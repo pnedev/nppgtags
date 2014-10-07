@@ -59,7 +59,6 @@ private:
     HWND composeWindow();
     int fillLV();
     int filterLV(const TCHAR* filter);
-    int searchLV(const TCHAR* txt);
     void resizeLV();
 
     void onDblClick();

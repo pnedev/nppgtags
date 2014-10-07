@@ -222,27 +222,6 @@ int AutoCompleteUI::filterLV(const TCHAR* filter)
 /**
  *  \brief
  */
-int AutoCompleteUI::searchLV(const TCHAR* txt)
-{
-    LVFINDINFO lvFind   = {0};
-    lvFind.flags        = LVFI_PARTIAL;
-    lvFind.psz          = txt;
-
-    int iItem = ListView_FindItem(_hLVWnd, -1, &lvFind);
-    if (iItem >= 0)
-    {
-        ListView_SetItemState(_hLVWnd, iItem, LVIS_FOCUSED | LVIS_SELECTED,
-                LVIS_FOCUSED | LVIS_SELECTED);
-        ListView_EnsureVisible(_hLVWnd, iItem, FALSE);
-    }
-
-    return iItem;
-}
-
-
-/**
- *  \brief
- */
 void AutoCompleteUI::resizeLV()
 {
     bool scroll = false;
@@ -355,17 +334,24 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
         case VK_CONTROL:
         case VK_MENU:
         case VK_ESCAPE:
+            SendMessage(_hwnd, WM_CLOSE, 0, 0);
+            return true;
+
         case VK_DELETE:
+            INpp::Get().ReplaceWord("");
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
             return true;
 
         case VK_BACK:
         {
             INpp& npp = INpp::Get();
-            if (npp.GetWordSize() == (int)_tagLen)
-                return true;
             npp.ClearSelection();
             npp.Backspace();
+            if (npp.GetWordSize() < (int)_tagLen)
+            {
+                SendMessage(_hwnd, WM_CLOSE, 0, 0);
+                return true;
+            }
             break;
         }
 
@@ -390,7 +376,6 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
 
     CText word(buf);
     if (!filterLV(word.C_str()))
-    // if (searchLV(word.C_str()) < 0)
         SendMessage(_hwnd, WM_CLOSE, 0, 0);
 
     return true;
