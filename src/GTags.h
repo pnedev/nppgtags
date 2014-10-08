@@ -37,8 +37,6 @@ namespace GTags
 const TCHAR cPluginName[]       = _T("NppGTags");
 const unsigned cMaxTagLen       = 128;
 
-const TCHAR cUIFontName[]       = _T("Liberation Mono");
-const unsigned cUIFontSize      = 9;
 const int cUIBackgroundColor    = COLOR_INFOBK;
 
 const TCHAR cCreateDatabase[]   = _T("Create Database");
@@ -56,6 +54,8 @@ const TCHAR cVersion[]          = _T("About");
 
 extern HINSTANCE HInst;
 extern CPath DllPath;
+extern TCHAR UIFontName[32];
+extern unsigned UIFontSize;
 extern bool AutoUpdate;
 
 

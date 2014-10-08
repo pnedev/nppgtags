@@ -217,11 +217,11 @@ void TreeViewUI::createWindow()
             _hWnd, NULL, HInst, NULL);
 
     HDC hdc = GetWindowDC(hOwnerWnd);
-    _hFont = CreateFont(-MulDiv(cUIFontSize,
+    _hFont = CreateFont(-MulDiv(UIFontSize,
             GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cUIFontName);
+            FF_DONTCARE | DEFAULT_PITCH, UIFontName);
     ReleaseDC(hOwnerWnd, hdc);
     if (_hFont)
         SendMessage(_hTVWnd, WM_SETFONT, (WPARAM) _hFont, (LPARAM) TRUE);

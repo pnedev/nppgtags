@@ -179,8 +179,8 @@ bool enterTag(TCHAR* tag, const TCHAR* uiName, const TCHAR* defaultTag)
     else
         tag[0] = 0;
 
-    return IOWindow::In(HInst, INpp::Get().GetMainHandle(), cUIFontName,
-            cUIFontSize + 2, 400, uiName, tag, cMaxTagLen - 1);
+    return IOWindow::In(HInst, INpp::Get().GetMainHandle(), UIFontName,
+            UIFontSize + 2, 400, uiName, tag, cMaxTagLen - 1);
 }
 
 
@@ -346,7 +346,7 @@ void showInfo(CmdData& cmd)
             cmd.Error() || cmd.NoResult() ?
             _T("VERSION READ FAILED\n") : cmd.GetResult());
 
-    IOWindow::Out(HInst, INpp::Get().GetMainHandle(), cUIFontName, cUIFontSize,
+    IOWindow::Out(HInst, INpp::Get().GetMainHandle(), UIFontName, UIFontSize,
             cVersion, text);
 }
 
@@ -358,6 +358,8 @@ namespace GTags
 
 HINSTANCE HInst = NULL;
 CPath DllPath;
+TCHAR UIFontName[32];
+unsigned UIFontSize;
 bool AutoUpdate = true;
 
 

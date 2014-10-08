@@ -79,7 +79,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
             GetModuleFileName((HMODULE)hModule,
                     GTags::DllPath.C_str(), GTags::DllPath.Size());
 
-            CPath gtags(DllPath);
+            CPath gtags(GTags::DllPath);
             gtags.StripFilename();
             gtags += GTags::cPluginName;
             gtags += _T("\\global.exe");
@@ -97,10 +97,10 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
                 gtags.StripFilename();
                 TCHAR msg[512];
                 _sntprintf_s(msg, 512, _TRUNCATE,
-                        _T("GTags binaries not found in\n%s\n")
-                        _T("%s plugin not loaded"),
-                        gtags, GTags::cPluginName);
-                MessageBox(NULL, GTags::cPluginName, msg,
+                        _T("GTags binaries not found in\n\"%s\"\n")
+                        _T("%s plugin will not be loaded!"),
+                        gtags.C_str(), GTags::cPluginName);
+                MessageBox(NULL, msg, GTags::cPluginName,
                         MB_OK | MB_ICONERROR);
                 return FALSE;
             }
@@ -123,7 +123,12 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
 
 extern "C" __declspec(dllexport) void setInfo(NppData nppData)
 {
-    INpp::Get().SetData(nppData);
+    INpp& npp = INpp::Get();
+    npp.SetData(nppData);
+    npp.ReadHandle();
+    npp.GetFontName(GTags::UIFontName, 32);
+    GTags::UIFontSize = (unsigned)npp.GetFontSize() - 1;
+
     TreeViewUI::Init();
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
