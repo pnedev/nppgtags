@@ -326,7 +326,6 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
             return false;
 
         case VK_TAB:
-        case VK_SPACE:
         case VK_RETURN:
             onDblClick();
             return true;
@@ -336,6 +335,15 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
         case VK_ESCAPE:
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
             return true;
+
+        case VK_SPACE:
+        {
+            INpp& npp = INpp::Get();
+            npp.ClearSelection();
+            npp.AddText(" ", 1);
+            SendMessage(_hwnd, WM_CLOSE, 0, 0);
+            return true;
+        }
 
         case VK_DELETE:
             INpp::Get().ReplaceWord("");

@@ -253,8 +253,10 @@ void autoComplHalf(CmdData& cmd)
 {
     if (cmd.Error())
     {
-        MessageBox(INpp::Get().GetMainHandle(), cmd.GetResult(),
-                cmd.GetName(), MB_OK | MB_ICONERROR);
+        CText msg(cmd.GetResult());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetMainHandle(), msg.C_str(), cmd.GetName(),
+                MB_OK | MB_ICONERROR);
         return;
     }
 
@@ -276,8 +278,10 @@ void autoComplReady(CmdData& cmd)
 
     if (cmd.Error())
     {
-        MessageBox(npp.GetMainHandle(), cmd.GetResult(),
-                cmd.GetName(), MB_OK | MB_ICONERROR);
+        CText msg(cmd.GetResult());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetMainHandle(), msg.C_str(), cmd.GetName(),
+                MB_OK | MB_ICONERROR);
         return;
     }
 
@@ -316,8 +320,10 @@ void fillTreeView(CmdData& cmd)
 
     if (cmd.Error())
     {
-        MessageBox(npp.GetMainHandle(), cmd.GetResult(),
-                cmd.GetName(), MB_OK | MB_ICONERROR);
+        CText msg(cmd.GetResult());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetMainHandle(), msg.C_str(), cmd.GetName(),
+                MB_OK | MB_ICONERROR);
         return;
     }
 
