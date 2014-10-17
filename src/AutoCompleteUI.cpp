@@ -330,8 +330,6 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
             onDblClick();
             return true;
 
-        case VK_CONTROL:
-        case VK_MENU:
         case VK_ESCAPE:
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
             return true;
@@ -383,8 +381,18 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
     INpp::Get().GetWord(buf, 128, true);
 
     CText word(buf);
-    if (!filterLV(word.C_str()))
+    int lvItemsCnt = filterLV(word.C_str());
+    if (lvItemsCnt == 0)
         SendMessage(_hwnd, WM_CLOSE, 0, 0);
+    else if (lvItemsCnt == 1)
+    {
+        TCHAR itemTxt[128];
+        ListView_GetItemText(_hLVWnd,
+                ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
+                itemTxt, 128);
+        if (word == itemTxt)
+            SendMessage(_hwnd, WM_CLOSE, 0, 0);
+    }
 
     return true;
 }
