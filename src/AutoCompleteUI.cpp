@@ -334,15 +334,6 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
             return true;
 
-        case VK_SPACE:
-        {
-            INpp& npp = INpp::Get();
-            npp.ClearSelection();
-            npp.AddText(" ", 1);
-            SendMessage(_hwnd, WM_CLOSE, 0, 0);
-            return true;
-        }
-
         case VK_DELETE:
             INpp::Get().ReplaceWord("");
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
@@ -377,21 +368,28 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
         }
     }
 
-    char buf[128];
-    INpp::Get().GetWord(buf, 128, true);
-
-    CText word(buf);
-    int lvItemsCnt = filterLV(word.C_str());
-    if (lvItemsCnt == 0)
-        SendMessage(_hwnd, WM_CLOSE, 0, 0);
-    else if (lvItemsCnt == 1)
+    if (keyCode != VK_SPACE)
     {
-        TCHAR itemTxt[128];
-        ListView_GetItemText(_hLVWnd,
-                ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
-                itemTxt, 128);
-        if (word == itemTxt)
+        char buf[128];
+        INpp::Get().GetWord(buf, 128, true);
+
+        CText word(buf);
+        int lvItemsCnt = filterLV(word.C_str());
+        if (lvItemsCnt == 0)
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
+        else if (lvItemsCnt == 1)
+        {
+            TCHAR itemTxt[128];
+            ListView_GetItemText(_hLVWnd,
+                    ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
+                    itemTxt, 128);
+            if (word == itemTxt)
+                SendMessage(_hwnd, WM_CLOSE, 0, 0);
+        }
+    }
+    else
+    {
+        SendMessage(_hwnd, WM_CLOSE, 0, 0);
     }
 
     return true;
