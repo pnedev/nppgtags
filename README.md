@@ -5,8 +5,9 @@ GTags plugin for Notepad++
 
 This is GUI frontend to GNU Global source code tagging system (GTags) for
 Notepad++.
-You'll need GTags binaries for Win32 to use this plugin. You can download them
-from GNU Global official website:
+You'll need GTags binaries for Win32 to use this plugin.
+Those are supplied with the plugin binary for convenience.
+You can also download them from GNU Global official website:
 http://www.gnu.org/software/global/global.html
 
 Put GTags Win32 binaries in folder named 'NppGTags'.
@@ -38,9 +39,10 @@ the database for:
 3) what you have entered in the text box that will appear if there is no word
 under the cursor.
 
-'Find File' command will not search for 2), it will directly go for 3) if there
-is no selection. It will automatically fill in the text box (case 3) the name
-of the current file to make switching between source <-> header easier.
+'Find File' command will skip 2), it will directly go to step 3) if there
+is no selection. It will automatically fill in the text box (from step 3)
+the name of the current file without the extension to make switching between
+source <-> header easier.
 
 All 'Find' commands will show Notepad++ docking Tree View UI with the results.
 Double-clicking (or hitting 'Space') on search result will take you to the
