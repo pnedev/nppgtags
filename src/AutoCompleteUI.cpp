@@ -92,7 +92,7 @@ AutoCompleteUI::~AutoCompleteUI()
  */
 HWND AutoCompleteUI::composeWindow()
 {
-    HWND hOwnerWnd = INpp::Get().GetHandle();
+    HWND hOwnerWnd = INpp::Get().GetSciHandle();
     RECT win;
     GetWindowRect(hOwnerWnd, &win);
     DWORD style = WS_POPUP | WS_BORDER;
@@ -238,7 +238,7 @@ void AutoCompleteUI::resizeLV()
 
     RECT maxWin;
     INpp& npp = INpp::Get();
-    GetWindowRect(npp.GetHandle(), &maxWin);
+    GetWindowRect(npp.GetSciHandle(), &maxWin);
 
     int maxWidth = (maxWin.right - maxWin.left) - 30;
     if (scroll)

@@ -101,7 +101,7 @@ int getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
 {
     INpp& npp = INpp::Get();
 
-    npp.ReadHandle();
+    npp.ReadSciHandle();
     if (npp.IsSelectionVertical())
         return 0;
 
@@ -113,7 +113,7 @@ int getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
     {
         if (len >= cMaxTagLen)
         {
-            MessageBox(npp.GetMainHandle(), _T("Tag string too long"),
+            MessageBox(npp.GetHandle(), _T("Tag string too long"),
                     cPluginName, MB_OK | MB_ICONEXCLAMATION);
             return 0;
         }
@@ -144,12 +144,12 @@ DBhandle getDatabase(bool writeMode)
     DBhandle db = DBManager::Get().GetDB(currentFile, writeMode, &success);
     if (!db)
     {
-        MessageBox(npp.GetMainHandle(), _T("GTags database not found"),
+        MessageBox(npp.GetHandle(), _T("GTags database not found"),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
     }
     else if (!success)
     {
-        MessageBox(npp.GetMainHandle(), _T("GTags database is in use"),
+        MessageBox(npp.GetHandle(), _T("GTags database is in use"),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
         db = NULL;
     }
@@ -179,7 +179,7 @@ bool enterTag(TCHAR* tag, const TCHAR* uiName, const TCHAR* defaultTag)
     else
         tag[0] = 0;
 
-    return IOWindow::In(HInst, INpp::Get().GetMainHandle(), UIFontName,
+    return IOWindow::In(HInst, INpp::Get().GetHandle(), UIFontName,
             UIFontSize + 2, 400, uiName, tag, cMaxTagLen - 1);
 }
 
@@ -241,7 +241,7 @@ void cmdReady(CmdData& cmd)
     runSheduledUpdate(cmd.GetDBPath());
 
     if (cmd.Error())
-        MessageBox(INpp::Get().GetMainHandle(), cmd.GetResult(),
+        MessageBox(INpp::Get().GetHandle(), cmd.GetResult(),
                 cmd.GetName(), MB_OK | MB_ICONERROR);
 }
 
@@ -255,7 +255,7 @@ void autoComplHalf(CmdData& cmd)
     {
         CText msg(cmd.GetResult());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetMainHandle(), msg.C_str(), cmd.GetName(),
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd.GetName(),
                 MB_OK | MB_ICONERROR);
         return;
     }
@@ -280,7 +280,7 @@ void autoComplReady(CmdData& cmd)
     {
         CText msg(cmd.GetResult());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetMainHandle(), msg.C_str(), cmd.GetName(),
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd.GetName(),
                 MB_OK | MB_ICONERROR);
         return;
     }
@@ -322,7 +322,7 @@ void fillTreeView(CmdData& cmd)
     {
         CText msg(cmd.GetResult());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetMainHandle(), msg.C_str(), cmd.GetName(),
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd.GetName(),
                 MB_OK | MB_ICONERROR);
         return;
     }
@@ -332,7 +332,7 @@ void fillTreeView(CmdData& cmd)
         TCHAR msg[cMaxTagLen + 32];
         _sntprintf_s(msg, cMaxTagLen + 32, _TRUNCATE, _T("\"%s\" not found"),
                 cmd.GetTag());
-        MessageBox(npp.GetMainHandle(), msg, cmd.GetName(),
+        MessageBox(npp.GetHandle(), msg, cmd.GetName(),
                 MB_OK | MB_ICONEXCLAMATION);
         return;
     }
@@ -352,7 +352,7 @@ void showInfo(CmdData& cmd)
             cmd.Error() || cmd.NoResult() ?
             _T("VERSION READ FAILED\n") : cmd.GetResult());
 
-    IOWindow::Out(HInst, INpp::Get().GetMainHandle(), UIFontName, UIFontSize,
+    IOWindow::Out(HInst, INpp::Get().GetHandle(), UIFontName, UIFontSize,
             cVersion, text);
 }
 
@@ -540,7 +540,7 @@ void CreateDatabase()
         TCHAR buf[512];
         _sntprintf_s(buf, 512, _TRUNCATE,
                 _T("Database at\n\"%s\" exists.\nRe-create?"), db->C_str());
-        int choice = MessageBox(npp.GetMainHandle(), buf, cPluginName,
+        int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
         {
@@ -553,7 +553,7 @@ void CreateDatabase()
         currentFile.StripFilename();
 
         BROWSEINFO bi       = {0};
-        bi.hwndOwner        = npp.GetMainHandle();
+        bi.hwndOwner        = npp.GetHandle();
         bi.pszDisplayName   = currentFile.C_str();
         bi.lpszTitle        = _T("Point to the root of your project");
         bi.ulFlags          = BIF_RETURNONLYFSDIRS;
@@ -624,7 +624,7 @@ void DeleteDatabase()
     TCHAR buf[512];
     _sntprintf_s(buf, 512, _TRUNCATE,
             _T("Delete database from\n\"%s\"?"), db->C_str());
-    int choice = MessageBox(npp.GetMainHandle(), buf, cPluginName,
+    int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
             MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
     if (choice != IDYES)
     {
@@ -633,10 +633,10 @@ void DeleteDatabase()
     }
 
     if (DBManager::Get().UnregisterDB(db))
-        MessageBox(npp.GetMainHandle(), _T("GTags database deleted"),
+        MessageBox(npp.GetHandle(), _T("GTags database deleted"),
                 cPluginName, MB_OK | MB_ICONINFORMATION);
     else
-        MessageBox(npp.GetMainHandle(),
+        MessageBox(npp.GetHandle(),
                 _T("Deleting database failed, is it read-only?"),
                 cPluginName, MB_OK | MB_ICONERROR);
 }

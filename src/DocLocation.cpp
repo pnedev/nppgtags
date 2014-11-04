@@ -86,7 +86,7 @@ void DocLocation::Pop()
     if (loc.filePath.FileExists())
     {
         INpp& npp = INpp::Get();
-        npp.OpenFile(loc.filePath);
+        npp.SwitchToFile(loc.filePath);
         npp.SetView(loc.firstVisibleLine, loc.posInFile);
     }
 

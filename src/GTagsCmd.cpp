@@ -230,7 +230,7 @@ bool Cmd::runProcess()
 
     bool ret = errorPipe.Open() && dataPipe.Open();
     if (ret)
-        ret = !ActivityWindow::Show(HInst, INpp::Get().GetHandle(), 600,
+        ret = !ActivityWindow::Show(HInst, INpp::Get().GetSciHandle(), 600,
                 header, pi.hProcess, activityShowDelay);
     if (ret)
     {

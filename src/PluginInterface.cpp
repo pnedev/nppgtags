@@ -125,7 +125,6 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
 {
     INpp& npp = INpp::Get();
     npp.SetData(nppData);
-    npp.ReadHandle();
     npp.GetFontName(GTags::UIFontName, 32);
     GTags::UIFontSize = (unsigned)npp.GetFontSize() - 1;
 

@@ -198,7 +198,7 @@ TreeViewUI::~TreeViewUI()
  */
 void TreeViewUI::createWindow()
 {
-    HWND hOwnerWnd = INpp::Get().GetMainHandle();
+    HWND hOwnerWnd = INpp::Get().GetHandle();
     RECT win;
     GetWindowRect(hOwnerWnd, &win);
     DWORD style = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_SIZEBOX;
@@ -367,7 +367,7 @@ void TreeViewUI::remove()
     if (TreeView_GetCount(_hTVWnd) == 0)
     {
         npp.HideDockingWin(_hWnd);
-        SetFocus(npp.ReadHandle());
+        SetFocus(npp.ReadSciHandle());
     }
 }
 
@@ -399,7 +399,7 @@ void TreeViewUI::removeAll()
         INpp& npp = INpp::Get();
         npp.UpdateDockingWin(_hWnd);
         npp.HideDockingWin(_hWnd);
-        SetFocus(npp.ReadHandle());
+        SetFocus(npp.ReadSciHandle());
     }
 }
 
@@ -435,15 +435,15 @@ bool TreeViewUI::openItem()
     INpp& npp = INpp::Get();
     if (!file.FileExists())
     {
-        MessageBox(npp.GetMainHandle(),
+        MessageBox(npp.GetHandle(),
                 _T("File not found, update database and search again"),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
         return true;
     }
 
     DocLocation::Get().Push();
-    npp.OpenFile(file);
-    SetFocus(npp.ReadHandle());
+    npp.SwitchToFile(file);
+    SetFocus(npp.ReadSciHandle());
 
     if (branch->_cmdID == FIND_FILE)
     {
@@ -462,7 +462,7 @@ bool TreeViewUI::openItem()
     if (!npp.SearchText(str, true, wholeWord,
             npp.PositionFromLine(line), npp.PositionFromLine(line + 1)))
     {
-        MessageBox(npp.GetMainHandle(),
+        MessageBox(npp.GetHandle(),
                 _T("Look-up mismatch, update database and search again"),
                 cPluginName, MB_OK | MB_ICONINFORMATION);
     }

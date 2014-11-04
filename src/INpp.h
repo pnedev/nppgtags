@@ -44,7 +44,7 @@ class INpp
 public:
     static inline INpp& Get() { return Instance; }
 
-    inline HWND ReadHandle()
+    inline HWND ReadSciHandle()
     {
         int currentEdit;
 
@@ -60,11 +60,11 @@ public:
     inline void SetData(NppData nppData)
     {
         _nppData = nppData;
-        ReadHandle();
+        ReadSciHandle();
     }
 
-    inline HWND GetMainHandle() { return _nppData._nppHandle; }
-    inline HWND GetHandle() { return _hSC; }
+    inline HWND GetHandle() { return _nppData._nppHandle; }
+    inline HWND GetSciHandle() { return _hSC; }
 
     inline void SetPluginMenuFlag(int cmdID, bool enable) const
     {
@@ -106,6 +106,18 @@ public:
                 0, (LPARAM)hwnd);
     }
 
+    inline HWND CreateSciHandle(const HWND hParentWnd) const
+    {
+        return SendMessage(_nppData._nppHandle, NPPM_CREATESCINTILLAHANDLE,
+                0, (LPARAM)hParentWnd);
+    }
+
+    inline void DestroySciHandle(const HWND hSciWnd) const
+    {
+        SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE,
+                0, (LPARAM)hSciWnd);
+    }
+
     inline void GetMainDir(CPath& mainPath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY,
@@ -136,6 +148,12 @@ public:
                 0, (LPARAM)filePath.C_str()))
             return -1;
         return 0;
+    }
+
+    inline void SwitchToFile(const CPath& filePath) const
+    {
+        SendMessage(_nppData._nppHandle, NPPM_SWITCHTOFILE,
+                0, (LPARAM)filePath.C_str());
     }
 
     inline void GetFontName(TCHAR* fontName, int len) const
