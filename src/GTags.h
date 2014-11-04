@@ -28,13 +28,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
+#include "resource.h"
 #include "Common.h"
 
 
 namespace GTags
 {
 
-const TCHAR cPluginName[]       = _T("NppGTags");
+const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
 const unsigned cMaxTagLen       = 128;
 
 const int cUIBackgroundColor    = COLOR_INFOBK;

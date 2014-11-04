@@ -47,10 +47,11 @@ using namespace GTags;
 
 
 const TCHAR cAbout[] = {
-    _T("\n%s plugin for Notepad++\n\n")
+    _T("\n") VER_DESCRIPTION _T("\n\n")
+    _T("Version: ") VER_VERSION_STR _T("\n")
     _T("Build date: %s %s\n")
-    _T("Copyright(C) 2014  Pavel Nedev <pg.nedev@gmail.com>\n\n")
-    _T("Licensed under GPLv2 ")
+    VER_COPYRIGHT _T(" <pg.nedev@gmail.com>\n\n")
+    _T("Licensed under GNU GPLv2 ")
     _T("as published by the Free Software Foundation.\n\n")
     _T("This plugin is frontend to ")
     _T("GNU Global source code tagging system (GTags):\n")
@@ -347,10 +348,9 @@ void fillTreeView(CmdData& cmd)
 void showInfo(CmdData& cmd)
 {
     TCHAR text[2048];
-    _sntprintf_s(text, 2048, _TRUNCATE, cAbout, cPluginName,
-            _T(__DATE__), _T(__TIME__),
+    _sntprintf_s(text, 2048, _TRUNCATE, cAbout, _T(__DATE__), _T(__TIME__),
             cmd.Error() || cmd.NoResult() ?
-            _T("VERSION READ FAILED\n") : cmd.GetResult());
+            _T("GTAGS VERSION READ FAILED\n") : cmd.GetResult());
 
     IOWindow::Out(HInst, INpp::Get().GetHandle(), UIFontName, UIFontSize,
             cVersion, text);

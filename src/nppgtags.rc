@@ -1,0 +1,39 @@
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include "resource.h"
+
+#ifndef DEBUG
+#define VER_DEBUG   0
+#else
+#define VER_DEBUG   VS_FF_DEBUG
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    	VER_VERSION
+PRODUCTVERSION 	VER_VERSION
+FILEFLAGSMASK  	VS_FFI_FILEFLAGSMASK
+FILEFLAGS      	(VER_PRERELEASE|VER_DEBUG)
+FILEOS         	VOS_NT_WINDOWS32
+FILETYPE       	VFT_DLL
+FILESUBTYPE    	VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",      VER_AUTHOR
+            VALUE "FileDescription",  VER_DESCRIPTION
+            VALUE "FileVersion",      VER_VERSION_STR
+            VALUE "InternalName",     VER_DLLFILENAME
+            VALUE "LegalCopyright",   VER_COPYRIGHT
+            VALUE "OriginalFilename", VER_DLLFILENAME
+            VALUE "ProductName",      VER_PLUGIN_NAME
+            VALUE "ProductVersion",   VER_VERSION_STR
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 0x4B0
+    END
+END
