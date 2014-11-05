@@ -108,8 +108,8 @@ public:
 
     inline HWND CreateSciHandle(const HWND hParentWnd) const
     {
-        return SendMessage(_nppData._nppHandle, NPPM_CREATESCINTILLAHANDLE,
-                0, (LPARAM)hParentWnd);
+        return (HWND)SendMessage(_nppData._nppHandle,
+                NPPM_CREATESCINTILLAHANDLE, 0, (LPARAM)hParentWnd);
     }
 
     inline void DestroySciHandle(const HWND hSciWnd) const

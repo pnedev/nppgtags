@@ -1,4 +1,6 @@
 .editorconfig
 *TAGS
 GPATH
-
+*.suo
+*.sdf
+/Release

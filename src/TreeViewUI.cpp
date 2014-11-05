@@ -442,7 +442,7 @@ bool TreeViewUI::openItem()
     }
 
     DocLocation::Get().Push();
-    npp.SwitchToFile(file);
+    npp.OpenFile(file);
     SetFocus(npp.ReadSciHandle());
 
     if (branch->_cmdID == FIND_FILE)

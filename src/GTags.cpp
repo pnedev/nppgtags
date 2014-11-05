@@ -47,10 +47,10 @@ using namespace GTags;
 
 
 const TCHAR cAbout[] = {
-    _T("\n") VER_DESCRIPTION _T("\n\n")
-    _T("Version: ") VER_VERSION_STR _T("\n")
+    _T("\n%s\n\n")
+    _T("Version: %s\n")
     _T("Build date: %s %s\n")
-    VER_COPYRIGHT _T(" <pg.nedev@gmail.com>\n\n")
+    _T("%s <pg.nedev@gmail.com>\n\n")
     _T("Licensed under GNU GPLv2 ")
     _T("as published by the Free Software Foundation.\n\n")
     _T("This plugin is frontend to ")
@@ -348,9 +348,11 @@ void fillTreeView(CmdData& cmd)
 void showInfo(CmdData& cmd)
 {
     TCHAR text[2048];
-    _sntprintf_s(text, 2048, _TRUNCATE, cAbout, _T(__DATE__), _T(__TIME__),
+    _sntprintf_s(text, 2048, _TRUNCATE, cAbout,
+            VER_DESCRIPTION, VER_VERSION_STR,
+            _T(__DATE__), _T(__TIME__), VER_COPYRIGHT,
             cmd.Error() || cmd.NoResult() ?
-            _T("GTAGS VERSION READ FAILED\n") : cmd.GetResult());
+            _T("VERSION READ FAILED\n") : cmd.GetResult());
 
     IOWindow::Out(HInst, INpp::Get().GetHandle(), UIFontName, UIFontSize,
             cVersion, text);
