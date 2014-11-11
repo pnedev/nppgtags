@@ -185,30 +185,15 @@ public:
         *y = SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, (LPARAM)currPos) + 2;
     }
 
-    inline void GetView(long* firstVisibleLine, long* pos) const
-    {
-        *firstVisibleLine = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-        *pos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    }
-
-    inline void SetView(long firstVisibleLine, long pos) const
-    {
-        long curLine = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-        curLine = firstVisibleLine - curLine;
-        SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)curLine);
-        SendMessage(_hSC, SCI_SETSEL, (WPARAM)pos, (LPARAM)pos);
-    }
-
     inline void GoToLine(long line) const
     {
-        long curLine = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-        curLine = line - curLine - 1;
-        SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)curLine);
+        line -= SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
+        SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)line);
     }
 
     inline long PositionFromLine(long line) const
     {
-        return SendMessage(_hSC, SCI_POSITIONFROMLINE, (WPARAM)line - 1, 0);
+        return SendMessage(_hSC, SCI_POSITIONFROMLINE, (WPARAM)(line - 1), 0);
     }
 
     inline long LineEndPosition(long line) const
@@ -234,10 +219,27 @@ public:
         return selLen;
     }
 
+    inline void SetSelection(long startPos, long endPos) const
+    {
+        SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
+    }
+
     inline void ClearSelection() const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
         SendMessage(_hSC, SCI_SETSEL, (WPARAM)currPos, (LPARAM)currPos);
+    }
+
+    inline void GetView(long* firstVisibleLine, long* pos) const
+    {
+        *firstVisibleLine = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
+        *pos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    }
+
+    inline void SetView(long firstVisibleLine, long pos) const
+    {
+        GoToLine(firstVisibleLine);
+        SendMessage(_hSC, SCI_SETSEL, (WPARAM)pos, (LPARAM)pos);
     }
 
     inline long GetWordSize() const

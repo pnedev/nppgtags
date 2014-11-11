@@ -460,7 +460,7 @@ bool TreeViewUI::openItem()
     long line = _ttoi(leaf->line);
 
     if (!npp.SearchText(str, true, wholeWord,
-            npp.PositionFromLine(line), npp.PositionFromLine(line + 1)))
+            npp.PositionFromLine(line), npp.LineEndPosition(line)))
     {
         MessageBox(npp.GetHandle(),
                 _T("Look-up mismatch, update database and search again"),
