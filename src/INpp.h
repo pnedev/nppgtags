@@ -187,13 +187,11 @@ public:
 
     inline void GoToPos(long pos) const
     {
-        SendMessage(_hSC, SCI_SETYCARETPOLICY, (WPARAM)CARET_STRICT, 0);
         SendMessage(_hSC, SCI_GOTOPOS, (WPARAM)pos, 0);
     }
 
     inline void GoToLine(long line) const
     {
-        SendMessage(_hSC, SCI_SETYCARETPOLICY, (WPARAM)CARET_STRICT, 0);
         SendMessage(_hSC, SCI_GOTOLINE, (WPARAM)line, 0);
     }
 
