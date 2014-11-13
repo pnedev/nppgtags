@@ -185,7 +185,19 @@ public:
         *y = SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, (LPARAM)currPos) + 2;
     }
 
+    inline void GoToPos(long pos) const
+    {
+        SendMessage(_hSC, SCI_SETYCARETPOLICY, (WPARAM)CARET_STRICT, 0);
+        SendMessage(_hSC, SCI_GOTOPOS, (WPARAM)pos, 0);
+    }
+
     inline void GoToLine(long line) const
+    {
+        SendMessage(_hSC, SCI_SETYCARETPOLICY, (WPARAM)CARET_STRICT, 0);
+        SendMessage(_hSC, SCI_GOTOLINE, (WPARAM)line, 0);
+    }
+
+    inline void ScrollToLine(long line) const
     {
         line -= SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
         SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)line);
@@ -238,7 +250,7 @@ public:
 
     inline void SetView(long firstVisibleLine, long pos) const
     {
-        GoToLine(firstVisibleLine);
+        ScrollToLine(firstVisibleLine);
         SendMessage(_hSC, SCI_SETSEL, (WPARAM)pos, (LPARAM)pos);
     }
 

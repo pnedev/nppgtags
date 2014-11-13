@@ -54,7 +54,7 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 #define SCI_GETANCHOR 2009
 #define SCI_GETSTYLEAT 2010
 #define SCI_REDO 2011
-#define SCI_SETUNDOCOLLECTION 2013
+#define SCI_SETUNDOCOLLECTION 2012
 #define SCI_SELECTALL 2013
 #define SCI_SETSAVEPOINT 2014
 #define SCI_GETSTYLEDTEXT 2015

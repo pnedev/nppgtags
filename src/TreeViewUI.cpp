@@ -479,7 +479,6 @@ bool TreeViewUI::onKeyDown(int keyCode)
     switch (keyCode)
     {
         case VK_SPACE:
-        case VK_RETURN:
             return openItem();
 
         case VK_DELETE:

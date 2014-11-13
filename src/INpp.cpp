@@ -112,11 +112,9 @@ bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord,
 
     long lineNum =
         SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)startPos, 0);
-    long firstVisibleLine =
-        SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-    if (lineNum > 4)
+    if (lineNum >= 5)
         lineNum -= 5;
-    lineNum -= firstVisibleLine;
+    lineNum -= SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
     SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)lineNum);
     SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
 
