@@ -457,7 +457,7 @@ bool TreeViewUI::openItem()
     char str[cMaxTagLen];
     size_t cnt;
     wcstombs_s(&cnt, str, cMaxTagLen, leaf->name, _TRUNCATE);
-    long line = _ttoi(leaf->line);
+    long line = _ttoi(leaf->line) - 1;
 
     if (!npp.SearchText(str, true, wholeWord,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))

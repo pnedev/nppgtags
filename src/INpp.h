@@ -205,7 +205,7 @@ public:
 
     inline long PositionFromLine(long line) const
     {
-        return SendMessage(_hSC, SCI_POSITIONFROMLINE, (WPARAM)(line - 1), 0);
+        return SendMessage(_hSC, SCI_POSITIONFROMLINE, (WPARAM)line, 0);
     }
 
     inline long LineEndPosition(long line) const
