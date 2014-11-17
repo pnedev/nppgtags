@@ -338,7 +338,8 @@ void fillTreeView(CmdData& cmd)
         return;
     }
 
-    TreeViewUI::Get().Show(cmd);
+    // TreeViewUI::Get().Show(cmd);
+    ScintillaViewUI::Get().Show(cmd);
 }
 
 

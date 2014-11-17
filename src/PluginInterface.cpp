@@ -128,7 +128,8 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     npp.GetFontName(GTags::UIFontName, 32);
     GTags::UIFontSize = (unsigned)npp.GetFontSize() - 1;
 
-    TreeViewUI::Init();
+    // TreeViewUI::Init();
+    ScintillaViewUI::Init();
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
 

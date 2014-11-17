@@ -168,7 +168,7 @@ TreeViewUI::TreeViewUI()
     data.pszAddInfo     = NULL;
     data.uMask          = DWS_DF_CONT_BOTTOM;
     data.pszModuleName  = DllPath.GetFilename_C_str();
-    data.dlgID          = 1;
+    data.dlgID          = 0;
 
     INpp& npp = INpp::Get();
     npp.RegisterWin(_hWnd);
