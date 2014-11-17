@@ -22,6 +22,7 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "TreeViewUI.h"
+#include "ScintillaViewUI.h"
 
 
 namespace

@@ -35,7 +35,9 @@
     <ClInclude Include="src\IOWindow.h" />
     <ClCompile Include="src\AutoCompleteUI.cpp" />
     <ClInclude Include="src\AutoCompleteUI.h" />
+    <ClCompile Include="src\ScintillaViewUI.cpp" />
     <ClCompile Include="src\TreeViewUI.cpp" />
+    <ClInclude Include="src\ScintillaViewUI.h" />
     <ClInclude Include="src\TreeViewUI.h" />
   </ItemGroup>
   <ItemGroup>
