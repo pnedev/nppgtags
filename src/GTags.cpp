@@ -24,7 +24,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include "GTags.h"
-#include <Shlobj.h>
+#include <shlobj.h>
 #include "Common.h"
 #include "AutoLock.h"
 #include "INpp.h"
@@ -68,7 +68,7 @@ Mutex UpdateLock;
 
 
 void releaseKeys();
-int getSelection(TCHAR* sel, bool autoSelectWord = false,
+unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
         bool skipPreSelect = false);
 DBhandle getDatabase(bool writeMode = false);
 int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData);
@@ -99,7 +99,7 @@ inline void releaseKeys()
 /**
  *  \brief
  */
-int getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
+unsigned getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
 {
     INpp& npp = INpp::Get();
 
@@ -108,7 +108,7 @@ int getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
         return 0;
 
     char tagA[cMaxTagLen];
-    long len = npp.GetSelection(tagA, cMaxTagLen);
+    unsigned len = npp.GetSelection(tagA, cMaxTagLen);
     if (skipPreSelect || (len == 0 && autoSelectWord))
         len = npp.GetWord(tagA, cMaxTagLen, true);
     if (len)

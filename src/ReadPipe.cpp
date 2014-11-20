@@ -33,7 +33,7 @@ const unsigned ReadPipe::cChunkSize = 4096;
 /**
  *  \brief
  */
-ReadPipe::ReadPipe() : _hThread(NULL), _hIn(NULL), _hOut(NULL), _output(NULL)
+ReadPipe::ReadPipe() : _hIn(NULL), _hOut(NULL), _hThread(NULL), _output(NULL)
 {
     SECURITY_ATTRIBUTES attr    = {0};
     attr.nLength                = sizeof(SECURITY_ATTRIBUTES);

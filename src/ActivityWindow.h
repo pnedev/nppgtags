@@ -54,9 +54,9 @@ private:
 
     ActivityWindow(HWND hOwnerWnd, HANDLE proc_hndl, int showDelay_ms,
             int refCount) :
-        _hOwnerWnd(hOwnerWnd), _hProc(proc_hndl),
+        _hOwnerWnd(hOwnerWnd), _hProc(proc_hndl), _hFont(NULL),
         _showDelay_ms(showDelay_ms), _initRefCount(refCount),
-        _hFont(NULL), _exitCode(1) {}
+        _exitCode(1) {}
     ActivityWindow(const ActivityWindow &);
     ~ActivityWindow();
 
@@ -65,8 +65,8 @@ private:
             int showDelay_ms);
     void onTimerRefresh(HWND hwnd);
 
-    const HANDLE _hProc;
     HWND _hOwnerWnd;
+    const HANDLE _hProc;
     HFONT _hFont;
     HWND _hBtn;
     UINT_PTR _timerID;

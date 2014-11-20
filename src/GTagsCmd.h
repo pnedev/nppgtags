@@ -84,7 +84,7 @@ public:
 protected:
     CmdData(CmdID_t id, const TCHAR* name, DBhandle db,
             const TCHAR* tag, const TCHAR* result = NULL) :
-        _id(id), _tag(tag), _error(false)
+        _id(id), _error(false), _tag(tag)
     {
         if (db)
             _dbPath = *db;

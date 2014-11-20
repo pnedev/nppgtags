@@ -79,7 +79,7 @@ int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
 
     BOOL r;
     MSG msg;
-    while (r = GetMessage(&msg, NULL, 0, 0))
+    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0)
     {
         if (r == -1)
             break;
