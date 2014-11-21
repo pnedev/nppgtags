@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <tchar.h>
 
-#define VER_PLUGIN_NAME     _T("NppGTags\0")
+#define VER_PLUGIN_NAME     _T("NppGTags_Dev\0")
 
 #define VER_VERSION         1,1,0,0
 #define VER_VERSION_STR     _T("1.1.0\0")
