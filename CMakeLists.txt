@@ -1,15 +1,9 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 2.8)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
-# set (CMAKE_SYSROOT /home/paveln/.wine)
-# set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM   NEVER)
-# set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY   ONLY)
-# set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE   ONLY)
-# set (CMAKE_FIND_ROOT_PATH_MODE_PACKAGE   ONLY)
-
-# set (toolchain_prefix   i686-w64-mingw32)
-set (toolchain_prefix   x86_64-w64-mingw32)
+set (toolchain_prefix   i686-w64-mingw32)
+# set (toolchain_prefix   x86_64-w64-mingw32)
 
 set (CMAKE_C_COMPILER   ${toolchain_prefix}-gcc)
 set (CMAKE_CXX_COMPILER ${toolchain_prefix}-g++)
@@ -28,7 +22,7 @@ set (defs
 )
 
 set (CMAKE_CXX_FLAGS
-    "-mthreads -Wall -v"
+    "-march=native -m32 -mwindows -mwin32 -mthreads -mabi=ms -municode -Wall -v"
 )
 
 set (CMAKE_MODULE_LINKER_FLAGS_RELEASE
