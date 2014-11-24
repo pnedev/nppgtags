@@ -22,7 +22,7 @@ set (defs
 )
 
 set (CMAKE_CXX_FLAGS
-    "-march=native -m32 -mwindows -mwin32 -mthreads -mabi=ms -municode -Wall -v"
+    "-march=native -m32 -mwindows -mwin32 -mthreads -mabi=ms -municode -mdll -Wall -v"
 )
 
 set (CMAKE_MODULE_LINKER_FLAGS_RELEASE
