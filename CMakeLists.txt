@@ -2,8 +2,13 @@ cmake_minimum_required (VERSION 2.8)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
+# set (CMAKE_SYSROOT "")
+
+# set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM  NEVER)
+# set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY  ONLY)
+# set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE  ONLY)
+
 set (toolchain_prefix   i686-w64-mingw32)
-# set (toolchain_prefix   x86_64-w64-mingw32)
 
 set (CMAKE_C_COMPILER   ${toolchain_prefix}-gcc)
 set (CMAKE_CXX_COMPILER ${toolchain_prefix}-g++)
@@ -21,9 +26,11 @@ set (defs
     -DUNICODE -D_UNICODE
 )
 
-set (CMAKE_CXX_FLAGS
+set (CMAKE_C_FLAGS
     "-march=native -m32 -mwindows -mwin32 -mthreads -mabi=ms -municode -mdll -Wall -v"
 )
+
+set (CMAKE_CXX_FLAGS    ${CMAKE_C_FLAGS})
 
 set (CMAKE_MODULE_LINKER_FLAGS_RELEASE
     "-s -v"
@@ -34,7 +41,7 @@ set (project_rc_files
 )
 
 set (project_inc_dir
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 set (project_sources
