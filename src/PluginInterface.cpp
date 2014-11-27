@@ -82,7 +82,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
 
             CPath gtags(GTags::DllPath);
             gtags.StripFilename();
-            gtags += GTags::cPluginName;
+            gtags += GTags::cBinsDir;
             gtags += _T("\\global.exe");
 
             bool gtagsBinsFound = gtags.FileExists();
@@ -100,7 +100,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
                 _sntprintf_s(msg, 512, _TRUNCATE,
                         _T("GTags binaries not found in\n\"%s\"\n")
                         _T("%s plugin will not be loaded!"),
-                        gtags.C_str(), GTags::cPluginName);
+                        gtags.C_str(), GTags::cBinsDir);
                 MessageBox(NULL, msg, GTags::cPluginName,
                         MB_OK | MB_ICONERROR);
                 return FALSE;

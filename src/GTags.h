@@ -36,6 +36,7 @@ namespace GTags
 {
 
 const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
+const TCHAR cBinsDir[]          = _T("NppGTags");
 const unsigned cMaxTagLen       = 128;
 
 const int cUIBackgroundColor    = COLOR_INFOBK;

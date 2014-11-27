@@ -149,7 +149,10 @@ void ScintillaViewUI::createWindow()
     SendMessage(_hSci, SCI_SETUNDOCOLLECTION, false, 0);
     SendMessage(_hSci, SCI_SETCARETLINEVISIBLE, 1, 0);
     SendMessage(_hSci, SCI_SETCARETWIDTH, 0, 0);
-    // SendMessage(_hSci, SCI_SETLEXER, SCLEX_SEARCHRESULT, 0);
+
+#define SCLEX_SEARCHRESULT 150
+// L_SEARCHRESULT
+    SendMessage(_hSci, SCI_SETLEXER, L_SEARCHRESULT, 0);
 
     ShowWindow(_hSci, SW_SHOW);
 }

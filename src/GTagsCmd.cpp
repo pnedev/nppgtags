@@ -168,7 +168,7 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
 {
     CPath path(DllPath);
     path.StripFilename();
-    path += cPluginName;
+    path += cBinsDir;
 
     if (_data._id == CREATE_DATABASE || _data._id == VERSION)
         _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str());
