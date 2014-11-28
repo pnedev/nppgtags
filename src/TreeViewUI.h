@@ -47,6 +47,7 @@ public:
         return Instance;
     }
 
+    // Use to create the static instance of the singleton
     static inline void Init()
     {
         Get();

@@ -186,4 +186,16 @@ namespace Tools
 
 void ReleaseKey(WORD virtKey);
 
+#ifdef DEVELOPMENT
+inline void Msg(const TCHAR* msg)
+{
+    MessageBox(NULL, msg, _T(""), MB_OK);
+}
+
+inline void MsgA(const char* msg)
+{
+    MessageBoxA(NULL, msg, "", MB_OK);
+}
+#endif
+
 } // namespace Tools

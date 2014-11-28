@@ -47,6 +47,7 @@ public:
         return Instance;
     }
 
+    // Use to create the static instance of the singleton
     static inline void Init()
     {
         Get();
@@ -56,6 +57,44 @@ public:
     void Update();
 
 private:
+    /**
+     *  \class  CmdBranch
+     *  \brief
+     */
+    class CmdBranch
+    {
+    public:
+        CmdBranch(GTags::CmdData& cmd);
+        ~CmdBranch() {};
+
+        /**
+         *  \struct  Leaf
+         *  \brief
+         */
+        struct Leaf {
+            TCHAR* name;
+            TCHAR* line;
+            TCHAR* preview;
+            TCHAR* file;
+        };
+
+        bool operator==(const CmdBranch& branch) const
+        {
+            return (_cmdName == branch._cmdName &&
+                    _basePath == branch._basePath);
+        }
+
+        const int _cmdID;
+        CPath _basePath;
+        CText _cmdName;
+        std::vector<Leaf> _leaves;
+
+    private:
+        void parseCmdOutput();
+
+        CText _cmdOutput;
+    };
+
     static const TCHAR cClassName[];
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
