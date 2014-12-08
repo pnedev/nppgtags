@@ -24,6 +24,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include "ReadPipe.h"
+#include <process.h>
 #include <stdlib.h>
 
 
@@ -80,8 +81,8 @@ bool ReadPipe::Open()
 
     CloseHandle(_hIn);
     _hIn = NULL;
-    _hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) threadFunc,
-            (LPVOID) this, 0, NULL);
+    _hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
+            (void*)this, 0, NULL);
     if (_hThread)
         return true;
 
@@ -128,11 +129,8 @@ char* ReadPipe::GetOutput()
 /**
  *  \brief
  */
-DWORD ReadPipe::threadFunc(LPVOID data)
+unsigned __stdcall ReadPipe::threadFunc(void* data)
 {
-    if (!data)
-        return -1;
-
     return static_cast<ReadPipe*>(data)->thread();
 }
 
@@ -140,7 +138,7 @@ DWORD ReadPipe::threadFunc(LPVOID data)
 /**
  *  \brief
  */
-DWORD ReadPipe::thread()
+unsigned ReadPipe::thread()
 {
     DWORD bytesRead = 0;
     unsigned totalBytesRead = 0;
@@ -153,7 +151,7 @@ DWORD ReadPipe::thread()
         {
             _output = (char*)realloc(_output, ++allocChunksCnt * cChunkSize);
             if (!_output)
-                return -1;
+                return 1;
             chunkRemainingSize = cChunkSize;
             ZeroMemory(_output + totalBytesRead, cChunkSize);
         }

@@ -138,7 +138,7 @@ private:
     static const TCHAR cFindLiteralCmd[];
     static const TCHAR cVersionCmd[];
 
-    static DWORD threadFunc(LPVOID data);
+    static unsigned __stdcall threadFunc(void* data);
 
     CmdData _data;
     DBhandle _db;
@@ -151,7 +151,7 @@ private:
         _db(db), _complCB(complCB), _hThread(NULL) {}
     ~Cmd();
 
-    DWORD thread();
+    unsigned thread();
     const TCHAR* getCmdLine();
     void composeCmd(TCHAR* cmd, unsigned len);
     bool runProcess();

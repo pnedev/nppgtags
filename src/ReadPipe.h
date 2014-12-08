@@ -47,7 +47,7 @@ public:
 private:
     static const unsigned cChunkSize;
 
-    static DWORD threadFunc(LPVOID data);
+    static unsigned __stdcall threadFunc(void* data);
 
     ReadPipe(const ReadPipe&);
     const ReadPipe& operator=(const ReadPipe&);
@@ -58,5 +58,5 @@ private:
     HANDLE _hThread;
     char* _output;
 
-    DWORD thread();
+    unsigned thread();
 };

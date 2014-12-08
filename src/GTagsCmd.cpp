@@ -27,6 +27,7 @@
 #include "INpp.h"
 #include "ActivityWindow.h"
 #include "ReadPipe.h"
+#include <process.h>
 
 
 namespace GTags
@@ -56,8 +57,8 @@ bool Cmd::Run(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
 {
     Cmd* cmd = new Cmd(id, name, db, tag, complCB, result);
 
-    cmd->_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadFunc,
-            (LPVOID)cmd, 0, NULL);
+    cmd->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
+            (void*)cmd, 0, NULL);
     if (!cmd->_hThread)
     {
         if (db)
@@ -83,13 +84,10 @@ Cmd::~Cmd()
 /**
  *  \brief
  */
-DWORD Cmd::threadFunc(LPVOID data)
+unsigned __stdcall Cmd::threadFunc(void* data)
 {
-    if (!data)
-        return -1;
-
     Cmd* cmd = static_cast<Cmd*>(data);
-    DWORD r = cmd->thread();
+    unsigned r = cmd->thread();
 
     delete cmd;
 
@@ -100,7 +98,7 @@ DWORD Cmd::threadFunc(LPVOID data)
 /**
  *  \brief
  */
-DWORD Cmd::thread()
+unsigned Cmd::thread()
 {
     if (!runProcess())
     {
@@ -111,7 +109,7 @@ DWORD Cmd::thread()
             else
                 DBManager::Get().PutDB(_db);
         }
-        return -1;
+        return 1;
     }
 
     if (_db)
