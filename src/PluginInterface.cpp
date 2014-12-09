@@ -67,6 +67,44 @@ void autoUpdate()
         INpp::Get().SetPluginMenuFlag(NppCmdID, GTags::AutoUpdate);
 }
 
+
+/**
+ *  \brief
+ */
+bool checkForGTagsBinaries()
+{
+    GetModuleFileName((HMODULE)hModule,
+            GTags::DllPath.C_str(), GTags::DllPath.Size());
+
+    CPath gtags(GTags::DllPath);
+    gtags.StripFilename();
+    gtags += GTags::cBinsDir;
+    gtags += _T("\\global.exe");
+
+    bool gtagsBinsFound = gtags.FileExists();
+    if (gtagsBinsFound)
+    {
+        gtags.StripFilename();
+        gtags += _T("gtags.exe");
+        gtagsBinsFound = gtags.FileExists();
+    }
+
+    if (!gtagsBinsFound)
+    {
+        gtags.StripFilename();
+        TCHAR msg[512];
+        _sntprintf_s(msg, 512, _TRUNCATE,
+                _T("GTags binaries not found in\n\"%s\"\n")
+                _T("%s plugin will not be loaded!"),
+                gtags.C_str(), GTags::cBinsDir);
+        MessageBox(NULL, msg, GTags::cPluginName,
+                MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    return true;
+}
+
 }
 
 
@@ -77,43 +115,20 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
     {
         case DLL_PROCESS_ATTACH:
         {
-            GetModuleFileName((HMODULE)hModule,
-                    GTags::DllPath.C_str(), GTags::DllPath.Size());
-
-            CPath gtags(GTags::DllPath);
-            gtags.StripFilename();
-            gtags += GTags::cBinsDir;
-            gtags += _T("\\global.exe");
-
-            bool gtagsBinsFound = gtags.FileExists();
-            if (gtagsBinsFound)
-            {
-                gtags.StripFilename();
-                gtags += _T("gtags.exe");
-                gtagsBinsFound = gtags.FileExists();
-            }
-
-            if (!gtagsBinsFound)
-            {
-                gtags.StripFilename();
-                TCHAR msg[512];
-                _sntprintf_s(msg, 512, _TRUNCATE,
-                        _T("GTags binaries not found in\n\"%s\"\n")
-                        _T("%s plugin will not be loaded!"),
-                        gtags.C_str(), GTags::cBinsDir);
-                MessageBox(NULL, msg, GTags::cPluginName,
-                        MB_OK | MB_ICONERROR);
+            if (!checkForGTagsBinaries())
                 return FALSE;
-            }
 
             GTags::HInst = hModule;
             break;
         }
+
         case DLL_PROCESS_DETACH:
             GTags::HInst = NULL;
             break;
+
         case DLL_THREAD_ATTACH:
             break;
+
         case DLL_THREAD_DETACH:
             break;
     }
