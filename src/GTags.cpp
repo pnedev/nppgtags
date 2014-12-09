@@ -34,7 +34,7 @@
 #include "IOWindow.h"
 #include "AutoCompleteUI.h"
 #include "TreeViewUI.h"
-#include "ScintillaViewUI.h"
+// #include "ScintillaViewUI.h"
 #include <list>
 
 
@@ -339,8 +339,8 @@ void fillTreeView(CmdData& cmd)
         return;
     }
 
-    // TreeViewUI::Get().Show(cmd);
-    ScintillaViewUI::Get().Show(cmd);
+    TreeViewUI::Get().Show(cmd);
+    // ScintillaViewUI::Get().Show(cmd);
 }
 
 
