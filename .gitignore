@@ -5,6 +5,7 @@ GPATH
 *.sdf
 *.bat
 *.sh
+*.sln
 /Release
 /out
 /build

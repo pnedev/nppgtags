@@ -37,8 +37,6 @@
     <ClInclude Include="src\AutoCompleteUI.h" />
     <ClCompile Include="src\TreeViewUI.cpp" />
     <ClInclude Include="src\TreeViewUI.h" />
-    <?ClCompile Include="src\ScintillaViewUI.cpp" /?>
-    <?ClInclude Include="src\ScintillaViewUI.h" /?>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\nppgtags.rc" />
