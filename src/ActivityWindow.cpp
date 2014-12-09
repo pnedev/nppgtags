@@ -71,7 +71,11 @@ int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
             return -1;
         }
 
-        InitCommonControls();
+        INITCOMMONCONTROLSEX icex   = {0};
+        icex.dwSize                 = sizeof(INITCOMMONCONTROLSEX);
+        icex.dwICC                  = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
+
+        InitCommonControlsEx(&icex);
     }
 
     ActivityWindow aw(hOwnerWnd, proc_hndl, showDelay_ms, (int)RefCount);
@@ -94,7 +98,7 @@ int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
 /**
  *  \brief
  */
-RECT ActivityWindow::adjustSizeAndPos(DWORD style, int width, int height)
+void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
 {
     RECT win, maxWin;
     bool noAdjust = false;
@@ -113,7 +117,7 @@ RECT ActivityWindow::adjustSizeAndPos(DWORD style, int width, int height)
 
     if (!noAdjust)
     {
-        AdjustWindowRect(&win, style, FALSE);
+        AdjustWindowRect(&win, GetWindowLongPtr(hwnd, GWL_STYLE), FALSE);
 
         width = win.right - win.left;
         height = win.bottom - win.top;
@@ -133,7 +137,8 @@ RECT ActivityWindow::adjustSizeAndPos(DWORD style, int width, int height)
         win.bottom = win.top + height;
     }
 
-    return win;
+    MoveWindow(hwnd, win.left, win.top,
+            win.right - win.left, win.bottom - win.top, TRUE);
 }
 
 
@@ -155,22 +160,18 @@ ActivityWindow::~ActivityWindow()
 HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
         const TCHAR* text, int showDelay_ms)
 {
-    RECT win;
-    GetWindowRect(_hOwnerWnd, &win);
-    DWORD style = WS_POPUP | WS_BORDER;
     HWND hMainWin = CreateWindow(cClassName, NULL,
-            style, win.left, win.top,
-            win.right - win.left, win.bottom - win.top,
-            _hOwnerWnd, NULL, hInst, (LPVOID) this);
+            WS_POPUP | WS_BORDER, 1, 1, 10, 10,
+            _hOwnerWnd, NULL, hInst, (LPVOID)this);
 
-    GetClientRect(hMainWin, &win);
     HWND hWndEdit = CreateWindowEx(0, _T("EDIT"), _T("Text"),
             WS_CHILD | WS_VISIBLE | ES_LEFT | ES_READONLY,
-            0, 0, win.right - win.left, win.bottom - win.top,
+            0, 0, 5, 5,
             hMainWin, NULL, hInst, NULL);
 
     HDC hdc = GetWindowDC(_hOwnerWnd);
-    _hFont = CreateFont(-MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+    _hFont = CreateFont(
+            -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cFontName);
@@ -184,10 +185,9 @@ HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
     ReleaseDC(hWndEdit, hdc);
 
     int textHeight = tm.tmHeight;
-    win = adjustSizeAndPos(style, width, textHeight + 25);
-    MoveWindow(hMainWin, win.left, win.top,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    adjustSizeAndPos(hMainWin, width, textHeight + 25);
 
+    RECT win;
     GetClientRect(hMainWin, &win);
     width = win.right - win.left;
     int height = win.bottom - win.top;
@@ -200,7 +200,7 @@ HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
             hMainWin, NULL, hInst, NULL);
-    SendMessage(hPBar, PBM_SETMARQUEE, (WPARAM) TRUE, (LPARAM) 50);
+    SendMessage(hPBar, PBM_SETMARQUEE, (WPARAM)TRUE, (LPARAM)50);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
@@ -251,10 +251,8 @@ void ActivityWindow::onTimerRefresh(HWND hwnd)
             _initRefCount = refCount;
             RECT win;
             GetClientRect(hwnd, &win);
-            win = adjustSizeAndPos(GetWindowLongPtr(hwnd, GWL_STYLE),
+            adjustSizeAndPos(hwnd,
                     win.right - win.left, win.bottom - win.top);
-            MoveWindow(hwnd, win.left, win.top,
-                    win.right - win.left, win.bottom - win.top, TRUE);
         }
     }
 }

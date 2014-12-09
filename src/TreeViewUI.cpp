@@ -157,6 +157,7 @@ TreeViewUI::TreeViewUI()
     INITCOMMONCONTROLSEX icex   = {0};
     icex.dwSize                 = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC                  = ICC_TREEVIEW_CLASSES;
+
     InitCommonControlsEx(&icex);
 
     createWindow();

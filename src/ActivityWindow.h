@@ -60,7 +60,7 @@ private:
     ActivityWindow(const ActivityWindow &);
     ~ActivityWindow();
 
-    RECT adjustSizeAndPos(DWORD style, int width, int height);
+    void adjustSizeAndPos(HWND hwnd, int width, int height);
     HWND composeWindow(HINSTANCE hInst, int width, const TCHAR* text,
             int showDelay_ms);
     void onTimerRefresh(HWND hwnd);

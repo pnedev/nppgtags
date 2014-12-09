@@ -73,9 +73,6 @@ void autoUpdate()
  */
 bool checkForGTagsBinaries()
 {
-    GetModuleFileName((HMODULE)hModule,
-            GTags::DllPath.C_str(), GTags::DllPath.Size());
-
     CPath gtags(GTags::DllPath);
     gtags.StripFilename();
     gtags += GTags::cBinsDir;
@@ -115,6 +112,9 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
     {
         case DLL_PROCESS_ATTACH:
         {
+            GetModuleFileName((HMODULE)hModule,
+                    GTags::DllPath.C_str(), GTags::DllPath.Size());
+
             if (!checkForGTagsBinaries())
                 return FALSE;
 

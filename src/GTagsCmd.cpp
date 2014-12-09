@@ -205,9 +205,9 @@ bool Cmd::runProcess()
         _sntprintf_s(header, 512, _TRUNCATE,
                 _T("%s - \"%s\""), _data.GetName(), _data.GetTag());
 
-    int activityShowDelay = 300;
+    int activityShowDelay_ms = 300;
     if (_data._id == CREATE_DATABASE || _data._id == UPDATE_SINGLE)
-        activityShowDelay = 0;
+        activityShowDelay_ms = 0;
 
     ReadPipe errorPipe;
     ReadPipe dataPipe;
@@ -229,7 +229,7 @@ bool Cmd::runProcess()
     bool ret = errorPipe.Open() && dataPipe.Open();
     if (ret)
         ret = !ActivityWindow::Show(HInst, INpp::Get().GetSciHandle(), 600,
-                header, pi.hProcess, activityShowDelay);
+                header, pi.hProcess, activityShowDelay_ms);
     if (ret)
     {
         CloseHandle(pi.hProcess);
