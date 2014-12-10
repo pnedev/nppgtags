@@ -1,0 +1,7 @@
+What's new in v1.1.1
+=======================
+
+- Replace all deprecated Win32 APIs with their recommended counterparts
+- Fix possible memory leaks connected to wrong Win32 API usage
+- Optimized code
+- GTags binaries updated to v6.3.3
