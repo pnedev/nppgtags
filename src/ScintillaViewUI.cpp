@@ -211,7 +211,8 @@ void ScintillaViewUI::createWindow()
     MoveWindow(_hSci, 0, 0,
             win.right - win.left, win.bottom - win.top, TRUE);
 
-    SendMessage(_hSci, SCI_STYLERESETDEFAULT, 0, 0);
+    // SendMessage(_hSci, SCI_STYLERESETDEFAULT, 0, 0);
+    // SendMessage(_hSci, SCI_CLEARDOCUMENTSTYLE, 0, 0);
     SendMessage(_hSci, SCI_SETCODEPAGE, SC_CP_UTF8, 0);
     SendMessage(_hSci, SCI_USEPOPUP, false, 0);
     SendMessage(_hSci, SCI_SETUNDOCOLLECTION, false, 0);
@@ -219,9 +220,8 @@ void ScintillaViewUI::createWindow()
     SendMessage(_hSci, SCI_SETCARETLINEBACK, 0xD5D8C3, 0);
     SendMessage(_hSci, SCI_SETCARETWIDTH, 0, 0);
     SendMessage(_hSci, SCI_SETREADONLY, true, 0);
-
-#define SCLEX_SEARCHRESULT 150
-    SendMessage(_hSci, SCI_SETLEXER, SCLEX_SEARCHRESULT, 0);
+    SendMessage(_hSci, SCI_SETLEXERLANGUAGE, 0,
+            reinterpret_cast<LPARAM>("searchResult"));
 
     ShowWindow(_hSci, SW_SHOW);
 }
@@ -240,10 +240,8 @@ void ScintillaViewUI::add(CmdData& cmd)
     SendMessage(_hSci, SCI_SETSEL, 0, 0);
     SendMessage(_hSci, SCI_SETREADONLY, false, 0);
 
-    SendMessage(_hSci, SCI_STYLESETBOLD, STYLE_DEFAULT, true);
     wcstombs_s(&cnt, str, 512, branch._cmdName.C_str(), _TRUNCATE);
     SendMessage(_hSci, SCI_ADDTEXT, (WPARAM)strlen(str), (LPARAM)str);
-    SendMessage(_hSci, SCI_STYLESETBOLD, STYLE_DEFAULT, false);
 
     unsigned leaves_cnt = branch._leaves.size();
     for (unsigned i = 0; i < leaves_cnt; i++)
@@ -273,9 +271,11 @@ void ScintillaViewUI::add(CmdData& cmd)
         }
     }
 
-    SendMessage(_hSci, SCI_COLOURISE, 0, -1);
     SendMessage(_hSci, SCI_SETREADONLY, true, 0);
     SendMessage(_hSci, SCI_SETSEL, 0, 0);
+    SendMessage(_hSci, SCI_COLOURISE, 0, -1);
+	SendMessage(_hSci, SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
+            reinterpret_cast<LPARAM>("1"));
 }
 
 
@@ -285,6 +285,10 @@ void ScintillaViewUI::add(CmdData& cmd)
 void ScintillaViewUI::remove()
 {
     AUTOLOCK(_lock);
+
+    SendMessage(_hSci, SCI_SETREADONLY, false, 0);
+    SendMessage(_hSci, SCI_CLEARALL, 0, 0);
+    SendMessage(_hSci, SCI_SETREADONLY, true, 0);
 
     INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
@@ -299,6 +303,10 @@ void ScintillaViewUI::remove()
 void ScintillaViewUI::removeAll()
 {
     AUTOLOCK(_lock);
+
+    SendMessage(_hSci, SCI_SETREADONLY, false, 0);
+    SendMessage(_hSci, SCI_CLEARALL, 0, 0);
+    SendMessage(_hSci, SCI_SETREADONLY, true, 0);
 
     INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
@@ -346,6 +354,12 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                 case SCN_DOUBLECLICK:
                     return 0;
             }
+            break;
+
+        case WM_CONTEXTMENU:
+            ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
+                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+            ui->remove();
             break;
 
         case WM_SIZE:
