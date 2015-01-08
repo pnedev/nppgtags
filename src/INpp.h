@@ -156,6 +156,14 @@ public:
                 0, (LPARAM)filePath.C_str());
     }
 
+    inline void GetFontNameA(char* fontName, int len) const
+    {
+        fontName[0] = 0;
+        if (len >= 32)
+            SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)STYLE_DEFAULT,
+                    (LPARAM)fontName);
+    }
+
     inline void GetFontName(TCHAR* fontName, int len) const
     {
         char fontNameA[32];

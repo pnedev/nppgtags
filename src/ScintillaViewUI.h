@@ -95,6 +95,9 @@ private:
         CText _cmdOutput;
     };
 
+    static const COLORREF cBlack = RGB(0,0,0);
+    static const COLORREF cWhite = RGB(255,255,255);
+
     static const TCHAR cClassName[];
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
@@ -104,13 +107,26 @@ private:
     ScintillaViewUI(const ScintillaViewUI&);
     ~ScintillaViewUI();
 
+    LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
+    {
+        return SendMessage(_hSci, Msg, wParam, lParam);
+    }
+
+    void setStyle(int style, COLORREF fore = cBlack, COLORREF back = cWhite,
+            bool bold = false, int size = 0, const char *font = NULL);
+
     void createWindow();
     void add(GTags::CmdData& cmd);
     void remove();
     void removeAll();
+    void onStyleNeeded(SCNotification* notify);
+    void onMarginClick(SCNotification* notify);
     void onResize(int width, int height);
 
     Mutex _lock;
     HWND _hWnd;
     HWND _hSci;
+
+    // Must be made per branch!
+    char _str[GTags::cMaxTagLen];
 };
