@@ -35,10 +35,17 @@
 #include "DocLocation.h"
 
 
-#define SCE_GTAGS_DEFAULT        150
 #define SCE_GTAGS_SEARCH_HEADER  151
 #define SCE_GTAGS_FILE_HEADER    152
 #define SCE_GTAGS_WORD2SEARCH    153
+
+
+enum
+{
+    SEARCH_HEADER_LVL = SC_FOLDLEVELBASE + 1,
+    FILE_HEADER_LVL,
+    RESULT_LVL
+};
 
 
 const TCHAR ScintillaViewUI::cClassName[] = _T("ScintillaViewUI");
@@ -242,39 +249,37 @@ void ScintillaViewUI::createWindow()
 
     char font[32];
     npp.GetFontNameA(font, sizeof(font));
+    int size = npp.GetFontSize();
 
     // Implement lexer in the container
     sendSci(SCI_SETLEXER, 0);
 
     sendSci(SCI_STYLERESETDEFAULT);
-    setStyle(STYLE_DEFAULT, cBlack, cWhite,
-            false, GTags::UIFontSize, font);
+    setStyle(STYLE_DEFAULT, cBlack, cWhite, false, size, font);
     sendSci(SCI_STYLECLEARALL);
-
-    setStyle(SCE_GTAGS_DEFAULT, cBlack, cWhite,
-            false, GTags::UIFontSize, font);
 
     setStyle(SCE_GTAGS_SEARCH_HEADER, cBlack, cWhite, true);
     setStyle(SCE_GTAGS_FILE_HEADER, RGB(10,100,100), cWhite, true);
-    setStyle(SCE_GTAGS_WORD2SEARCH, RGB(200,0,30));
+    setStyle(SCE_GTAGS_WORD2SEARCH, RGB(200,0,30), cWhite, true);
 
-    // sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
-            // reinterpret_cast<LPARAM>("1"));
+    sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
+            reinterpret_cast<LPARAM>("1"));
 
-    // sendSci(SCI_SETMARGINTYPEN, 1, SC_MARGIN_SYMBOL);
-    // sendSci(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS);
-    // sendSci(SCI_SETMARGINWIDTHN, 1, 20);
+    sendSci(SCI_SETMARGINTYPEN, 1, SC_MARGIN_SYMBOL);
+    sendSci(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS);
+    sendSci(SCI_SETMARGINWIDTHN, 1, 20);
 
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_PLUS);
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS);
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY);
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY);
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY);
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY);
-    // sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID,
+            SC_MARK_BOXMINUSCONNECTED);
 
-    // sendSci(SCI_SETFOLDFLAGS, 16);
-    // sendSci(SCI_SETMARGINSENSITIVEN, 1, 1);
+    sendSci(SCI_SETFOLDFLAGS, SC_FOLDFLAG_LINEAFTER_CONTRACTED);
+    sendSci(SCI_SETMARGINSENSITIVEN, 1, 1);
 
     sendSci(SCI_SETREADONLY, true);
 
@@ -326,7 +331,8 @@ void ScintillaViewUI::add(CmdData& cmd)
                     break;
                 }
 
-                sendSci(SCI_ADDTEXT, 3, reinterpret_cast<LPARAM>("\n\t\t"));
+                sendSci(SCI_ADDTEXT, 3,
+                        reinterpret_cast<LPARAM>("\n\t\t"));
                 wcstombs_s(&cnt, str, 512, next.preview, _TRUNCATE);
                 sendSci(SCI_ADDTEXT, strlen(str),
                         reinterpret_cast<LPARAM>(str));
@@ -334,8 +340,6 @@ void ScintillaViewUI::add(CmdData& cmd)
         }
     }
 
-    sendSci(SCI_CLEARDOCUMENTSTYLE);
-    sendSci(SCI_COLOURISE, 0, -1);
     sendSci(SCI_SETREADONLY, true);
     sendSci(SCI_SETSEL);
 }
@@ -386,8 +390,6 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             sendSci(SCI_GETENDSTYLED));
     const int endPos = notify->position;
 
-    sendSci(SCI_SETREADONLY, false);
-
     for (int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum);
         endPos > startPos;
         startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
@@ -397,8 +399,6 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
         {
             char firstChar = sendSci(SCI_GETCHARAT, startPos);
             char secondChar = sendSci(SCI_GETCHARAT, startPos + 1);
-
-            sendSci(SCI_STARTSTYLING, startPos);
 
             if (firstChar == '\t')
             {
@@ -412,25 +412,30 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                     if (sendSci(SCI_FINDTEXT, SCFIND_MATCHCASE,
                         reinterpret_cast<LPARAM>(&ttf)) != -1)
                     {
-                        sendSci(SCI_STARTSTYLING, ttf.chrgText.cpMin);
+                        sendSci(SCI_STARTSTYLING, ttf.chrgText.cpMin, 0xFF);
                         sendSci(SCI_SETSTYLING,
                                 ttf.chrgText.cpMax - ttf.chrgText.cpMin,
                                 SCE_GTAGS_WORD2SEARCH);
+                        sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
                     }
                 }
                 else
                 {
+                    sendSci(SCI_STARTSTYLING, startPos, 0xFF);
                     sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE_HEADER);
+                    sendSci(SCI_SETFOLDLEVEL, lineNum,
+                            FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
                 }
             }
             else
             {
+                sendSci(SCI_STARTSTYLING, startPos, 0xFF);
                 sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_SEARCH_HEADER);
+                sendSci(SCI_SETFOLDLEVEL, lineNum,
+                        SEARCH_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
             }
         }
     }
-
-    sendSci(SCI_SETREADONLY, true);
 }
 
 
@@ -439,20 +444,12 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
  */
 void ScintillaViewUI::onMarginClick(SCNotification* notify)
 {
-    // const int modifiers = notify->modifiers;
-    const int position = notify->position;
-    const int margin = notify->margin;
-    const int lineNum = sendSci(SCI_LINEFROMPOSITION, position, 0);
+    const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
 
-    switch (margin)
-    {
-        case 1:
-        {
-            sendSci(SCI_TOGGLEFOLD, lineNum, 0);
-        }
-        break;
-    }
+    if (notify->margin == 1)
+        sendSci(SCI_TOGGLEFOLD, lineNum);
 }
+
 
 /**
  *  \brief
@@ -494,9 +491,9 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                     ui->onStyleNeeded((SCNotification*)lparam);
                     return 0;
 
-                // case SCN_MARGINCLICK:
-                    // ui->onMarginClick((SCNotification*)lparam);
-                    // return 0;
+                case SCN_MARGINCLICK:
+                    ui->onMarginClick((SCNotification*)lparam);
+                    return 0;
 
                 case SCN_DOUBLECLICK:
                     return 0;
