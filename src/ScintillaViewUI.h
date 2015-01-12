@@ -29,6 +29,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
+#include "Scintilla.h"
 #include "Common.h"
 #include "AutoLock.h"
 #include "GTagsCmd.h"
@@ -87,6 +88,7 @@ private:
         const int _cmdID;
         CPath _basePath;
         CText _cmdName;
+        char _cmdTag[GTags::cMaxTagLen];
         std::vector<Leaf> _leaves;
 
     private:
@@ -109,7 +111,8 @@ private:
 
     LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
-        return SendMessage(_hSci, Msg, wParam, lParam);
+        return _sciFunc(_sciPtr, static_cast<unsigned int>(Msg),
+                static_cast<uptr_t>(wParam), static_cast<sptr_t>(lParam));
     }
 
     void setStyle(int style, COLORREF fore = cBlack, COLORREF back = cWhite,
@@ -119,14 +122,18 @@ private:
     void add(GTags::CmdData& cmd);
     void remove();
     void removeAll();
+    bool openItem(int lineNum);
     void onStyleNeeded(SCNotification* notify);
+    void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onResize(int width, int height);
 
     Mutex _lock;
     HWND _hWnd;
     HWND _hSci;
+	SciFnDirect _sciFunc;
+	sptr_t _sciPtr;
 
-    // Must be made per branch!
-    char _str[GTags::cMaxTagLen];
+    // Only one branch possible for now - fix this!
+    CmdBranch* _branch;
 };

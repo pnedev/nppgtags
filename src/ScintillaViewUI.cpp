@@ -87,9 +87,12 @@ ScintillaViewUI::CmdBranch::CmdBranch(CmdData& cmd) :
     _cmdID(cmd.GetID()), _basePath(cmd.GetDBPath()),
     _cmdName(cmd.GetName()), _cmdOutput(cmd.GetResult())
 {
+    size_t cnt;
+    wcstombs_s(&cnt, _cmdTag, sizeof(_cmdTag), cmd.GetTag(), _TRUNCATE);
+
     _cmdName.ToUpper();
     _cmdName += _T(" \"");
-    _cmdName += cmd.GetTag();
+    _cmdName += _cmdTag;
     _cmdName += _T("\"");
     parseCmdOutput();
 }
@@ -155,7 +158,7 @@ void ScintillaViewUI::CmdBranch::parseCmdOutput()
 /**
  *  \brief
  */
-ScintillaViewUI::ScintillaViewUI()
+ScintillaViewUI::ScintillaViewUI() : _branch(NULL)
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -232,6 +235,8 @@ void ScintillaViewUI::createWindow()
             hOwnerWnd, NULL, HInst, (LPVOID)this);
 
     _hSci = npp.CreateSciHandle(_hWnd);
+	_sciFunc = (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
+	_sciPtr = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
 
     AdjustWindowRect(&win, style, FALSE);
     MoveWindow(_hWnd, win.left, win.top,
@@ -241,6 +246,7 @@ void ScintillaViewUI::createWindow()
             win.right - win.left, win.bottom - win.top, TRUE);
 
     sendSci(SCI_SETCODEPAGE, SC_CP_UTF8);
+    sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
     sendSci(SCI_USEPOPUP, false);
     sendSci(SCI_SETUNDOCOLLECTION, false);
     sendSci(SCI_SETCARETLINEBACK, RGB(212,255,127));
@@ -269,6 +275,9 @@ void ScintillaViewUI::createWindow()
     sendSci(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS);
     sendSci(SCI_SETMARGINWIDTHN, 1, 20);
 
+    sendSci(SCI_SETFOLDMARGINCOLOUR, 1, cBlack);
+    sendSci(SCI_SETFOLDMARGINHICOLOUR, 1, cBlack);
+
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
@@ -292,12 +301,12 @@ void ScintillaViewUI::createWindow()
  */
 void ScintillaViewUI::add(CmdData& cmd)
 {
-    CmdBranch branch(cmd);
+    remove();
+
+    _branch = new CmdBranch(cmd);
 
     char str[512];
     size_t cnt;
-
-    wcstombs_s(&cnt, _str, GTags::cMaxTagLen, cmd.GetTag(), _TRUNCATE);
 
     sendSci(SCI_SETSEL);
     sendSci(SCI_SETREADONLY, false);
@@ -308,31 +317,36 @@ void ScintillaViewUI::add(CmdData& cmd)
         sendSci(SCI_SETSEL);
     }
 
-    wcstombs_s(&cnt, str, 512, branch._cmdName.C_str(), _TRUNCATE);
+    wcstombs_s(&cnt, str, 512, _branch->_cmdName.C_str(), _TRUNCATE);
     sendSci(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
 
-    unsigned leaves_cnt = branch._leaves.size();
+    unsigned leaves_cnt = _branch->_leaves.size();
     for (unsigned i = 0; i < leaves_cnt; i++)
     {
-        CmdBranch::Leaf& leaf = branch._leaves[i];
+        CmdBranch::Leaf& leaf = _branch->_leaves[i];
 
         sendSci(SCI_ADDTEXT, 2, reinterpret_cast<LPARAM>("\n\t"));
         wcstombs_s(&cnt, str, 512, leaf.file, _TRUNCATE);
         sendSci(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
 
-        if (branch._cmdID != FIND_FILE)
+        if (_branch->_cmdID != FIND_FILE)
         {
             for (; i < leaves_cnt; i++)
             {
-                CmdBranch::Leaf& next = branch._leaves[i];
+                CmdBranch::Leaf& next = _branch->_leaves[i];
                 if (_tcscmp(next.file, leaf.file))
                 {
                     i--;
                     break;
                 }
 
-                sendSci(SCI_ADDTEXT, 3,
-                        reinterpret_cast<LPARAM>("\n\t\t"));
+                sendSci(SCI_ADDTEXT, 8,
+                        reinterpret_cast<LPARAM>("\n\t\tline "));
+                wcstombs_s(&cnt, str, 512, next.line, _TRUNCATE);
+                sendSci(SCI_ADDTEXT, strlen(str),
+                        reinterpret_cast<LPARAM>(str));
+                sendSci(SCI_ADDTEXT, 2,
+                        reinterpret_cast<LPARAM>(":\t"));
                 wcstombs_s(&cnt, str, 512, next.preview, _TRUNCATE);
                 sendSci(SCI_ADDTEXT, strlen(str),
                         reinterpret_cast<LPARAM>(str));
@@ -350,11 +364,15 @@ void ScintillaViewUI::add(CmdData& cmd)
  */
 void ScintillaViewUI::remove()
 {
-    AUTOLOCK(_lock);
-
     sendSci(SCI_SETREADONLY, false);
     sendSci(SCI_CLEARALL);
     sendSci(SCI_SETREADONLY, true);
+
+    if (_branch)
+    {
+        delete _branch;
+        _branch = NULL;
+    }
 
     INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
@@ -374,10 +392,88 @@ void ScintillaViewUI::removeAll()
     sendSci(SCI_CLEARALL);
     sendSci(SCI_SETREADONLY, true);
 
+    if (_branch)
+    {
+        delete _branch;
+        _branch = NULL;
+    }
+
     INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
     npp.HideDockingWin(_hWnd);
     SetFocus(npp.ReadSciHandle());
+}
+
+
+/**
+ *  \brief
+ */
+bool ScintillaViewUI::openItem(int lineNum)
+{
+    int lineLen = sendSci(SCI_LINELENGTH, lineNum);
+    char* lineTxt = new char[lineLen];
+
+    sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt));
+
+    long line = -1;
+    int i;
+
+    if (lineTxt[1] == '\t')
+    {
+        for (i = 7; lineTxt[i] != ':'; i++);
+        lineTxt[i] = 0;
+        line = atoi(&lineTxt[7]) - 1;
+        delete [] lineTxt;
+
+        lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+        if (lineNum == -1)
+            return false;
+
+        lineLen = sendSci(SCI_LINELENGTH, lineNum);
+        lineTxt = new char[lineLen];
+        sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt));
+    }
+
+    for (i = 1; lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
+    lineTxt[i] = 0;
+
+    CPath file(_branch->_basePath);
+    CText str(&lineTxt[1]);
+	file += str.C_str();
+    delete [] lineTxt;
+
+    INpp& npp = INpp::Get();
+    if (!file.FileExists())
+    {
+        MessageBox(npp.GetHandle(),
+                _T("File not found, update database and search again"),
+                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        return true;
+    }
+
+    DocLocation::Get().Push();
+    npp.OpenFile(file);
+    SetFocus(npp.ReadSciHandle());
+
+    // GTags command was FIND_FILE
+    if (line == -1)
+    {
+        npp.ClearSelection();
+        return true;
+    }
+
+    bool wholeWord =
+            (_branch->_cmdID != GREP && _branch->_cmdID != FIND_LITERAL);
+
+    if (!npp.SearchText(_branch->_cmdTag, true, wholeWord,
+            npp.PositionFromLine(line), npp.LineEndPosition(line)))
+    {
+        MessageBox(npp.GetHandle(),
+                _T("Look-up mismatch, update database and search again"),
+                cPluginName, MB_OK | MB_ICONINFORMATION);
+    }
+
+    return true;
 }
 
 
@@ -405,7 +501,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 if (secondChar == '\t')
                 {
                     struct TextToFind ttf = {0};
-                    ttf.lpstrText = const_cast<char*>(_str);
+                    ttf.lpstrText = const_cast<char*>(_branch->_cmdTag);
                     ttf.chrg.cpMin = startPos + 2;
                     ttf.chrg.cpMax = startPos + lineLen;
 
@@ -424,7 +520,9 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                     sendSci(SCI_STARTSTYLING, startPos, 0xFF);
                     sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE_HEADER);
                     sendSci(SCI_SETFOLDLEVEL, lineNum,
-                            FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+                            FILE_HEADER_LVL |
+                            (_branch->_cmdID == FIND_FILE ?
+                            0 : SC_FOLDLEVELHEADERFLAG));
                 }
             }
             else
@@ -442,8 +540,26 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 /**
  *  \brief
  */
+void ScintillaViewUI::onDoubleClick(SCNotification* notify)
+{
+    AUTOLOCK(_lock);
+
+    const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+
+    if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+        sendSci(SCI_TOGGLEFOLD, lineNum);
+    else
+        openItem(lineNum);
+}
+
+
+/**
+ *  \brief
+ */
 void ScintillaViewUI::onMarginClick(SCNotification* notify)
 {
+    AUTOLOCK(_lock);
+
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
 
     if (notify->margin == 1)
@@ -491,11 +607,12 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                     ui->onStyleNeeded((SCNotification*)lparam);
                     return 0;
 
-                case SCN_MARGINCLICK:
-                    ui->onMarginClick((SCNotification*)lparam);
+                case SCN_DOUBLECLICK:
+                    ui->onDoubleClick((SCNotification*)lparam);
                     return 0;
 
-                case SCN_DOUBLECLICK:
+                case SCN_MARGINCLICK:
+                    ui->onMarginClick((SCNotification*)lparam);
                     return 0;
             }
             break;
@@ -503,7 +620,7 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
         case WM_CONTEXTMENU:
             ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            ui->remove();
+            ui->removeAll();
             break;
 
         case WM_SIZE:
