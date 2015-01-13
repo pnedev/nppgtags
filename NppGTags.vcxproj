@@ -7,6 +7,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\TreeViewUI.cpp" />
     <ClInclude Include="src\AutoLock.h" />
     <ClInclude Include="src\Docking.h" />
     <ClInclude Include="src\DocLocation.h" />
@@ -37,6 +38,7 @@
     <ClInclude Include="src\AutoCompleteUI.h" />
     <ClCompile Include="src\ScintillaViewUI.cpp" />
     <ClInclude Include="src\ScintillaViewUI.h" />
+    <ClInclude Include="src\TreeViewUI.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\nppgtags.rc" />
@@ -67,7 +69,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPGTAGS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEVELOPMENT;WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPGTAGS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>

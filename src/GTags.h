@@ -59,6 +59,7 @@ extern CPath DllPath;
 extern TCHAR UIFontName[32];
 extern unsigned UIFontSize;
 extern bool AutoUpdate;
+extern bool UseTreeView;
 
 
 void AutoComplete();

@@ -89,7 +89,7 @@ void ScintillaViewUI::ResetStyle()
 
     char font[32];
     npp.GetFontNameA(font, sizeof(font));
-    int size = npp.GetFontSize();
+    int size = npp.GetFontSize() - 1;
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, cBlack, cWhite, false, size, font);

@@ -22,6 +22,7 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "ScintillaViewUI.h"
+#include "TreeViewUI.h"
 
 
 namespace
@@ -64,6 +65,20 @@ void autoUpdate()
 
     if (NppCmdID != -1)
         INpp::Get().SetPluginMenuFlag(NppCmdID, GTags::AutoUpdate);
+}
+
+
+/**
+ *  \brief
+ */
+bool checkForIniFile()
+{
+    CPath gtagsConfFile;
+
+    INpp::Get().GetPluginsConfDir(gtagsConfFile);
+    gtagsConfFile += _T("\\NppGTags.ini");
+
+    return gtagsConfFile.FileExists();
 }
 
 
@@ -141,9 +156,14 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     INpp& npp = INpp::Get();
     npp.SetData(nppData);
     npp.GetFontName(GTags::UIFontName, 32);
-    GTags::UIFontSize = (unsigned)npp.GetFontSize();
+    GTags::UIFontSize = (unsigned)npp.GetFontSize() - 1;
 
-    ScintillaViewUI::Init();
+    GTags::UseTreeView = checkForIniFile();
+
+    if (GTags::UseTreeView)
+        TreeViewUI::Init();
+    else
+        ScintillaViewUI::Init();
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
 
@@ -194,7 +214,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     {
         INpp& npp = INpp::Get();
         npp.GetFontName(GTags::UIFontName, 32);
-        GTags::UIFontSize = (unsigned)npp.GetFontSize();
+        GTags::UIFontSize = (unsigned)npp.GetFontSize() - 1;
         ScintillaViewUI::Get().ResetStyle();
     }
 }
