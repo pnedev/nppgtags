@@ -21,7 +21,6 @@
 #include "menuCmdID.h"
 #include "INpp.h"
 #include "GTags.h"
-// #include "TreeViewUI.h"
 #include "ScintillaViewUI.h"
 
 
@@ -142,9 +141,8 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     INpp& npp = INpp::Get();
     npp.SetData(nppData);
     npp.GetFontName(GTags::UIFontName, 32);
-    GTags::UIFontSize = (unsigned)npp.GetFontSize() - 1;
+    GTags::UIFontSize = (unsigned)npp.GetFontSize();
 
-    // TreeViewUI::Init();
     ScintillaViewUI::Init();
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
@@ -185,7 +183,19 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     if (notifyCode->nmhdr.code == NPPN_FILESAVED)
     {
         if (GTags::AutoUpdate)
-            GTags::UpdateSingleFile();
+        {
+            CPath fileSaved;
+            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom,
+                    fileSaved);
+            GTags::UpdateSingleFile(fileSaved.C_str());
+        }
+    }
+    else if (notifyCode->nmhdr.code == NPPN_WORDSTYLESUPDATED)
+    {
+        INpp& npp = INpp::Get();
+        npp.GetFontName(GTags::UIFontName, 32);
+        GTags::UIFontSize = (unsigned)npp.GetFontSize();
+        ScintillaViewUI::Get().ResetStyle();
     }
 }
 

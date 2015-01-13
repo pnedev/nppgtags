@@ -48,7 +48,6 @@ set (project_sources
     src/IOWindow.cpp
     src/AutoCompleteUI.cpp
     src/ScintillaViewUI.cpp
-    src/TreeViewUI.cpp
 )
 
 find_library (comctl32

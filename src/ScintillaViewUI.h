@@ -56,6 +56,7 @@ public:
 
     void Show(GTags::CmdData& cmd);
     void Update();
+    void ResetStyle();
 
 private:
     /**
@@ -118,14 +119,16 @@ private:
     void setStyle(int style, COLORREF fore = cBlack, COLORREF back = cWhite,
             bool bold = false, int size = 0, const char *font = NULL);
 
-    void createWindow();
+    void composeWindow();
     void add(GTags::CmdData& cmd);
     void remove();
     void removeAll();
     bool openItem(int lineNum);
+    void styleSearchWord(int lineNum, int startOffset = 0);
     void onStyleNeeded(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
+    void onCharAddTry(SCNotification* notify);
     void onResize(int width, int height);
 
     Mutex _lock;

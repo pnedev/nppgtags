@@ -33,7 +33,6 @@
 #include "DocLocation.h"
 #include "IOWindow.h"
 #include "AutoCompleteUI.h"
-// #include "TreeViewUI.h"
 #include "ScintillaViewUI.h"
 #include <list>
 
@@ -79,7 +78,7 @@ bool runSheduledUpdate(const TCHAR* dbPath);
 void autoComplHalf(CmdData& cmd);
 void autoComplReady(CmdData& cmd);
 void findReady(CmdData& cmd);
-void fillTreeView(CmdData& cmd);
+void showResult(CmdData& cmd);
 void showInfo(CmdData& cmd);
 
 
@@ -303,18 +302,18 @@ void findReady(CmdData& cmd)
     {
         DBhandle db = getDatabase();
         if (db)
-            Cmd::Run(FIND_SYMBOL, cFindSymbol, db, cmd.GetTag(), fillTreeView);
+            Cmd::Run(FIND_SYMBOL, cFindSymbol, db, cmd.GetTag(), showResult);
         return;
     }
 
-    fillTreeView(cmd);
+    showResult(cmd);
 }
 
 
 /**
  *  \brief
  */
-void fillTreeView(CmdData& cmd)
+void showResult(CmdData& cmd)
 {
     runSheduledUpdate(cmd.GetDBPath());
 
@@ -339,7 +338,6 @@ void fillTreeView(CmdData& cmd)
         return;
     }
 
-    // TreeViewUI::Get().Show(cmd);
     ScintillaViewUI::Get().Show(cmd);
 }
 
@@ -436,7 +434,7 @@ void FindFile()
         return;
 
     releaseKeys();
-    Cmd::Run(FIND_FILE, cFindFile, db, tag, fillTreeView);
+    Cmd::Run(FIND_FILE, cFindFile, db, tag, showResult);
 }
 
 
@@ -499,7 +497,7 @@ void Grep()
         return;
 
     releaseKeys();
-    Cmd::Run(GREP, cGrep, db, tag, fillTreeView);
+    Cmd::Run(GREP, cGrep, db, tag, showResult);
 }
 
 
@@ -520,7 +518,7 @@ void FindLiteral()
         return;
 
     releaseKeys();
-    Cmd::Run(FIND_LITERAL, cFindLiteral, db, tag, fillTreeView);
+    Cmd::Run(FIND_LITERAL, cFindLiteral, db, tag, showResult);
 }
 
 

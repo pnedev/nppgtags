@@ -136,6 +136,12 @@ public:
                 0, (LPARAM)filePath.C_str());
     }
 
+    inline void GetFilePathFromBufID(int bufID, CPath& filePath) const
+    {
+        SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID,
+                bufID, (LPARAM)filePath.C_str());
+    }
+
     inline void GetFileNamePart(CPath& fileName) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETNAMEPART,
