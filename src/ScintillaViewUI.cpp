@@ -493,8 +493,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
         int lineLen = sendSci(SCI_LINELENGTH, lineNum);
         if (lineLen > 0)
         {
-            char firstChar = sendSci(SCI_GETCHARAT, startPos);
-            char secondChar = sendSci(SCI_GETCHARAT, startPos + 1);
+            char firstChar = (char)sendSci(SCI_GETCHARAT, startPos);
+            char secondChar = (char)sendSci(SCI_GETCHARAT, startPos + 1);
 
             if (firstChar == '\t')
             {
