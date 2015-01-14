@@ -34,7 +34,6 @@
 #include "IOWindow.h"
 #include "AutoCompleteUI.h"
 #include "ScintillaViewUI.h"
-#include "TreeViewUI.h"
 #include <list>
 
 
@@ -339,10 +338,7 @@ void showResult(CmdData& cmd)
         return;
     }
 
-    if (GTags::UseTreeView)
-        TreeViewUI::Get().Show(cmd);
-    else
-        ScintillaViewUI::Get().Show(cmd);
+    ScintillaViewUI::Get().Show(cmd);
 }
 
 
@@ -378,8 +374,6 @@ bool AutoUpdate = true;
 #else
 bool AutoUpdate = false;
 #endif
-
-bool UseTreeView = false;
 
 
 /**

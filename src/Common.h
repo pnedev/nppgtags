@@ -28,6 +28,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 /**
@@ -158,12 +160,12 @@ public:
     const CText& operator=(const char* str);
     const CText& operator=(const CText& txt);
 
-    bool operator==(const TCHAR* str) const
+    inline bool operator==(const TCHAR* str) const
     {
         return !_tcscmp(_str, str);
     }
 
-    bool operator==(const CText& txt) const
+    inline bool operator==(const CText& txt) const
     {
         return !_tcscmp(_str, txt._str);
     }
@@ -172,11 +174,68 @@ public:
     const CText& operator+=(const char* str);
     const CText& operator+=(const CText& txt);
 
-    TCHAR* C_str() { return _str; }
-    const TCHAR* C_str() const { return _str; }
-    unsigned Size() const { return _size; }
-    unsigned Len() const { return _tcslen(_str); }
-    void Clear() { _str[0] = 0; }
+    inline TCHAR* C_str() { return _str; }
+    inline const TCHAR* C_str() const { return _str; }
+    inline unsigned Size() const { return _size; }
+    inline unsigned Len() const { return _tcslen(_str); }
+    inline void Clear() { _str[0] = 0; }
+    void ToUpper();
+};
+
+
+/**
+ *  \class  CTextA
+ *  \brief
+ */
+class CTextA
+{
+private:
+    enum
+    {
+        ALLOC_CHUNK_SIZE = 2048
+    };
+
+    void resize(unsigned newLen);
+    unsigned expand(unsigned newLen);
+
+    unsigned _size;
+    char *_str;
+    char _buf[ALLOC_CHUNK_SIZE];
+
+public:
+    CTextA() : _size(ALLOC_CHUNK_SIZE), _str(_buf) { _buf[0] = 0; }
+    CTextA(const char* str);
+    CTextA(const TCHAR* str);
+    CTextA(const CTextA& txt);
+    ~CTextA()
+    {
+        if (_str != _buf)
+            delete [] _str;
+    }
+
+    const CTextA& operator=(const char* str);
+    const CTextA& operator=(const TCHAR* str);
+    const CTextA& operator=(const CTextA& txt);
+
+    inline bool operator==(const char* str) const
+    {
+        return !strcmp(_str, str);
+    }
+
+    inline bool operator==(const CTextA& txt) const
+    {
+        return !strcmp(_str, txt._str);
+    }
+
+    const CTextA& operator+=(const char* str);
+    const CTextA& operator+=(const TCHAR* str);
+    const CTextA& operator+=(const CTextA& txt);
+
+    inline char* C_str() { return _str; }
+    inline const char* C_str() const { return _str; }
+    inline unsigned Size() const { return _size; }
+    inline unsigned Len() const { return strlen(_str); }
+    inline void Clear() { _str[0] = 0; }
     void ToUpper();
 };
 

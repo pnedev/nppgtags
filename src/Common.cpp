@@ -22,10 +22,7 @@
  */
 
 
-#define WIN32_LEAN_AND_MEAN
 #include "Common.h"
-#include <stdlib.h>
-#include <string.h>
 
 
 /**
@@ -331,6 +328,216 @@ unsigned CText::expand(unsigned newLen)
         _size = (newLen / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
         _str = new TCHAR[_size];
         _tcscpy_s(_str, _size, oldStr);
+        if (oldStr != _buf)
+            delete [] oldStr;
+    }
+
+    return len;
+}
+
+
+/**
+ *  \brief
+ */
+CTextA::CTextA(const char* str) : _size(ALLOC_CHUNK_SIZE), _str(_buf)
+{
+    _buf[0] = 0;
+    if (str)
+    {
+        unsigned len = strlen(str);
+        if (len >= _size)
+        {
+            _size = (len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
+            _str = new char[_size];
+        }
+        strcpy_s(_str, _size, str);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+CTextA::CTextA(const TCHAR* str) : _size(ALLOC_CHUNK_SIZE), _str(_buf)
+{
+    _buf[0] = 0;
+    if (str)
+    {
+        unsigned len = _tcslen(str);
+        if (len >= _size)
+        {
+            _size = (len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
+            _str = new char[_size];
+        }
+        size_t cnt;
+        wcstombs_s(&cnt, _str, _size, str, _TRUNCATE);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+CTextA::CTextA(const CTextA& txt) : _size(ALLOC_CHUNK_SIZE), _str(_buf)
+{
+    _buf[0] = 0;
+    if (_size < txt._size)
+    {
+        _size = txt._size;
+        _str = new char[_size];
+    }
+    strcpy_s(_str, _size, txt._str);
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator=(const char* str)
+{
+    if (str)
+    {
+        resize(strlen(str));
+        strcpy_s(_str, _size, str);
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator=(const TCHAR* str)
+{
+    if (str)
+    {
+        resize(_tcslen(str));
+        size_t cnt;
+        wcstombs_s(&cnt, _str, _size, str, _TRUNCATE);
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator=(const CTextA& txt)
+{
+    if (this != &txt)
+    {
+        resize(txt.Len());
+        strcpy_s(_str, _size, txt._str);
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator+=(const char* str)
+{
+    if (str)
+    {
+        unsigned len = strlen(str);
+        if (len)
+        {
+            expand(len);
+            strcat_s(_str, _size, str);
+        }
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator+=(const TCHAR* str)
+{
+    if (str)
+    {
+        unsigned len = _tcslen(str);
+        if (len)
+        {
+            len = expand(len);
+            size_t cnt;
+            wcstombs_s(&cnt, &_str[len], _size - len, str, _TRUNCATE);
+        }
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator+=(const CTextA& txt)
+{
+    unsigned len = txt.Len();
+    if (len)
+    {
+        expand(len);
+        strcat_s(_str, _size, txt._str);
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::ToUpper()
+{
+    for (int i = strlen(_str) - 1; i >= 0; i--)
+        _str[i] = toupper(_str[i]);
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::resize(unsigned newLen)
+{
+    unsigned newSize = (newLen / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
+
+    if (_size != newSize)
+    {
+        if (_str != _buf)
+            delete [] _str;
+        if (newSize != ALLOC_CHUNK_SIZE)
+            _str = new char[newSize];
+        else
+            _str = _buf;
+        _size = newSize;
+    }
+}
+
+
+/**
+ *  \brief
+ */
+unsigned CTextA::expand(unsigned newLen)
+{
+    if (newLen == 0)
+        return 0;
+
+    unsigned len = strlen(_str);
+    newLen += len;
+
+    if (_size <= newLen)
+    {
+        char *oldStr = _str;
+        _size = (newLen / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
+        _str = new char[_size];
+        strcpy_s(_str, _size, oldStr);
         if (oldStr != _buf)
             delete [] oldStr;
     }

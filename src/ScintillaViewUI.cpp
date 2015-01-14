@@ -89,7 +89,7 @@ void ScintillaViewUI::ResetStyle()
 
     char font[32];
     npp.GetFontNameA(font, sizeof(font));
-    int size = npp.GetFontSize() - 1;
+    int size = npp.GetFontSize();
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, cBlack, cWhite, false, size, font);
@@ -104,29 +104,32 @@ void ScintillaViewUI::ResetStyle()
 /**
  *  \brief
  */
-ScintillaViewUI::CmdBranch::CmdBranch(CmdData& cmd) :
-    _cmdID(cmd.GetID()), _basePath(cmd.GetDBPath()),
-    _cmdName(cmd.GetName()), _cmdOutput(cmd.GetResult())
+const Branch& ScintillaViewUI::Branch::operator=(const GTags::CmdData& cmd)
 {
-    size_t cnt;
-    wcstombs_s(&cnt, _cmdTag, sizeof(_cmdTag), cmd.GetTag(), _TRUNCATE);
+    _cmdID = cmd.GetID();
+    _projectPath = cmd.GetDBPath();
 
-    _cmdName.ToUpper();
-    _cmdName += _T(" \"");
-    _cmdName += _cmdTag;
-    _cmdName += _T("\"");
-    parseCmdOutput();
+    size_t cnt;
+    wcstombs_s(&cnt, _search, sizeof(_search), cmd.GetTag(), _TRUNCATE);
+
+    _name = cmd.GetName();
+    _name += " \"";
+    _name += _search;
+    _name += "\"";
+
+    return this;
 }
 
 
 /**
  *  \brief
  */
-void ScintillaViewUI::CmdBranch::parseCmdOutput()
+void ScintillaViewUI::Branch::parseCmdOutput()
 {
+    CTextA buf;
     TCHAR* pTmp;
 
-    for (TCHAR* pToken = _tcstok_s(_cmdOutput.C_str(), _T("\n\r"), &pTmp);
+    for (TCHAR* pToken = _tcstok_s(cmd.GetResult(), _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         Leaf leaf = {0};
@@ -315,7 +318,7 @@ void ScintillaViewUI::add(CmdData& cmd)
 {
     remove();
 
-    _branch = new CmdBranch(cmd);
+    _branch = cmd;
 
     char str[512];
     size_t cnt;
@@ -329,13 +332,13 @@ void ScintillaViewUI::add(CmdData& cmd)
         sendSci(SCI_SETSEL);
     }
 
-    wcstombs_s(&cnt, str, 512, _branch->_cmdName.C_str(), _TRUNCATE);
+    wcstombs_s(&cnt, str, 512, _branch->_name.C_str(), _TRUNCATE);
     sendSci(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
 
     unsigned leaves_cnt = _branch->_leaves.size();
     for (unsigned i = 0; i < leaves_cnt; i++)
     {
-        CmdBranch::Leaf& leaf = _branch->_leaves[i];
+        Branch::Leaf& leaf = _branch->_leaves[i];
 
         sendSci(SCI_ADDTEXT, 2, reinterpret_cast<LPARAM>("\n\t"));
         wcstombs_s(&cnt, str, 512, leaf.file, _TRUNCATE);
@@ -345,7 +348,7 @@ void ScintillaViewUI::add(CmdData& cmd)
         {
             for (; i < leaves_cnt; i++)
             {
-                CmdBranch::Leaf& next = _branch->_leaves[i];
+                Branch::Leaf& next = _branch->_leaves[i];
                 if (_tcscmp(next.file, leaf.file))
                 {
                     i--;
@@ -450,7 +453,7 @@ bool ScintillaViewUI::openItem(int lineNum)
     for (i = 1; lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
     lineTxt[i] = 0;
 
-    CPath file(_branch->_basePath);
+    CPath file(_branch->_projectPath);
     CText str(&lineTxt[1]);
 	file += str.C_str();
     delete [] lineTxt;
@@ -478,7 +481,7 @@ bool ScintillaViewUI::openItem(int lineNum)
     bool wholeWord =
             (_branch->_cmdID != GREP && _branch->_cmdID != FIND_LITERAL);
 
-    if (!npp.SearchText(_branch->_cmdTag, true, wholeWord,
+    if (!npp.SearchText(_branch->_search, true, wholeWord,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))
     {
         MessageBox(npp.GetHandle(),
@@ -496,7 +499,7 @@ bool ScintillaViewUI::openItem(int lineNum)
 void ScintillaViewUI::styleSearchWord(int lineNum, int startOffset)
 {
     struct TextToFind ttf = {0};
-    ttf.lpstrText = const_cast<char*>(_branch->_cmdTag);
+    ttf.lpstrText = const_cast<char*>(_branch->_search);
     ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + startOffset;
     ttf.chrg.cpMax = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 

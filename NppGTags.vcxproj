@@ -38,7 +38,6 @@
     <ClInclude Include="src\AutoCompleteUI.h" />
     <ClCompile Include="src\ScintillaViewUI.cpp" />
     <ClInclude Include="src\ScintillaViewUI.h" />
-    <ClInclude Include="src\TreeViewUI.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\nppgtags.rc" />
@@ -69,7 +68,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>DEVELOPMENT;WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPGTAGS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NPPGTAGS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>

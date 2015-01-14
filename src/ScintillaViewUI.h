@@ -32,6 +32,7 @@
 #include "Scintilla.h"
 #include "Common.h"
 #include "AutoLock.h"
+#include "GTags.h"
 #include "GTagsCmd.h"
 
 
@@ -60,42 +61,22 @@ public:
 
 private:
     /**
-     *  \class  CmdBranch
+     *  \struct  Branch
      *  \brief
      */
-    class CmdBranch
+    struct Branch
     {
-    public:
-        CmdBranch(GTags::CmdData& cmd);
-        ~CmdBranch() {};
-
-        /**
-         *  \struct  Leaf
-         *  \brief
-         */
-        struct Leaf {
-            TCHAR* name;
-            TCHAR* line;
-            TCHAR* preview;
-            TCHAR* file;
-        };
-
-        bool operator==(const CmdBranch& branch) const
+        const Branch& operator=(const GTags::CmdData& cmd);
+        bool operator==(const Branch& branch) const
         {
-            return (_cmdName == branch._cmdName &&
-                    _basePath == branch._basePath);
+            return (_name == branch._name &&
+                    _projectPath == branch._projectPath);
         }
 
-        const int _cmdID;
-        CPath _basePath;
-        CText _cmdName;
-        char _cmdTag[GTags::cMaxTagLen];
-        std::vector<Leaf> _leaves;
-
-    private:
-        void parseCmdOutput();
-
-        CText _cmdOutput;
+        int _cmdID;
+        CPath _projectPath;
+        CTextA _name;
+        char _search[GTags::cMaxTagLen];
     };
 
     static const COLORREF cBlack = RGB(0,0,0);
@@ -138,5 +119,5 @@ private:
 	sptr_t _sciPtr;
 
     // Only one branch possible for now - fix this!
-    CmdBranch* _branch;
+    Branch _branch;
 };
