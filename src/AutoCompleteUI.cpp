@@ -41,7 +41,7 @@ using namespace GTags;
 /**
  *  \brief
  */
-bool AutoCompleteUI::Create(CmdData& cmd)
+bool AutoCompleteUI::Create(const CmdData& cmd)
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -60,8 +60,8 @@ bool AutoCompleteUI::Create(CmdData& cmd)
 
     InitCommonControlsEx(&icex);
 
-    AutoCompleteUI ui(cmd);
-    ui.composeWindow();
+    AutoCompleteUI ui;
+    ui.composeWindow(cmd);
 
     BOOL r;
     MSG msg;
@@ -91,7 +91,7 @@ AutoCompleteUI::~AutoCompleteUI()
 /**
  *  \brief
  */
-HWND AutoCompleteUI::composeWindow()
+HWND AutoCompleteUI::composeWindow(const CmdData& cmd)
 {
     HWND hOwnerWnd = INpp::Get().GetSciHandle();
     RECT win;
@@ -123,8 +123,12 @@ HWND AutoCompleteUI::composeWindow()
     ListView_SetExtendedListViewStyle(_hLVWnd,
             LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
+    _tagLen     = cmd.GetTagLen();
+    _resultLen  = cmd.GetResultLen();
+    _cmdResult  = cmd.GetResult();
+
     TCHAR buf[32];
-    _tcscpy_s(buf, 32, _cmd.GetName());
+    _tcscpy_s(buf, 32, cmd.GetName());
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
@@ -158,8 +162,10 @@ int AutoCompleteUI::fillLV()
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
+    /* _cmdResult string will be chopped but as long as we don't concatenate
+        anything it will do just fine */
     TCHAR* pTmp;
-    for (TCHAR* pToken = _tcstok_s(_cmd.GetResult(), _T("\n\r"), &pTmp);
+    for (TCHAR* pToken = _tcstok_s(_cmdResult.C_str(), _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         lvItem.pszText = pToken;
@@ -188,7 +194,7 @@ int AutoCompleteUI::filterLV(const TCHAR* filter)
 
     int len = _tcslen(filter);
 
-    TCHAR* pRes = _cmd.GetResult();
+    TCHAR* pRes = _cmdResult.C_str();
     TCHAR* pEnd = pRes + _resultLen;
 
     ListView_DeleteAllItems(_hLVWnd);

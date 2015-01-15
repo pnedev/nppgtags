@@ -242,8 +242,11 @@ void cmdReady(CmdData& cmd)
     runSheduledUpdate(cmd.GetDBPath());
 
     if (cmd.Error())
-        MessageBox(INpp::Get().GetHandle(), cmd.GetResult(),
+    {
+        CText msg(cmd.GetResult());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(),
                 cmd.GetName(), MB_OK | MB_ICONERROR);
+    }
 }
 
 
@@ -348,11 +351,12 @@ void showResult(CmdData& cmd)
 void showInfo(CmdData& cmd)
 {
     TCHAR text[2048];
+    CText msg(cmd.GetResult());
     _sntprintf_s(text, 2048, _TRUNCATE, cAbout,
             VER_DESCRIPTION, VER_VERSION_STR,
             _T(__DATE__), _T(__TIME__), VER_COPYRIGHT,
             cmd.Error() || cmd.NoResult() ?
-            _T("VERSION READ FAILED\n") : cmd.GetResult());
+            _T("VERSION READ FAILED\n") : msg.C_str());
 
     IOWindow::Out(HInst, INpp::Get().GetHandle(), UIFontName, UIFontSize,
             cVersion, text);

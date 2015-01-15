@@ -53,7 +53,7 @@ const TCHAR Cmd::cVersionCmd[]         = _T("\"%s\\global.exe\" --version");
  *  \brief
  */
 bool Cmd::Run(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
-        CompletionCB complCB, const TCHAR* result)
+        CompletionCB complCB, const char* result)
 {
     Cmd* cmd = new Cmd(id, name, db, tag, complCB, result);
 

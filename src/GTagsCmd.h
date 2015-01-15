@@ -71,19 +71,20 @@ enum CtagsFormat_t
 class CmdData
 {
 public:
-    CmdID_t GetID() const { return _id; }
-    const TCHAR* GetName() const { return _name; }
-    const TCHAR* GetDBPath() const { return _dbPath.C_str(); }
-    const TCHAR* GetTag() const { return _tag.C_str(); }
-    unsigned GetTagLen() const { return _tag.Len(); }
-    bool Error() const { return _error; }
-    bool NoResult() const { return !_result.Len(); }
-    TCHAR* GetResult() { return _result.C_str(); }
-    unsigned GetResultLen() { return _result.Len(); }
+    inline CmdID_t GetID() const { return _id; }
+    inline const TCHAR* GetName() const { return _name; }
+    inline const TCHAR* GetDBPath() const { return _dbPath.C_str(); }
+    inline const TCHAR* GetTag() const { return _tag.C_str(); }
+    inline unsigned GetTagLen() const { return _tag.Len(); }
+    inline bool Error() const { return _error; }
+    inline bool NoResult() const { return !_result.Len(); }
+    inline char* GetResult() { return _result.C_str(); }
+    inline const char* GetResult() const { return _result.C_str(); }
+    inline unsigned GetResultLen() const { return _result.Len(); }
 
 protected:
     CmdData(CmdID_t id, const TCHAR* name, DBhandle db,
-            const TCHAR* tag, const TCHAR* result = NULL) :
+            const TCHAR* tag, const char* result = NULL) :
         _id(id), _error(false), _tag(tag)
     {
         if (db)
@@ -99,7 +100,7 @@ protected:
 
     CmdID_t _id;
     bool _error;
-    CText _result;
+    CTextA _result;
 
 private:
     friend class Cmd;
@@ -122,7 +123,7 @@ class Cmd
 public:
     static bool Run(CmdID_t id, const TCHAR* name, DBhandle db,
             const TCHAR* tag, CompletionCB complCB,
-            const TCHAR* result = NULL);
+            const char* result = NULL);
 
 private:
     static const TCHAR cCreateDatabaseCmd[];
@@ -146,7 +147,7 @@ private:
     HANDLE _hThread;
 
     Cmd(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
-            CompletionCB complCB, const TCHAR* result = NULL) :
+            CompletionCB complCB, const char* result = NULL) :
         _data(id, name, db, tag, result),
         _db(db), _complCB(complCB), _hThread(NULL) {}
     ~Cmd();
