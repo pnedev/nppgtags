@@ -38,15 +38,12 @@
  */
 class CPath
 {
-private:
+public:
     enum
     {
         MAX_LEN = MAX_PATH
     };
 
-    TCHAR _str[MAX_LEN];
-
-public:
     CPath(const TCHAR* pathStr = NULL)
     {
         _str[0] = 0;
@@ -61,13 +58,13 @@ public:
 
     ~CPath() {}
 
-    const CPath& operator=(const TCHAR* pathStr)
+    inline const CPath& operator=(const TCHAR* pathStr)
     {
         _tcscpy_s(_str, MAX_LEN, pathStr);
         return *this;
     }
 
-    const CPath& operator=(const CPath& path)
+    inline const CPath& operator=(const CPath& path)
     {
         if (this != &path)
         {
@@ -76,40 +73,39 @@ public:
         return *this;
     }
 
-    bool operator==(const TCHAR* pathStr) const
+    inline bool operator==(const TCHAR* pathStr) const
     {
         return !_tcscmp(_str, pathStr);
     }
 
-    bool operator==(const CPath& path) const
+    inline bool operator==(const CPath& path) const
     {
         return !_tcscmp(_str, path._str);
     }
 
-    const CPath& operator+=(const TCHAR* str)
+    inline const CPath& operator+=(const TCHAR* str)
     {
         _tcscat_s(_str, MAX_LEN, str);
         return *this;
     }
 
-    const CPath& operator+=(const CPath& path)
+    inline const CPath& operator+=(const CPath& path)
     {
         _tcscat_s(_str, MAX_LEN, path._str);
         return *this;
     }
 
-    TCHAR* C_str() { return _str; }
-    const TCHAR* C_str() const { return _str; }
-    unsigned Size() const { return MAX_LEN; }
-    unsigned Len() const { return _tcslen(_str); }
+    inline TCHAR* C_str() { return _str; }
+    inline const TCHAR* C_str() const { return _str; }
+    inline unsigned Len() const { return _tcslen(_str); }
 
-    bool Exists() const
+    inline bool Exists() const
     {
         DWORD dwAttrib = GetFileAttributes(_str);
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES);
     }
 
-    bool FileExists() const
+    inline bool FileExists() const
     {
         DWORD dwAttrib = GetFileAttributes(_str);
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES &&
@@ -123,6 +119,9 @@ public:
     bool Contains(const CPath& path) const;
     bool IsContainedIn(const TCHAR* pathStr) const;
     bool IsContainedIn(const CPath& path) const;
+
+private:
+    TCHAR _str[MAX_LEN];
 };
 
 

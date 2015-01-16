@@ -55,15 +55,6 @@ enum CmdID_t
 };
 
 
-enum CtagsFormat_t
-{
-    CTAGS_F_TAG = 0,
-    CTAGS_F_LINE,
-    CTAGS_F_FILE,
-    CTAGS_F_PREVIEW
-};
-
-
 /**
  *  \class  CmdData
  *  \brief

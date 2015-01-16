@@ -28,7 +28,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
-#include <vector>
 #include "Scintilla.h"
 #include "Common.h"
 #include "AutoLock.h"
@@ -56,7 +55,6 @@ public:
     }
 
     void Show(GTags::CmdData& cmd);
-    void Update();
     void ResetStyle();
 
 private:
@@ -69,13 +67,13 @@ private:
         const Branch& operator=(const GTags::CmdData& cmd);
         bool operator==(const Branch& branch) const
         {
-            return (_name == branch._name &&
-                    _projectPath == branch._projectPath);
+            return (_cmdID == branch._cmdID &&
+                    !strcmp(_projectPath, branch._projectPath) &&
+                    !strcmp(_search, branch._search));
         }
 
         int _cmdID;
-        CPath _projectPath;
-        CTextA _name;
+        char _projectPath[CPath::MAX_LEN];
         char _search[GTags::cMaxTagLen];
     };
 
@@ -101,8 +99,8 @@ private:
             bool bold = false, int size = 0, const char *font = NULL);
 
     void composeWindow();
+    void prepare();
     void add(GTags::CmdData& cmd);
-    void remove();
     void removeAll();
     bool openItem(int lineNum);
     void styleSearchWord(int lineNum, int startOffset = 0);

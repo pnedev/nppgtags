@@ -68,7 +68,7 @@ bool IOWindow::Create(HINSTANCE hInst, HWND hOwnerWnd,
         }
 
         INITCOMMONCONTROLSEX icex   = {0};
-        icex.dwSize                 = sizeof(INITCOMMONCONTROLSEX);
+        icex.dwSize                 = sizeof(icex);
         icex.dwICC                  = ICC_STANDARD_CLASSES;
 
         InitCommonControlsEx(&icex);

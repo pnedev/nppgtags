@@ -37,7 +37,7 @@ const unsigned ReadPipe::cChunkSize = 4096;
 ReadPipe::ReadPipe() : _hIn(NULL), _hOut(NULL), _hThread(NULL), _output(NULL)
 {
     SECURITY_ATTRIBUTES attr    = {0};
-    attr.nLength                = sizeof(SECURITY_ATTRIBUTES);
+    attr.nLength                = sizeof(attr);
     attr.bInheritHandle         = TRUE;
 
     _ready = CreatePipe(&_hOut, &_hIn, &attr, 0);

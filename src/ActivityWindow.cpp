@@ -72,7 +72,7 @@ int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
         }
 
         INITCOMMONCONTROLSEX icex   = {0};
-        icex.dwSize                 = sizeof(INITCOMMONCONTROLSEX);
+        icex.dwSize                 = sizeof(icex);
         icex.dwICC                  = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
 
         InitCommonControlsEx(&icex);

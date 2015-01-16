@@ -25,14 +25,11 @@
 #pragma comment (lib, "comctl32")
 
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <commctrl.h>
+#include "ScintillaViewUI.h"
 #include "INpp.h"
 #include "DBManager.h"
-#include "GTags.h"
-#include "ScintillaViewUI.h"
 #include "DocLocation.h"
+#include <commctrl.h>
 
 
 #define SCE_GTAGS_SEARCH_HEADER  151
@@ -62,21 +59,6 @@ void ScintillaViewUI::Show(CmdData& cmd)
     AUTOLOCK(_lock);
 
     add(cmd);
-
-    INpp& npp = INpp::Get();
-    npp.UpdateDockingWin(_hWnd);
-    npp.ShowDockingWin(_hWnd);
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::Update()
-{
-    AUTOLOCK(_lock);
-
-    INpp::Get().UpdateDockingWin(_hWnd);
 }
 
 
@@ -88,7 +70,7 @@ void ScintillaViewUI::ResetStyle()
     INpp& npp = INpp::Get();
 
     char font[32];
-    npp.GetFontNameA(font, sizeof(font));
+    npp.GetFontNameA(font, 32);
     int size = npp.GetFontSize();
 
     sendSci(SCI_STYLERESETDEFAULT);
@@ -107,15 +89,11 @@ void ScintillaViewUI::ResetStyle()
 const Branch& ScintillaViewUI::Branch::operator=(const GTags::CmdData& cmd)
 {
     _cmdID = cmd.GetID();
-    _projectPath = cmd.GetDBPath();
-
     size_t cnt;
-    wcstombs_s(&cnt, _search, sizeof(_search), cmd.GetTag(), _TRUNCATE);
 
-    _name = cmd.GetName();
-    _name += " \"";
-    _name += _search;
-    _name += "\"";
+    wcstombs_s(&cnt, _projectPath, sizeof(_projectPath),
+            cmd._projectPath(), _TRUNCATE);
+    wcstombs_s(&cnt, _search, sizeof(_search), cmd.GetTag(), _TRUNCATE);
 
     return this;
 }
@@ -126,63 +104,13 @@ const Branch& ScintillaViewUI::Branch::operator=(const GTags::CmdData& cmd)
  */
 void ScintillaViewUI::Branch::parseCmdOutput()
 {
-    CTextA buf;
-    TCHAR* pTmp;
-
-    for (TCHAR* pToken = _tcstok_s(cmd.GetResult(), _T("\n\r"), &pTmp);
-        pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
-    {
-        Leaf leaf = {0};
-        if (_cmdID == FIND_FILE)
-            leaf.file = pToken;
-        else
-            leaf.name = pToken;
-        _leaves.push_back(leaf);
-    }
-
-    if (_cmdID == FIND_FILE)
-        return;
-
-    for (unsigned i = 0; i < _leaves.size(); i++)
-    {
-        Leaf& leaf = _leaves[i];
-        unsigned currentResultField = CTAGS_F_TAG;
-        for (TCHAR* pToken = _tcstok_s(leaf.name, _T(" \t"), &pTmp);
-            pToken; pToken = _tcstok_s(NULL, _T(" \t"), &pTmp))
-        {
-            switch (currentResultField)
-            {
-                case CTAGS_F_TAG:
-                    leaf.name = pToken;
-                    break;
-
-                case CTAGS_F_LINE:
-                    leaf.line = pToken;
-                    break;
-
-                case CTAGS_F_FILE:
-                    leaf.file = pToken;
-            }
-
-            if (++currentResultField == CTAGS_F_PREVIEW)
-            {
-                while (*pTmp == _T(' ') || *pTmp == _T('\t'))
-                    pTmp++;
-                leaf.preview = pTmp;
-                for (int j = _tcslen(leaf.preview) - 1; j > 0; j--)
-                    if (leaf.preview[j] == _T('\t'))
-                        leaf.preview[j] = _T(' ');
-                break;
-            }
-        }
-    }
 }
 
 
 /**
  *  \brief
  */
-ScintillaViewUI::ScintillaViewUI() : _branch(NULL)
+ScintillaViewUI::ScintillaViewUI()
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -314,85 +242,67 @@ void ScintillaViewUI::composeWindow()
 /**
  *  \brief
  */
-void ScintillaViewUI::add(CmdData& cmd)
+void ScintillaViewUI::prepare()
 {
-    remove();
+    const char msg[] = "Filling results, please wait...";
 
-    _branch = cmd;
-
-    char str[512];
-    size_t cnt;
-
-    sendSci(SCI_SETSEL);
     sendSci(SCI_SETREADONLY, 0);
-
-    if (sendSci(SCI_GETLINECOUNT) > 1)
-    {
-        sendSci(SCI_ADDTEXT, 1, reinterpret_cast<LPARAM>("\n"));
-        sendSci(SCI_SETSEL);
-    }
-
-    wcstombs_s(&cnt, str, 512, _branch->_name.C_str(), _TRUNCATE);
-    sendSci(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
-
-    unsigned leaves_cnt = _branch->_leaves.size();
-    for (unsigned i = 0; i < leaves_cnt; i++)
-    {
-        Branch::Leaf& leaf = _branch->_leaves[i];
-
-        sendSci(SCI_ADDTEXT, 2, reinterpret_cast<LPARAM>("\n\t"));
-        wcstombs_s(&cnt, str, 512, leaf.file, _TRUNCATE);
-        sendSci(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
-
-        if (_branch->_cmdID != FIND_FILE)
-        {
-            for (; i < leaves_cnt; i++)
-            {
-                Branch::Leaf& next = _branch->_leaves[i];
-                if (_tcscmp(next.file, leaf.file))
-                {
-                    i--;
-                    break;
-                }
-
-                sendSci(SCI_ADDTEXT, 8,
-                        reinterpret_cast<LPARAM>("\n\t\tline "));
-                wcstombs_s(&cnt, str, 512, next.line, _TRUNCATE);
-                sendSci(SCI_ADDTEXT, strlen(str),
-                        reinterpret_cast<LPARAM>(str));
-                sendSci(SCI_ADDTEXT, 2,
-                        reinterpret_cast<LPARAM>(":\t"));
-                wcstombs_s(&cnt, str, 512, next.preview, _TRUNCATE);
-                sendSci(SCI_ADDTEXT, strlen(str),
-                        reinterpret_cast<LPARAM>(str));
-            }
-        }
-    }
-
+    sendSci(SCI_CLEARALL);
+    sendSci(SCI_INSERTTEXT, 0, reinterpret_cast<LPARAM>(msg));
     sendSci(SCI_SETREADONLY, 1);
     sendSci(SCI_SETSEL);
+
+    INpp& npp = INpp::Get();
+    npp.UpdateDockingWin(_hWnd);
+    npp.ShowDockingWin(_hWnd);
 }
 
 
 /**
  *  \brief
  */
-void ScintillaViewUI::remove()
+void ScintillaViewUI::add(CmdData& cmd)
 {
-    sendSci(SCI_SETREADONLY, 0);
-    sendSci(SCI_CLEARALL);
-    sendSci(SCI_SETREADONLY, 1);
+    prepare();
 
-    if (_branch)
+    _branch = cmd;
+
+    int searchLen = strlen(_branch._search);
+    CTextA buf(cmd.GetName());
+
+    // Add the search header - cmd name + search tag + project path
+    buf += " \"";
+    buf += _branch._search;
+    buf += "\"   (";
+    buf += _branch._projectPath;
+    buf += ")\n\t";
+
+    char* pEnd;
+
+    // parsing result buffer and composing UI buffer
+    for (char* pBegin = cmd.GetResult(); *pBegin; pBegin++)
     {
-        delete _branch;
-        _branch = NULL;
+        if (_branch._cmdID == FIND_FILE)
+        {
+            pEnd = strchr(pBegin, '\n'); // find end of line
+            buf.append(pBegin, pEnd - pBegin);
+            if (*pEnd == 0)
+                break;
+            buf += "\n\t";
+            pBegin = pEnd;
+        }
+        else
+        {
+            pBegin += searchLen; // skip search tag from result buffer
+            pBegin = _strspnp(pBegin, " \t"); // skip empty spaces
+            pEnd = strchr(pBegin, ' '); // find end of
+        }
     }
 
-    INpp& npp = INpp::Get();
-    npp.UpdateDockingWin(_hWnd);
-    npp.HideDockingWin(_hWnd);
-    SetFocus(npp.ReadSciHandle());
+    sendSci(SCI_SETREADONLY, 0);
+    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(buf.C_str()));
+    sendSci(SCI_SETREADONLY, 1);
+    sendSci(SCI_SETSEL);
 }
 
 
@@ -406,12 +316,6 @@ void ScintillaViewUI::removeAll()
     sendSci(SCI_SETREADONLY, 0);
     sendSci(SCI_CLEARALL);
     sendSci(SCI_SETREADONLY, 1);
-
-    if (_branch)
-    {
-        delete _branch;
-        _branch = NULL;
-    }
 
     INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
@@ -453,7 +357,7 @@ bool ScintillaViewUI::openItem(int lineNum)
     for (i = 1; lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
     lineTxt[i] = 0;
 
-    CPath file(_branch->_projectPath);
+    CPath file(_branch._projectPath);
     CText str(&lineTxt[1]);
 	file += str.C_str();
     delete [] lineTxt;
@@ -479,9 +383,9 @@ bool ScintillaViewUI::openItem(int lineNum)
     }
 
     bool wholeWord =
-            (_branch->_cmdID != GREP && _branch->_cmdID != FIND_LITERAL);
+            (_branch._cmdID != GREP && _branch._cmdID != FIND_LITERAL);
 
-    if (!npp.SearchText(_branch->_search, true, wholeWord,
+    if (!npp.SearchText(_branch._search, true, wholeWord,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))
     {
         MessageBox(npp.GetHandle(),
@@ -499,7 +403,7 @@ bool ScintillaViewUI::openItem(int lineNum)
 void ScintillaViewUI::styleSearchWord(int lineNum, int startOffset)
 {
     struct TextToFind ttf = {0};
-    ttf.lpstrText = const_cast<char*>(_branch->_search);
+    ttf.lpstrText = const_cast<char*>(_branch._search);
     ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + startOffset;
     ttf.chrg.cpMax = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
@@ -545,7 +449,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 {
                     sendSci(SCI_STARTSTYLING, startPos, 0xFF);
                     sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE_HEADER);
-                    if (_branch->_cmdID == FIND_FILE)
+                    if (_branch._cmdID == FIND_FILE)
                     {
                         styleSearchWord(lineNum, 1);
                     }
@@ -577,6 +481,7 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
     AUTOLOCK(_lock);
 
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+    sendSci(SCI_GOTOLINE, lineNum); // Clear double-click auto-selection
 
     if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
         sendSci(SCI_TOGGLEFOLD, lineNum);

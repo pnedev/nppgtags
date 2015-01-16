@@ -55,7 +55,7 @@ bool AutoCompleteUI::Create(const CmdData& cmd)
         return false;
 
     INITCOMMONCONTROLSEX icex   = {0};
-    icex.dwSize                 = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwSize                 = sizeof(icex);
     icex.dwICC                  = ICC_LISTVIEW_CLASSES;
 
     InitCommonControlsEx(&icex);
