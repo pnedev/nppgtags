@@ -494,6 +494,21 @@ const CTextA& CTextA::operator+=(const CTextA& txt)
 /**
  *  \brief
  */
+const CTextA& CTextA::append(const char* str, unsigned len)
+{
+    if (str && len)
+    {
+        expand(len);
+        strncat_s(_str, _size, str, len);
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
 void CTextA::ToUpper()
 {
     for (int i = strlen(_str) - 1; i >= 0; i--)

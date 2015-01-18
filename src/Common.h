@@ -51,6 +51,16 @@ public:
             _tcscpy_s(_str, MAX_LEN, pathStr);
     }
 
+    CPath(const char* pathStr)
+    {
+        _str[0] = 0;
+        if (pathStr)
+        {
+            size_t cnt;
+            mbstowcs_s(&cnt, _str, MAX_LEN, pathStr, _TRUNCATE);
+        }
+    }
+
     CPath(const CPath& path)
     {
         _tcscpy_s(_str, MAX_LEN, path._str);
@@ -229,6 +239,7 @@ public:
     const CTextA& operator+=(const char* str);
     const CTextA& operator+=(const TCHAR* str);
     const CTextA& operator+=(const CTextA& txt);
+    const CTextA& append(const char* str, unsigned len);
 
     inline char* C_str() { return _str; }
     inline const char* C_str() const { return _str; }

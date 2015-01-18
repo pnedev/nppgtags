@@ -112,7 +112,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
         case DLL_PROCESS_ATTACH:
         {
             GetModuleFileName((HMODULE)hModule,
-                    GTags::DllPath.C_str(), GTags::DllPath.Size());
+                    GTags::DllPath.C_str(), CPath::MAX_LEN);
 
             if (!checkForGTagsBinaries())
                 return FALSE;

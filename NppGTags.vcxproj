@@ -7,7 +7,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\TreeViewUI.cpp" />
     <ClInclude Include="src\AutoLock.h" />
     <ClInclude Include="src\Docking.h" />
     <ClInclude Include="src\DocLocation.h" />

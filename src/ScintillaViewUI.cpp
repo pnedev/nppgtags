@@ -86,24 +86,17 @@ void ScintillaViewUI::ResetStyle()
 /**
  *  \brief
  */
-const Branch& ScintillaViewUI::Branch::operator=(const GTags::CmdData& cmd)
+const ScintillaViewUI::Branch&
+        ScintillaViewUI::Branch::operator=(const GTags::CmdData& cmd)
 {
     _cmdID = cmd.GetID();
     size_t cnt;
 
     wcstombs_s(&cnt, _projectPath, sizeof(_projectPath),
-            cmd._projectPath(), _TRUNCATE);
+            cmd.GetDBPath(), _TRUNCATE);
     wcstombs_s(&cnt, _search, sizeof(_search), cmd.GetTag(), _TRUNCATE);
 
-    return this;
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::Branch::parseCmdOutput()
-{
+    return *this;
 }
 
 
@@ -273,29 +266,58 @@ void ScintillaViewUI::add(CmdData& cmd)
     // Add the search header - cmd name + search tag + project path
     buf += " \"";
     buf += _branch._search;
-    buf += "\"   (";
+    buf += "\" in \"";
     buf += _branch._projectPath;
-    buf += ")\n\t";
+    buf += "\"";
 
     char* pEnd;
+    char* pPrevFile = NULL;
+    unsigned prevFileLen = 0;
+    char* pLine = NULL;
+    unsigned lineLen = 0;
 
     // parsing result buffer and composing UI buffer
-    for (char* pBegin = cmd.GetResult(); *pBegin; pBegin++)
+    for (char* pBegin = cmd.GetResult(); *pBegin || *pBegin == '\n'; pBegin++)
     {
         if (_branch._cmdID == FIND_FILE)
         {
             pEnd = strchr(pBegin, '\n'); // find end of line
-            buf.append(pBegin, pEnd - pBegin);
-            if (*pEnd == 0)
-                break;
             buf += "\n\t";
+            buf.append(pBegin, pEnd - pBegin);
             pBegin = pEnd;
         }
         else
         {
             pBegin += searchLen; // skip search tag from result buffer
-            pBegin = _strspnp(pBegin, " \t"); // skip empty spaces
-            pEnd = strchr(pBegin, ' '); // find end of
+            while (*pBegin == ' ' || *pBegin == '\t') // skip empty spaces
+                pBegin++;
+            pEnd = strchr(pBegin, ' '); // find end of file name token
+            pLine = pEnd;
+            while (*pLine == ' ' || *pLine == '\t') // skip empty spaces
+                pLine++;
+            lineLen = strchr(pLine, ' ') - pLine; // find end of line num token
+
+            // add new file name to the UI buffer if it is different
+            // than the previous one
+            if (pPrevFile == NULL || (pEnd - pBegin) != prevFileLen ||
+                strncmp(pBegin, pPrevFile, prevFileLen))
+            {
+                buf += "\n\t";
+                pPrevFile = pBegin;
+                prevFileLen = pEnd - pBegin;
+                buf.append(pPrevFile, prevFileLen);
+            }
+
+            buf += "\n\t\tline ";
+            buf.append(pLine, lineLen);
+            buf += ":\t";
+
+            pBegin = pLine + lineLen;
+            while (*pBegin == ' ' || *pBegin == '\t') // skip empty spaces
+                pBegin++;
+            pEnd = strchr(pBegin, '\n'); // find end of line
+            buf.append(pBegin, pEnd - pBegin);
+            pBegin = pEnd;
         }
     }
 
