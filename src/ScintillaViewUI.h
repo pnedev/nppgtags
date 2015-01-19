@@ -99,6 +99,8 @@ private:
             bool bold = false, int size = 0, const char *font = NULL);
 
     void composeWindow();
+    void parseFindFile(CTextA& dst, char* src);
+    void parseCmd(CTextA& dst, char* src, unsigned searchLen);
     void prepare();
     void add(GTags::CmdData& cmd);
     void removeAll();
@@ -116,6 +118,6 @@ private:
 	SciFnDirect _sciFunc;
 	sptr_t _sciPtr;
 
-    // Only one branch possible for now - fix this!
+    // Only one branch possible for now - implement tab ctrl
     Branch _branch;
 };

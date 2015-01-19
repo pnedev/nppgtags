@@ -235,6 +235,92 @@ void ScintillaViewUI::composeWindow()
 /**
  *  \brief
  */
+void ScintillaViewUI::parseFindFile(CTextA& dst, char* src)
+{
+    char* eol;
+
+    for (;;)
+    {
+        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+            src++;
+        if (*src == 0) break;
+
+        eol = src;
+        while (*eol != '\n' && *eol != '\r' && *eol != 0)
+            eol++;
+
+        dst += "\n\t";
+        dst.append(src, eol - src);
+        src = eol;
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::parseCmd(CTextA& dst, char* src, unsigned searchLen)
+{
+    char* lineRes;
+    char* lineResEnd;
+    char* fileResEnd;
+    char* prevFile = NULL;
+    unsigned prevFileLen = 0;
+
+    for (;;)
+    {
+        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+            src++;
+        if (*src == 0) break;
+
+        src += searchLen; // skip search tag from result buffer
+        while (*src == ' ' || *src == '\t')
+            src++;
+
+        lineRes = lineResEnd = src;
+        while (*lineResEnd != ' ' && *lineResEnd != '\t')
+            lineResEnd++;
+
+        src = lineResEnd;
+        while (*src == ' ' || *src == '\t')
+            src++;
+
+        fileResEnd = src;
+        while (*fileResEnd != ' ' && *fileResEnd != '\t')
+            fileResEnd++;
+
+        // add new file name to the UI buffer if it is different
+        // than the previous one
+        if (prevFile == NULL || (fileResEnd - src) != prevFileLen ||
+            strncmp(src, prevFile, prevFileLen))
+        {
+            prevFile = src;
+            prevFileLen = fileResEnd - src;
+            dst += "\n\t";
+            dst.append(prevFile, prevFileLen);
+        }
+
+        dst += "\n\t\tline ";
+        dst.append(lineRes, lineResEnd - lineRes);
+        dst += ":\t";
+
+        src = fileResEnd;
+        while (*src == ' ' || *src == '\t')
+            src++;
+
+        lineResEnd = src;
+        while (*lineResEnd != '\n' && *lineResEnd != '\r')
+            lineResEnd++;
+
+        dst.append(src, lineResEnd - src);
+        src = lineResEnd;
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void ScintillaViewUI::prepare()
 {
     const char msg[] = "Filling results, please wait...";
@@ -260,69 +346,23 @@ void ScintillaViewUI::add(CmdData& cmd)
 
     _branch = cmd;
 
-    int searchLen = strlen(_branch._search);
-    CTextA buf(cmd.GetName());
+    CTextA uiBuf(cmd.GetName());
 
     // Add the search header - cmd name + search tag + project path
-    buf += " \"";
-    buf += _branch._search;
-    buf += "\" in \"";
-    buf += _branch._projectPath;
-    buf += "\"";
-
-    char* pEnd;
-    char* pPrevFile = NULL;
-    unsigned prevFileLen = 0;
-    char* pLine = NULL;
-    unsigned lineLen = 0;
+    uiBuf += " \"";
+    uiBuf += _branch._search;
+    uiBuf += "\" in \"";
+    uiBuf += _branch._projectPath;
+    uiBuf += "\"";
 
     // parsing result buffer and composing UI buffer
-    for (char* pBegin = cmd.GetResult(); *pBegin || *pBegin == '\n'; pBegin++)
-    {
-        if (_branch._cmdID == FIND_FILE)
-        {
-            pEnd = strchr(pBegin, '\n'); // find end of line
-            buf += "\n\t";
-            buf.append(pBegin, pEnd - pBegin);
-            pBegin = pEnd;
-        }
-        else
-        {
-            pBegin += searchLen; // skip search tag from result buffer
-            while (*pBegin == ' ' || *pBegin == '\t') // skip empty spaces
-                pBegin++;
-            pEnd = strchr(pBegin, ' '); // find end of file name token
-            pLine = pEnd;
-            while (*pLine == ' ' || *pLine == '\t') // skip empty spaces
-                pLine++;
-            lineLen = strchr(pLine, ' ') - pLine; // find end of line num token
-
-            // add new file name to the UI buffer if it is different
-            // than the previous one
-            if (pPrevFile == NULL || (pEnd - pBegin) != prevFileLen ||
-                strncmp(pBegin, pPrevFile, prevFileLen))
-            {
-                buf += "\n\t";
-                pPrevFile = pBegin;
-                prevFileLen = pEnd - pBegin;
-                buf.append(pPrevFile, prevFileLen);
-            }
-
-            buf += "\n\t\tline ";
-            buf.append(pLine, lineLen);
-            buf += ":\t";
-
-            pBegin = pLine + lineLen;
-            while (*pBegin == ' ' || *pBegin == '\t') // skip empty spaces
-                pBegin++;
-            pEnd = strchr(pBegin, '\n'); // find end of line
-            buf.append(pBegin, pEnd - pBegin);
-            pBegin = pEnd;
-        }
-    }
+    if (_branch._cmdID == FIND_FILE)
+        parseFindFile(uiBuf, cmd.GetResult());
+    else
+        parseCmd(uiBuf, cmd.GetResult(), strlen(_branch._search));
 
     sendSci(SCI_SETREADONLY, 0);
-    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(buf.C_str()));
+    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(uiBuf.C_str()));
     sendSci(SCI_SETREADONLY, 1);
     sendSci(SCI_SETSEL);
 }
