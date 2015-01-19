@@ -54,6 +54,11 @@ public:
         EnterCriticalSection(&_lock);
     }
 
+    inline BOOL TryLock()
+    {
+        return TryEnterCriticalSection(&_lock);
+    }
+
     inline void Unlock()
     {
         LeaveCriticalSection(&_lock);

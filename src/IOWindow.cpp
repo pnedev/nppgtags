@@ -239,7 +239,7 @@ HWND IOWindow::composeWindow(HINSTANCE hInst, HWND hOwnerWnd,
             Edit_SetSel(hWndEdit, 0, -1);
     }
 
-    ShowWindow(_hWnd, SW_SHOW);
+    ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
 
     return _hWnd;
@@ -292,7 +292,7 @@ int IOWindow::onAutoSize(REQRESIZE* pReqResize)
     if (width < _minWidth) width = _minWidth;
     if (height < _minHeight) height = _minHeight;
 
-    RECT win = IOWindow::adjustSizeAndPos(WS_POPUPWINDOW | WS_CAPTION,
+    RECT win = IOWindow::adjustSizeAndPos(GetWindowLong(_hWnd, GWL_STYLE),
             width, height);
     MoveWindow(_hWnd, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);

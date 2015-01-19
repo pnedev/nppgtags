@@ -32,9 +32,10 @@
 #include <commctrl.h>
 
 
-#define SCE_GTAGS_SEARCH_HEADER  151
-#define SCE_GTAGS_FILE_HEADER    152
-#define SCE_GTAGS_WORD2SEARCH    153
+#define SCE_GTAGS_HEADER         151
+#define SCE_GTAGS_PROJECT_PATH    152
+#define SCE_GTAGS_FILE           153
+#define SCE_GTAGS_WORD2SEARCH           154
 
 
 enum
@@ -58,6 +59,7 @@ void ScintillaViewUI::Show(CmdData& cmd)
 {
     AUTOLOCK(_lock);
 
+    prepare();
     add(cmd);
 }
 
@@ -74,11 +76,12 @@ void ScintillaViewUI::ResetStyle()
     int size = npp.GetFontSize();
 
     sendSci(SCI_STYLERESETDEFAULT);
-    setStyle(STYLE_DEFAULT, cBlack, cWhite, false, size, font);
+    setStyle(STYLE_DEFAULT, cBlack, cWhite, false, false, size, font);
     sendSci(SCI_STYLECLEARALL);
 
-    setStyle(SCE_GTAGS_SEARCH_HEADER, cBlack, RGB(179,217,217), true);
-    setStyle(SCE_GTAGS_FILE_HEADER, RGB(0,0,255), cWhite, true);
+    setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
+    setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
+    setStyle(SCE_GTAGS_FILE, RGB(0,0,255), cWhite, true);
     setStyle(SCE_GTAGS_WORD2SEARCH, RGB(255,0,0), cWhite, true);
 }
 
@@ -138,8 +141,6 @@ ScintillaViewUI::ScintillaViewUI()
  */
 ScintillaViewUI::~ScintillaViewUI()
 {
-    removeAll();
-
     INpp& npp = INpp::Get();
     npp.DestroySciHandle(_hSci);
     npp.UnregisterWin(_hWnd);
@@ -152,12 +153,13 @@ ScintillaViewUI::~ScintillaViewUI()
  *  \brief
  */
 void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
-        bool bold, int size, const char *font)
+        bool bold, bool italic, int size, const char *font)
 {
     sendSci(SCI_STYLESETEOLFILLED, style, 1);
     sendSci(SCI_STYLESETFORE, style, fore);
     sendSci(SCI_STYLESETBACK, style, back);
     sendSci(SCI_STYLESETBOLD, style, bold);
+    sendSci(SCI_STYLESETITALIC, style, italic);
     if (size >= 1)
         sendSci(SCI_STYLESETSIZE, style, size);
     if (font)
@@ -174,7 +176,7 @@ void ScintillaViewUI::composeWindow()
     HWND hOwnerWnd = npp.GetHandle();
     RECT win;
     GetWindowRect(hOwnerWnd, &win);
-    DWORD style = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_SIZEBOX;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX;
     _hWnd = CreateWindow(cClassName, cPluginName,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
@@ -228,39 +230,16 @@ void ScintillaViewUI::composeWindow()
 
     sendSci(SCI_SETREADONLY, 1);
 
-    ShowWindow(_hSci, SW_SHOW);
+    ShowWindow(_hSci, SW_SHOWNORMAL);
 }
 
 
 /**
  *  \brief
  */
-void ScintillaViewUI::parseFindFile(CTextA& dst, char* src)
+void ScintillaViewUI::parseCmd(CTextA& dst, char* src)
 {
-    char* eol;
-
-    for (;;)
-    {
-        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
-            src++;
-        if (*src == 0) break;
-
-        eol = src;
-        while (*eol != '\n' && *eol != '\r' && *eol != 0)
-            eol++;
-
-        dst += "\n\t";
-        dst.append(src, eol - src);
-        src = eol;
-    }
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::parseCmd(CTextA& dst, char* src, unsigned searchLen)
-{
+    unsigned searchLen = strlen(_branch._search);
     char* lineRes;
     char* lineResEnd;
     char* fileResEnd;
@@ -289,9 +268,9 @@ void ScintillaViewUI::parseCmd(CTextA& dst, char* src, unsigned searchLen)
         while (*fileResEnd != ' ' && *fileResEnd != '\t')
             fileResEnd++;
 
-        // add new file name to the UI buffer if it is different
+        // add new file name to the UI buffer only if it is different
         // than the previous one
-        if (prevFile == NULL || (fileResEnd - src) != prevFileLen ||
+        if (prevFile == NULL || (unsigned)(fileResEnd - src) != prevFileLen ||
             strncmp(src, prevFile, prevFileLen))
         {
             prevFile = src;
@@ -315,6 +294,34 @@ void ScintillaViewUI::parseCmd(CTextA& dst, char* src, unsigned searchLen)
         dst.append(src, lineResEnd - src);
         src = lineResEnd;
     }
+
+    dst += "\n";
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::parseFindFile(CTextA& dst, char* src)
+{
+    char* eol;
+
+    for (;;)
+    {
+        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+            src++;
+        if (*src == 0) break;
+
+        eol = src;
+        while (*eol != '\n' && *eol != '\r' && *eol != 0)
+            eol++;
+
+        dst += "\n\t";
+        dst.append(src, eol - src);
+        src = eol;
+    }
+
+    dst += "\n";
 }
 
 
@@ -342,13 +349,10 @@ void ScintillaViewUI::prepare()
  */
 void ScintillaViewUI::add(CmdData& cmd)
 {
-    prepare();
-
     _branch = cmd;
 
-    CTextA uiBuf(cmd.GetName());
-
     // Add the search header - cmd name + search tag + project path
+    CTextA uiBuf(cmd.GetName());
     uiBuf += " \"";
     uiBuf += _branch._search;
     uiBuf += "\" in \"";
@@ -359,30 +363,18 @@ void ScintillaViewUI::add(CmdData& cmd)
     if (_branch._cmdID == FIND_FILE)
         parseFindFile(uiBuf, cmd.GetResult());
     else
-        parseCmd(uiBuf, cmd.GetResult(), strlen(_branch._search));
+        parseCmd(uiBuf, cmd.GetResult());
 
     sendSci(SCI_SETREADONLY, 0);
     sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(uiBuf.C_str()));
     sendSci(SCI_SETREADONLY, 1);
-    sendSci(SCI_SETSEL);
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::removeAll()
-{
-    AUTOLOCK(_lock);
-
-    sendSci(SCI_SETREADONLY, 0);
-    sendSci(SCI_CLEARALL);
-    sendSci(SCI_SETREADONLY, 1);
+    const int line1pos = sendSci(SCI_POSITIONFROMLINE, 1);
+    sendSci(SCI_SETSEL, line1pos, line1pos);
 
     INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
-    npp.HideDockingWin(_hWnd);
-    SetFocus(npp.ReadSciHandle());
+    npp.ShowDockingWin(_hWnd);
+    SetFocus(_hWnd);
 }
 
 
@@ -462,14 +454,21 @@ bool ScintillaViewUI::openItem(int lineNum)
 /**
  *  \brief
  */
-void ScintillaViewUI::styleSearchWord(int lineNum, int startOffset)
+void ScintillaViewUI::styleSearchWord(int lineNum, int posOffset)
 {
     struct TextToFind ttf = {0};
     ttf.lpstrText = const_cast<char*>(_branch._search);
-    ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + startOffset;
+    ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + posOffset;
     ttf.chrg.cpMax = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
-    if (sendSci(SCI_FINDTEXT, SCFIND_MATCHCASE,
+    int searchFlags = 0;
+    if (_branch._cmdID != FIND_FILE)
+        searchFlags |= SCFIND_MATCHCASE;
+    if (_branch._cmdID != FIND_FILE &&
+        _branch._cmdID != GREP && _branch._cmdID != FIND_LITERAL)
+        searchFlags |= SCFIND_WHOLEWORD;
+
+    if (sendSci(SCI_FINDTEXT, searchFlags,
             reinterpret_cast<LPARAM>(&ttf)) != -1)
     {
         sendSci(SCI_STARTSTYLING, ttf.chrgText.cpMin, 0xFF);
@@ -496,39 +495,42 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
         startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
     {
         int lineLen = sendSci(SCI_LINELENGTH, lineNum);
-        if (lineLen > 0)
-        {
-            char firstChar = (char)sendSci(SCI_GETCHARAT, startPos);
-            char secondChar = (char)sendSci(SCI_GETCHARAT, startPos + 1);
+        if (lineLen == 0)
+            continue;
 
-            if (firstChar == '\t')
+        if ((char)sendSci(SCI_GETCHARAT, startPos) != '\t')
+        {
+            sendSci(SCI_STARTSTYLING, startPos, 0xFF);
+            sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_HEADER);
+
+            int pathLen = strlen(_branch._projectPath);
+            startPos = sendSci(SCI_GETLINEENDPOSITION, lineNum) - pathLen - 1;
+
+            sendSci(SCI_STARTSTYLING, startPos, 0xFF);
+            sendSci(SCI_SETSTYLING, pathLen, SCE_GTAGS_PROJECT_PATH);
+            sendSci(SCI_SETFOLDLEVEL, lineNum,
+                    SEARCH_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+        }
+        else
+        {
+            if ((char)sendSci(SCI_GETCHARAT, startPos + 1) != '\t')
             {
-                if (secondChar == '\t')
+                sendSci(SCI_STARTSTYLING, startPos, 0xFF);
+                sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
+                if (_branch._cmdID == FIND_FILE)
                 {
-                    styleSearchWord(lineNum, 7);
+                    styleSearchWord(lineNum, 1);
                 }
                 else
                 {
-                    sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-                    sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE_HEADER);
-                    if (_branch._cmdID == FIND_FILE)
-                    {
-                        styleSearchWord(lineNum, 1);
-                    }
-                    else
-                    {
-                        sendSci(SCI_SETFOLDLEVEL, lineNum,
-                                FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
-                        sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
-                    }
+                    sendSci(SCI_SETFOLDLEVEL, lineNum,
+                            FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+                    sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
                 }
             }
             else
             {
-                sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-                sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_SEARCH_HEADER);
-                sendSci(SCI_SETFOLDLEVEL, lineNum,
-                        SEARCH_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+                styleSearchWord(lineNum, 7);
             }
         }
     }
@@ -540,15 +542,21 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
  */
 void ScintillaViewUI::onDoubleClick(SCNotification* notify)
 {
-    AUTOLOCK(_lock);
+    if (!_lock.TryLock())
+        return;
 
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
     sendSci(SCI_GOTOLINE, lineNum); // Clear double-click auto-selection
 
-    if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-        sendSci(SCI_TOGGLEFOLD, lineNum);
-    else
-        openItem(lineNum);
+    if (sendSci(SCI_LINELENGTH, lineNum))
+    {
+        if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+            sendSci(SCI_TOGGLEFOLD, lineNum);
+        else
+            openItem(lineNum);
+    }
+
+    _lock.Unlock();
 }
 
 
@@ -557,13 +565,17 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
  */
 void ScintillaViewUI::onMarginClick(SCNotification* notify)
 {
-    AUTOLOCK(_lock);
+    if (!_lock.TryLock())
+        return;
 
     if (notify->margin == 1)
     {
         const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
-        sendSci(SCI_TOGGLEFOLD, lineNum);
+        if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+            sendSci(SCI_TOGGLEFOLD, lineNum);
     }
+
+    _lock.Unlock();
 }
 
 
@@ -572,17 +584,44 @@ void ScintillaViewUI::onMarginClick(SCNotification* notify)
  */
 void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 {
-    AUTOLOCK(_lock);
+    if (!_lock.TryLock())
+        return;
 
     if (notify->ch == ' ')
     {
         const int lineNum =
                 sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
-        if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-            sendSci(SCI_TOGGLEFOLD, lineNum);
-        else
-            openItem(lineNum);
+        if (sendSci(SCI_LINELENGTH, lineNum))
+        {
+            if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+                sendSci(SCI_TOGGLEFOLD, lineNum);
+            else
+                openItem(lineNum);
+        }
     }
+
+    _lock.Unlock();
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::onContextMenu()
+{
+    if (!_lock.TryLock())
+        return;
+
+    sendSci(SCI_SETREADONLY, 0);
+    sendSci(SCI_CLEARALL);
+    sendSci(SCI_SETREADONLY, 1);
+
+    INpp& npp = INpp::Get();
+    npp.UpdateDockingWin(_hWnd);
+    npp.HideDockingWin(_hWnd);
+    SetFocus(npp.ReadSciHandle());
+
+    _lock.Unlock();
 }
 
 
@@ -643,7 +682,7 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
         case WM_CONTEXTMENU:
             ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            ui->removeAll();
+            ui->onContextMenu();
             break;
 
         case WM_SIZE:

@@ -147,7 +147,7 @@ HWND AutoCompleteUI::composeWindow(const CmdData& cmd)
         return NULL;
     }
 
-    ShowWindow(_hwnd, SW_SHOW);
+    ShowWindow(_hwnd, SW_SHOWNORMAL);
     UpdateWindow(_hwnd);
 
     return _hwnd;

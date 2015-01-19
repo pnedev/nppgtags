@@ -65,7 +65,7 @@ private:
     struct Branch
     {
         const Branch& operator=(const GTags::CmdData& cmd);
-        bool operator==(const Branch& branch) const
+        inline bool operator==(const Branch& branch) const
         {
             return (_cmdID == branch._cmdID &&
                     !strcmp(_projectPath, branch._projectPath) &&
@@ -89,27 +89,28 @@ private:
     ScintillaViewUI(const ScintillaViewUI&);
     ~ScintillaViewUI();
 
-    LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
+    inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
         return _sciFunc(_sciPtr, static_cast<unsigned int>(Msg),
                 static_cast<uptr_t>(wParam), static_cast<sptr_t>(lParam));
     }
 
     void setStyle(int style, COLORREF fore = cBlack, COLORREF back = cWhite,
-            bool bold = false, int size = 0, const char *font = NULL);
+            bool bold = false, bool italic = false,
+            int size = 0, const char *font = NULL);
 
     void composeWindow();
+    void parseCmd(CTextA& dst, char* src);
     void parseFindFile(CTextA& dst, char* src);
-    void parseCmd(CTextA& dst, char* src, unsigned searchLen);
     void prepare();
     void add(GTags::CmdData& cmd);
-    void removeAll();
     bool openItem(int lineNum);
-    void styleSearchWord(int lineNum, int startOffset = 0);
+    void styleSearchWord(int lineNum, int posOffset = 0);
     void onStyleNeeded(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
+    void onContextMenu();
     void onResize(int width, int height);
 
     Mutex _lock;

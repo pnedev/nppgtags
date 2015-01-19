@@ -38,7 +38,7 @@ class ActivityWindow
 {
 public:
     static int Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
-            const TCHAR *text, HANDLE proc_hndl, int showDelay_ms);
+            const TCHAR *text, HANDLE procHndl, int showDelay_ms);
 
 private:
     static const TCHAR cClassName[];
@@ -52,9 +52,9 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    ActivityWindow(HWND hOwnerWnd, HANDLE proc_hndl, int showDelay_ms,
+    ActivityWindow(HWND hOwnerWnd, HANDLE procHndl, int showDelay_ms,
             int refCount) :
-        _hOwnerWnd(hOwnerWnd), _hProc(proc_hndl), _hFont(NULL),
+        _hOwnerWnd(hOwnerWnd), _hProc(procHndl), _hFont(NULL),
         _showDelay_ms(showDelay_ms), _initRefCount(refCount),
         _exitCode(1) {}
     ActivityWindow(const ActivityWindow &);

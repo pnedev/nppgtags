@@ -45,13 +45,13 @@ volatile LONG ActivityWindow::RefCount = 0;
  *  \brief
  */
 int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
-        const TCHAR* text, HANDLE proc_hndl, int showDelay_ms)
+        const TCHAR* text, HANDLE procHndl, int showDelay_ms)
 {
-    if (!proc_hndl)
+    if (!procHndl)
         return -1;
 
     DWORD dwRet;
-    GetExitCodeProcess(proc_hndl, &dwRet);
+    GetExitCodeProcess(procHndl, &dwRet);
     if (dwRet != STILL_ACTIVE)
         return 0;
 
@@ -78,7 +78,7 @@ int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
         InitCommonControlsEx(&icex);
     }
 
-    ActivityWindow aw(hOwnerWnd, proc_hndl, showDelay_ms, (int)RefCount);
+    ActivityWindow aw(hOwnerWnd, procHndl, showDelay_ms, (int)RefCount);
     aw.composeWindow(hInst, width, text, showDelay_ms);
 
     BOOL r;
@@ -117,7 +117,7 @@ void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
 
     if (!noAdjust)
     {
-        AdjustWindowRect(&win, GetWindowLongPtr(hwnd, GWL_STYLE), FALSE);
+        AdjustWindowRect(&win, GetWindowLong(hwnd, GWL_STYLE), FALSE);
 
         width = win.right - win.left;
         height = win.bottom - win.top;
@@ -211,9 +211,9 @@ HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
 
     if (showDelay_ms <= 0)
     {
-        ShowWindow(hMainWin, SW_SHOW);
+        ShowWindow(hMainWin, SW_SHOWNORMAL);
         UpdateWindow(hMainWin);
-        SetForegroundWindow(_hOwnerWnd);
+        SetFocus(_hOwnerWnd);
     }
 
     return hMainWin;
@@ -238,9 +238,9 @@ void ActivityWindow::onTimerRefresh(HWND hwnd)
         _showDelay_ms -= cUpdate_ms;
         if (_showDelay_ms <= 0)
         {
-            ShowWindow(hwnd, SW_SHOW);
+            ShowWindow(hwnd, SW_SHOWNORMAL);
             UpdateWindow(hwnd);
-            SetForegroundWindow(_hOwnerWnd);
+            SetFocus(_hOwnerWnd);
         }
     }
     else
