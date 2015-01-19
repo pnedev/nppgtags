@@ -264,7 +264,7 @@ void AutoCompleteUI::resizeLV()
     win.right   = win.left + lvWidth;
     win.bottom  = win.top + lvHeight;
 
-    AdjustWindowRect(&win, GetWindowLong(_hwnd, GWL_STYLE), FALSE);
+    AdjustWindowRect(&win, GetWindowLongPtr(_hwnd, GWL_STYLE), FALSE);
     lvWidth     = win.right - win.left;
     lvHeight    = win.bottom - win.top;
 

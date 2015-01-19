@@ -292,7 +292,7 @@ int IOWindow::onAutoSize(REQRESIZE* pReqResize)
     if (width < _minWidth) width = _minWidth;
     if (height < _minHeight) height = _minHeight;
 
-    RECT win = IOWindow::adjustSizeAndPos(GetWindowLong(_hWnd, GWL_STYLE),
+    RECT win = IOWindow::adjustSizeAndPos(GetWindowLongPtr(_hWnd, GWL_STYLE),
             width, height);
     MoveWindow(_hWnd, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);

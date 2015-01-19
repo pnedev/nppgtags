@@ -117,7 +117,7 @@ void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
 
     if (!noAdjust)
     {
-        AdjustWindowRect(&win, GetWindowLong(hwnd, GWL_STYLE), FALSE);
+        AdjustWindowRect(&win, GetWindowLongPtr(hwnd, GWL_STYLE), FALSE);
 
         width = win.right - win.left;
         height = win.bottom - win.top;

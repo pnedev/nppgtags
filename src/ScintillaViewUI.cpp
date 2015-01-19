@@ -32,10 +32,10 @@
 #include <commctrl.h>
 
 
-#define SCE_GTAGS_HEADER         151
-#define SCE_GTAGS_PROJECT_PATH    152
-#define SCE_GTAGS_FILE           153
-#define SCE_GTAGS_WORD2SEARCH           154
+#define SCE_GTAGS_HEADER        151
+#define SCE_GTAGS_PROJECT_PATH  152
+#define SCE_GTAGS_FILE          153
+#define SCE_GTAGS_WORD2SEARCH   154
 
 
 enum
