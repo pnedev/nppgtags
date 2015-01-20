@@ -59,17 +59,17 @@ public:
 
 private:
     /**
-     *  \struct  Branch
+     *  \struct  Tab
      *  \brief
      */
-    struct Branch
+    struct Tab
     {
-        const Branch& operator=(const GTags::CmdData& cmd);
-        inline bool operator==(const Branch& branch) const
+        const Tab& operator=(const GTags::CmdData& cmd);
+        inline bool operator==(const Tab& tab) const
         {
-            return (_cmdID == branch._cmdID &&
-                    !strcmp(_projectPath, branch._projectPath) &&
-                    !strcmp(_search, branch._search));
+            return (_cmdID == tab._cmdID &&
+                    !strcmp(_projectPath, tab._projectPath) &&
+                    !strcmp(_search, tab._search));
         }
 
         int _cmdID;
@@ -100,10 +100,9 @@ private:
             int size = 0, const char *font = NULL);
 
     void composeWindow();
-    void parseCmd(CTextA& dst, char* src);
-    void parseFindFile(CTextA& dst, char* src);
-    void prepare();
     void add(GTags::CmdData& cmd);
+    void parseCmd(CTextA& dst, const char* src);
+    void parseFindFile(CTextA& dst, const char* src);
     bool openItem(int lineNum);
     void styleSearchWord(int lineNum, int posOffset = 0);
     void onStyleNeeded(SCNotification* notify);
@@ -119,6 +118,6 @@ private:
 	SciFnDirect _sciFunc;
 	sptr_t _sciPtr;
 
-    // Only one branch possible for now - implement tab ctrl
-    Branch _branch;
+    // Only one tab possible for now - implement tab ctrl
+    Tab _tab;
 };

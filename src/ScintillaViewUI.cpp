@@ -32,12 +32,17 @@
 #include <commctrl.h>
 
 
-#define SCE_GTAGS_HEADER        151
-#define SCE_GTAGS_PROJECT_PATH  152
-#define SCE_GTAGS_FILE          153
-#define SCE_GTAGS_WORD2SEARCH   154
+// Scintilla user defined styles IDs
+enum
+{
+    SCE_GTAGS_HEADER = 151,
+    SCE_GTAGS_PROJECT_PATH,
+    SCE_GTAGS_FILE,
+    SCE_GTAGS_WORD2SEARCH
+};
 
 
+// Scintilla fold levels
 enum
 {
     SEARCH_HEADER_LVL = SC_FOLDLEVELBASE + 1,
@@ -57,9 +62,6 @@ using namespace GTags;
  */
 void ScintillaViewUI::Show(CmdData& cmd)
 {
-    AUTOLOCK(_lock);
-
-    prepare();
     add(cmd);
 }
 
@@ -89,8 +91,8 @@ void ScintillaViewUI::ResetStyle()
 /**
  *  \brief
  */
-const ScintillaViewUI::Branch&
-        ScintillaViewUI::Branch::operator=(const GTags::CmdData& cmd)
+const ScintillaViewUI::Tab&
+        ScintillaViewUI::Tab::operator=(const GTags::CmdData& cmd)
 {
     _cmdID = cmd.GetID();
     size_t cnt;
@@ -237,13 +239,49 @@ void ScintillaViewUI::composeWindow()
 /**
  *  \brief
  */
-void ScintillaViewUI::parseCmd(CTextA& dst, char* src)
+void ScintillaViewUI::add(CmdData& cmd)
 {
-    unsigned searchLen = strlen(_branch._search);
-    char* lineRes;
-    char* lineResEnd;
-    char* fileResEnd;
-    char* prevFile = NULL;
+    _tab = cmd;
+
+    // Add the search header - cmd name + search word + project path
+    CTextA uiBuf(cmd.GetName());
+    uiBuf += " \"";
+    uiBuf += _tab._search;
+    uiBuf += "\" in \"";
+    uiBuf += _tab._projectPath;
+    uiBuf += "\"";
+
+    // parsing result buffer and composing UI buffer
+    if (_tab._cmdID == FIND_FILE)
+        parseFindFile(uiBuf, cmd.GetResult());
+    else
+        parseCmd(uiBuf, cmd.GetResult());
+
+    AUTOLOCK(_lock);
+
+    sendSci(SCI_SETREADONLY, 0);
+    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(uiBuf.C_str()));
+    sendSci(SCI_SETREADONLY, 1);
+    const int line1pos = sendSci(SCI_POSITIONFROMLINE, 1);
+    sendSci(SCI_SETSEL, line1pos, line1pos);
+
+    INpp& npp = INpp::Get();
+    npp.UpdateDockingWin(_hWnd);
+    npp.ShowDockingWin(_hWnd);
+    SetFocus(_hWnd);
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::parseCmd(CTextA& dst, const char* src)
+{
+    const unsigned searchLen = strlen(_tab._search);
+    const char* lineRes;
+    const char* lineResEnd;
+    const char* fileResEnd;
+    const char* prevFile = NULL;
     unsigned prevFileLen = 0;
 
     for (;;)
@@ -252,7 +290,7 @@ void ScintillaViewUI::parseCmd(CTextA& dst, char* src)
             src++;
         if (*src == 0) break;
 
-        src += searchLen; // skip search tag from result buffer
+        src += searchLen; // skip search word from result buffer
         while (*src == ' ' || *src == '\t')
             src++;
 
@@ -302,9 +340,9 @@ void ScintillaViewUI::parseCmd(CTextA& dst, char* src)
 /**
  *  \brief
  */
-void ScintillaViewUI::parseFindFile(CTextA& dst, char* src)
+void ScintillaViewUI::parseFindFile(CTextA& dst, const char* src)
 {
-    char* eol;
+    const char* eol;
 
     for (;;)
     {
@@ -322,59 +360,6 @@ void ScintillaViewUI::parseFindFile(CTextA& dst, char* src)
     }
 
     dst += "\n";
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::prepare()
-{
-    const char msg[] = "Filling results, please wait...";
-
-    sendSci(SCI_SETREADONLY, 0);
-    sendSci(SCI_CLEARALL);
-    sendSci(SCI_INSERTTEXT, 0, reinterpret_cast<LPARAM>(msg));
-    sendSci(SCI_SETREADONLY, 1);
-    sendSci(SCI_SETSEL);
-
-    INpp& npp = INpp::Get();
-    npp.UpdateDockingWin(_hWnd);
-    npp.ShowDockingWin(_hWnd);
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::add(CmdData& cmd)
-{
-    _branch = cmd;
-
-    // Add the search header - cmd name + search tag + project path
-    CTextA uiBuf(cmd.GetName());
-    uiBuf += " \"";
-    uiBuf += _branch._search;
-    uiBuf += "\" in \"";
-    uiBuf += _branch._projectPath;
-    uiBuf += "\"";
-
-    // parsing result buffer and composing UI buffer
-    if (_branch._cmdID == FIND_FILE)
-        parseFindFile(uiBuf, cmd.GetResult());
-    else
-        parseCmd(uiBuf, cmd.GetResult());
-
-    sendSci(SCI_SETREADONLY, 0);
-    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(uiBuf.C_str()));
-    sendSci(SCI_SETREADONLY, 1);
-    const int line1pos = sendSci(SCI_POSITIONFROMLINE, 1);
-    sendSci(SCI_SETSEL, line1pos, line1pos);
-
-    INpp& npp = INpp::Get();
-    npp.UpdateDockingWin(_hWnd);
-    npp.ShowDockingWin(_hWnd);
-    SetFocus(_hWnd);
 }
 
 
@@ -411,7 +396,7 @@ bool ScintillaViewUI::openItem(int lineNum)
     for (i = 1; lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
     lineTxt[i] = 0;
 
-    CPath file(_branch._projectPath);
+    CPath file(_tab._projectPath);
     CText str(&lineTxt[1]);
 	file += str.C_str();
     delete [] lineTxt;
@@ -437,9 +422,9 @@ bool ScintillaViewUI::openItem(int lineNum)
     }
 
     bool wholeWord =
-            (_branch._cmdID != GREP && _branch._cmdID != FIND_LITERAL);
+            (_tab._cmdID != GREP && _tab._cmdID != FIND_LITERAL);
 
-    if (!npp.SearchText(_branch._search, true, wholeWord,
+    if (!npp.SearchText(_tab._search, true, wholeWord,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))
     {
         MessageBox(npp.GetHandle(),
@@ -457,15 +442,15 @@ bool ScintillaViewUI::openItem(int lineNum)
 void ScintillaViewUI::styleSearchWord(int lineNum, int posOffset)
 {
     struct TextToFind ttf = {0};
-    ttf.lpstrText = const_cast<char*>(_branch._search);
+    ttf.lpstrText = const_cast<char*>(_tab._search);
     ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + posOffset;
     ttf.chrg.cpMax = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
     int searchFlags = 0;
-    if (_branch._cmdID != FIND_FILE)
+    if (_tab._cmdID != FIND_FILE)
         searchFlags |= SCFIND_MATCHCASE;
-    if (_branch._cmdID != FIND_FILE &&
-        _branch._cmdID != GREP && _branch._cmdID != FIND_LITERAL)
+    if (_tab._cmdID != FIND_FILE &&
+        _tab._cmdID != GREP && _tab._cmdID != FIND_LITERAL)
         searchFlags |= SCFIND_WHOLEWORD;
 
     if (sendSci(SCI_FINDTEXT, searchFlags,
@@ -503,7 +488,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             sendSci(SCI_STARTSTYLING, startPos, 0xFF);
             sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_HEADER);
 
-            int pathLen = strlen(_branch._projectPath);
+            int pathLen = strlen(_tab._projectPath);
             startPos = sendSci(SCI_GETLINEENDPOSITION, lineNum) - pathLen - 1;
 
             sendSci(SCI_STARTSTYLING, startPos, 0xFF);
@@ -517,7 +502,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             {
                 sendSci(SCI_STARTSTYLING, startPos, 0xFF);
                 sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
-                if (_branch._cmdID == FIND_FILE)
+                if (_tab._cmdID == FIND_FILE)
                 {
                     styleSearchWord(lineNum, 1);
                 }
