@@ -151,11 +151,13 @@ private:
     unsigned expand(unsigned newLen);
 
     unsigned _size;
+    unsigned _len;
     TCHAR *_str;
     TCHAR _buf[ALLOC_CHUNK_SIZE];
 
 public:
-    CText() : _size(ALLOC_CHUNK_SIZE), _str(_buf) { _buf[0] = 0; }
+    CText() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
+    CText(unsigned size);
     CText(const TCHAR* str);
     CText(const char* str);
     CText(const CText& txt);
@@ -182,13 +184,12 @@ public:
     const CText& operator+=(const TCHAR* str);
     const CText& operator+=(const char* str);
     const CText& operator+=(const CText& txt);
+    const CText& append(const TCHAR* str, unsigned len);
 
     inline TCHAR* C_str() { return _str; }
     inline const TCHAR* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
-    inline unsigned Len() const { return _tcslen(_str); }
-    inline void Clear() { _str[0] = 0; }
-    void ToUpper();
+    inline unsigned Len() const { return _len; }
 };
 
 
@@ -208,11 +209,13 @@ private:
     unsigned expand(unsigned newLen);
 
     unsigned _size;
+    unsigned _len;
     char *_str;
     char _buf[ALLOC_CHUNK_SIZE];
 
 public:
-    CTextA() : _size(ALLOC_CHUNK_SIZE), _str(_buf) { _buf[0] = 0; }
+    CTextA() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
+    CTextA(unsigned size);
     CTextA(const char* str);
     CTextA(const TCHAR* str);
     CTextA(const CTextA& txt);
@@ -244,9 +247,7 @@ public:
     inline char* C_str() { return _str; }
     inline const char* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
-    inline unsigned Len() const { return strlen(_str); }
-    inline void Clear() { _str[0] = 0; }
-    void ToUpper();
+    inline unsigned Len() const { return _len; }
 };
 
 
