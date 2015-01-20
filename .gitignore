@@ -1,4 +1,3 @@
-.editorconfig
 *TAGS
 GPATH
 *.suo
@@ -6,6 +5,7 @@ GPATH
 *.bat
 *.sh
 *.sln
+/Debug
 /Release
 /out
 /build
