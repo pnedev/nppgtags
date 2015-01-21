@@ -60,46 +60,13 @@ using namespace GTags;
 /**
  *  \brief
  */
-void ScintillaViewUI::Show(CmdData& cmd)
-{
-    add(cmd);
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::ResetStyle()
-{
-    INpp& npp = INpp::Get();
-
-    char font[32];
-    npp.GetFontNameA(font, 32);
-    int size = npp.GetFontSize();
-
-    sendSci(SCI_STYLERESETDEFAULT);
-    setStyle(STYLE_DEFAULT, cBlack, cWhite, false, false, size, font);
-    sendSci(SCI_STYLECLEARALL);
-
-    setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
-    setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
-    setStyle(SCE_GTAGS_FILE, RGB(0,0,255), cWhite, true);
-    setStyle(SCE_GTAGS_WORD2SEARCH, RGB(255,0,0), cWhite, true);
-}
-
-
-/**
- *  \brief
- */
 const ScintillaViewUI::Tab&
         ScintillaViewUI::Tab::operator=(const GTags::CmdData& cmd)
 {
     _cmdID = cmd.GetID();
-    size_t cnt;
 
-    wcstombs_s(&cnt, _projectPath, sizeof(_projectPath),
-            cmd.GetDBPath(), _TRUNCATE);
-    wcstombs_s(&cnt, _search, sizeof(_search), cmd.GetTag(), _TRUNCATE);
+    Tools::wtoa_str(_projectPath, _countof(_projectPath), cmd.GetDBPath());
+    Tools::wtoa_str(_search, _countof(_search), cmd.GetTag());
 
     return *this;
 }
@@ -108,8 +75,11 @@ const ScintillaViewUI::Tab&
 /**
  *  \brief
  */
-ScintillaViewUI::ScintillaViewUI()
+int ScintillaViewUI::Init()
 {
+    if (_hWnd)
+        return 0;
+
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
@@ -120,7 +90,8 @@ ScintillaViewUI::ScintillaViewUI()
 
     RegisterClass(&wc);
 
-    composeWindow();
+    if (composeWindow())
+        return -1;
 
     tTbData data        = {0};
     data.hClient        = _hWnd;
@@ -128,26 +99,76 @@ ScintillaViewUI::ScintillaViewUI()
     data.uMask          = 0;
     data.pszAddInfo     = NULL;
     data.uMask          = DWS_DF_CONT_BOTTOM;
-    data.pszModuleName  = DllPath.GetFilename_C_str();
+    data.pszModuleName  = DllPath.GetFilename();
     data.dlgID          = 0;
 
     INpp& npp = INpp::Get();
     npp.RegisterWin(_hWnd);
     npp.RegisterDockingWin(data);
     npp.HideDockingWin(_hWnd);
+
+    return 0;
 }
 
 
 /**
  *  \brief
  */
-ScintillaViewUI::~ScintillaViewUI()
+void ScintillaViewUI::DeInit()
 {
-    INpp& npp = INpp::Get();
-    npp.DestroySciHandle(_hSci);
-    npp.UnregisterWin(_hWnd);
+    if (_hWnd == NULL)
+        return;
 
-    UnregisterClass(cClassName, NULL);
+    INpp& npp = INpp::Get();
+
+    if (_hSci)
+    {
+        npp.DestroySciHandle(_hSci);
+        _hSci = NULL;
+    }
+
+    npp.UnregisterWin(_hWnd);
+    SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    _hWnd = NULL;
+
+    UnregisterClass(cClassName, HInst);
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::Show(CmdData& cmd)
+{
+    if (_hWnd == NULL)
+        return;
+
+    add(cmd);
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::ResetStyle()
+{
+    if (_hWnd == NULL)
+        return;
+
+    INpp& npp = INpp::Get();
+
+    char font[32];
+    npp.GetFontName(font, _countof(font));
+    int size = npp.GetFontSize();
+
+    sendSci(SCI_STYLERESETDEFAULT);
+    setStyle(STYLE_DEFAULT, cBlack, cWhite, false, false, size, font);
+    sendSci(SCI_STYLECLEARALL);
+
+    setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
+    setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
+    setStyle(SCE_GTAGS_FILE, cBlue, cWhite, true);
+    setStyle(SCE_GTAGS_WORD2SEARCH, cRed, cWhite, true);
 }
 
 
@@ -172,7 +193,7 @@ void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
 /**
  *  \brief
  */
-void ScintillaViewUI::composeWindow()
+int ScintillaViewUI::composeWindow()
 {
     INpp& npp = INpp::Get();
     HWND hOwnerWnd = npp.GetHandle();
@@ -183,10 +204,23 @@ void ScintillaViewUI::composeWindow()
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
             hOwnerWnd, NULL, HInst, (LPVOID)this);
+    if (_hWnd == NULL)
+        return -1;
 
     _hSci = npp.CreateSciHandle(_hWnd);
-	_sciFunc = (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
-	_sciPtr = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
+    if (_hSci)
+    {
+        _sciFunc =
+                (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
+        _sciPtr = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
+    }
+    if (_hSci == NULL || _sciFunc == NULL || _sciPtr == NULL)
+    {
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        _hWnd = NULL;
+        _hSci = NULL;
+        return -1;
+    }
 
     AdjustWindowRect(&win, style, FALSE);
     MoveWindow(_hWnd, win.left, win.top,
@@ -233,6 +267,8 @@ void ScintillaViewUI::composeWindow()
     sendSci(SCI_SETREADONLY, 1);
 
     ShowWindow(_hSci, SW_SHOWNORMAL);
+
+    return 0;
 }
 
 
@@ -411,7 +447,7 @@ bool ScintillaViewUI::openItem(int lineNum)
     }
 
     DocLocation::Get().Push();
-    npp.OpenFile(file);
+    npp.OpenFile(file.C_str());
     SetFocus(npp.ReadSciHandle());
 
     // GTags command is FIND_FILE

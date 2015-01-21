@@ -68,30 +68,72 @@ public:
     inline const TCHAR* GetTag() const { return _tag.C_str(); }
     inline unsigned GetTagLen() const { return _tag.Len(); }
     inline bool Error() const { return _error; }
-    inline bool NoResult() const { return !_result.Len(); }
-    inline char* GetResult() { return _result.C_str(); }
-    inline const char* GetResult() const { return _result.C_str(); }
-    inline unsigned GetResultLen() const { return _result.Len(); }
+    inline bool NoResult() const { return (_result == NULL); }
+    inline char* GetResult() { return _result; }
+    inline const char* GetResult() const { return _result; }
+    inline unsigned GetResultLen() const { return _len; }
 
 protected:
     CmdData(CmdID_t id, const TCHAR* name, DBhandle db,
             const TCHAR* tag, const char* result = NULL) :
-        _id(id), _error(false), _tag(tag)
+        _id(id), _error(false), _result(NULL), _len(0), _tag(tag)
     {
         if (db)
             _dbPath = *db;
         _name[0] = 0;
         if (name)
-            _tcscpy_s(_name, 32, name);
+            _tcscpy_s(_name, _countof(_name), name);
         if (result)
-            _result = result;
+        {
+            _len = strlen(result);
+            _result = new char[_len + 1];
+            strcpy_s(_result, _len + 1, result);
+        }
     }
 
-    ~CmdData() {}
+    ~CmdData()
+    {
+        if (_result)
+            delete [] _result;
+    }
+
+    void SetResult(const char* result)
+    {
+        if (result == NULL)
+            return;
+
+        if (_result)
+            delete [] _result;
+
+        _len = strlen(result);
+        _result = new char[_len + 1];
+        strcpy_s(_result, _len + 1, result);
+    }
+
+    void AppendResult(const char* result)
+    {
+        if (result == NULL)
+            return;
+
+        char* oldResult = _result;
+        unsigned oldLen = _len;
+
+        _len += strlen(result);
+        _result = new char[_len + 1];
+
+        if (oldResult)
+        {
+            strcpy_s(_result, oldLen + 1, oldResult);
+            delete [] oldResult;
+        }
+
+        strcpy_s(_result + oldLen, _len + 1 - oldLen, result);
+    }
 
     CmdID_t _id;
     bool _error;
-    CTextA _result;
+    char* _result;
+    unsigned _len;
 
 private:
     friend class Cmd;

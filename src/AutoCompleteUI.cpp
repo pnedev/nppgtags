@@ -28,6 +28,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include "AutoCompleteUI.h"
 #include <commctrl.h>
+#include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
 
@@ -128,12 +129,12 @@ HWND AutoCompleteUI::composeWindow(const CmdData& cmd)
     _cmdResult  = cmd.GetResult();
 
     TCHAR buf[32];
-    _tcscpy_s(buf, 32, cmd.GetName());
+    _tcscpy_s(buf, _countof(buf), cmd.GetName());
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
     lvCol.pszText       = buf;
-    lvCol.cchTextMax    = 32;
+    lvCol.cchTextMax    = _countof(buf);
     lvCol.cx            = 300;
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
@@ -313,8 +314,7 @@ void AutoCompleteUI::onDblClick()
     ListView_GetItem(_hLVWnd, &lvItem);
 
     char str[128];
-    size_t cnt;
-    wcstombs_s(&cnt, str, 128, lvItem.pszText, _TRUNCATE);
+    Tools::wtoa_str(str, _countof(str), lvItem.pszText);
 
     INpp::Get().ReplaceWord(str);
     SendMessage(_hwnd, WM_CLOSE, 0, 0);

@@ -123,7 +123,7 @@ public:
     }
 
     unsigned StripFilename();
-    const TCHAR* GetFilename_C_str() const;
+    const TCHAR* GetFilename() const;
     unsigned Up();
     bool Contains(const TCHAR* pathStr) const;
     bool Contains(const CPath& path) const;
@@ -135,11 +135,18 @@ private:
 };
 
 
+#ifdef UNICODE
+#define CText     CTextW
+#else
+#define CText     CTextA
+#endif
+
+
 /**
- *  \class  CText
+ *  \class  CTextW
  *  \brief
  */
-class CText
+class CTextW
 {
 private:
     enum
@@ -152,42 +159,42 @@ private:
 
     unsigned _size;
     unsigned _len;
-    TCHAR *_str;
-    TCHAR _buf[ALLOC_CHUNK_SIZE];
+    wchar_t *_str;
+    wchar_t _buf[ALLOC_CHUNK_SIZE];
 
 public:
-    CText() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
-    CText(unsigned size);
-    CText(const TCHAR* str);
-    CText(const char* str);
-    CText(const CText& txt);
-    ~CText()
+    CTextW() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
+    CTextW(unsigned size);
+    CTextW(const wchar_t* str);
+    CTextW(const char* str);
+    CTextW(const CTextW& txt);
+    ~CTextW()
     {
         if (_str != _buf)
             delete [] _str;
     }
 
-    const CText& operator=(const TCHAR* str);
-    const CText& operator=(const char* str);
-    const CText& operator=(const CText& txt);
+    const CTextW& operator=(const wchar_t* str);
+    const CTextW& operator=(const char* str);
+    const CTextW& operator=(const CTextW& txt);
 
-    inline bool operator==(const TCHAR* str) const
+    inline bool operator==(const wchar_t* str) const
     {
-        return !_tcscmp(_str, str);
+        return !wcscmp(_str, str);
     }
 
-    inline bool operator==(const CText& txt) const
+    inline bool operator==(const CTextW& txt) const
     {
-        return !_tcscmp(_str, txt._str);
+        return !wcscmp(_str, txt._str);
     }
 
-    const CText& operator+=(const TCHAR* str);
-    const CText& operator+=(const char* str);
-    const CText& operator+=(const CText& txt);
-    const CText& append(const TCHAR* str, unsigned len);
+    const CTextW& operator+=(const wchar_t* str);
+    const CTextW& operator+=(const char* str);
+    const CTextW& operator+=(const CTextW& txt);
+    const CTextW& append(const wchar_t* str, unsigned len);
 
-    inline TCHAR* C_str() { return _str; }
-    inline const TCHAR* C_str() const { return _str; }
+    inline wchar_t* C_str() { return _str; }
+    inline const wchar_t* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }
 };
@@ -217,7 +224,7 @@ public:
     CTextA() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
     CTextA(unsigned size);
     CTextA(const char* str);
-    CTextA(const TCHAR* str);
+    CTextA(const wchar_t* str);
     CTextA(const CTextA& txt);
     ~CTextA()
     {
@@ -226,7 +233,7 @@ public:
     }
 
     const CTextA& operator=(const char* str);
-    const CTextA& operator=(const TCHAR* str);
+    const CTextA& operator=(const wchar_t* str);
     const CTextA& operator=(const CTextA& txt);
 
     inline bool operator==(const char* str) const
@@ -240,7 +247,7 @@ public:
     }
 
     const CTextA& operator+=(const char* str);
-    const CTextA& operator+=(const TCHAR* str);
+    const CTextA& operator+=(const wchar_t* str);
     const CTextA& operator+=(const CTextA& txt);
     const CTextA& append(const char* str, unsigned len);
 
@@ -256,16 +263,46 @@ namespace Tools
 
 void ReleaseKey(WORD virtKey);
 
-#ifdef DEVELOPMENT
-inline void Msg(const TCHAR* msg)
+
+inline unsigned wtoa_str(char* dst, unsigned dstSize, const wchar_t* src)
 {
-    MessageBox(NULL, msg, _T(""), MB_OK);
+    size_t cnt;
+
+    wcstombs_s(&cnt, dst, dstSize, src, _TRUNCATE);
+
+    return cnt;
 }
 
-inline void MsgA(const char* msg)
+
+inline unsigned atow_str(wchar_t* dst, unsigned dstSize, const char* src)
 {
-    MessageBoxA(NULL, msg, "", MB_OK);
+    size_t cnt;
+
+    mbstowcs_s(&cnt, dst, dstSize, src, _TRUNCATE);
+
+    return cnt;
 }
+
+
+#ifdef DEVELOPMENT
+
+#ifdef UNICODE
+#define Msg(x)     MsgW(x)
+#else
+#define Msg(x)     MsgA(x)
+#endif
+
+inline void MsgW(const wchar_t* msg, HWND hWnd = NULL)
+{
+    MessageBoxW(hWnd, msg, L"", MB_OK);
+}
+
+
+inline void MsgA(const char* msg, HWND hWnd = NULL)
+{
+    MessageBoxA(hWnd, msg, "", MB_OK);
+}
+
 #endif
 
 } // namespace Tools

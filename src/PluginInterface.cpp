@@ -19,6 +19,7 @@
 #include "PluginInterface.h"
 #include "Notepad_plus_msgs.h"
 #include "menuCmdID.h"
+#include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
 #include "ScintillaViewUI.h"
@@ -111,8 +112,9 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
     {
         case DLL_PROCESS_ATTACH:
         {
-            GetModuleFileName((HMODULE)hModule,
-                    GTags::DllPath.C_str(), CPath::MAX_LEN);
+            TCHAR moduleFileName[MAX_PATH];
+            GetModuleFileName((HMODULE)hModule, moduleFileName, MAX_PATH);
+            GTags::DllPath = moduleFileName;
 
             if (!checkForGTagsBinaries())
                 return FALSE;
@@ -122,6 +124,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
         }
 
         case DLL_PROCESS_DETACH:
+            ScintillaViewUI::Get().DeInit();
             GTags::HInst = NULL;
             break;
 
@@ -140,10 +143,13 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
 {
     INpp& npp = INpp::Get();
     npp.SetData(nppData);
-    npp.GetFontName(GTags::UIFontName, 32);
+
+    char font[32];
+    npp.GetFontName(font, _countof(font));
+    Tools::atow_str(GTags::UIFontName, _countof(GTags::UIFontName), font);
     GTags::UIFontSize = (unsigned)npp.GetFontSize();
 
-    ScintillaViewUI::Init();
+    ScintillaViewUI::Get().Init();
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
 
@@ -184,16 +190,18 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     {
         if (GTags::AutoUpdate)
         {
-            CPath fileSaved;
+            TCHAR filePath[MAX_PATH];
             INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom,
-                    fileSaved);
-            GTags::UpdateSingleFile(fileSaved.C_str());
+                    filePath);
+            GTags::UpdateSingleFile(filePath);
         }
     }
     else if (notifyCode->nmhdr.code == NPPN_WORDSTYLESUPDATED)
     {
         INpp& npp = INpp::Get();
-        npp.GetFontName(GTags::UIFontName, 32);
+        char font[32];
+        npp.GetFontName(font, _countof(font));
+        Tools::atow_str(GTags::UIFontName, _countof(GTags::UIFontName), font);
         GTags::UIFontSize = (unsigned)npp.GetFontSize();
         ScintillaViewUI::Get().ResetStyle();
     }

@@ -32,7 +32,6 @@
 #include "Notepad_plus_msgs.h"
 #include "Docking.h"
 #include "PluginInterface.h"
-#include "Common.h"
 
 
 /**
@@ -118,66 +117,54 @@ public:
                 0, (LPARAM)hSciWnd);
     }
 
-    inline void GetMainDir(CPath& mainPath) const
+    inline void GetMainDir(TCHAR* mainPath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY,
-                0, (LPARAM)mainPath.C_str());
+                0, (LPARAM)mainPath);
     }
 
-    inline void GetPluginsConfDir(CPath& confPath) const
+    inline void GetPluginsConfDir(TCHAR* confPath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR,
-                0, (LPARAM)confPath.C_str());
+                0, (LPARAM)confPath);
     }
 
-    inline void GetFilePath(CPath& filePath) const
+    inline void GetFilePath(TCHAR* filePath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETFULLCURRENTPATH,
-                0, (LPARAM)filePath.C_str());
+                0, (LPARAM)filePath);
     }
 
-    inline void GetFilePathFromBufID(int bufID, CPath& filePath) const
+    inline void GetFilePathFromBufID(int bufID, TCHAR* filePath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID,
-                bufID, (LPARAM)filePath.C_str());
+                bufID, (LPARAM)filePath);
     }
 
-    inline void GetFileNamePart(CPath& fileName) const
+    inline void GetFileNamePart(TCHAR* fileName) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETNAMEPART,
-                0, (LPARAM)fileName.C_str());
+                0, (LPARAM)fileName);
     }
 
-    inline int OpenFile(const CPath& filePath) const
+    inline int OpenFile(const TCHAR* filePath) const
     {
         if (!SendMessage(_nppData._nppHandle, NPPM_DOOPEN,
-                0, (LPARAM)filePath.C_str()))
+                0, (LPARAM)filePath))
             return -1;
         return 0;
     }
 
-    inline void SwitchToFile(const CPath& filePath) const
+    inline void SwitchToFile(const TCHAR* filePath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_SWITCHTOFILE,
-                0, (LPARAM)filePath.C_str());
+                0, (LPARAM)filePath);
     }
 
-    inline void GetFontNameA(char* fontName, int len) const
+    inline void GetFontName(char* fontName, int size) const
     {
-        fontName[0] = 0;
-        if (len >= 32)
-            SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)STYLE_DEFAULT,
-                    (LPARAM)fontName);
-    }
-
-    inline void GetFontName(TCHAR* fontName, int len) const
-    {
-        char fontNameA[32];
-        size_t cnt;
-
         SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)STYLE_DEFAULT,
-                (LPARAM)fontNameA);
-        mbstowcs_s(&cnt, fontName, len, fontNameA, _TRUNCATE);
+                (LPARAM)fontName);
     }
 
     inline int GetFontSize() const

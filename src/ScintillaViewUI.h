@@ -48,12 +48,8 @@ public:
         return Instance;
     }
 
-    // Use to create the static instance of the singleton
-    static inline void Init()
-    {
-        Get();
-    }
-
+    int Init();
+    void DeInit();
     void Show(GTags::CmdData& cmd);
     void ResetStyle();
 
@@ -73,21 +69,24 @@ private:
         }
 
         int _cmdID;
-        char _projectPath[CPath::MAX_LEN];
+        char _projectPath[MAX_PATH];
         char _search[GTags::cMaxTagLen];
     };
 
     static const COLORREF cBlack = RGB(0,0,0);
     static const COLORREF cWhite = RGB(255,255,255);
+    static const COLORREF cRed = RGB(255,0,0);
+    static const COLORREF cBlue = RGB(0,0,255);
 
     static const TCHAR cClassName[];
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    ScintillaViewUI();
+    ScintillaViewUI() :
+        _hWnd(NULL), _hSci(NULL), _sciFunc(NULL), _sciPtr(NULL) {}
     ScintillaViewUI(const ScintillaViewUI&);
-    ~ScintillaViewUI();
+    ~ScintillaViewUI() { DeInit(); };
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
@@ -99,7 +98,7 @@ private:
             bool bold = false, bool italic = false,
             int size = 0, const char *font = NULL);
 
-    void composeWindow();
+    int composeWindow();
     void add(GTags::CmdData& cmd);
     void parseCmd(CTextA& dst, const char* src);
     void parseFindFile(CTextA& dst, const char* src);

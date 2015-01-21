@@ -28,7 +28,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <tchar.h>
 #include <vector>
-#include "Common.h"
 #include "AutoLock.h"
 
 
@@ -53,7 +52,7 @@ private:
      */
     struct Location
     {
-        CPath filePath;
+        TCHAR filePath[MAX_PATH];
         long firstVisibleLine;
         long posInFile;
     };

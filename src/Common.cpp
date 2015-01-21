@@ -44,7 +44,7 @@ unsigned CPath::StripFilename()
 /**
  *  \brief
  */
-const TCHAR* CPath::GetFilename_C_str() const
+const TCHAR* CPath::GetFilename() const
 {
     int len;
 
@@ -129,13 +129,13 @@ bool CPath::IsContainedIn(const CPath& path) const
 /**
  *  \brief
  */
-CText::CText(unsigned size) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
+CTextW::CTextW(unsigned size) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 {
     _buf[0] = 0;
     if (_size < size)
     {
         _size = (size / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-        _str = new TCHAR[_size];
+        _str = new wchar_t[_size];
         _str[0] = 0;
     }
 }
@@ -144,18 +144,18 @@ CText::CText(unsigned size) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 /**
  *  \brief
  */
-CText::CText(const TCHAR* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
+CTextW::CTextW(const wchar_t* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 {
     _buf[0] = 0;
     if (str)
     {
-        _len = _tcslen(str);
+        _len = wcslen(str);
         if (_len >= _size)
         {
             _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-            _str = new TCHAR[_size];
+            _str = new wchar_t[_size];
         }
-        _tcscpy_s(_str, _size, str);
+        wcscpy_s(_str, _size, str);
     }
 }
 
@@ -163,7 +163,7 @@ CText::CText(const TCHAR* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 /**
  *  \brief
  */
-CText::CText(const char* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
+CTextW::CTextW(const char* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 {
     _buf[0] = 0;
     if (str)
@@ -172,7 +172,7 @@ CText::CText(const char* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
         if (_len >= _size)
         {
             _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-            _str = new TCHAR[_size];
+            _str = new wchar_t[_size];
         }
         size_t cnt;
         mbstowcs_s(&cnt, _str, _size, str, _TRUNCATE);
@@ -183,28 +183,28 @@ CText::CText(const char* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 /**
  *  \brief
  */
-CText::CText(const CText& txt) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
+CTextW::CTextW(const CTextW& txt) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 {
     _buf[0] = 0;
     if (_size < txt._size)
     {
         _size = txt._size;
-        _str = new TCHAR[_size];
+        _str = new wchar_t[_size];
     }
     _len = txt._len;
-    _tcscpy_s(_str, _size, txt._str);
+    wcscpy_s(_str, _size, txt._str);
 }
 
 
 /**
  *  \brief
  */
-const CText& CText::operator=(const TCHAR* str)
+const CTextW& CTextW::operator=(const wchar_t* str)
 {
     if (str)
     {
-        resize(_tcslen(str));
-        _tcscpy_s(_str, _size, str);
+        resize(wcslen(str));
+        wcscpy_s(_str, _size, str);
     }
 
     return *this;
@@ -214,7 +214,7 @@ const CText& CText::operator=(const TCHAR* str)
 /**
  *  \brief
  */
-const CText& CText::operator=(const char* str)
+const CTextW& CTextW::operator=(const char* str)
 {
     if (str)
     {
@@ -230,12 +230,12 @@ const CText& CText::operator=(const char* str)
 /**
  *  \brief
  */
-const CText& CText::operator=(const CText& txt)
+const CTextW& CTextW::operator=(const CTextW& txt)
 {
     if (this != &txt)
     {
         resize(txt._len);
-        _tcscpy_s(_str, _size, txt._str);
+        wcscpy_s(_str, _size, txt._str);
     }
 
     return *this;
@@ -245,15 +245,15 @@ const CText& CText::operator=(const CText& txt)
 /**
  *  \brief
  */
-const CText& CText::operator+=(const TCHAR* str)
+const CTextW& CTextW::operator+=(const wchar_t* str)
 {
     if (str)
     {
-        unsigned len = _tcslen(str);
+        unsigned len = wcslen(str);
         if (len)
         {
             expand(len);
-            _tcscat_s(_str, _size, str);
+            wcscat_s(_str, _size, str);
         }
     }
 
@@ -264,7 +264,7 @@ const CText& CText::operator+=(const TCHAR* str)
 /**
  *  \brief
  */
-const CText& CText::operator+=(const char* str)
+const CTextW& CTextW::operator+=(const char* str)
 {
     if (str)
     {
@@ -284,13 +284,13 @@ const CText& CText::operator+=(const char* str)
 /**
  *  \brief
  */
-const CText& CText::operator+=(const CText& txt)
+const CTextW& CTextW::operator+=(const CTextW& txt)
 {
     unsigned len = txt._len;
     if (len)
     {
         expand(len);
-        _tcscat_s(_str, _size, txt._str);
+        wcscat_s(_str, _size, txt._str);
     }
 
     return *this;
@@ -300,12 +300,12 @@ const CText& CText::operator+=(const CText& txt)
 /**
  *  \brief
  */
-const CText& CText::append(const TCHAR* str, unsigned len)
+const CTextW& CTextW::append(const wchar_t* str, unsigned len)
 {
     if (str && len)
     {
         expand(len);
-        _tcsncat_s(_str, _size, str, len);
+        wcsncat_s(_str, _size, str, len);
     }
 
     return *this;
@@ -315,7 +315,7 @@ const CText& CText::append(const TCHAR* str, unsigned len)
 /**
  *  \brief
  */
-void CText::resize(unsigned newLen)
+void CTextW::resize(unsigned newLen)
 {
     unsigned newSize = (newLen / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
 
@@ -325,7 +325,7 @@ void CText::resize(unsigned newLen)
         if (_str != _buf)
             delete [] _str;
         if (newSize != ALLOC_CHUNK_SIZE)
-            _str = new TCHAR[newSize];
+            _str = new wchar_t[newSize];
         else
             _str = _buf;
         _size = newSize;
@@ -336,7 +336,7 @@ void CText::resize(unsigned newLen)
 /**
  *  \brief
  */
-unsigned CText::expand(unsigned newLen)
+unsigned CTextW::expand(unsigned newLen)
 {
     if (newLen == 0)
         return 0;
@@ -346,10 +346,10 @@ unsigned CText::expand(unsigned newLen)
 
     if (_size <= _len)
     {
-        TCHAR *oldStr = _str;
+        wchar_t *oldStr = _str;
         _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-        _str = new TCHAR[_size];
-        _tcscpy_s(_str, _size, oldStr);
+        _str = new wchar_t[_size];
+        wcscpy_s(_str, _size, oldStr);
         if (oldStr != _buf)
             delete [] oldStr;
     }
@@ -395,12 +395,12 @@ CTextA::CTextA(const char* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 /**
  *  \brief
  */
-CTextA::CTextA(const TCHAR* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
+CTextA::CTextA(const wchar_t* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
 {
     _buf[0] = 0;
     if (str)
     {
-        _len = _tcslen(str);
+        _len = wcslen(str);
         if (_len >= _size)
         {
             _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
@@ -446,11 +446,11 @@ const CTextA& CTextA::operator=(const char* str)
 /**
  *  \brief
  */
-const CTextA& CTextA::operator=(const TCHAR* str)
+const CTextA& CTextA::operator=(const wchar_t* str)
 {
     if (str)
     {
-        resize(_tcslen(str));
+        resize(wcslen(str));
         size_t cnt;
         wcstombs_s(&cnt, _str, _size, str, _TRUNCATE);
     }
@@ -496,11 +496,11 @@ const CTextA& CTextA::operator+=(const char* str)
 /**
  *  \brief
  */
-const CTextA& CTextA::operator+=(const TCHAR* str)
+const CTextA& CTextA::operator+=(const wchar_t* str)
 {
     if (str)
     {
-        unsigned len = _tcslen(str);
+        unsigned len = wcslen(str);
         if (len)
         {
             len = expand(len);

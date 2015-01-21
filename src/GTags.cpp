@@ -25,7 +25,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "GTags.h"
 #include <shlobj.h>
-#include "Common.h"
 #include "AutoLock.h"
 #include "INpp.h"
 #include "DBManager.h"
@@ -119,8 +118,7 @@ unsigned getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
             return 0;
         }
 
-        size_t cnt;
-        mbstowcs_s(&cnt, sel, cMaxTagLen, tagA, _TRUNCATE);
+        Tools::atow_str(sel, cMaxTagLen, tagA);
     }
     else
     {
@@ -138,9 +136,9 @@ DBhandle getDatabase(bool writeMode)
 {
     INpp& npp = INpp::Get();
     bool success;
-    CPath currentFile;
-
-    npp.GetFilePath(currentFile);
+    TCHAR filePath[MAX_PATH];
+    npp.GetFilePath(filePath);
+    CPath currentFile(filePath);
 
     DBhandle db = DBManager::Get().GetDB(currentFile, writeMode, &success);
     if (!db)
@@ -424,12 +422,12 @@ void FindFile()
     TCHAR tag[cMaxTagLen];
     if (!getSelection(tag))
     {
-        CPath fileName;
+        TCHAR fileName[MAX_PATH];
         INpp::Get().GetFileNamePart(fileName);
-        if (fileName.Len() >= cMaxTagLen)
-            fileName.C_str()[cMaxTagLen - 1] = 0;
+        if (_tcslen(fileName) >= cMaxTagLen)
+            fileName[cMaxTagLen - 1] = 0;
 
-        if (!enterTag(tag, cFindFile, fileName.C_str()))
+        if (!enterTag(tag, cFindFile, fileName))
             return;
     }
 
@@ -542,8 +540,9 @@ void CreateDatabase()
 {
     INpp& npp = INpp::Get();
     bool success;
-    CPath currentFile;
-    npp.GetFilePath(currentFile);
+    TCHAR filePath[MAX_PATH];
+    npp.GetFilePath(filePath);
+    CPath currentFile(filePath);
 
     DBhandle db = DBManager::Get().GetDB(currentFile, true, &success);
     if (db)
@@ -600,7 +599,11 @@ bool UpdateSingleFile(const TCHAR* file)
 {
     CPath currentFile(file);
     if (!file)
-        INpp::Get().GetFilePath(currentFile);
+    {
+        TCHAR filePath[MAX_PATH];
+        INpp::Get().GetFilePath(filePath);
+        currentFile = filePath;
+    }
 
     bool success;
     DBhandle db = DBManager::Get().GetDB(currentFile, true, &success);

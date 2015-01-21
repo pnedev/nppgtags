@@ -193,16 +193,17 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
 bool Cmd::runProcess()
 {
     TCHAR cmd[2048];
-    composeCmd(cmd, 2048);
+    composeCmd(cmd, _countof(cmd));
 
     TCHAR header[512];
     if (_data._id == CREATE_DATABASE)
-        _sntprintf_s(header, 512, _TRUNCATE,
+        _sntprintf_s(header, _countof(header), _TRUNCATE,
                 _T("%s - \"%s\""), _data.GetName(), _data.GetDBPath());
     else if (_data._id == VERSION)
-        _sntprintf_s(header, 512, _TRUNCATE, _T("%s"), _data.GetName());
+        _sntprintf_s(header, _countof(header), _TRUNCATE,
+                _T("%s"), _data.GetName());
     else
-        _sntprintf_s(header, 512, _TRUNCATE,
+        _sntprintf_s(header, _countof(header), _TRUNCATE,
                 _T("%s - \"%s\""), _data.GetName(), _data.GetTag());
 
     int activityShowDelay_ms = 300;
@@ -237,12 +238,12 @@ bool Cmd::runProcess()
 
         if (errorPipe.GetOutput())
         {
-            _data._error  = true;
-            _data._result = errorPipe.GetOutput();
+            _data._error = true;
+            _data.SetResult(errorPipe.GetOutput());
         }
         else if (dataPipe.GetOutput())
         {
-            _data._result += dataPipe.GetOutput();
+            _data.AppendResult(dataPipe.GetOutput());
         }
     }
     else
