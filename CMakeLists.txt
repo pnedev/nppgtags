@@ -36,14 +36,14 @@ set (project_rc_files
 )
 
 set (project_sources
-    src/DocLocation.cpp
-    src/GTagsCmd.cpp
-    src/INpp.cpp
     src/Common.cpp
+    src/INpp.cpp
     src/PluginInterface.cpp
-    src/GTags.cpp
-    src/DBManager.cpp
     src/ReadPipe.cpp
+    src/GTags.cpp
+    src/Cmd.cpp
+    src/DBManager.cpp
+    src/DocLocation.cpp
     src/ActivityWindow.cpp
     src/IOWindow.cpp
     src/AutoCompleteUI.cpp

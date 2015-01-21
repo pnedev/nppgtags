@@ -151,7 +151,7 @@ class CTextW
 private:
     enum
     {
-        ALLOC_CHUNK_SIZE = 2048
+        ALLOC_CHUNK_SIZE = 4096
     };
 
     void resize(unsigned newLen);
@@ -209,7 +209,7 @@ class CTextA
 private:
     enum
     {
-        ALLOC_CHUNK_SIZE = 2048
+        ALLOC_CHUNK_SIZE = 4096
     };
 
     void resize(unsigned newLen);
@@ -264,7 +264,7 @@ namespace Tools
 void ReleaseKey(WORD virtKey);
 
 
-inline unsigned wtoa_str(char* dst, unsigned dstSize, const wchar_t* src)
+inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)
 {
     size_t cnt;
 
@@ -274,7 +274,7 @@ inline unsigned wtoa_str(char* dst, unsigned dstSize, const wchar_t* src)
 }
 
 
-inline unsigned atow_str(wchar_t* dst, unsigned dstSize, const char* src)
+inline unsigned AtoW(wchar_t* dst, unsigned dstSize, const char* src)
 {
     size_t cnt;
 

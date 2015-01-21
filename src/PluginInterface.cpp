@@ -90,7 +90,7 @@ bool checkForGTagsBinaries()
     {
         gtags.StripFilename();
         TCHAR msg[512];
-        _sntprintf_s(msg, 512, _TRUNCATE,
+        _sntprintf_s(msg, _countof(msg), _TRUNCATE,
                 _T("GTags binaries not found in\n\"%s\"\n")
                 _T("%s plugin will not be loaded!"),
                 gtags.C_str(), GTags::cBinsDir);
@@ -146,10 +146,13 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
 
     char font[32];
     npp.GetFontName(font, _countof(font));
-    Tools::atow_str(GTags::UIFontName, _countof(GTags::UIFontName), font);
+    Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
     GTags::UIFontSize = (unsigned)npp.GetFontSize();
 
-    ScintillaViewUI::Get().Init();
+    if (ScintillaViewUI::Get().Init())
+        MessageBox(npp.GetHandle(),
+            _T("ScintillaViewUI init failed, plugin will not be operational"),
+            GTags::cPluginName, MB_OK | MB_ICONERROR);
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
 
@@ -201,7 +204,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         INpp& npp = INpp::Get();
         char font[32];
         npp.GetFontName(font, _countof(font));
-        Tools::atow_str(GTags::UIFontName, _countof(GTags::UIFontName), font);
+        Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
         GTags::UIFontSize = (unsigned)npp.GetFontSize();
         ScintillaViewUI::Get().ResetStyle();
     }

@@ -32,7 +32,7 @@
 #include "Common.h"
 #include "AutoLock.h"
 #include "GTags.h"
-#include "GTagsCmd.h"
+#include "Cmd.h"
 
 
 /**

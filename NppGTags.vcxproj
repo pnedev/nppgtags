@@ -7,28 +7,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\AutoLock.h" />
-    <ClInclude Include="src\Docking.h" />
-    <ClInclude Include="src\DocLocation.h" />
-    <ClInclude Include="src\menuCmdID.h" />
     <ClInclude Include="src\Notepad_plus_msgs.h" />
-    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\menuCmdID.h" />
     <ClInclude Include="src\Scintilla.h" />
-    <ClCompile Include="src\DocLocation.cpp" />
-    <ClCompile Include="src\GTagsCmd.cpp" />
-    <ClCompile Include="src\INpp.cpp" />
-    <ClInclude Include="src\INpp.h" />
+    <ClInclude Include="src\Docking.h" />
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\AutoLock.h" />
     <ClCompile Include="src\Common.cpp" />
     <ClInclude Include="src\Common.h" />
+    <ClCompile Include="src\INpp.cpp" />
+    <ClInclude Include="src\INpp.h" />
     <ClCompile Include="src\PluginInterface.cpp" />
     <ClInclude Include="src\PluginInterface.h" />
-    <ClCompile Include="src\GTags.cpp" />
-    <ClInclude Include="src\GTags.h" />
-    <ClInclude Include="src\GTagsCmd.h" />
-    <ClCompile Include="src\DBManager.cpp" />
-    <ClInclude Include="src\DBManager.h" />
     <ClCompile Include="src\ReadPipe.cpp" />
     <ClInclude Include="src\ReadPipe.h" />
+    <ClCompile Include="src\GTags.cpp" />
+    <ClInclude Include="src\GTags.h" />
+    <ClCompile Include="src\Cmd.cpp" />
+    <ClInclude Include="src\Cmd.h" />
+    <ClCompile Include="src\DBManager.cpp" />
+    <ClInclude Include="src\DBManager.h" />
+    <ClCompile Include="src\DocLocation.cpp" />
+    <ClInclude Include="src\DocLocation.h" />
     <ClCompile Include="src\ActivityWindow.cpp" />
     <ClInclude Include="src\ActivityWindow.h" />
     <ClCompile Include="src\IOWindow.cpp" />

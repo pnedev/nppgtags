@@ -28,7 +28,7 @@
 #include "AutoLock.h"
 #include "INpp.h"
 #include "DBManager.h"
-#include "GTagsCmd.h"
+#include "Cmd.h"
 #include "DocLocation.h"
 #include "IOWindow.h"
 #include "AutoCompleteUI.h"
@@ -118,7 +118,7 @@ unsigned getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
             return 0;
         }
 
-        Tools::atow_str(sel, cMaxTagLen, tagA);
+        Tools::AtoW(sel, cMaxTagLen, tagA);
     }
     else
     {
@@ -332,7 +332,7 @@ void showResult(CmdData& cmd)
     if (cmd.NoResult())
     {
         TCHAR msg[cMaxTagLen + 32];
-        _sntprintf_s(msg, cMaxTagLen + 32, _TRUNCATE, _T("\"%s\" not found"),
+        _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"),
                 cmd.GetTag());
         MessageBox(npp.GetHandle(), msg, cmd.GetName(),
                 MB_OK | MB_ICONEXCLAMATION);
@@ -350,7 +350,7 @@ void showInfo(CmdData& cmd)
 {
     TCHAR text[2048];
     CText msg(cmd.GetResult());
-    _sntprintf_s(text, 2048, _TRUNCATE, cAbout,
+    _sntprintf_s(text, _countof(text), _TRUNCATE, cAbout,
             VER_DESCRIPTION, VER_VERSION_STR,
             _T(__DATE__), _T(__TIME__), VER_COPYRIGHT,
             cmd.Error() || cmd.NoResult() ?
@@ -548,7 +548,7 @@ void CreateDatabase()
     if (db)
     {
         TCHAR buf[512];
-        _sntprintf_s(buf, 512, _TRUNCATE,
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE,
                 _T("Database at\n\"%s\" exists.\nRe-create?"), db->C_str());
         int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
@@ -636,7 +636,7 @@ void DeleteDatabase()
 
     INpp& npp = INpp::Get();
     TCHAR buf[512];
-    _sntprintf_s(buf, 512, _TRUNCATE,
+    _sntprintf_s(buf, _countof(buf), _TRUNCATE,
             _T("Delete database from\n\"%s\"?"), db->C_str());
     int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
             MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);

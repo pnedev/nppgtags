@@ -309,12 +309,12 @@ void AutoCompleteUI::onDblClick()
     lvItem.mask         = LVIF_TEXT;
     lvItem.iItem        = ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED);
     lvItem.pszText      = buf;
-    lvItem.cchTextMax   = 128;
+    lvItem.cchTextMax   = _countof(buf);
 
     ListView_GetItem(_hLVWnd, &lvItem);
 
     char str[128];
-    Tools::wtoa_str(str, _countof(str), lvItem.pszText);
+    Tools::WtoA(str, _countof(str), lvItem.pszText);
 
     INpp::Get().ReplaceWord(str);
     SendMessage(_hwnd, WM_CLOSE, 0, 0);
@@ -378,7 +378,7 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
     if (keyCode != VK_SPACE)
     {
         char buf[128];
-        INpp::Get().GetWord(buf, 128, true);
+        INpp::Get().GetWord(buf, _countof(buf), true);
 
         CText word(buf);
         int lvItemsCnt = filterLV(word.C_str());
@@ -389,7 +389,7 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
             TCHAR itemTxt[128];
             ListView_GetItemText(_hLVWnd,
                     ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
-                    itemTxt, 128);
+                    itemTxt, _countof(itemTxt));
             if (word == itemTxt)
                 SendMessage(_hwnd, WM_CLOSE, 0, 0);
         }

@@ -65,8 +65,8 @@ const ScintillaViewUI::Tab&
 {
     _cmdID = cmd.GetID();
 
-    Tools::wtoa_str(_projectPath, _countof(_projectPath), cmd.GetDBPath());
-    Tools::wtoa_str(_search, _countof(_search), cmd.GetTag());
+    Tools::WtoA(_projectPath, _countof(_projectPath), cmd.GetDBPath());
+    Tools::WtoA(_search, _countof(_search), cmd.GetTag());
 
     return *this;
 }
