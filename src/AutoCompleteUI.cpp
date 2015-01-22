@@ -42,7 +42,7 @@ using namespace GTags;
 /**
  *  \brief
  */
-bool AutoCompleteUI::Create(const CmdData& cmd)
+BOOL AutoCompleteUI::Show(const CmdData& cmd)
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -52,8 +52,7 @@ bool AutoCompleteUI::Create(const CmdData& cmd)
     wc.hbrBackground    = GetSysColorBrush(cUIBackgroundColor);
     wc.lpszClassName    = cClassName;
 
-    if (!RegisterClass(&wc))
-        return false;
+    RegisterClass(&wc);
 
     INITCOMMONCONTROLSEX icex   = {0};
     icex.dwSize                 = sizeof(icex);
@@ -61,20 +60,31 @@ bool AutoCompleteUI::Create(const CmdData& cmd)
 
     InitCommonControlsEx(&icex);
 
-    AutoCompleteUI ui;
-    ui.composeWindow(cmd);
+    AutoCompleteUI ui(cmd);
+    if (ui.composeWindow() == NULL)
+        return -1;
 
     BOOL r;
     MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0)
+    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
     {
-        if (r == -1)
-            break;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    return true;
+    return r;
+}
+
+
+/**
+ *  \brief
+ */
+AutoCompleteUI::AutoCompleteUI(const CmdData& cmd) :
+    _hwnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
+{
+    unsigned len = cmd.GetResultLen();
+    _result = new TCHAR[len + 1];
+    Tools::AtoW(_result, len + 1, cmd.GetResult());
 }
 
 
@@ -83,6 +93,8 @@ bool AutoCompleteUI::Create(const CmdData& cmd)
  */
 AutoCompleteUI::~AutoCompleteUI()
 {
+    if (_result)
+        delete [] _result;
     if (_hFont)
         DeleteObject(_hFont);
     UnregisterClass(cClassName, NULL);
@@ -92,16 +104,18 @@ AutoCompleteUI::~AutoCompleteUI()
 /**
  *  \brief
  */
-HWND AutoCompleteUI::composeWindow(const CmdData& cmd)
+HWND AutoCompleteUI::composeWindow()
 {
-    HWND hOwnerWnd = INpp::Get().GetSciHandle();
+    HWND hOwner = INpp::Get().GetSciHandle();
     RECT win;
-    GetWindowRect(hOwnerWnd, &win);
+    GetWindowRect(hOwner, &win);
     DWORD style = WS_POPUP | WS_BORDER;
     _hwnd = CreateWindow(cClassName, NULL,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwnerWnd, NULL, HInst, (LPVOID) this);
+            hOwner, NULL, HInst, (LPVOID) this);
+    if (_hwnd == NULL)
+        return NULL;
 
     GetClientRect(_hwnd, &win);
     _hLVWnd = CreateWindow(WC_LISTVIEW, _T("List View"),
@@ -111,25 +125,21 @@ HWND AutoCompleteUI::composeWindow(const CmdData& cmd)
             0, 0, win.right - win.left, win.bottom - win.top,
             _hwnd, NULL, HInst, NULL);
 
-    HDC hdc = GetWindowDC(hOwnerWnd);
-    _hFont = CreateFont(-MulDiv(UIFontSize,
-            GetDeviceCaps(hdc, LOGPIXELSY), 72),
+    HDC hdc = GetWindowDC(hOwner);
+    _hFont = CreateFont(
+            -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName);
-    ReleaseDC(hOwnerWnd, hdc);
+    ReleaseDC(hOwner, hdc);
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM) _hFont, (LPARAM) TRUE);
 
     ListView_SetExtendedListViewStyle(_hLVWnd,
             LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-    _tagLen     = cmd.GetTagLen();
-    _resultLen  = cmd.GetResultLen();
-    _cmdResult  = cmd.GetResult();
-
     TCHAR buf[32];
-    _tcscpy_s(buf, _countof(buf), cmd.GetName());
+    _tcscpy_s(buf, _countof(buf), _cmd.GetName());
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
@@ -163,10 +173,8 @@ int AutoCompleteUI::fillLV()
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
-    /* _cmdResult string will be chopped but as long as we don't concatenate
-        anything it will do just fine */
     TCHAR* pTmp;
-    for (TCHAR* pToken = _tcstok_s(_cmdResult.C_str(), _T("\n\r"), &pTmp);
+    for (TCHAR* pToken = _tcstok_s(_result, _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         lvItem.pszText = pToken;
@@ -195,8 +203,8 @@ int AutoCompleteUI::filterLV(const TCHAR* filter)
 
     int len = _tcslen(filter);
 
-    TCHAR* pRes = _cmdResult.C_str();
-    TCHAR* pEnd = pRes + _resultLen;
+    TCHAR* pRes = _result;
+    TCHAR* pEnd = pRes + _cmd.GetResultLen();
 
     ListView_DeleteAllItems(_hLVWnd);
 
@@ -304,16 +312,16 @@ void AutoCompleteUI::resizeLV()
  */
 void AutoCompleteUI::onDblClick()
 {
-    TCHAR buf[128];
+    TCHAR itemTxt[MAX_PATH];
     LVITEM lvItem       = {0};
     lvItem.mask         = LVIF_TEXT;
     lvItem.iItem        = ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED);
-    lvItem.pszText      = buf;
-    lvItem.cchTextMax   = _countof(buf);
+    lvItem.pszText      = itemTxt;
+    lvItem.cchTextMax   = _countof(itemTxt);
 
     ListView_GetItem(_hLVWnd, &lvItem);
 
-    char str[128];
+    char str[MAX_PATH];
     Tools::WtoA(str, _countof(str), lvItem.pszText);
 
     INpp::Get().ReplaceWord(str);
@@ -332,12 +340,15 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
         case VK_DOWN:
             return false;
 
+        case VK_SPACE:
         case VK_TAB:
         case VK_RETURN:
             onDblClick();
             return true;
 
         case VK_ESCAPE:
+        case VK_CONTROL:
+        case VK_MENU:
             SendMessage(_hwnd, WM_CLOSE, 0, 0);
             return true;
 
@@ -351,7 +362,7 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
             INpp& npp = INpp::Get();
             npp.ClearSelection();
             npp.Backspace();
-            if (npp.GetWordSize() < (int)_tagLen)
+            if (npp.GetWordSize() < (int)_cmd.GetTagLen())
             {
                 SendMessage(_hwnd, WM_CLOSE, 0, 0);
                 return true;
@@ -375,28 +386,22 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
         }
     }
 
-    if (keyCode != VK_SPACE)
-    {
-        char buf[128];
-        INpp::Get().GetWord(buf, _countof(buf), true);
+    char wordA[MAX_PATH];
+    INpp::Get().GetWord(wordA, _countof(wordA), true);
 
-        CText word(buf);
-        int lvItemsCnt = filterLV(word.C_str());
-        if (lvItemsCnt == 0)
-            SendMessage(_hwnd, WM_CLOSE, 0, 0);
-        else if (lvItemsCnt == 1)
-        {
-            TCHAR itemTxt[128];
-            ListView_GetItemText(_hLVWnd,
-                    ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
-                    itemTxt, _countof(itemTxt));
-            if (word == itemTxt)
-                SendMessage(_hwnd, WM_CLOSE, 0, 0);
-        }
-    }
-    else
-    {
+    TCHAR word[MAX_PATH];
+    Tools::AtoW(word, _countof(word), wordA);
+    int lvItemsCnt = filterLV(word);
+    if (lvItemsCnt == 0)
         SendMessage(_hwnd, WM_CLOSE, 0, 0);
+    else if (lvItemsCnt == 1)
+    {
+        TCHAR itemTxt[MAX_PATH];
+        ListView_GetItemText(_hLVWnd,
+                ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
+                itemTxt, _countof(itemTxt));
+        if (!_tcscmp(word, itemTxt))
+            SendMessage(_hwnd, WM_CLOSE, 0, 0);
     }
 
     return true;

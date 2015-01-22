@@ -105,7 +105,6 @@ public:
         return *this;
     }
 
-    inline TCHAR* C_str() { return _str; }
     inline const TCHAR* C_str() const { return _str; }
     inline unsigned Len() const { return _tcslen(_str); }
 
@@ -193,7 +192,6 @@ public:
     const CTextW& operator+=(const CTextW& txt);
     const CTextW& append(const wchar_t* str, unsigned len);
 
-    inline wchar_t* C_str() { return _str; }
     inline const wchar_t* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }
@@ -251,7 +249,6 @@ public:
     const CTextA& operator+=(const CTextA& txt);
     const CTextA& append(const char* str, unsigned len);
 
-    inline char* C_str() { return _str; }
     inline const char* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }

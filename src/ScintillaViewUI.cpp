@@ -138,7 +138,7 @@ void ScintillaViewUI::DeInit()
 /**
  *  \brief
  */
-void ScintillaViewUI::Show(CmdData& cmd)
+void ScintillaViewUI::Show(const CmdData& cmd)
 {
     if (_hWnd == NULL)
         return;
@@ -196,14 +196,14 @@ void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
 int ScintillaViewUI::composeWindow()
 {
     INpp& npp = INpp::Get();
-    HWND hOwnerWnd = npp.GetHandle();
+    HWND hOwner = npp.GetHandle();
     RECT win;
-    GetWindowRect(hOwnerWnd, &win);
+    GetWindowRect(hOwner, &win);
     DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX;
     _hWnd = CreateWindow(cClassName, cPluginName,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwnerWnd, NULL, HInst, (LPVOID)this);
+            hOwner, NULL, HInst, (LPVOID)this);
     if (_hWnd == NULL)
         return -1;
 
@@ -275,7 +275,7 @@ int ScintillaViewUI::composeWindow()
 /**
  *  \brief
  */
-void ScintillaViewUI::add(CmdData& cmd)
+void ScintillaViewUI::add(const CmdData& cmd)
 {
     _tab = cmd;
 

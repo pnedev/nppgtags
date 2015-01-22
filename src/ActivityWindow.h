@@ -37,8 +37,11 @@
 class ActivityWindow
 {
 public:
-    static int Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
-            const TCHAR *text, HANDLE procHndl, int showDelay_ms);
+    static void Register(HINSTANCE hInst = NULL);
+    static void Unregister() {  UnregisterClass(cClassName, HInst); }
+
+    static int Show(HWND hOwner, HANDLE procHndl, int width,
+            const TCHAR *text, int showDelay_ms);
 
 private:
     static const TCHAR cClassName[];
@@ -48,29 +51,25 @@ private:
     static const int cBackgroundColor;
 
     static volatile LONG RefCount;
+    static HINSTANCE HInst;
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    ActivityWindow(HWND hOwnerWnd, HANDLE procHndl, int showDelay_ms,
-            int refCount) :
-        _hOwnerWnd(hOwnerWnd), _hProc(procHndl), _hFont(NULL),
-        _showDelay_ms(showDelay_ms), _initRefCount(refCount),
-        _exitCode(1) {}
+    ActivityWindow(HWND hOwner, HANDLE procHndl, int showDelay_ms);
     ActivityWindow(const ActivityWindow &);
     ~ActivityWindow();
 
     void adjustSizeAndPos(HWND hwnd, int width, int height);
-    HWND composeWindow(HINSTANCE hInst, int width, const TCHAR* text,
-            int showDelay_ms);
+    HWND composeWindow(int width, const TCHAR* text, int showDelay_ms);
     void onTimerRefresh(HWND hwnd);
 
-    HWND _hOwnerWnd;
-    const HANDLE _hProc;
+    HWND _hOwner;
+    HANDLE _hProc;
     HFONT _hFont;
     HWND _hBtn;
     UINT_PTR _timerID;
     int _showDelay_ms;
     int _initRefCount;
-    int _exitCode;
+    int _isCancelled;
 };

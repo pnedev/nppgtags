@@ -68,7 +68,7 @@ Mutex UpdateLock;
 void releaseKeys();
 unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
         bool skipPreSelect = false);
-DBhandle getDatabase(bool writeMode = false);
+DBhandle getDatabase(bool writeEn = false);
 int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData);
 bool enterTag(TCHAR* tag, const TCHAR* uiName = NULL,
         const TCHAR* defaultTag = NULL);
@@ -132,15 +132,15 @@ unsigned getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
 /**
  *  \brief
  */
-DBhandle getDatabase(bool writeMode)
+DBhandle getDatabase(bool writeEn)
 {
     INpp& npp = INpp::Get();
     bool success;
-    TCHAR filePath[MAX_PATH];
-    npp.GetFilePath(filePath);
-    CPath currentFile(filePath);
+    TCHAR file[MAX_PATH];
+    npp.GetFilePath(file);
+    CPath currentFile(file);
 
-    DBhandle db = DBManager::Get().GetDB(currentFile, writeMode, &success);
+    DBhandle db = DBManager::Get().GetDB(currentFile, writeEn, &success);
     if (!db)
     {
         MessageBox(npp.GetHandle(), _T("GTags database not found"),
@@ -290,7 +290,7 @@ void autoComplReady(CmdData& cmd)
     if (cmd.NoResult())
         npp.ClearSelection();
     else
-        AutoCompleteUI::Create(cmd);
+        AutoCompleteUI::Show(cmd);
 }
 
 
@@ -540,9 +540,9 @@ void CreateDatabase()
 {
     INpp& npp = INpp::Get();
     bool success;
-    TCHAR filePath[MAX_PATH];
-    npp.GetFilePath(filePath);
-    CPath currentFile(filePath);
+    TCHAR path[MAX_PATH];
+    npp.GetFilePath(path);
+    CPath currentFile(path);
 
     DBhandle db = DBManager::Get().GetDB(currentFile, true, &success);
     if (db)
@@ -564,7 +564,7 @@ void CreateDatabase()
 
         BROWSEINFO bi       = {0};
         bi.hwndOwner        = npp.GetHandle();
-        bi.pszDisplayName   = currentFile.C_str();
+        bi.pszDisplayName   = path;
         bi.lpszTitle        = _T("Point to the root of your project");
         bi.ulFlags          = BIF_RETURNONLYFSDIRS;
         bi.lpfn             = browseFolderCB;
@@ -574,7 +574,7 @@ void CreateDatabase()
         if (!pidl)
             return;
 
-        SHGetPathFromIDList(pidl, currentFile.C_str());
+        SHGetPathFromIDList(pidl, path);
 
         IMalloc* imalloc = NULL;
         if (SUCCEEDED(SHGetMalloc(&imalloc)))
@@ -583,6 +583,7 @@ void CreateDatabase()
             imalloc->Release();
         }
 
+        currentFile = path;
 		currentFile += _T("\\");
         db = DBManager::Get().RegisterDB(currentFile, true);
     }

@@ -44,9 +44,9 @@ class DBManager
 public:
     static DBManager& Get() { return Instance; }
 
-    DBhandle RegisterDB(const CPath& dbPath, bool writeMode);
+    DBhandle RegisterDB(const CPath& dbPath, bool writeEn);
     bool UnregisterDB(DBhandle db);
-    DBhandle GetDB(const CPath& filePath, bool writeMode, bool* success);
+    DBhandle GetDB(const CPath& filePath, bool writeEn, bool* success);
     bool PutDB(DBhandle db);
 
 private:
@@ -66,9 +66,9 @@ private:
             return (_writeLock || _readLocks);
         }
 
-        bool Lock(bool writeMode)
+        bool Lock(bool writeEn)
         {
-            if (writeMode)
+            if (writeEn)
             {
                 if (_writeLock || _readLocks)
                     return false;
@@ -92,10 +92,10 @@ private:
         }
 
     protected:
-        GTagsDB(const CPath& dbPath, bool writeMode) :
-            _path(dbPath), _writeLock(writeMode)
+        GTagsDB(const CPath& dbPath, bool writeEn) :
+            _path(dbPath), _writeLock(writeEn)
         {
-            _readLocks = writeMode ? 0 : 1;
+            _readLocks = writeEn ? 0 : 1;
         }
 
     private:
@@ -103,7 +103,6 @@ private:
 
         int _readLocks;
         bool _writeLock;
-
     };
 
     static DBManager Instance;
@@ -114,8 +113,8 @@ private:
 
     bool dbExistsInFolder(const CPath& folder);
     bool deleteDB(CPath& dbPath);
-    DBhandle addDB(const CPath& dbPath, bool writeMode);
-    DBhandle lockDB(const CPath& filePath, bool writeMode, bool* success);
+    DBhandle addDB(const CPath& dbPath, bool writeEn);
+    DBhandle lockDB(const CPath& filePath, bool writeEn, bool* success);
 
     Mutex _lock;
     std::list<GTagsDB> _dbList;

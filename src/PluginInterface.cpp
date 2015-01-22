@@ -35,6 +35,32 @@ FuncItem InterfaceFunc[cFuncCount];
 /**
  *  \brief
  */
+void pluginInit(HINSTANCE hModule)
+{
+    TCHAR moduleFileName[MAX_PATH];
+    GetModuleFileName((HMODULE)hModule, moduleFileName, MAX_PATH);
+    GTags::DllPath = moduleFileName;
+
+    if (!checkForGTagsBinaries())
+        return FALSE;
+
+    GTags::HInst = hModule;
+}
+
+
+/**
+ *  \brief
+ */
+void pluginDeInit()
+{
+    ScintillaViewUI::Get().DeInit();
+    GTags::HInst = NULL;
+}
+
+
+/**
+ *  \brief
+ */
 void addMenuItem(const TCHAR* itemName = NULL,
         PFUNCPLUGINCMD cmdFunc = NULL, bool initCheckMark = false)
 {
@@ -112,20 +138,12 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
     {
         case DLL_PROCESS_ATTACH:
         {
-            TCHAR moduleFileName[MAX_PATH];
-            GetModuleFileName((HMODULE)hModule, moduleFileName, MAX_PATH);
-            GTags::DllPath = moduleFileName;
-
-            if (!checkForGTagsBinaries())
-                return FALSE;
-
-            GTags::HInst = hModule;
+            pluginInit(hModule);
             break;
         }
 
         case DLL_PROCESS_DETACH:
-            ScintillaViewUI::Get().DeInit();
-            GTags::HInst = NULL;
+            pluginDeInit();
             break;
 
         case DLL_THREAD_ATTACH:
@@ -193,10 +211,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     {
         if (GTags::AutoUpdate)
         {
-            TCHAR filePath[MAX_PATH];
-            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom,
-                    filePath);
-            GTags::UpdateSingleFile(filePath);
+            TCHAR file[MAX_PATH];
+            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
+            GTags::UpdateSingleFile(file);
         }
     }
     else if (notifyCode->nmhdr.code == NPPN_WORDSTYLESUPDATED)

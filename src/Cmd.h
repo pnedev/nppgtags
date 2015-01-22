@@ -174,14 +174,14 @@ private:
 
     static unsigned __stdcall threadFunc(void* data);
 
-    CmdData _data;
+    CmdData _cmd;
     DBhandle _db;
     CompletionCB const _complCB;
     HANDLE _hThread;
 
     Cmd(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
             CompletionCB complCB, const char* result = NULL) :
-        _data(id, name, db, tag, result),
+        _cmd(id, name, db, tag, result),
         _db(db), _complCB(complCB), _hThread(NULL) {}
     ~Cmd();
 

@@ -33,7 +33,7 @@ DBManager DBManager::Instance;
 /**
  *  \brief
  */
-DBhandle DBManager::RegisterDB(const CPath& dbPath, bool writeMode)
+DBhandle DBManager::RegisterDB(const CPath& dbPath, bool writeEn)
 {
     AUTOLOCK(_lock);
 
@@ -48,13 +48,13 @@ DBhandle DBManager::RegisterDB(const CPath& dbPath, bool writeMode)
             }
             else
             {
-                dbi->Lock(writeMode);
+                dbi->Lock(writeEn);
                 return &(dbi->_path);
             }
         }
     }
 
-    return addDB(dbPath, writeMode);
+    return addDB(dbPath, writeEn);
 }
 
 
@@ -92,15 +92,14 @@ bool DBManager::UnregisterDB(DBhandle db)
 /**
  *  \brief
  */
-DBhandle DBManager::GetDB(const CPath& filePath, bool writeMode,
-        bool* success)
+DBhandle DBManager::GetDB(const CPath& filePath, bool writeEn, bool* success)
 {
     if (!success)
         return NULL;
 
     AUTOLOCK(_lock);
 
-    DBhandle db = lockDB(filePath, writeMode, success);
+    DBhandle db = lockDB(filePath, writeEn, success);
     if (db)
         return db;
 
@@ -116,7 +115,7 @@ DBhandle DBManager::GetDB(const CPath& filePath, bool writeMode,
 
     *success = true;
 
-    return addDB(dbPath, writeMode);
+    return addDB(dbPath, writeEn);
 }
 
 
@@ -182,9 +181,9 @@ bool DBManager::deleteDB(CPath& dbPath)
 /**
  *  \brief
  */
-DBhandle DBManager::addDB(const CPath& dbPath, bool writeMode)
+DBhandle DBManager::addDB(const CPath& dbPath, bool writeEn)
 {
-    GTagsDB newDB(dbPath, writeMode);
+    GTagsDB newDB(dbPath, writeEn);
     _dbList.push_back(newDB);
 
     return &(_dbList.rbegin()->_path);
@@ -194,8 +193,7 @@ DBhandle DBManager::addDB(const CPath& dbPath, bool writeMode)
 /**
  *  \brief
  */
-DBhandle DBManager::lockDB(const CPath& filePath, bool writeMode,
-        bool* success)
+DBhandle DBManager::lockDB(const CPath& filePath, bool writeEn, bool* success)
 {
     for (std::list<GTagsDB>::iterator dbi = _dbList.begin();
         dbi != _dbList.end(); dbi++)
@@ -207,7 +205,7 @@ DBhandle DBManager::lockDB(const CPath& filePath, bool writeMode,
                 _dbList.erase(dbi);
                 return NULL;
             }
-            *success = dbi->Lock(writeMode);
+            *success = dbi->Lock(writeEn);
             return &(dbi->_path);
         }
     }

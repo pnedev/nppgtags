@@ -38,12 +38,53 @@ const int IOWindow::cBackgroundColor    = COLOR_INFOBK;
 
 
 volatile LONG IOWindow::RefCount = 0;
+HINSTANCE IOWindow::HInst = NULL;
 
 
 /**
  *  \brief
  */
-bool IOWindow::Create(HINSTANCE hInst, HWND hOwnerWnd,
+void IOWindow::Register(HINSTANCE hInst)
+{
+    HInst = hInst;
+    if (hInst == NULL)
+        GetModuleHandleEx(
+                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HInst);
+
+    WNDCLASS wc         = {0};
+    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc      = wndProc;
+    wc.hInstance        = HInst;
+    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
+    wc.lpszClassName    = cClassName;
+
+    RegisterClass(&wc);
+
+    INITCOMMONCONTROLSEX icex   = {0};
+    icex.dwSize                 = sizeof(icex);
+    icex.dwICC                  = ICC_STANDARD_CLASSES;
+
+    InitCommonControlsEx(&icex);
+    LoadLibrary(_T("Msftedit.dll"));
+}
+
+
+/**
+ *  \brief
+ */
+void IOWindow::Unregister()
+{
+    UnregisterClass(cClassName, HInst);
+    FreeLibrary(GetModuleHandle(_T("Msftedit.dll")));
+}
+
+
+/**
+ *  \brief
+ */
+bool IOWindow::Create(HWND hOwner,
         const TCHAR* font, unsigned fontSize, bool readOnly,
         int minWidth, int minHeight,
         const TCHAR* header, TCHAR* text, int txtLimit)
@@ -51,50 +92,24 @@ bool IOWindow::Create(HINSTANCE hInst, HWND hOwnerWnd,
     if (!text)
         return false;
 
-    if (InterlockedIncrement(&RefCount) == 1)
-    {
-        WNDCLASS wc         = {0};
-        wc.style            = CS_HREDRAW | CS_VREDRAW;
-        wc.lpfnWndProc      = wndProc;
-        wc.hInstance        = hInst;
-        wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-        wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
-        wc.lpszClassName    = cClassName;
-
-        if (!RegisterClass(&wc))
-        {
-            InterlockedDecrement(&RefCount);
-            return false;
-        }
-
-        INITCOMMONCONTROLSEX icex   = {0};
-        icex.dwSize                 = sizeof(icex);
-        icex.dwICC                  = ICC_STANDARD_CLASSES;
-
-        InitCommonControlsEx(&icex);
-        LoadLibrary(_T("Msftedit.dll"));
-    }
-
     if (!readOnly)
     {
-        HDC hdc = GetWindowDC(hOwnerWnd);
+        HDC hdc = GetWindowDC(hOwner);
         TEXTMETRIC tm;
         GetTextMetrics(hdc, &tm);
         minHeight = MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
                 tm.tmInternalLeading;
-        ReleaseDC(hOwnerWnd, hdc);
+        ReleaseDC(hOwner, hdc);
     }
 
     IOWindow iow(readOnly, minWidth, minHeight, text);
-    iow.composeWindow(hInst, hOwnerWnd, font, fontSize, readOnly,
+    iow.composeWindow(hOwner, font, fontSize, readOnly,
             minWidth, minHeight, header, text, txtLimit);
 
     BOOL r;
     MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0)
+    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
     {
-        if (r == -1)
-            break;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -165,22 +180,31 @@ RECT IOWindow::adjustSizeAndPos(DWORD style, int width, int height)
 /**
  *  \brief
  */
+IOWindow::IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text) :
+    _readOnly(readOnly), _minWidth(minWidth), _minHeight(minHeight),
+    _text(text), _success(false)
+{
+    InterlockedIncrement(&RefCount);
+}
+
+
+
+/**
+ *  \brief
+ */
 IOWindow::~IOWindow()
 {
     if (_hFont)
         DeleteObject(_hFont);
-    if (InterlockedDecrement(&RefCount) == 0)
-    {
-        UnregisterClass(cClassName, NULL);
-        FreeLibrary(GetModuleHandle(_T("Msftedit.dll")));
-    }
+
+    InterlockedDecrement(&RefCount);
 }
 
 
 /**
  *  \brief
  */
-HWND IOWindow::composeWindow(HINSTANCE hInst, HWND hOwnerWnd,
+HWND IOWindow::composeWindow(HWND hOwner,
         const TCHAR* font, unsigned fontSize, bool readOnly,
         int minWidth, int minHeight,
         const TCHAR* header, const TCHAR* text, int txtLimit)
@@ -190,7 +214,7 @@ HWND IOWindow::composeWindow(HINSTANCE hInst, HWND hOwnerWnd,
     _hWnd = CreateWindow(cClassName, header,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwnerWnd, NULL, hInst, (LPVOID) this);
+            hOwner, NULL, HInst, (LPVOID) this);
 
     GetClientRect(_hWnd, &win);
 
@@ -199,7 +223,7 @@ HWND IOWindow::composeWindow(HINSTANCE hInst, HWND hOwnerWnd,
         style |= ES_MULTILINE | ES_READONLY;
     HWND hWndEdit = CreateWindowEx(0, MSFTEDIT_CLASS, NULL, style, 0, 0,
             win.right - win.left, win.bottom - win.top,
-            _hWnd, NULL, hInst, NULL);
+            _hWnd, NULL, HInst, NULL);
 
     SendMessage(hWndEdit, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(cBackgroundColor));
@@ -213,12 +237,13 @@ HWND IOWindow::composeWindow(HINSTANCE hInst, HWND hOwnerWnd,
         _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), font);
     SendMessage(hWndEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &fmt);
 
-    HDC hdc = GetWindowDC(hOwnerWnd);
-    _hFont = CreateFont(-MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+    HDC hdc = GetWindowDC(hOwner);
+    _hFont = CreateFont(
+            -MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, font);
-    ReleaseDC(hOwnerWnd, hdc);
+    ReleaseDC(hOwner, hdc);
     if (_hFont)
         SendMessage(hWndEdit, WM_SETFONT, (WPARAM) _hFont, (LPARAM) TRUE);
 

@@ -50,7 +50,7 @@ public:
 
     int Init();
     void DeInit();
-    void Show(GTags::CmdData& cmd);
+    void Show(const GTags::CmdData& cmd);
     void ResetStyle();
 
 private:
@@ -99,7 +99,7 @@ private:
             int size = 0, const char *font = NULL);
 
     int composeWindow();
-    void add(GTags::CmdData& cmd);
+    void add(const GTags::CmdData& cmd);
     void parseCmd(CTextA& dst, const char* src);
     void parseFindFile(CTextA& dst, const char* src);
     bool openItem(int lineNum);

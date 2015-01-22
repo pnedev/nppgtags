@@ -38,20 +38,23 @@
 class IOWindow
 {
 public:
-    static bool In(HINSTANCE hInst, HWND hOwnerWnd,
+    static void Register(HINSTANCE hInst = NULL);
+    static void Unregister();
+
+    static bool In(HWND hOwner,
             const TCHAR* font, unsigned fontSize, int width,
             const TCHAR* header, TCHAR* text, int txtLimit)
     {
-        return Create(hInst, hOwnerWnd, font, fontSize, false,
+        return Create(hOwner, font, fontSize, false,
                 width, 0, header, text, txtLimit);
     }
 
-    static void Out(HINSTANCE hInst, HWND hOwnerWnd,
+    static void Out(HWND hOwner,
             const TCHAR* font, unsigned fontSize,
             const TCHAR* header, TCHAR* text,
             int minWidth = 0, int minHeight = 0)
     {
-        Create(hInst, hOwnerWnd, font, fontSize, true, minWidth, minHeight,
+        Create(hOwner, font, fontSize, true, minWidth, minHeight,
                 header, text, 0);
     }
 
@@ -60,8 +63,9 @@ private:
     static const int cBackgroundColor;
 
     static volatile LONG RefCount;
+    static HINSTANCE HInst;
 
-    static bool Create(HINSTANCE hInst, HWND hOwnerWnd,
+    static bool Create(HWND hOwner,
             const TCHAR *font, unsigned fontSize, bool readOnly,
             int minWidth, int minHeight,
             const TCHAR *header, TCHAR *text, int txtLimit);
@@ -69,13 +73,11 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text) :
-            _readOnly(readOnly), _minWidth(minWidth), _minHeight(minHeight),
-            _text(text), _success(false) {}
+    IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text);
     IOWindow(const IOWindow &);
     ~IOWindow();
 
-    HWND composeWindow(HINSTANCE hInst, HWND hOwnerWnd,
+    HWND composeWindow(HWND hOwner,
             const TCHAR* font, unsigned fontSize, bool readOnly,
             int minWidth, int minHeight,
             const TCHAR* header, const TCHAR* text, int txtLimit);

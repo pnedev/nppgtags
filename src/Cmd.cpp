@@ -104,7 +104,7 @@ unsigned Cmd::thread()
     {
         if (_db)
         {
-            if (_data._id == CREATE_DATABASE)
+            if (_cmd._id == CREATE_DATABASE)
                 DBManager::Get().UnregisterDB(_db);
             else
                 DBManager::Get().PutDB(_db);
@@ -116,7 +116,7 @@ unsigned Cmd::thread()
         DBManager::Get().PutDB(_db);
 
     if (_complCB)
-        _complCB(_data);
+        _complCB(_cmd);
 
 	return 0;
 }
@@ -127,7 +127,7 @@ unsigned Cmd::thread()
  */
 const TCHAR* Cmd::getCmdLine()
 {
-    switch (_data._id)
+    switch (_cmd._id)
     {
         case CREATE_DATABASE:
             return cCreateDatabaseCmd;
@@ -168,13 +168,13 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
     path.StripFilename();
     path += cBinsDir;
 
-    if (_data._id == CREATE_DATABASE || _data._id == VERSION)
+    if (_cmd._id == CREATE_DATABASE || _cmd._id == VERSION)
         _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str());
     else
         _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str(),
-                _data.GetTag());
+                _cmd.GetTag());
 
-    if (_data._id == CREATE_DATABASE || _data._id == UPDATE_SINGLE)
+    if (_cmd._id == CREATE_DATABASE || _cmd._id == UPDATE_SINGLE)
     {
         path += _T("\\gtags.conf");
         if (path.FileExists())
@@ -196,19 +196,15 @@ bool Cmd::runProcess()
     composeCmd(cmd, _countof(cmd));
 
     TCHAR header[512];
-    if (_data._id == CREATE_DATABASE)
+    if (_cmd._id == CREATE_DATABASE)
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _data.GetName(), _data.GetDBPath());
-    else if (_data._id == VERSION)
+                _T("%s - \"%s\""), _cmd.GetName(), _cmd.GetDBPath());
+    else if (_cmd._id == VERSION)
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s"), _data.GetName());
+                _T("%s"), _cmd.GetName());
     else
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _data.GetName(), _data.GetTag());
-
-    int activityShowDelay_ms = 300;
-    if (_data._id == CREATE_DATABASE || _data._id == UPDATE_SINGLE)
-        activityShowDelay_ms = 0;
+                _T("%s - \"%s\""), _cmd.GetName(), _cmd.GetTag());
 
     ReadPipe errorPipe;
     ReadPipe dataPipe;
@@ -222,15 +218,17 @@ bool Cmd::runProcess()
     PROCESS_INFORMATION pi;
     if (!CreateProcess(NULL, cmd, NULL, NULL, TRUE,
             NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL,
-            _data._id == VERSION ? NULL : _data.GetDBPath(), &si, &pi))
+            _cmd._id == VERSION ? NULL : _cmd.GetDBPath(), &si, &pi))
         return false;
 
     SetThreadPriority(pi.hThread, THREAD_PRIORITY_NORMAL);
 
     bool ret = errorPipe.Open() && dataPipe.Open();
     if (ret)
-        ret = !ActivityWindow::Show(HInst, INpp::Get().GetSciHandle(), 600,
-                header, pi.hProcess, activityShowDelay_ms);
+        ret = !ActivityWindow::Show(INpp::Get().GetSciHandle(), pi.hProcess,
+                600, header,
+                (_cmd._id == CREATE_DATABASE || _cmd._id == UPDATE_SINGLE) ?
+                0 : 300);
     if (ret)
     {
         CloseHandle(pi.hProcess);
@@ -238,12 +236,12 @@ bool Cmd::runProcess()
 
         if (errorPipe.GetOutput())
         {
-            _data._error = true;
-            _data.SetResult(errorPipe.GetOutput());
+            _cmd._error = true;
+            _cmd.SetResult(errorPipe.GetOutput());
         }
         else if (dataPipe.GetOutput())
         {
-            _data.AppendResult(dataPipe.GetOutput());
+            _cmd.AppendResult(dataPipe.GetOutput());
         }
     }
     else

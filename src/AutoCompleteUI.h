@@ -38,7 +38,7 @@
 class AutoCompleteUI
 {
 public:
-    static bool Create(const GTags::CmdData& cmd);
+    static BOOL Show(const GTags::CmdData& cmd);
 
 private:
     static const TCHAR cClassName[];
@@ -46,11 +46,11 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    AutoCompleteUI() : _hwnd(NULL), _hLVWnd(NULL), _hFont(NULL) {}
+    AutoCompleteUI(const GTags::CmdData& cmd);
     AutoCompleteUI(const AutoCompleteUI&);
     ~AutoCompleteUI();
 
-    HWND composeWindow(const GTags::CmdData& cmd);
+    HWND composeWindow();
     int fillLV();
     int filterLV(const TCHAR* filter);
     void resizeLV();
@@ -61,7 +61,6 @@ private:
     HWND _hwnd;
     HWND _hLVWnd;
     HFONT _hFont;
-    unsigned _tagLen;
-    unsigned _resultLen;
-    CText _cmdResult;
+    const GTags::CmdData& _cmd;
+    TCHAR* _result;
 };

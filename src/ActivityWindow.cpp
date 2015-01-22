@@ -39,13 +39,43 @@ const int ActivityWindow::cBackgroundColor  = COLOR_WINDOW;
 
 
 volatile LONG ActivityWindow::RefCount = 0;
+HINSTANCE ActivityWindow::HInst = NULL;
 
 
 /**
  *  \brief
  */
-int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
-        const TCHAR* text, HANDLE procHndl, int showDelay_ms)
+void ActivityWindow::Register(HINSTANCE hInst)
+{
+    HInst = hInst;
+    if (hInst == NULL)
+        GetModuleHandleEx(
+                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HInst);
+
+    WNDCLASS wc         = {0};
+    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc      = wndProc;
+    wc.hInstance        = HInst;
+    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
+    wc.lpszClassName    = cClassName;
+
+    RegisterClass(&wc);
+
+    INITCOMMONCONTROLSEX icex   = {0};
+    icex.dwSize                 = sizeof(icex);
+    icex.dwICC                  = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
+
+    InitCommonControlsEx(&icex);
+}
+
+
+/**
+ *  \brief
+ */
+int ActivityWindow::Show(HWND hOwner, HANDLE procHndl,
+        int width, const TCHAR* text, int showDelay_ms)
 {
     if (!procHndl)
         return -1;
@@ -55,43 +85,43 @@ int ActivityWindow::Show(HINSTANCE hInst, HWND hOwnerWnd, int width,
     if (dwRet != STILL_ACTIVE)
         return 0;
 
-    if (InterlockedIncrement(&RefCount) == 1)
-    {
-        WNDCLASS wc         = {0};
-        wc.style            = CS_HREDRAW | CS_VREDRAW;
-        wc.lpfnWndProc      = wndProc;
-        wc.hInstance        = hInst;
-        wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-        wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
-        wc.lpszClassName    = cClassName;
-
-        if (!RegisterClass(&wc))
-        {
-            InterlockedDecrement(&RefCount);
-            return -1;
-        }
-
-        INITCOMMONCONTROLSEX icex   = {0};
-        icex.dwSize                 = sizeof(icex);
-        icex.dwICC                  = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
-
-        InitCommonControlsEx(&icex);
-    }
-
-    ActivityWindow aw(hOwnerWnd, procHndl, showDelay_ms, (int)RefCount);
-    aw.composeWindow(hInst, width, text, showDelay_ms);
+    ActivityWindow aw(hOwner, procHndl, showDelay_ms);
+    if (aw.composeWindow(width, text, showDelay_ms) == NULL)
+        return -1;
 
     BOOL r;
     MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0)
+    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
     {
-        if (r == -1)
-            break;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    return aw._exitCode;
+    return aw._isCancelled;
+}
+
+
+/**
+ *  \brief
+ */
+ActivityWindow::ActivityWindow(
+    HWND hOwner, HANDLE procHndl, int showDelay_ms) :
+        _hOwner(hOwner), _hProc(procHndl), _hFont(NULL),
+        _showDelay_ms(showDelay_ms), _isCancelled(1)
+{
+    _initRefCount = InterlockedIncrement(&RefCount);
+}
+
+
+/**
+ *  \brief
+ */
+ActivityWindow::~ActivityWindow()
+{
+    if (_hFont)
+        DeleteObject(_hFont);
+
+    InterlockedDecrement(&RefCount);
 }
 
 
@@ -103,7 +133,7 @@ void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
     RECT win, maxWin;
     bool noAdjust = false;
 
-    GetWindowRect(_hOwnerWnd, &maxWin);
+    GetWindowRect(_hOwner, &maxWin);
 
     win = maxWin;
     if (width <= 0) width = 400;
@@ -145,37 +175,27 @@ void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
 /**
  *  \brief
  */
-ActivityWindow::~ActivityWindow()
-{
-    if (_hFont)
-        DeleteObject(_hFont);
-    if (InterlockedDecrement(&RefCount) == 0)
-        UnregisterClass(cClassName, NULL);
-}
-
-
-/**
- *  \brief
- */
-HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
+HWND ActivityWindow::composeWindow(int width,
         const TCHAR* text, int showDelay_ms)
 {
-    HWND hMainWin = CreateWindow(cClassName, NULL,
-            WS_POPUP | WS_BORDER, 1, 1, 10, 10,
-            _hOwnerWnd, NULL, hInst, (LPVOID)this);
+    HWND hWnd = CreateWindow(cClassName, NULL,
+            WS_POPUP | WS_BORDER,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            _hOwner, NULL, HInst, (LPVOID)this);
+    if (hWnd == NULL)
+        return NULL;
 
     HWND hWndEdit = CreateWindowEx(0, _T("EDIT"), _T("Text"),
             WS_CHILD | WS_VISIBLE | ES_LEFT | ES_READONLY,
-            0, 0, 5, 5,
-            hMainWin, NULL, hInst, NULL);
+            0, 0, 0, 0, hWnd, NULL, HInst, NULL);
 
-    HDC hdc = GetWindowDC(_hOwnerWnd);
+    HDC hdc = GetWindowDC(_hOwner);
     _hFont = CreateFont(
             -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cFontName);
-    ReleaseDC(_hOwnerWnd, hdc);
+    ReleaseDC(_hOwner, hdc);
     if (_hFont)
         SendMessage(hWndEdit, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
@@ -185,10 +205,10 @@ HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
     ReleaseDC(hWndEdit, hdc);
 
     int textHeight = tm.tmHeight;
-    adjustSizeAndPos(hMainWin, width, textHeight + 25);
+    adjustSizeAndPos(hWnd, width, textHeight + 25);
 
     RECT win;
-    GetClientRect(hMainWin, &win);
+    GetClientRect(hWnd, &win);
     width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -199,24 +219,24 @@ HWND ActivityWindow::composeWindow(HINSTANCE hInst, int width,
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, _T("Progress Bar"),
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
-            hMainWin, NULL, hInst, NULL);
+            hWnd, NULL, HInst, NULL);
     SendMessage(hPBar, PBM_SETMARQUEE, (WPARAM)TRUE, (LPARAM)50);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
-            width - 85, (height - 25) / 2, 80, 25, hMainWin,
-            NULL, hInst, NULL);
+            width - 85, (height - 25) / 2, 80, 25, hWnd,
+            NULL, HInst, NULL);
 
-    _timerID = SetTimer(hMainWin, 0, cUpdate_ms, NULL);
+    _timerID = SetTimer(hWnd, 0, cUpdate_ms, NULL);
 
     if (showDelay_ms <= 0)
     {
-        ShowWindow(hMainWin, SW_SHOWNORMAL);
-        UpdateWindow(hMainWin);
-        SetFocus(_hOwnerWnd);
+        ShowWindow(hWnd, SW_SHOWNORMAL);
+        UpdateWindow(hWnd);
+        SetFocus(_hOwner);
     }
 
-    return hMainWin;
+    return hWnd;
 }
 
 
@@ -229,7 +249,7 @@ void ActivityWindow::onTimerRefresh(HWND hwnd)
     GetExitCodeProcess(_hProc, &dwRet);
     if (dwRet != STILL_ACTIVE)
     {
-        _exitCode = 0;
+        _isCancelled = 0;
         KillTimer(hwnd, _timerID);
         SendMessage(hwnd, WM_CLOSE, 0, 0);
     }
@@ -240,7 +260,7 @@ void ActivityWindow::onTimerRefresh(HWND hwnd)
         {
             ShowWindow(hwnd, SW_SHOWNORMAL);
             UpdateWindow(hwnd);
-            SetFocus(_hOwnerWnd);
+            SetFocus(_hOwner);
         }
     }
     else
