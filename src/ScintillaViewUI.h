@@ -48,8 +48,8 @@ public:
         return Instance;
     }
 
-    int Init();
-    void DeInit();
+    int Register();
+    void Unregister();
     void Show(const GTags::CmdData& cmd);
     void ResetStyle();
 
@@ -86,7 +86,7 @@ private:
     ScintillaViewUI() :
         _hWnd(NULL), _hSci(NULL), _sciFunc(NULL), _sciPtr(NULL) {}
     ScintillaViewUI(const ScintillaViewUI&);
-    ~ScintillaViewUI() { DeInit(); };
+    ~ScintillaViewUI() { Unregister(); };
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {

@@ -178,7 +178,7 @@ bool enterTag(TCHAR* tag, const TCHAR* uiName, const TCHAR* defaultTag)
     else
         tag[0] = 0;
 
-    return IOWindow::In(HInst, INpp::Get().GetHandle(), UIFontName,
+    return IOWindow::In(INpp::Get().GetHandle(), UIFontName,
             UIFontSize + 2, 400, uiName, tag, cMaxTagLen - 1);
 }
 
@@ -356,7 +356,7 @@ void showInfo(CmdData& cmd)
             cmd.Error() || cmd.NoResult() ?
             _T("VERSION READ FAILED\n") : msg.C_str());
 
-    IOWindow::Out(HInst, INpp::Get().GetHandle(), UIFontName, UIFontSize,
+    IOWindow::Out(INpp::Get().GetHandle(), UIFontName, UIFontSize,
             cVersion, text);
 }
 

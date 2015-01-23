@@ -75,7 +75,7 @@ const ScintillaViewUI::Tab&
 /**
  *  \brief
  */
-int ScintillaViewUI::Init()
+int ScintillaViewUI::Register()
 {
     if (_hWnd)
         return 0;
@@ -114,7 +114,7 @@ int ScintillaViewUI::Init()
 /**
  *  \brief
  */
-void ScintillaViewUI::DeInit()
+void ScintillaViewUI::Unregister()
 {
     if (_hWnd == NULL)
         return;

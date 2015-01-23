@@ -23,6 +23,8 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "ScintillaViewUI.h"
+#include "ActivityWindow.h"
+#include "IOWindow.h"
 
 
 namespace
@@ -30,32 +32,6 @@ namespace
 
 const int cFuncCount = 15;
 FuncItem InterfaceFunc[cFuncCount];
-
-
-/**
- *  \brief
- */
-void pluginInit(HINSTANCE hModule)
-{
-    TCHAR moduleFileName[MAX_PATH];
-    GetModuleFileName((HMODULE)hModule, moduleFileName, MAX_PATH);
-    GTags::DllPath = moduleFileName;
-
-    if (!checkForGTagsBinaries())
-        return FALSE;
-
-    GTags::HInst = hModule;
-}
-
-
-/**
- *  \brief
- */
-void pluginDeInit()
-{
-    ScintillaViewUI::Get().DeInit();
-    GTags::HInst = NULL;
-}
 
 
 /**
@@ -128,6 +104,41 @@ bool checkForGTagsBinaries()
     return true;
 }
 
+
+
+/**
+ *  \brief
+ */
+BOOL pluginInit(HINSTANCE hModule)
+{
+    TCHAR moduleFileName[MAX_PATH];
+    GetModuleFileName((HMODULE)hModule, moduleFileName, MAX_PATH);
+    GTags::DllPath = moduleFileName;
+
+    if (!checkForGTagsBinaries())
+        return FALSE;
+
+    GTags::HInst = hModule;
+
+	ActivityWindow::Register(hModule);
+	IOWindow::Register(hModule);
+
+	return TRUE;
+}
+
+
+/**
+ *  \brief
+ */
+void pluginDeInit()
+{
+	ActivityWindow::Unregister();
+	IOWindow::Unregister();
+    ScintillaViewUI::Get().Unregister();
+
+    GTags::HInst = NULL;
+}
+
 }
 
 
@@ -167,7 +178,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
     GTags::UIFontSize = (unsigned)npp.GetFontSize();
 
-    if (ScintillaViewUI::Get().Init())
+    if (ScintillaViewUI::Get().Register())
         MessageBox(npp.GetHandle(),
             _T("ScintillaViewUI init failed, plugin will not be operational"),
             GTags::cPluginName, MB_OK | MB_ICONERROR);
