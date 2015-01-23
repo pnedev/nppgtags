@@ -30,6 +30,7 @@
 #include <tchar.h>
 #include "Common.h"
 #include "DBManager.h"
+#include "GTags.h"
 
 
 class ReadPipe;
@@ -65,8 +66,8 @@ public:
     inline CmdID_t GetID() const { return _id; }
     inline const TCHAR* GetName() const { return _name; }
     inline const TCHAR* GetDBPath() const { return _dbPath.C_str(); }
-    inline const TCHAR* GetTag() const { return _tag.C_str(); }
-    inline unsigned GetTagLen() const { return _tag.Len(); }
+    inline const TCHAR* GetTag() const { return _tag; }
+    inline unsigned GetTagLen() const { return _tcslen(_tag); }
     inline bool Error() const { return _error; }
     inline bool NoResult() const { return (_result == NULL); }
     inline char* GetResult() { return _result; }
@@ -74,73 +75,24 @@ public:
     inline unsigned GetResultLen() const { return _len; }
 
 protected:
-    CmdData(CmdID_t id, const TCHAR* name, DBhandle db,
-            const TCHAR* tag, const char* result = NULL) :
-        _id(id), _error(false), _result(NULL), _len(0), _tag(tag)
-    {
-        if (db)
-            _dbPath = *db;
-        _name[0] = 0;
-        if (name)
-            _tcscpy_s(_name, _countof(_name), name);
-        if (result)
-        {
-            _len = strlen(result);
-            _result = new char[_len + 1];
-            strcpy_s(_result, _len + 1, result);
-        }
-    }
+    CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag, DBhandle db,
+            const char* result = NULL);
+    ~CmdData();
 
-    ~CmdData()
-    {
-        if (_result)
-            delete [] _result;
-    }
-
-    void SetResult(const char* result)
-    {
-        if (result == NULL)
-            return;
-
-        if (_result)
-            delete [] _result;
-
-        _len = strlen(result);
-        _result = new char[_len + 1];
-        strcpy_s(_result, _len + 1, result);
-    }
-
-    void AppendResult(const char* result)
-    {
-        if (result == NULL)
-            return;
-
-        char* oldResult = _result;
-        unsigned oldLen = _len;
-
-        _len += strlen(result);
-        _result = new char[_len + 1];
-
-        if (oldResult)
-        {
-            strcpy_s(_result, oldLen + 1, oldResult);
-            delete [] oldResult;
-        }
-
-        strcpy_s(_result + oldLen, _len + 1 - oldLen, result);
-    }
+    void SetResult(const char* result);
+    void AppendResult(const char* result);
 
     CmdID_t _id;
     bool _error;
-    char* _result;
-    unsigned _len;
 
 private:
     friend class Cmd;
 
     TCHAR _name[32];
+    TCHAR _tag[cMaxTagLen];
     CPath _dbPath;
-    const CText _tag;
+    char* _result;
+    unsigned _len;
 };
 
 
@@ -154,9 +106,8 @@ typedef void (*CompletionCB)(CmdData&);
 class Cmd
 {
 public:
-    static bool Run(CmdID_t id, const TCHAR* name, DBhandle db,
-            const TCHAR* tag, CompletionCB complCB,
-            const char* result = NULL);
+    static bool Run(CmdID_t id, const TCHAR* name, const TCHAR* tag,
+            DBhandle db, CompletionCB complCB, const char* result = NULL);
 
 private:
     static const TCHAR cCreateDatabaseCmd[];
@@ -179,9 +130,9 @@ private:
     CompletionCB const _complCB;
     HANDLE _hThread;
 
-    Cmd(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
+    Cmd(CmdID_t id, const TCHAR* name, const TCHAR* tag, DBhandle db,
             CompletionCB complCB, const char* result = NULL) :
-        _cmd(id, name, db, tag, result),
+        _cmd(id, name, tag, db, result),
         _db(db), _complCB(complCB), _hThread(NULL) {}
     ~Cmd();
 

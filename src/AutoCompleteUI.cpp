@@ -33,7 +33,8 @@
 #include "GTags.h"
 
 
-const TCHAR AutoCompleteUI::cClassName[] = _T("AutoCompleteUI");
+const TCHAR AutoCompleteUI::cClassName[]    = _T("AutoCompleteUI");
+const int AutoCompleteUI::cBackgroundColor  = COLOR_INFOBK;
 
 
 using namespace GTags;
@@ -42,14 +43,14 @@ using namespace GTags;
 /**
  *  \brief
  */
-BOOL AutoCompleteUI::Show(const CmdData& cmd)
+void AutoCompleteUI::Register()
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
-    wc.hInstance        = HInst;
+    wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground    = GetSysColorBrush(cUIBackgroundColor);
+    wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
 
     RegisterClass(&wc);
@@ -59,7 +60,23 @@ BOOL AutoCompleteUI::Show(const CmdData& cmd)
     icex.dwICC                  = ICC_LISTVIEW_CLASSES;
 
     InitCommonControlsEx(&icex);
+}
 
+
+/**
+ *  \brief
+ */
+void AutoCompleteUI::Unregister()
+{
+    UnregisterClass(cClassName, HMod);
+}
+
+
+/**
+ *  \brief
+ */
+BOOL AutoCompleteUI::Show(const CmdData& cmd)
+{
     AutoCompleteUI ui(cmd);
     if (ui.composeWindow() == NULL)
         return -1;
@@ -97,7 +114,6 @@ AutoCompleteUI::~AutoCompleteUI()
         delete [] _result;
     if (_hFont)
         DeleteObject(_hFont);
-    UnregisterClass(cClassName, NULL);
 }
 
 
@@ -113,7 +129,7 @@ HWND AutoCompleteUI::composeWindow()
     _hwnd = CreateWindow(cClassName, NULL,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HInst, (LPVOID) this);
+            hOwner, NULL, HMod, (LPVOID) this);
     if (_hwnd == NULL)
         return NULL;
 
@@ -123,7 +139,7 @@ HWND AutoCompleteUI::composeWindow()
             LVS_REPORT | LVS_SINGLESEL | LVS_NOLABELWRAP |
             LVS_NOSORTHEADER | LVS_SORTASCENDING,
             0, 0, win.right - win.left, win.bottom - win.top,
-            _hwnd, NULL, HInst, NULL);
+            _hwnd, NULL, HMod, NULL);
 
     HDC hdc = GetWindowDC(hOwner);
     _hFont = CreateFont(
@@ -148,7 +164,7 @@ HWND AutoCompleteUI::composeWindow()
     lvCol.cx            = 300;
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
-    DWORD backgroundColor = GetSysColor(cUIBackgroundColor);
+    DWORD backgroundColor = GetSysColor(cBackgroundColor);
     ListView_SetBkColor(_hLVWnd, backgroundColor);
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
 

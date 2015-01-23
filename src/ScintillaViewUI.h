@@ -98,16 +98,19 @@ private:
             bool bold = false, bool italic = false,
             int size = 0, const char *font = NULL);
 
-    int composeWindow();
+    HWND composeWindow();
     void add(const GTags::CmdData& cmd);
     void parseCmd(CTextA& dst, const char* src);
     void parseFindFile(CTextA& dst, const char* src);
     bool openItem(int lineNum);
-    void styleSearchWord(int lineNum, int posOffset = 0);
+    void styleString(int styleID, const char* str,
+        int lineNum, int lineOffset = 0,
+        bool matchCase = true, bool wholeWord = false);
     void onStyleNeeded(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
+    void onKey(SCNotification* notify);
     void onContextMenu();
     void onResize(int width, int height);
 

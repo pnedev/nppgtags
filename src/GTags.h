@@ -39,8 +39,6 @@ const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
 const TCHAR cBinsDir[]          = _T("NppGTags");
 const unsigned cMaxTagLen       = 128;
 
-const int cUIBackgroundColor    = COLOR_INFOBK;
-
 const TCHAR cCreateDatabase[]   = _T("Create Database");
 const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
 const TCHAR cAutoCompl[]        = _T("AutoComplete");
@@ -54,12 +52,15 @@ const TCHAR cFindLiteral[]      = _T("Find Literal");
 const TCHAR cVersion[]          = _T("About");
 
 
-extern HINSTANCE HInst;
+extern HINSTANCE HMod;
 extern CPath DllPath;
 extern TCHAR UIFontName[32];
 extern unsigned UIFontSize;
 extern bool AutoUpdate;
 
+
+BOOL PluginInit(HINSTANCE hMod);
+void PluginDeInit();
 
 void AutoComplete();
 void AutoCompleteFile();

@@ -39,24 +39,24 @@ const int ActivityWindow::cBackgroundColor  = COLOR_WINDOW;
 
 
 volatile LONG ActivityWindow::RefCount = 0;
-HINSTANCE ActivityWindow::HInst = NULL;
+HINSTANCE ActivityWindow::HMod = NULL;
 
 
 /**
  *  \brief
  */
-void ActivityWindow::Register(HINSTANCE hInst)
+void ActivityWindow::Register(HINSTANCE hMod)
 {
-    HInst = hInst;
-    if (hInst == NULL)
+    HMod = hMod;
+    if (hMod == NULL)
         GetModuleHandleEx(
                 GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HInst);
+                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HMod);
 
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
-    wc.hInstance        = HInst;
+    wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
@@ -68,6 +68,15 @@ void ActivityWindow::Register(HINSTANCE hInst)
     icex.dwICC                  = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
 
     InitCommonControlsEx(&icex);
+}
+
+
+/**
+ *  \brief
+ */
+void ActivityWindow::Unregister()
+{
+    UnregisterClass(cClassName, HMod);
 }
 
 
@@ -181,13 +190,13 @@ HWND ActivityWindow::composeWindow(int width,
     HWND hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            _hOwner, NULL, HInst, (LPVOID)this);
+            _hOwner, NULL, HMod, (LPVOID)this);
     if (hWnd == NULL)
         return NULL;
 
     HWND hWndEdit = CreateWindowEx(0, _T("EDIT"), _T("Text"),
             WS_CHILD | WS_VISIBLE | ES_LEFT | ES_READONLY,
-            0, 0, 0, 0, hWnd, NULL, HInst, NULL);
+            0, 0, 0, 0, hWnd, NULL, HMod, NULL);
 
     HDC hdc = GetWindowDC(_hOwner);
     _hFont = CreateFont(
@@ -219,13 +228,13 @@ HWND ActivityWindow::composeWindow(int width,
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, _T("Progress Bar"),
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
-            hWnd, NULL, HInst, NULL);
+            hWnd, NULL, HMod, NULL);
     SendMessage(hPBar, PBM_SETMARQUEE, (WPARAM)TRUE, (LPARAM)50);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
             width - 85, (height - 25) / 2, 80, 25, hWnd,
-            NULL, HInst, NULL);
+            NULL, HMod, NULL);
 
     _timerID = SetTimer(hWnd, 0, cUpdate_ms, NULL);
 

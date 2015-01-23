@@ -38,10 +38,14 @@
 class AutoCompleteUI
 {
 public:
+    static void Register();
+    static void Unregister();
+
     static BOOL Show(const GTags::CmdData& cmd);
 
 private:
     static const TCHAR cClassName[];
+    static const int cBackgroundColor;
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);

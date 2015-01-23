@@ -23,8 +23,6 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "ScintillaViewUI.h"
-#include "ActivityWindow.h"
-#include "IOWindow.h"
 
 
 namespace
@@ -69,76 +67,6 @@ void autoUpdate()
         INpp::Get().SetPluginMenuFlag(NppCmdID, GTags::AutoUpdate);
 }
 
-
-/**
- *  \brief
- */
-bool checkForGTagsBinaries()
-{
-    CPath gtags(GTags::DllPath);
-    gtags.StripFilename();
-    gtags += GTags::cBinsDir;
-    gtags += _T("\\global.exe");
-
-    bool gtagsBinsFound = gtags.FileExists();
-    if (gtagsBinsFound)
-    {
-        gtags.StripFilename();
-        gtags += _T("gtags.exe");
-        gtagsBinsFound = gtags.FileExists();
-    }
-
-    if (!gtagsBinsFound)
-    {
-        gtags.StripFilename();
-        TCHAR msg[512];
-        _sntprintf_s(msg, _countof(msg), _TRUNCATE,
-                _T("GTags binaries not found in\n\"%s\"\n")
-                _T("%s plugin will not be loaded!"),
-                gtags.C_str(), GTags::cBinsDir);
-        MessageBox(NULL, msg, GTags::cPluginName,
-                MB_OK | MB_ICONERROR);
-        return false;
-    }
-
-    return true;
-}
-
-
-
-/**
- *  \brief
- */
-BOOL pluginInit(HINSTANCE hModule)
-{
-    TCHAR moduleFileName[MAX_PATH];
-    GetModuleFileName((HMODULE)hModule, moduleFileName, MAX_PATH);
-    GTags::DllPath = moduleFileName;
-
-    if (!checkForGTagsBinaries())
-        return FALSE;
-
-    GTags::HInst = hModule;
-
-	ActivityWindow::Register(hModule);
-	IOWindow::Register(hModule);
-
-	return TRUE;
-}
-
-
-/**
- *  \brief
- */
-void pluginDeInit()
-{
-	ActivityWindow::Unregister();
-	IOWindow::Unregister();
-    ScintillaViewUI::Get().Unregister();
-
-    GTags::HInst = NULL;
-}
-
 }
 
 
@@ -148,13 +76,10 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
     switch (reasonForCall)
     {
         case DLL_PROCESS_ATTACH:
-        {
-            pluginInit(hModule);
-            break;
-        }
+            return GTags::PluginInit(hModule);
 
         case DLL_PROCESS_DETACH:
-            pluginDeInit();
+            GTags::PluginDeInit();
             break;
 
         case DLL_THREAD_ATTACH:

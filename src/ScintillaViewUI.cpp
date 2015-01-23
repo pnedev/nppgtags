@@ -83,14 +83,14 @@ int ScintillaViewUI::Register()
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
-    wc.hInstance        = HInst;
+    wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground    = GetSysColorBrush(cUIBackgroundColor);
+    wc.hbrBackground    = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszClassName    = cClassName;
 
     RegisterClass(&wc);
 
-    if (composeWindow())
+    if (composeWindow() == NULL)
         return -1;
 
     tTbData data        = {0};
@@ -131,7 +131,7 @@ void ScintillaViewUI::Unregister()
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
     _hWnd = NULL;
 
-    UnregisterClass(cClassName, HInst);
+    UnregisterClass(cClassName, HMod);
 }
 
 
@@ -193,7 +193,7 @@ void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
 /**
  *  \brief
  */
-int ScintillaViewUI::composeWindow()
+HWND ScintillaViewUI::composeWindow()
 {
     INpp& npp = INpp::Get();
     HWND hOwner = npp.GetHandle();
@@ -203,9 +203,9 @@ int ScintillaViewUI::composeWindow()
     _hWnd = CreateWindow(cClassName, cPluginName,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HInst, (LPVOID)this);
+            hOwner, NULL, HMod, (LPVOID)this);
     if (_hWnd == NULL)
-        return -1;
+        return NULL;
 
     _hSci = npp.CreateSciHandle(_hWnd);
     if (_hSci)
@@ -219,7 +219,7 @@ int ScintillaViewUI::composeWindow()
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
         _hWnd = NULL;
         _hSci = NULL;
-        return -1;
+        return NULL;
     }
 
     AdjustWindowRect(&win, style, FALSE);
@@ -268,7 +268,7 @@ int ScintillaViewUI::composeWindow()
 
     ShowWindow(_hSci, SW_SHOWNORMAL);
 
-    return 0;
+    return _hWnd;
 }
 
 
@@ -475,30 +475,27 @@ bool ScintillaViewUI::openItem(int lineNum)
 /**
  *  \brief
  */
-void ScintillaViewUI::styleSearchWord(int lineNum, int posOffset)
+void ScintillaViewUI::styleString(int styleID, const char* str,
+        int lineNum, int lineOffset, bool matchCase, bool wholeWord)
 {
     struct TextToFind ttf = {0};
-    ttf.lpstrText = const_cast<char*>(_tab._search);
-    ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + posOffset;
+    ttf.lpstrText = const_cast<char*>(str);
+    ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + lineOffset;
     ttf.chrg.cpMax = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
     int searchFlags = 0;
-    if (_tab._cmdID != FIND_FILE)
+    if (matchCase)
         searchFlags |= SCFIND_MATCHCASE;
-    if (_tab._cmdID != FIND_FILE &&
-        _tab._cmdID != GREP && _tab._cmdID != FIND_LITERAL)
+    if (wholeWord)
         searchFlags |= SCFIND_WHOLEWORD;
 
     if (sendSci(SCI_FINDTEXT, searchFlags,
             reinterpret_cast<LPARAM>(&ttf)) != -1)
     {
         sendSci(SCI_STARTSTYLING, ttf.chrgText.cpMin, 0xFF);
-        sendSci(SCI_SETSTYLING,
-                ttf.chrgText.cpMax - ttf.chrgText.cpMin,
-                SCE_GTAGS_WORD2SEARCH);
+        sendSci(SCI_SETSTYLING, ttf.chrgText.cpMax - ttf.chrgText.cpMin,
+                styleID);
     }
-
-    sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
 }
 
 
@@ -540,7 +537,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
                 if (_tab._cmdID == FIND_FILE)
                 {
-                    styleSearchWord(lineNum, 1);
+                    styleString(SCE_GTAGS_WORD2SEARCH, _tab._search, lineNum);
+                    sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
                 }
                 else
                 {
@@ -551,7 +549,12 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             }
             else
             {
-                styleSearchWord(lineNum, 7);
+                bool wholeWord =
+                        (_tab._cmdID == GREP || _tab._cmdID == FIND_LITERAL) ?
+                        false : true;
+                styleString(SCE_GTAGS_WORD2SEARCH, _tab._search, lineNum,
+                        7, true, wholeWord);
+                sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
             }
         }
     }
@@ -628,6 +631,16 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 /**
  *  \brief
  */
+void ScintillaViewUI::onKey(SCNotification* notify)
+{
+    if (notify->ch == 'q' && notify->modifiers == SCMOD_CTRL)
+        onContextMenu();
+}
+
+
+/**
+ *  \brief
+ */
 void ScintillaViewUI::onContextMenu()
 {
     if (!_lock.TryLock())
@@ -696,6 +709,10 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
 
                 case SCN_CHARADDED:
                     ui->onCharAddTry((SCNotification*)lparam);
+                    return 0;
+
+                case SCN_KEY:
+                    ui->onKey((SCNotification*)lparam);
                     return 0;
             }
             break;

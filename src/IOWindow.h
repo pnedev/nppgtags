@@ -38,14 +38,14 @@
 class IOWindow
 {
 public:
-    static void Register(HINSTANCE hInst = NULL);
+    static void Register(HINSTANCE hMod = NULL);
     static void Unregister();
 
     static bool In(HWND hOwner,
             const TCHAR* font, unsigned fontSize, int width,
             const TCHAR* header, TCHAR* text, int txtLimit)
     {
-        return Create(hOwner, font, fontSize, false,
+        return create(hOwner, font, fontSize, false,
                 width, 0, header, text, txtLimit);
     }
 
@@ -54,7 +54,7 @@ public:
             const TCHAR* header, TCHAR* text,
             int minWidth = 0, int minHeight = 0)
     {
-        Create(hOwner, font, fontSize, true, minWidth, minHeight,
+        create(hOwner, font, fontSize, true, minWidth, minHeight,
                 header, text, 0);
     }
 
@@ -62,18 +62,20 @@ private:
     static const TCHAR cClassName[];
     static const int cBackgroundColor;
 
-    static volatile LONG RefCount;
-    static HINSTANCE HInst;
+    static HINSTANCE HMod;
 
-    static bool Create(HWND hOwner,
+    static bool create(HWND hOwner,
             const TCHAR *font, unsigned fontSize, bool readOnly,
             int minWidth, int minHeight,
             const TCHAR *header, TCHAR *text, int txtLimit);
-    static RECT adjustSizeAndPos(DWORD style, int width, int height);
+    static RECT adjustSizeAndPos(DWORD styleEx, DWORD style,
+            int width, int height);
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text);
+    IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text) :
+            _minWidth(minWidth), _minHeight(minHeight), _text(text),
+            _success(false) {}
     IOWindow(const IOWindow &);
     ~IOWindow();
 
@@ -86,7 +88,6 @@ private:
 
     HWND _hWnd;
     HFONT _hFont;
-    bool _readOnly;
     int _minWidth;
     int _minHeight;
     TCHAR* _text;

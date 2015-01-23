@@ -52,10 +52,88 @@ const TCHAR Cmd::cVersionCmd[]         = _T("\"%s\\global.exe\" --version");
 /**
  *  \brief
  */
-bool Cmd::Run(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
+CmdData::CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag,
+        DBhandle db, const char* result) :
+    _id(id), _error(false), _result(NULL), _len(0)
+{
+    if (db)
+        _dbPath = *db;
+
+    _name[0] = 0;
+    if (name)
+        _tcscpy_s(_name, _countof(_name), name);
+
+    _tag[0] = 0;
+    if (tag)
+        _tcscpy_s(_tag, _countof(_tag), tag);
+
+    if (result)
+    {
+        _len = strlen(result);
+        _result = new char[_len + 1];
+        strcpy_s(_result, _len + 1, result);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+CmdData::~CmdData()
+{
+    if (_result)
+        delete [] _result;
+}
+
+
+/**
+ *  \brief
+ */
+void CmdData::SetResult(const char* result)
+{
+    if (result == NULL)
+        return;
+
+    if (_result)
+        delete [] _result;
+
+    _len = strlen(result);
+    _result = new char[_len + 1];
+    strcpy_s(_result, _len + 1, result);
+}
+
+
+/**
+ *  \brief
+ */
+void CmdData::AppendResult(const char* result)
+{
+    if (result == NULL)
+        return;
+
+    char* oldResult = _result;
+    unsigned oldLen = _len;
+
+    _len += strlen(result);
+    _result = new char[_len + 1];
+
+    if (oldResult)
+    {
+        strcpy_s(_result, oldLen + 1, oldResult);
+        delete [] oldResult;
+    }
+
+    strcpy_s(_result + oldLen, _len + 1 - oldLen, result);
+}
+
+
+/**
+ *  \brief
+ */
+bool Cmd::Run(CmdID_t id, const TCHAR* name, const TCHAR* tag, DBhandle db,
         CompletionCB complCB, const char* result)
 {
-    Cmd* cmd = new Cmd(id, name, db, tag, complCB, result);
+    Cmd* cmd = new Cmd(id, name, tag, db, complCB, result);
 
     cmd->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
             (void*)cmd, 0, NULL);

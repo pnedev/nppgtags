@@ -25,15 +25,16 @@
 #define WIN32_LEAN_AND_MEAN
 #include "GTags.h"
 #include <shlobj.h>
+#include <list>
 #include "AutoLock.h"
 #include "INpp.h"
 #include "DBManager.h"
 #include "Cmd.h"
 #include "DocLocation.h"
 #include "IOWindow.h"
+#include "ActivityWindow.h"
 #include "AutoCompleteUI.h"
 #include "ScintillaViewUI.h"
-#include <list>
 
 
 #define LINUX_WINE_WORKAROUNDS
@@ -79,6 +80,40 @@ void autoComplReady(CmdData& cmd);
 void findReady(CmdData& cmd);
 void showResult(CmdData& cmd);
 void showInfo(CmdData& cmd);
+
+
+/**
+ *  \brief
+ */
+bool checkForGTagsBinaries(const TCHAR* dllPath)
+{
+    CPath gtags(dllPath);
+    gtags.StripFilename();
+    gtags += cBinsDir;
+    gtags += _T("\\global.exe");
+
+    bool gtagsBinsFound = gtags.FileExists();
+    if (gtagsBinsFound)
+    {
+        gtags.StripFilename();
+        gtags += _T("gtags.exe");
+        gtagsBinsFound = gtags.FileExists();
+    }
+
+    if (!gtagsBinsFound)
+    {
+        gtags.StripFilename();
+        TCHAR msg[512];
+        _sntprintf_s(msg, _countof(msg), _TRUNCATE,
+                _T("GTags binaries not found in\n\"%s\"\n")
+                _T("%s plugin will not be loaded!"),
+                gtags.C_str(), cBinsDir);
+        MessageBox(NULL, msg, cPluginName, MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    return true;
+}
 
 
 /**
@@ -264,7 +299,7 @@ void autoComplHalf(CmdData& cmd)
 
     DBhandle db = getDatabase();
     if (db)
-        Cmd::Run(AUTOCOMPLETE_SYMBOL, cmd.GetName(), db, cmd.GetTag(),
+        Cmd::Run(AUTOCOMPLETE_SYMBOL, cmd.GetName(), cmd.GetTag(), db,
                 autoComplReady, cmd.GetResult());
 }
 
@@ -303,7 +338,7 @@ void findReady(CmdData& cmd)
     {
         DBhandle db = getDatabase();
         if (db)
-            Cmd::Run(FIND_SYMBOL, cFindSymbol, db, cmd.GetTag(), showResult);
+            Cmd::Run(FIND_SYMBOL, cFindSymbol, cmd.GetTag(), db, showResult);
         return;
     }
 
@@ -366,7 +401,7 @@ void showInfo(CmdData& cmd)
 namespace GTags
 {
 
-HINSTANCE HInst = NULL;
+HINSTANCE HMod = NULL;
 CPath DllPath;
 TCHAR UIFontName[32];
 unsigned UIFontSize;
@@ -376,6 +411,43 @@ bool AutoUpdate = true;
 #else
 bool AutoUpdate = false;
 #endif
+
+
+/**
+ *  \brief
+ */
+BOOL PluginInit(HINSTANCE hMod)
+{
+    TCHAR moduleFileName[MAX_PATH];
+    GetModuleFileName((HMODULE)hMod, moduleFileName, MAX_PATH);
+    DllPath = moduleFileName;
+
+    if (!checkForGTagsBinaries(moduleFileName))
+        return FALSE;
+
+    HMod = hMod;
+
+    ActivityWindow::Register(hMod);
+    IOWindow::Register(hMod);
+    AutoCompleteUI::Register();
+
+    return TRUE;
+}
+
+
+/**
+ *  \brief
+ */
+void PluginDeInit()
+{
+    ActivityWindow::Unregister();
+    IOWindow::Unregister();
+	AutoCompleteUI::Unregister();
+
+    ScintillaViewUI::Get().Unregister();
+
+    HMod = NULL;
+}
 
 
 /**
@@ -392,7 +464,7 @@ void AutoComplete()
         return;
 
     releaseKeys();
-    Cmd::Run(AUTOCOMPLETE, cAutoCompl, db, tag, autoComplHalf);
+    Cmd::Run(AUTOCOMPLETE, cAutoCompl, tag, db, autoComplHalf);
 }
 
 
@@ -410,7 +482,7 @@ void AutoCompleteFile()
         return;
 
     releaseKeys();
-    Cmd::Run(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag, autoComplReady);
+    Cmd::Run(AUTOCOMPLETE_FILE, cAutoComplFile, tag, db, autoComplReady);
 }
 
 
@@ -436,7 +508,7 @@ void FindFile()
         return;
 
     releaseKeys();
-    Cmd::Run(FIND_FILE, cFindFile, db, tag, showResult);
+    Cmd::Run(FIND_FILE, cFindFile, tag, db, showResult);
 }
 
 
@@ -457,7 +529,7 @@ void FindDefinition()
         return;
 
     releaseKeys();
-    Cmd::Run(FIND_DEFINITION, cFindDefinition, db, tag, findReady);
+    Cmd::Run(FIND_DEFINITION, cFindDefinition, tag, db, findReady);
 }
 
 
@@ -478,7 +550,7 @@ void FindReference()
         return;
 
     releaseKeys();
-    Cmd::Run(FIND_REFERENCE, cFindReference, db, tag, findReady);
+    Cmd::Run(FIND_REFERENCE, cFindReference, tag, db, findReady);
 }
 
 
@@ -499,7 +571,7 @@ void Grep()
         return;
 
     releaseKeys();
-    Cmd::Run(GREP, cGrep, db, tag, showResult);
+    Cmd::Run(GREP, cGrep, tag, db, showResult);
 }
 
 
@@ -520,7 +592,7 @@ void FindLiteral()
         return;
 
     releaseKeys();
-    Cmd::Run(FIND_LITERAL, cFindLiteral, db, tag, showResult);
+    Cmd::Run(FIND_LITERAL, cFindLiteral, tag, db, showResult);
 }
 
 
@@ -589,7 +661,7 @@ void CreateDatabase()
     }
 
     releaseKeys();
-    Cmd::Run(CREATE_DATABASE, cCreateDatabase, db, NULL, cmdReady);
+    Cmd::Run(CREATE_DATABASE, cCreateDatabase, NULL, db, cmdReady);
 }
 
 
@@ -618,7 +690,7 @@ bool UpdateSingleFile(const TCHAR* file)
     }
 
     releaseKeys();
-    if (!Cmd::Run(UPDATE_SINGLE, cUpdateSingle, db, currentFile.C_str(),
+    if (!Cmd::Run(UPDATE_SINGLE, cUpdateSingle, currentFile.C_str(), db,
             cmdReady))
         return false;
 

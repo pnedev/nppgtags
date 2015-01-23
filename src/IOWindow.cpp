@@ -37,25 +37,24 @@ const TCHAR IOWindow::cClassName[]      = _T("IOWindow");
 const int IOWindow::cBackgroundColor    = COLOR_INFOBK;
 
 
-volatile LONG IOWindow::RefCount = 0;
-HINSTANCE IOWindow::HInst = NULL;
+HINSTANCE IOWindow::HMod = NULL;
 
 
 /**
  *  \brief
  */
-void IOWindow::Register(HINSTANCE hInst)
+void IOWindow::Register(HINSTANCE hMod)
 {
-    HInst = hInst;
-    if (hInst == NULL)
+    HMod = hMod;
+    if (hMod == NULL)
         GetModuleHandleEx(
                 GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HInst);
+                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HMod);
 
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
-    wc.hInstance        = HInst;
+    wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
@@ -67,7 +66,7 @@ void IOWindow::Register(HINSTANCE hInst)
     icex.dwICC                  = ICC_STANDARD_CLASSES;
 
     InitCommonControlsEx(&icex);
-    LoadLibrary(_T("Msftedit.dll"));
+    LoadLibrary(_T("Riched20.dll"));
 }
 
 
@@ -76,15 +75,15 @@ void IOWindow::Register(HINSTANCE hInst)
  */
 void IOWindow::Unregister()
 {
-    UnregisterClass(cClassName, HInst);
-    FreeLibrary(GetModuleHandle(_T("Msftedit.dll")));
+    UnregisterClass(cClassName, HMod);
+    FreeLibrary(GetModuleHandle(_T("Riched20.dll")));
 }
 
 
 /**
  *  \brief
  */
-bool IOWindow::Create(HWND hOwner,
+bool IOWindow::create(HWND hOwner,
         const TCHAR* font, unsigned fontSize, bool readOnly,
         int minWidth, int minHeight,
         const TCHAR* header, TCHAR* text, int txtLimit)
@@ -103,8 +102,9 @@ bool IOWindow::Create(HWND hOwner,
     }
 
     IOWindow iow(readOnly, minWidth, minHeight, text);
-    iow.composeWindow(hOwner, font, fontSize, readOnly,
-            minWidth, minHeight, header, text, txtLimit);
+    if (iow.composeWindow(hOwner, font, fontSize, readOnly,
+            minWidth, minHeight, header, text, txtLimit) == NULL)
+        return false;
 
     BOOL r;
     MSG msg;
@@ -121,11 +121,11 @@ bool IOWindow::Create(HWND hOwner,
 /**
  *  \brief
  */
-RECT IOWindow::adjustSizeAndPos(DWORD style, int width, int height)
+RECT IOWindow::adjustSizeAndPos(DWORD styleEx, DWORD style,
+        int width, int height)
 {
     RECT win, maxWin;
-    int noAdjust = 0;
-    int offset = (RefCount - 1) * 15;
+    int dontAdjust = 0;
 
     SystemParametersInfo(SPI_GETWORKAREA, 0, &maxWin, 0);
 
@@ -136,23 +136,23 @@ RECT IOWindow::adjustSizeAndPos(DWORD style, int width, int height)
     if ((int) width < maxWin.right - maxWin.left)
         win.right = win.left + width;
     else
-        noAdjust++;
+        dontAdjust++;
 
     if (height < maxWin.bottom - maxWin.top)
         win.bottom = win.top + height;
     else
-        noAdjust++;
+        dontAdjust++;
 
-    if (noAdjust < 2)
+    if (dontAdjust < 2)
     {
-        AdjustWindowRect(&win, style, FALSE);
+        AdjustWindowRectEx(&win, style, FALSE, styleEx);
 
         width = win.right - win.left;
         height = win.bottom - win.top;
 
         if (width < maxWin.right - maxWin.left)
         {
-            win.left = (maxWin.right - width) / 2 + offset;
+            win.left = (maxWin.right - width) / 2;
             win.right = win.left + width;
         }
         else
@@ -163,7 +163,7 @@ RECT IOWindow::adjustSizeAndPos(DWORD style, int width, int height)
 
         if (height < maxWin.bottom - maxWin.top)
         {
-            win.top = (maxWin.bottom - height) / 2 + offset;
+            win.top = (maxWin.bottom - height) / 2;
             win.bottom = win.top + height;
         }
         else
@@ -180,24 +180,10 @@ RECT IOWindow::adjustSizeAndPos(DWORD style, int width, int height)
 /**
  *  \brief
  */
-IOWindow::IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text) :
-    _readOnly(readOnly), _minWidth(minWidth), _minHeight(minHeight),
-    _text(text), _success(false)
-{
-    InterlockedIncrement(&RefCount);
-}
-
-
-
-/**
- *  \brief
- */
 IOWindow::~IOWindow()
 {
     if (_hFont)
         DeleteObject(_hFont);
-
-    InterlockedDecrement(&RefCount);
 }
 
 
@@ -209,23 +195,26 @@ HWND IOWindow::composeWindow(HWND hOwner,
         int minWidth, int minHeight,
         const TCHAR* header, const TCHAR* text, int txtLimit)
 {
-    DWORD style = WS_POPUPWINDOW | WS_CAPTION;
-    RECT win = adjustSizeAndPos(style, minWidth, minHeight);
-    _hWnd = CreateWindow(cClassName, header,
+    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
+    DWORD style = WS_POPUP | WS_CAPTION;
+    RECT win = adjustSizeAndPos(styleEx, style, minWidth, minHeight);
+    _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HInst, (LPVOID) this);
+            hOwner, NULL, HMod, (LPVOID) this);
+    if (_hWnd == NULL)
+        return NULL;
 
     GetClientRect(_hWnd, &win);
 
     style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL;
     if (readOnly)
         style |= ES_MULTILINE | ES_READONLY;
-    HWND hWndEdit = CreateWindowEx(0, MSFTEDIT_CLASS, NULL, style, 0, 0,
+    HWND hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style, 0, 0,
             win.right - win.left, win.bottom - win.top,
-            _hWnd, NULL, HInst, NULL);
+            _hWnd, NULL, HMod, NULL);
 
-    SendMessage(hWndEdit, EM_SETBKGNDCOLOR, 0,
+    SendMessage(hEdit, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(cBackgroundColor));
 
     CHARFORMAT fmt  = {0};
@@ -235,7 +224,7 @@ HWND IOWindow::composeWindow(HWND hOwner,
     fmt.yHeight     = fontSize * 20;
     if (font)
         _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), font);
-    SendMessage(hWndEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &fmt);
+    SendMessage(hEdit, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
 
     HDC hdc = GetWindowDC(hOwner);
     _hFont = CreateFont(
@@ -245,23 +234,27 @@ HWND IOWindow::composeWindow(HWND hOwner,
             FF_DONTCARE | DEFAULT_PITCH, font);
     ReleaseDC(hOwner, hdc);
     if (_hFont)
-        SendMessage(hWndEdit, WM_SETFONT, (WPARAM) _hFont, (LPARAM) TRUE);
+        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
-    SendMessage(hWndEdit, EM_AUTOURLDETECT, (WPARAM) TRUE, 0);
+    DWORD events = ENM_KEYEVENTS;
 
-    DWORD events = ENM_KEYEVENTS | ENM_LINK;
     if (readOnly)
-        events |= ENM_MOUSEEVENTS | ENM_REQUESTRESIZE;
-    SendMessage(hWndEdit, EM_SETEVENTMASK, 0, (LPARAM) events);
+    {
+        events |= (ENM_MOUSEEVENTS | ENM_REQUESTRESIZE | ENM_LINK);
+        SendMessage(hEdit, EM_AUTOURLDETECT, (WPARAM)TRUE, 0);
+    }
+    else
+    {
+        SendMessage(hEdit, EM_EXLIMITTEXT, 0, (LPARAM)txtLimit);
+    }
 
-    if (!readOnly)
-        SendMessage(hWndEdit, EM_EXLIMITTEXT, 0, (LPARAM) txtLimit);
+    SendMessage(hEdit, EM_SETEVENTMASK, 0, (LPARAM)events);
 
     if (_tcslen(text))
     {
-        Edit_SetText(hWndEdit, text);
+        Edit_SetText(hEdit, text);
         if (!readOnly)
-            Edit_SetSel(hWndEdit, 0, -1);
+            Edit_SetSel(hEdit, 0, -1);
     }
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
@@ -284,61 +277,58 @@ int IOWindow::onKeyDown(DWORD key)
             return 1;
 
         case VK_RETURN:
-            if (!_readOnly)
+        {
+            HWND hEdit = GetTopWindow(_hWnd);
+            if (!(GetWindowLongPtr(hEdit, GWL_STYLE) & ES_READONLY))
             {
-                HWND hwndEdit = GetTopWindow(_hWnd);
-                int len = Edit_GetTextLength(hwndEdit) + 1;
+                int len = Edit_GetTextLength(hEdit) + 1;
                 if (len > 1)
                 {
-                    Edit_GetText(hwndEdit, _text, len);
+                    Edit_GetText(hEdit, _text, len);
                     _success = true;
                 }
                 SendMessage(_hWnd, WM_CLOSE, 0, 0);
                 return 1;
             }
+        }
     }
 
     return 0;
 }
 
 
-
-/* ========================================================================== */
 /**
-*  @fn  onAutoSize()  function_description
-*/
-/* ========================================================================== */
+ *  \brief
+ */
 int IOWindow::onAutoSize(REQRESIZE* pReqResize)
 {
-    HWND hWndEdit = pReqResize->nmhdr.hwndFrom;
+    HWND hEdit = pReqResize->nmhdr.hwndFrom;
     int width = pReqResize->rc.right - pReqResize->rc.left + 30;
     int height = pReqResize->rc.bottom - pReqResize->rc.top;
 
     if (width < _minWidth) width = _minWidth;
     if (height < _minHeight) height = _minHeight;
 
-    RECT win = IOWindow::adjustSizeAndPos(GetWindowLongPtr(_hWnd, GWL_STYLE),
-            width, height);
+    RECT win = IOWindow::adjustSizeAndPos(
+            GetWindowLongPtr(_hWnd, GWL_EXSTYLE),
+            GetWindowLongPtr(_hWnd, GWL_STYLE), width, height);
     MoveWindow(_hWnd, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);
     GetClientRect(_hWnd, &win);
-    MoveWindow(hWndEdit, 0, 0,
+    MoveWindow(hEdit, 0, 0,
             win.right - win.left, win.bottom - win.top, TRUE);
 
-    DWORD events = SendMessage(hWndEdit, EM_GETEVENTMASK, 0, 0);
+    DWORD events = SendMessage(hEdit, EM_GETEVENTMASK, 0, 0);
     events &= ~ENM_REQUESTRESIZE;
-    SendMessage(hWndEdit, EM_SETEVENTMASK, 0, (LPARAM) events);
+    SendMessage(hEdit, EM_SETEVENTMASK, 0, (LPARAM) events);
 
     return 1;
 }
 
 
-
-/* ========================================================================== */
 /**
-*  @fn  wndProc()  function_description
-*/
-/* ========================================================================== */
+ *  \brief
+ */
 LRESULT APIENTRY IOWindow::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
@@ -359,58 +349,63 @@ LRESULT APIENTRY IOWindow::wndProc(HWND hwnd, UINT umsg,
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_SETFOCUS)
             {
-                IOWindow* iow =
-                        reinterpret_cast<IOWindow*>(static_cast<LONG_PTR>
-                                (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                if (iow->_readOnly)
-                    HideCaret((HWND) lparam);
+                HWND hEdit = GetTopWindow(hwnd);
+                if (GetWindowLongPtr(hEdit, GWL_STYLE) & ES_READONLY)
+                    DestroyCaret();
+                return 0;
+            }
+            if (HIWORD(wparam) == EN_KILLFOCUS)
+            {
+                DestroyCaret();
+                SendMessage(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }
             break;
 
         case WM_NOTIFY:
-            if (((LPNMHDR)lparam)->code == EN_MSGFILTER)
+            switch (((LPNMHDR)lparam)->code)
             {
-                IOWindow* iow =
-                        reinterpret_cast<IOWindow*>(static_cast<LONG_PTR>
-                                (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                if (iow->_readOnly)
-                    HideCaret(GetTopWindow(hwnd));
-                MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
-                if (pMsgFilter->msg == WM_KEYDOWN)
-                    return iow->onKeyDown(pMsgFilter->wParam);
-                return 0;
-            }
-            if (((LPNMHDR)lparam)->code == EN_REQUESTRESIZE)
-            {
-                IOWindow* iow = reinterpret_cast<IOWindow*>
-                        (static_cast<LONG_PTR>
-                        (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                return iow->onAutoSize((REQRESIZE*)lparam);
-            }
-            if (((LPNMHDR)lparam)->code == EN_LINK)
-            {
-                ENLINK* pEnLink = (ENLINK*)lparam;
-                if (pEnLink->msg == WM_LBUTTONUP)
+                case EN_MSGFILTER:
                 {
-                    TCHAR link[2048];
-                    TCHAR* pLink = link;
-                    unsigned len =
-                            pEnLink->chrg.cpMax - pEnLink->chrg.cpMin + 1;
-                    if (len > 2048)
-                        pLink = new TCHAR[len];
-                    TEXTRANGE range;
-                    range.chrg = pEnLink->chrg;
-                    range.lpstrText = pLink;
-                    SendMessage(pEnLink->nmhdr.hwndFrom, EM_GETTEXTRANGE,
-                            0, (LPARAM) &range);
-                    ShellExecute(NULL, _T("open"), pLink, NULL, NULL,
-                            SW_SHOWNORMAL);
-                    if (pLink != link)
-                        delete [] pLink;
-                    return 1;
+                    HWND hEdit = GetTopWindow(hwnd);
+                    if (GetWindowLongPtr(hEdit, GWL_STYLE) & ES_READONLY)
+                        DestroyCaret();
+                    IOWindow* iow =
+                            reinterpret_cast<IOWindow*>(static_cast<LONG_PTR>
+                                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
+                    if (pMsgFilter->msg == WM_KEYDOWN)
+                        return iow->onKeyDown(pMsgFilter->wParam);
+                    return 0;
                 }
-                return 0;
+
+                case EN_REQUESTRESIZE:
+                {
+                    IOWindow* iow = reinterpret_cast<IOWindow*>
+                            (static_cast<LONG_PTR>
+                            (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    return iow->onAutoSize((REQRESIZE*)lparam);
+                }
+
+                case EN_LINK:
+                {
+                    ENLINK* pEnLink = (ENLINK*)lparam;
+                    if (pEnLink->msg == WM_LBUTTONUP)
+                    {
+                        TCHAR* link = new TCHAR[
+                                pEnLink->chrg.cpMax - pEnLink->chrg.cpMin + 1];
+                        TEXTRANGE range;
+                        range.chrg = pEnLink->chrg;
+                        range.lpstrText = link;
+                        SendMessage(pEnLink->nmhdr.hwndFrom, EM_GETTEXTRANGE,
+                                0, (LPARAM) &range);
+                        ShellExecute(NULL, _T("open"), link, NULL, NULL,
+                                SW_SHOWNORMAL);
+                        delete [] link;
+                        return 1;
+                    }
+                    return 0;
+                }
             }
             break;
 

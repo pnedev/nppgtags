@@ -37,8 +37,8 @@
 class ActivityWindow
 {
 public:
-    static void Register(HINSTANCE hInst = NULL);
-    static void Unregister() {  UnregisterClass(cClassName, HInst); }
+    static void Register(HINSTANCE hMod = NULL);
+    static void Unregister();
 
     static int Show(HWND hOwner, HANDLE procHndl, int width,
             const TCHAR *text, int showDelay_ms);
@@ -51,7 +51,7 @@ private:
     static const int cBackgroundColor;
 
     static volatile LONG RefCount;
-    static HINSTANCE HInst;
+    static HINSTANCE HMod;
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
