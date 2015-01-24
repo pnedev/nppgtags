@@ -60,7 +60,9 @@ private:
      */
     struct Tab
     {
-        const Tab& operator=(const GTags::CmdData& cmd);
+        Tab(const GTags::CmdData& cmd);
+        ~Tab();
+
         inline bool operator==(const Tab& tab) const
         {
             return (_cmdID == tab._cmdID &&
@@ -71,6 +73,7 @@ private:
         int _cmdID;
         char _projectPath[MAX_PATH];
         char _search[GTags::cMaxTagLen];
+        void* _sciDoc;
     };
 
     static const COLORREF cBlack = RGB(0,0,0);
@@ -100,8 +103,9 @@ private:
 
     HWND composeWindow();
     void add(const GTags::CmdData& cmd);
-    void parseCmd(CTextA& dst, const char* src);
+    void parseCmd(CTextA& dst, const char* src, unsigned tagLen);
     void parseFindFile(CTextA& dst, const char* src);
+    Tab* getTab(int i = -1);
     bool openItem(int lineNum);
     void styleString(int styleID, const char* str,
         int lineNum, int lineOffset = 0,
@@ -110,15 +114,15 @@ private:
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
-    void onClose();
+    void onTabChange();
+    void onCloseTab();
+    void closeAllTabs();
     void onResize(int width, int height);
 
     Mutex _lock;
     HWND _hWnd;
     HWND _hSci;
+    HWND _hTab;
 	SciFnDirect _sciFunc;
 	sptr_t _sciPtr;
-
-    // Only one tab possible for now - implement tab ctrl
-    Tab _tab;
 };

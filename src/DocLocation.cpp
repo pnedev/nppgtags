@@ -23,6 +23,7 @@
 
 
 #include "DocLocation.h"
+#include "Common.h"
 #include "INpp.h"
 
 
@@ -83,9 +84,12 @@ void DocLocation::Pop()
 
     Location& loc = _locList.back();
 
-    INpp& npp = INpp::Get();
-    if (npp.OpenFile(loc.filePath))
+    if (Tools::FileExists(loc.filePath))
+    {
+        INpp& npp = INpp::Get();
+        npp.OpenFile(loc.filePath);
         npp.SetView(loc.firstVisibleLine, loc.posInFile);
+    }
 
     _locList.pop_back();
 }

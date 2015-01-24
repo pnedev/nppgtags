@@ -5,7 +5,7 @@
 #define VER_VERSION_STR     _T("1.2.0\0")
 
 #define VER_AUTHOR          _T("Pavel Nedev\0")
-#define VER_COPYRIGHT       _T("Copyright(C) 2014 Pavel Nedev\0")
+#define VER_COPYRIGHT       _T("Copyright(C) 2014-2015 Pavel Nedev\0")
 
 #ifndef DEVELOPMENT
 

@@ -281,6 +281,14 @@ inline unsigned AtoW(wchar_t* dst, unsigned dstSize, const char* src)
 }
 
 
+inline bool FileExists(TCHAR* file)
+{
+    DWORD dwAttrib = GetFileAttributes(file);
+    return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES &&
+        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
 #ifdef DEVELOPMENT
 
 #ifdef UNICODE
