@@ -383,8 +383,8 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
                 SendMessage(_hwnd, WM_CLOSE, 0, 0);
                 return true;
             }
-            break;
         }
+        break;
 
         default:
         {
@@ -458,13 +458,13 @@ LRESULT APIENTRY AutoCompleteUI::wndProc(HWND hwnd, UINT umsg,
                 case LVN_KEYDOWN:
                     if (ui->onKeyDown(((LPNMLVKEYDOWN)lparam)->wVKey))
                         return 0;
-                    break;
+                break;
 
                 case NM_DBLCLK:
                     ui->onDblClick();
                     return 0;
             }
-            break;
+        break;
 
         case WM_DESTROY:
             INpp::Get().ClearSelection();

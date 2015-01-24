@@ -80,13 +80,13 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
 
         case DLL_PROCESS_DETACH:
             GTags::PluginDeInit();
-            break;
+        break;
 
         case DLL_THREAD_ATTACH:
-            break;
+        break;
 
         case DLL_THREAD_DETACH:
-            break;
+        break;
     }
 
     return TRUE;
@@ -143,23 +143,32 @@ extern "C" __declspec(dllexport) FuncItem* getFuncsArray(int* nbF)
 
 extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
 {
-    if (notifyCode->nmhdr.code == NPPN_FILESAVED)
+    switch (notifyCode->nmhdr.code)
     {
-        if (GTags::AutoUpdate)
+        case NPPN_FILESAVED:
+            if (GTags::AutoUpdate)
+            {
+                TCHAR file[MAX_PATH];
+                INpp::Get().GetFilePathFromBufID(
+                        notifyCode->nmhdr.idFrom, file);
+                GTags::UpdateSingleFile(file);
+            }
+        break;
+
+        case NPPN_WORDSTYLESUPDATED:
         {
-            TCHAR file[MAX_PATH];
-            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-            GTags::UpdateSingleFile(file);
+            INpp& npp = INpp::Get();
+            char font[32];
+            npp.GetFontName(font, _countof(font));
+            Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
+            GTags::UIFontSize = (unsigned)npp.GetFontSize();
+            ScintillaViewUI::Get().ResetStyle();
         }
-    }
-    else if (notifyCode->nmhdr.code == NPPN_WORDSTYLESUPDATED)
-    {
-        INpp& npp = INpp::Get();
-        char font[32];
-        npp.GetFontName(font, _countof(font));
-        Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
-        GTags::UIFontSize = (unsigned)npp.GetFontSize();
-        ScintillaViewUI::Get().ResetStyle();
+        break;
+
+        case NPPN_SHUTDOWN:
+            GTags::PluginDeInit();
+        break;
     }
 }
 

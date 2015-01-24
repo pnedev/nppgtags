@@ -110,8 +110,7 @@ private:
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
-    void onKey(SCNotification* notify);
-    void onContextMenu();
+    void onClose();
     void onResize(int width, int height);
 
     Mutex _lock;

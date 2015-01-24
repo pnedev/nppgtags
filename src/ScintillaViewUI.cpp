@@ -631,17 +631,7 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onKey(SCNotification* notify)
-{
-    if (notify->ch == 'q' && notify->modifiers == SCMOD_CTRL)
-        onContextMenu();
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::onContextMenu()
+void ScintillaViewUI::onClose()
 {
     if (!_lock.TryLock())
         return;
@@ -710,18 +700,14 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                 case SCN_CHARADDED:
                     ui->onCharAddTry((SCNotification*)lparam);
                     return 0;
-
-                case SCN_KEY:
-                    ui->onKey((SCNotification*)lparam);
-                    return 0;
             }
-            break;
+        break;
 
         case WM_CONTEXTMENU:
             ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            ui->onContextMenu();
-            break;
+            ui->onClose();
+        break;
 
         case WM_SIZE:
             ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>

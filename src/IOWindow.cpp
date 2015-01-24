@@ -360,7 +360,7 @@ LRESULT APIENTRY IOWindow::wndProc(HWND hwnd, UINT umsg,
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }
-            break;
+        break;
 
         case WM_NOTIFY:
             switch (((LPNMHDR)lparam)->code)
@@ -407,7 +407,7 @@ LRESULT APIENTRY IOWindow::wndProc(HWND hwnd, UINT umsg,
                     return 0;
                 }
             }
-            break;
+        break;
 
         case WM_DESTROY:
             PostQuitMessage(0);
