@@ -73,7 +73,13 @@ private:
         int _cmdID;
         char _projectPath[MAX_PATH];
         char _search[GTags::cMaxTagLen];
-        void* _sciDoc;
+        CTextA _uiBuf;
+        int _uiLine;
+        int _uiFoldLine;
+
+    private:
+        void parseCmd(CTextA& dst, const char* src);
+        void parseFindFile(CTextA& dst, const char* src);
     };
 
     static const COLORREF cBlack = RGB(0,0,0);
@@ -101,12 +107,13 @@ private:
             bool bold = false, bool italic = false,
             int size = 0, const char *font = NULL);
 
+    void configScintilla();
     HWND composeWindow();
-    void add(const GTags::CmdData& cmd);
-    void parseCmd(CTextA& dst, const char* src, unsigned tagLen);
-    void parseFindFile(CTextA& dst, const char* src);
+
     Tab* getTab(int i = -1);
+    void loadTab(Tab* tab);
     bool openItem(int lineNum);
+
     void styleString(int styleID, const char* str,
         int lineNum, int lineOffset = 0,
         bool matchCase = true, bool wholeWord = false);
@@ -114,6 +121,7 @@ private:
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
+    void onBeforeTabChange();
     void onTabChange();
     void onCloseTab();
     void closeAllTabs();

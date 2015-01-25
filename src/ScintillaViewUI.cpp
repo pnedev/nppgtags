@@ -60,15 +60,27 @@ using namespace GTags;
 /**
  *  \brief
  */
-ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd)
+ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd) :
+    _uiLine(1), _uiFoldLine(0)
 {
     _cmdID = cmd.GetID();
 
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd.GetDBPath());
     Tools::WtoA(_search, _countof(_search), cmd.GetTag());
 
-    _sciDoc = reinterpret_cast<void*>(
-            ScintillaViewUI::Get().sendSci(SCI_CREATEDOCUMENT));
+    // Add the search header - cmd name + search word + project path
+    _uiBuf = cmd.GetName();
+    _uiBuf += " \"";
+    _uiBuf += _search;
+    _uiBuf += "\" in \"";
+    _uiBuf += _projectPath;
+    _uiBuf += "\"";
+
+    // parsing result buffer and composing UI buffer
+    if (_cmdID == FIND_FILE)
+        parseFindFile(_uiBuf, cmd.GetResult());
+    else
+        parseCmd(_uiBuf, cmd.GetResult());
 }
 
 
@@ -77,8 +89,97 @@ ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd)
  */
 ScintillaViewUI::Tab::~Tab()
 {
-    ScintillaViewUI::Get().sendSci(SCI_RELEASEDOCUMENT,
-            0, reinterpret_cast<LPARAM>(_sciDoc));
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::Tab::parseCmd(CTextA& dst, const char* src)
+{
+    unsigned tagLen = strlen(_search);
+    const char* lineRes;
+    const char* lineResEnd;
+    const char* fileResEnd;
+    const char* prevFile = NULL;
+    unsigned prevFileLen = 0;
+
+    for (;;)
+    {
+        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+            src++;
+        if (*src == 0) break;
+
+        src += tagLen; // skip search word from result buffer
+        while (*src == ' ' || *src == '\t')
+            src++;
+
+        lineRes = lineResEnd = src;
+        while (*lineResEnd != ' ' && *lineResEnd != '\t')
+            lineResEnd++;
+
+        src = lineResEnd;
+        while (*src == ' ' || *src == '\t')
+            src++;
+
+        fileResEnd = src;
+        while (*fileResEnd != ' ' && *fileResEnd != '\t')
+            fileResEnd++;
+
+        // add new file name to the UI buffer only if it is different
+        // than the previous one
+        if (prevFile == NULL || (unsigned)(fileResEnd - src) != prevFileLen ||
+            strncmp(src, prevFile, prevFileLen))
+        {
+            prevFile = src;
+            prevFileLen = fileResEnd - src;
+            dst += "\n\t";
+            dst.append(prevFile, prevFileLen);
+        }
+
+        dst += "\n\t\tline ";
+        dst.append(lineRes, lineResEnd - lineRes);
+        dst += ":\t";
+
+        src = fileResEnd;
+        while (*src == ' ' || *src == '\t')
+            src++;
+
+        lineResEnd = src;
+        while (*lineResEnd != '\n' && *lineResEnd != '\r')
+            lineResEnd++;
+
+        dst.append(src, lineResEnd - src);
+        src = lineResEnd;
+    }
+
+    dst += "\n";
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::Tab::parseFindFile(CTextA& dst, const char* src)
+{
+    const char* eol;
+
+    for (;;)
+    {
+        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+            src++;
+        if (*src == 0) break;
+
+        eol = src;
+        while (*eol != '\n' && *eol != '\r' && *eol != 0)
+            eol++;
+
+        dst += "\n\t";
+        dst.append(src, eol - src);
+        src = eol;
+    }
+
+    dst += "\n";
 }
 
 
@@ -161,7 +262,40 @@ void ScintillaViewUI::Show(const CmdData& cmd)
     if (_hWnd == NULL)
         return;
 
-    add(cmd);
+    Tab* tab = new Tab(cmd);
+
+    AUTOLOCK(_lock);
+
+    for (int i = TabCtrl_GetItemCount(_hTab); i; i--)
+    {
+        Tab* oldTab = getTab(i - 1);
+        if (oldTab && *tab == *oldTab)
+        {
+            TabCtrl_DeleteItem(_hTab, i - 1);
+            delete oldTab;
+            break;
+        }
+    }
+
+    TCITEM tci  = {0};
+    tci.mask    = TCIF_TEXT | TCIF_PARAM;
+    tci.pszText = const_cast<TCHAR*>(cmd.GetTag());
+    tci.lParam  = (LPARAM)tab;
+
+    int i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+    if (i == -1)
+    {
+        delete tab;
+        return;
+    }
+
+    TabCtrl_SetCurSel(_hTab, i);
+    loadTab(tab);
+
+    INpp& npp = INpp::Get();
+    npp.UpdateDockingWin(_hWnd);
+    npp.ShowDockingWin(_hWnd);
+    SetFocus(_hSci);
 }
 
 
@@ -211,6 +345,49 @@ void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
 /**
  *  \brief
  */
+void ScintillaViewUI::configScintilla()
+{
+    sendSci(SCI_SETCODEPAGE, SC_CP_UTF8);
+    sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
+    sendSci(SCI_USEPOPUP, false);
+    sendSci(SCI_SETUNDOCOLLECTION, false);
+    sendSci(SCI_SETCURSOR, SC_CURSORARROW);
+    sendSci(SCI_SETCARETSTYLE, CARETSTYLE_INVISIBLE);
+    sendSci(SCI_SETCARETLINEBACK, RGB(222,222,238));
+    sendSci(SCI_SETCARETLINEVISIBLE, 1);
+    sendSci(SCI_SETCARETLINEVISIBLEALWAYS, 1);
+
+    // Implement lexer in the container
+    sendSci(SCI_SETLEXER, 0);
+
+    ResetStyle();
+
+    sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
+            reinterpret_cast<LPARAM>("1"));
+
+    sendSci(SCI_SETMARGINTYPEN, 1, SC_MARGIN_SYMBOL);
+    sendSci(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS);
+    sendSci(SCI_SETMARGINWIDTHN, 1, 20);
+    sendSci(SCI_SETFOLDMARGINCOLOUR, 1, cBlack);
+    sendSci(SCI_SETFOLDMARGINHICOLOUR, 1, cBlack);
+    sendSci(SCI_SETMARGINSENSITIVEN, 1, 1);
+    sendSci(SCI_SETFOLDFLAGS, 0);
+    sendSci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW);
+
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID,
+            SC_MARK_BOXMINUSCONNECTED);
+}
+
+
+/**
+ *  \brief
+ */
 HWND ScintillaViewUI::composeWindow()
 {
     INpp& npp = INpp::Get();
@@ -246,8 +423,7 @@ HWND ScintillaViewUI::composeWindow()
     GetClientRect(_hWnd, &win);
 
     _hTab = CreateWindowEx(0, WC_TABCONTROL, _T("TabCtrl"),
-            WS_CHILD | WS_VISIBLE |
-            TCS_BUTTONS | TCS_FOCUSONBUTTONDOWN | TCS_FLATBUTTONS,
+            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -257,188 +433,11 @@ HWND ScintillaViewUI::composeWindow()
     MoveWindow(_hSci, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);
 
-    sendSci(SCI_SETCODEPAGE, SC_CP_UTF8);
-    sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
-    sendSci(SCI_USEPOPUP, false);
-    sendSci(SCI_SETUNDOCOLLECTION, false);
-    sendSci(SCI_SETCURSOR, SC_CURSORARROW);
-    sendSci(SCI_SETCARETSTYLE, CARETSTYLE_INVISIBLE);
-    sendSci(SCI_SETCARETLINEBACK, RGB(222,222,238));
-    sendSci(SCI_SETCARETLINEVISIBLE, 1);
-    sendSci(SCI_SETCARETLINEVISIBLEALWAYS, 1);
-
-    // Implement lexer in the container
-    sendSci(SCI_SETLEXER, 0);
-
-    ResetStyle();
-
-    sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
-            reinterpret_cast<LPARAM>("1"));
-
-    sendSci(SCI_SETMARGINTYPEN, 1, SC_MARGIN_SYMBOL);
-    sendSci(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS);
-    sendSci(SCI_SETMARGINWIDTHN, 1, 20);
-    sendSci(SCI_SETFOLDMARGINCOLOUR, 1, cBlack);
-    sendSci(SCI_SETFOLDMARGINHICOLOUR, 1, cBlack);
-    sendSci(SCI_SETMARGINSENSITIVEN, 1, 1);
-    sendSci(SCI_SETFOLDFLAGS, 0);
-
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID,
-            SC_MARK_BOXMINUSCONNECTED);
+    configScintilla();
 
     ShowWindow(_hSci, SW_SHOWNORMAL);
 
     return _hWnd;
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::add(const CmdData& cmd)
-{
-    Tab* tab = new Tab(cmd);
-
-    /* TODO: check if tab already exists and if yes - delete the old one */
-
-    // Add the search header - cmd name + search word + project path
-    CTextA uiBuf(cmd.GetName());
-    uiBuf += " \"";
-    uiBuf += tab->_search;
-    uiBuf += "\" in \"";
-    uiBuf += tab->_projectPath;
-    uiBuf += "\"";
-
-    // parsing result buffer and composing UI buffer
-    if (tab->_cmdID == FIND_FILE)
-        parseFindFile(uiBuf, cmd.GetResult());
-    else
-        parseCmd(uiBuf, cmd.GetResult(), strlen(tab->_search));
-
-    AUTOLOCK(_lock);
-
-    TCITEM tci  = {0};
-    tci.mask    = TCIF_TEXT | TCIF_PARAM;
-    tci.pszText = const_cast<TCHAR*>(cmd.GetTag());
-    tci.lParam  = (LPARAM)tab;
-
-    int i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
-    if (i == -1)
-    {
-        delete tab;
-        return;
-    }
-
-    TabCtrl_SetCurSel(_hTab, i);
-
-    sendSci(SCI_SETDOCPOINTER, 0,
-            reinterpret_cast<LPARAM>(tab->_sciDoc));
-
-    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(uiBuf.C_str()));
-    sendSci(SCI_SETREADONLY, 1);
-    const int line1pos = sendSci(SCI_POSITIONFROMLINE, 1);
-    sendSci(SCI_SETSEL, line1pos, line1pos);
-
-    INpp& npp = INpp::Get();
-    npp.UpdateDockingWin(_hWnd);
-    npp.ShowDockingWin(_hWnd);
-    SetFocus(_hWnd);
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::parseCmd(CTextA& dst, const char* src, unsigned tagLen)
-{
-    const char* lineRes;
-    const char* lineResEnd;
-    const char* fileResEnd;
-    const char* prevFile = NULL;
-    unsigned prevFileLen = 0;
-
-    for (;;)
-    {
-        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
-            src++;
-        if (*src == 0) break;
-
-        src += tagLen; // skip search word from result buffer
-        while (*src == ' ' || *src == '\t')
-            src++;
-
-        lineRes = lineResEnd = src;
-        while (*lineResEnd != ' ' && *lineResEnd != '\t')
-            lineResEnd++;
-
-        src = lineResEnd;
-        while (*src == ' ' || *src == '\t')
-            src++;
-
-        fileResEnd = src;
-        while (*fileResEnd != ' ' && *fileResEnd != '\t')
-            fileResEnd++;
-
-        // add new file name to the UI buffer only if it is different
-        // than the previous one
-        if (prevFile == NULL || (unsigned)(fileResEnd - src) != prevFileLen ||
-            strncmp(src, prevFile, prevFileLen))
-        {
-            prevFile = src;
-            prevFileLen = fileResEnd - src;
-            dst += "\n\t";
-            dst.append(prevFile, prevFileLen);
-        }
-
-        dst += "\n\t\tline ";
-        dst.append(lineRes, lineResEnd - lineRes);
-        dst += ":\t";
-
-        src = fileResEnd;
-        while (*src == ' ' || *src == '\t')
-            src++;
-
-        lineResEnd = src;
-        while (*lineResEnd != '\n' && *lineResEnd != '\r')
-            lineResEnd++;
-
-        dst.append(src, lineResEnd - src);
-        src = lineResEnd;
-    }
-
-    dst += "\n";
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::parseFindFile(CTextA& dst, const char* src)
-{
-    const char* eol;
-
-    for (;;)
-    {
-        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
-            src++;
-        if (*src == 0) break;
-
-        eol = src;
-        while (*eol != '\n' && *eol != '\r' && *eol != 0)
-            eol++;
-
-        dst += "\n\t";
-        dst.append(src, eol - src);
-        src = eol;
-    }
-
-    dst += "\n";
 }
 
 
@@ -461,6 +460,20 @@ ScintillaViewUI::Tab* ScintillaViewUI::getTab(int i)
         return NULL;
 
     return (Tab*)tci.lParam;
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
+{
+    sendSci(SCI_SETREADONLY, 0);
+    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_uiBuf.C_str()));
+    sendSci(SCI_SETREADONLY, 1);
+    const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_uiLine);
+    sendSci(SCI_SETSEL, pos, pos);
+    SetFocus(_hSci);
 }
 
 
@@ -526,8 +539,7 @@ bool ScintillaViewUI::openItem(int lineNum)
         return true;
     }
 
-    bool wholeWord =
-            (tab->_cmdID != GREP && tab->_cmdID != FIND_LITERAL);
+    bool wholeWord = (tab->_cmdID != GREP && tab->_cmdID != FIND_LITERAL);
 
     if (!npp.SearchText(tab->_search, true, wholeWord,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))
@@ -617,7 +629,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 {
                     sendSci(SCI_SETFOLDLEVEL, lineNum,
                             FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
-                    sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
+                    if (lineNum != tab->_uiFoldLine)
+                        sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
                 }
             }
             else
@@ -703,7 +716,7 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onTabChange()
+void ScintillaViewUI::onBeforeTabChange()
 {
     if (!_lock.TryLock())
         return;
@@ -711,12 +724,26 @@ void ScintillaViewUI::onTabChange()
     Tab* tab = getTab();
     if (tab)
     {
-        sendSci(SCI_SETDOCPOINTER, 0,
-                reinterpret_cast<LPARAM>(tab->_sciDoc));
-        ResetStyle();
-        sendSci(SCI_CLEARDOCUMENTSTYLE);
-        sendSci(SCI_COLOURISE, 0, -1);
+        tab->_uiLine =
+                sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
+        tab->_uiFoldLine = sendSci(SCI_GETFOLDPARENT, tab->_uiLine);
     }
+
+    _lock.Unlock();
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::onTabChange()
+{
+    if (!_lock.TryLock())
+        return;
+
+    Tab* tab = getTab();
+    if (tab)
+        loadTab(tab);
 
     _lock.Unlock();
 }
@@ -732,31 +759,35 @@ void ScintillaViewUI::onCloseTab()
 
     int i = TabCtrl_GetCurSel(_hTab);
     Tab* oldTab = getTab(i);
-    if (oldTab == NULL)
-        return;
-    TabCtrl_DeleteItem(_hTab, i);
-
-    if (TabCtrl_GetItemCount(_hTab))
+    if (oldTab)
     {
-        if (--i < 0)
-            i = 0;
-        TabCtrl_SetCurSel(_hTab, i);
-        Tab* tab = getTab(i);
-        if (tab)
+        if (TabCtrl_GetItemCount(_hTab) - 1)
         {
-            sendSci(SCI_SETDOCPOINTER, 0,
-                    reinterpret_cast<LPARAM>(tab->_sciDoc));
-            delete oldTab;
-        }
-    }
-    else
-    {
-        delete oldTab;
+            int j = i ? i - 1 : 0;
+            Tab* tab = getTab(j);
+            if (tab)
+            {
+                TabCtrl_DeleteItem(_hTab, i);
+                delete oldTab;
 
-        INpp& npp = INpp::Get();
-        npp.UpdateDockingWin(_hWnd);
-        npp.HideDockingWin(_hWnd);
-        SetFocus(npp.ReadSciHandle());
+                TabCtrl_SetCurSel(_hTab, j);
+                loadTab(tab);
+            }
+        }
+        else
+        {
+            TabCtrl_DeleteItem(_hTab, i);
+            delete oldTab;
+
+            sendSci(SCI_SETREADONLY, 0);
+            sendSci(SCI_CLEARALL);
+            sendSci(SCI_SETREADONLY, 1);
+
+            INpp& npp = INpp::Get();
+            npp.UpdateDockingWin(_hWnd);
+            npp.HideDockingWin(_hWnd);
+            SetFocus(npp.ReadSciHandle());
+        }
     }
 
     _lock.Unlock();
@@ -835,6 +866,10 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
 
                 case SCN_CHARADDED:
                     ui->onCharAddTry((SCNotification*)lparam);
+                    return 0;
+
+                case TCN_SELCHANGING:
+                    ui->onBeforeTabChange();
                     return 0;
 
                 case TCN_SELCHANGE:
