@@ -1,3 +1,10 @@
+What's new in v2.0.0
+=======================
+
+- Use Scintilla to display results - colorized results and better navigation
+- Code refactoring and optimization
+- Minor fixes to GTags binaries v6.3.3
+
 What's new in v1.1.1
 =======================
 
