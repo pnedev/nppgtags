@@ -93,7 +93,8 @@ private:
             WPARAM wparam, LPARAM lparam);
 
     ScintillaViewUI() :
-        _hWnd(NULL), _hSci(NULL), _sciFunc(NULL), _sciPtr(NULL) {}
+        _hWnd(NULL), _hSci(NULL), _sciFunc(NULL), _sciPtr(NULL),
+        _activeTab(NULL) {}
     ScintillaViewUI(const ScintillaViewUI&);
     ~ScintillaViewUI() { Unregister(); };
 
@@ -119,9 +120,7 @@ private:
         bool matchCase = true, bool wholeWord = false);
     void onStyleNeeded(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);
-    void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
-    void onBeforeTabChange();
     void onTabChange();
     void onCloseTab();
     void closeAllTabs();
@@ -133,4 +132,5 @@ private:
     HWND _hTab;
 	SciFnDirect _sciFunc;
 	sptr_t _sciPtr;
+    Tab* _activeTab;
 };

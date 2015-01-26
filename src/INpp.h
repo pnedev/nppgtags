@@ -196,12 +196,6 @@ public:
         SendMessage(_hSC, SCI_GOTOLINE, (WPARAM)line, 0);
     }
 
-    inline void ScrollToLine(long line) const
-    {
-        line -= SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-        SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)line);
-    }
-
     inline long PositionFromLine(long line) const
     {
         return SendMessage(_hSC, SCI_POSITIONFROMLINE, (WPARAM)line, 0);
@@ -249,7 +243,7 @@ public:
 
     inline void SetView(long firstVisibleLine, long pos) const
     {
-        ScrollToLine(firstVisibleLine);
+        SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, firstVisibleLine, 0);
         SendMessage(_hSC, SCI_SETSEL, (WPARAM)pos, (LPARAM)pos);
     }
 

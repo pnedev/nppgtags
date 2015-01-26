@@ -262,37 +262,72 @@ void ScintillaViewUI::Show(const CmdData& cmd)
     if (_hWnd == NULL)
         return;
 
+    INpp& npp = INpp::Get();
+
+    if (cmd.GetResultLen() > 100000)
+    {
+        TCHAR buf[512];
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE,
+                _T("%s \"%s\": A lot of matches were found, ")
+                _T("parsing those will be rather slow.\n")
+                _T("Are you sure you want to proceed?"),
+                cmd.GetName(), cmd.GetTag());
+        int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
+                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+        if (choice != IDYES)
+            return;
+    }
+
+    // parsing results happens here
     Tab* tab = new Tab(cmd);
 
     AUTOLOCK(_lock);
 
-    for (int i = TabCtrl_GetItemCount(_hTab); i; i--)
+    int i;
+    for (i = TabCtrl_GetItemCount(_hTab); i; i--)
     {
         Tab* oldTab = getTab(i - 1);
-        if (oldTab && *tab == *oldTab)
+        if (oldTab && *tab == *oldTab) // same search tab already present?
         {
-            TabCtrl_DeleteItem(_hTab, i - 1);
+            if (_activeTab == oldTab) // is this the currently active tab?
+                _activeTab = NULL;
             delete oldTab;
             break;
         }
     }
 
-    TCITEM tci  = {0};
-    tci.mask    = TCIF_TEXT | TCIF_PARAM;
-    tci.pszText = const_cast<TCHAR*>(cmd.GetTag());
-    tci.lParam  = (LPARAM)tab;
-
-    int i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
-    if (i == -1)
+    if (i == 0) // search is completely new - add new tab
     {
-        delete tab;
-        return;
+        TCITEM tci  = {0};
+        tci.mask    = TCIF_TEXT | TCIF_PARAM;
+        tci.pszText = const_cast<TCHAR*>(cmd.GetTag());
+        tci.lParam  = (LPARAM)tab;
+
+        i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+        if (i == -1)
+        {
+            delete tab;
+            return;
+        }
+    }
+    else // same search tab exists - reuse it, just update results
+    {
+        TCITEM tci  = {0};
+        tci.mask    = TCIF_PARAM;
+        tci.lParam  = (LPARAM)tab;
+
+        if (!TabCtrl_SetItem(_hTab, --i, &tci))
+        {
+            TabCtrl_DeleteItem(_hTab, i);
+            delete tab;
+            closeAllTabs();
+            return;
+        }
     }
 
     TabCtrl_SetCurSel(_hTab, i);
     loadTab(tab);
 
-    INpp& npp = INpp::Get();
     npp.UpdateDockingWin(_hWnd);
     npp.ShowDockingWin(_hWnd);
     SetFocus(_hSci);
@@ -357,6 +392,8 @@ void ScintillaViewUI::configScintilla()
     sendSci(SCI_SETCARETLINEVISIBLE, 1);
     sendSci(SCI_SETCARETLINEVISIBLEALWAYS, 1);
 
+    sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_DOCUMENT);
+
     // Implement lexer in the container
     sendSci(SCI_SETLEXER, 0);
 
@@ -370,9 +407,9 @@ void ScintillaViewUI::configScintilla()
     sendSci(SCI_SETMARGINWIDTHN, 1, 20);
     sendSci(SCI_SETFOLDMARGINCOLOUR, 1, cBlack);
     sendSci(SCI_SETFOLDMARGINHICOLOUR, 1, cBlack);
-    sendSci(SCI_SETMARGINSENSITIVEN, 1, 1);
     sendSci(SCI_SETFOLDFLAGS, 0);
-    sendSci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW);
+    sendSci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW |
+            SC_AUTOMATICFOLD_CLICK | SC_AUTOMATICFOLD_CHANGE);
 
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
@@ -468,11 +505,25 @@ ScintillaViewUI::Tab* ScintillaViewUI::getTab(int i)
  */
 void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
 {
+    // store current view if there is one
+    if (_activeTab)
+    {
+        _activeTab->_uiLine =
+                sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
+        _activeTab->_uiFoldLine =
+                sendSci(SCI_GETFOLDPARENT, _activeTab->_uiLine);
+    }
+
+    _activeTab = tab;
+
     sendSci(SCI_SETREADONLY, 0);
     sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_uiBuf.C_str()));
     sendSci(SCI_SETREADONLY, 1);
+
+    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_uiLine > 3 ? tab->_uiLine - 3 : 0);
     const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_uiLine);
     sendSci(SCI_SETSEL, pos, pos);
+
     SetFocus(_hSci);
 }
 
@@ -482,10 +533,6 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
  */
 bool ScintillaViewUI::openItem(int lineNum)
 {
-    Tab* tab = getTab();
-    if (tab == NULL)
-        return false;
-
     int lineLen = sendSci(SCI_LINELENGTH, lineNum);
     char* lineTxt = new char[lineLen + 1];
 
@@ -514,7 +561,7 @@ bool ScintillaViewUI::openItem(int lineNum)
     for (i = 1; lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
     lineTxt[i] = 0;
 
-    CPath file(tab->_projectPath);
+    CPath file(_activeTab->_projectPath);
     CText str(&lineTxt[1]);
 	file += str.C_str();
     delete [] lineTxt;
@@ -539,9 +586,10 @@ bool ScintillaViewUI::openItem(int lineNum)
         return true;
     }
 
-    bool wholeWord = (tab->_cmdID != GREP && tab->_cmdID != FIND_LITERAL);
+    bool wholeWord =
+            (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
 
-    if (!npp.SearchText(tab->_search, true, wholeWord,
+    if (!npp.SearchText(_activeTab->_search, true, wholeWord,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))
     {
         MessageBox(npp.GetHandle(),
@@ -585,8 +633,7 @@ void ScintillaViewUI::styleString(int styleID, const char* str,
  */
 void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 {
-    Tab* tab = getTab();
-    if (tab == NULL)
+    if (_activeTab == NULL)
         return;
 
     int lineNum = sendSci(SCI_LINEFROMPOSITION,
@@ -606,7 +653,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             sendSci(SCI_STARTSTYLING, startPos, 0xFF);
             sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_HEADER);
 
-            int pathLen = strlen(tab->_projectPath);
+            int pathLen = strlen(_activeTab->_projectPath);
             startPos = sendSci(SCI_GETLINEENDPOSITION, lineNum) - pathLen - 1;
 
             sendSci(SCI_STARTSTYLING, startPos, 0xFF);
@@ -620,25 +667,26 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             {
                 sendSci(SCI_STARTSTYLING, startPos, 0xFF);
                 sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
-                if (tab->_cmdID == FIND_FILE)
+                if (_activeTab->_cmdID == FIND_FILE)
                 {
-                    styleString(SCE_GTAGS_WORD2SEARCH, tab->_search, lineNum);
+                    styleString(SCE_GTAGS_WORD2SEARCH,
+                            _activeTab->_search, lineNum);
                     sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
                 }
                 else
                 {
                     sendSci(SCI_SETFOLDLEVEL, lineNum,
                             FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
-                    if (lineNum != tab->_uiFoldLine)
+                    if (lineNum != _activeTab->_uiFoldLine)
                         sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
                 }
             }
             else
             {
-                bool wholeWord = (tab->_cmdID == GREP ||
-                        tab->_cmdID == FIND_LITERAL) ? false : true;
+                bool wholeWord = (_activeTab->_cmdID == GREP ||
+                        _activeTab->_cmdID == FIND_LITERAL) ? false : true;
                 styleString(SCE_GTAGS_WORD2SEARCH,
-                        tab->_search, lineNum, 7, true, wholeWord);
+                        _activeTab->_search, lineNum, 7, true, wholeWord);
                 sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
             }
         }
@@ -655,33 +703,25 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
         return;
 
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
-    sendSci(SCI_GOTOLINE, lineNum); // Clear double-click auto-selection
 
-    if (sendSci(SCI_LINELENGTH, lineNum))
+    if (lineNum)
     {
-        if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-            sendSci(SCI_TOGGLEFOLD, lineNum);
-        else
-            openItem(lineNum);
+        // Clear double-click auto-selection
+        sendSci(SCI_SETSEL, notify->position, notify->position);
+
+        if (sendSci(SCI_LINELENGTH, lineNum))
+        {
+            if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+                sendSci(SCI_TOGGLEFOLD, lineNum);
+            else
+                openItem(lineNum);
+        }
     }
-
-    _lock.Unlock();
-}
-
-
-/**
- *  \brief
- */
-void ScintillaViewUI::onMarginClick(SCNotification* notify)
-{
-    if (!_lock.TryLock())
-        return;
-
-    if (notify->margin == 1)
+    else
     {
-        const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
-        if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-            sendSci(SCI_TOGGLEFOLD, lineNum);
+        const int pos = sendSci(SCI_GETCURRENTPOS);
+        // Clear double-click auto-selection
+        sendSci(SCI_SETSEL, pos, pos);
     }
 
     _lock.Unlock();
@@ -716,26 +756,6 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onBeforeTabChange()
-{
-    if (!_lock.TryLock())
-        return;
-
-    Tab* tab = getTab();
-    if (tab)
-    {
-        tab->_uiLine =
-                sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
-        tab->_uiFoldLine = sendSci(SCI_GETFOLDPARENT, tab->_uiLine);
-    }
-
-    _lock.Unlock();
-}
-
-
-/**
- *  \brief
- */
 void ScintillaViewUI::onTabChange()
 {
     if (!_lock.TryLock())
@@ -758,36 +778,28 @@ void ScintillaViewUI::onCloseTab()
         return;
 
     int i = TabCtrl_GetCurSel(_hTab);
-    Tab* oldTab = getTab(i);
-    if (oldTab)
+    delete _activeTab;
+    _activeTab = NULL;
+    TabCtrl_DeleteItem(_hTab, i);
+
+    if (TabCtrl_GetItemCount(_hTab))
     {
-        if (TabCtrl_GetItemCount(_hTab) - 1)
-        {
-            int j = i ? i - 1 : 0;
-            Tab* tab = getTab(j);
-            if (tab)
-            {
-                TabCtrl_DeleteItem(_hTab, i);
-                delete oldTab;
+        i = i ? i - 1 : 0;
+        Tab* tab = getTab(i);
+        TabCtrl_SetCurSel(_hTab, i);
+        if (tab)
+            loadTab(tab);
+    }
+    else
+    {
+        sendSci(SCI_SETREADONLY, 0);
+        sendSci(SCI_CLEARALL);
+        sendSci(SCI_SETREADONLY, 1);
 
-                TabCtrl_SetCurSel(_hTab, j);
-                loadTab(tab);
-            }
-        }
-        else
-        {
-            TabCtrl_DeleteItem(_hTab, i);
-            delete oldTab;
-
-            sendSci(SCI_SETREADONLY, 0);
-            sendSci(SCI_CLEARALL);
-            sendSci(SCI_SETREADONLY, 1);
-
-            INpp& npp = INpp::Get();
-            npp.UpdateDockingWin(_hWnd);
-            npp.HideDockingWin(_hWnd);
-            SetFocus(npp.ReadSciHandle());
-        }
+        INpp& npp = INpp::Get();
+        npp.UpdateDockingWin(_hWnd);
+        npp.HideDockingWin(_hWnd);
+        SetFocus(npp.ReadSciHandle());
     }
 
     _lock.Unlock();
@@ -799,13 +811,19 @@ void ScintillaViewUI::onCloseTab()
  */
 void ScintillaViewUI::closeAllTabs()
 {
+    _activeTab = NULL;
+
     for (int i = TabCtrl_GetItemCount(_hTab); i; i--)
     {
-        TabCtrl_DeleteItem(_hTab, i - 1);
         Tab* tab = getTab(i - 1);
         if (tab)
             delete tab;
+        TabCtrl_DeleteItem(_hTab, i - 1);
     }
+
+    sendSci(SCI_SETREADONLY, 0);
+    sendSci(SCI_CLEARALL);
+    sendSci(SCI_SETREADONLY, 1);
 
     INpp::Get().HideDockingWin(_hWnd);
 }
@@ -860,16 +878,8 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                     ui->onDoubleClick((SCNotification*)lparam);
                     return 0;
 
-                case SCN_MARGINCLICK:
-                    ui->onMarginClick((SCNotification*)lparam);
-                    return 0;
-
                 case SCN_CHARADDED:
                     ui->onCharAddTry((SCNotification*)lparam);
-                    return 0;
-
-                case TCN_SELCHANGING:
-                    ui->onBeforeTabChange();
                     return 0;
 
                 case TCN_SELCHANGE:
