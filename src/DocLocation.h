@@ -55,6 +55,12 @@ private:
         TCHAR filePath[MAX_PATH];
         long firstVisibleLine;
         long posInFile;
+
+        inline bool operator==(const Location& loc) const
+        {
+            return (posInFile == loc.posInFile &&
+                    !_tcscmp(filePath, loc.filePath));
+        }
     };
 
     static const unsigned cInitialDepth;

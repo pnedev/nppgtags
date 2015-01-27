@@ -68,6 +68,9 @@ void DocLocation::Push()
     npp.GetFilePath(loc.filePath);
     npp.GetView(&loc.firstVisibleLine, &loc.posInFile);
 
+    if (!_locList.empty() && (loc == _locList.back()))
+        return;
+
     _locList.push_back(loc);
 }
 

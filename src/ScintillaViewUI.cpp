@@ -698,26 +698,37 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
     if (!_lock.TryLock())
         return;
 
-    const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+    int pos = notify->position;
+    int lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
 
-    if (lineNum)
+    if (lineNum == 0)
     {
-        // Clear double-click auto-selection
-        sendSci(SCI_SETSEL, notify->position, notify->position);
-
-        if (sendSci(SCI_LINELENGTH, lineNum))
+        pos = sendSci(SCI_GETCURRENTPOS);
+        if (pos == sendSci(SCI_POSITIONAFTER, pos)) // end of document
         {
-            if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-                sendSci(SCI_TOGGLEFOLD, lineNum);
-            else
-                openItem(lineNum);
+            lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
+            int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+            if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
+            {
+                lineNum = foldLine;
+                pos = sendSci(SCI_POSITIONFROMLINE, lineNum);
+            }
+        }
+        else
+        {
+            lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
         }
     }
-    else
+
+    // Clear double-click auto-selection
+    sendSci(SCI_SETSEL, pos, pos);
+
+    if (sendSci(SCI_LINELENGTH, lineNum))
     {
-        const int pos = sendSci(SCI_GETCURRENTPOS);
-        // Clear double-click auto-selection
-        sendSci(SCI_SETSEL, pos, pos);
+        if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+            sendSci(SCI_TOGGLEFOLD, lineNum);
+        else
+            openItem(lineNum);
     }
 
     _lock.Unlock();

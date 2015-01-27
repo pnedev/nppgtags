@@ -42,7 +42,7 @@ const TCHAR Cmd::cAutoComplCmd[]       =
 const TCHAR Cmd::cAutoComplSymCmd[] =
         _T("\"%s\\global.exe\" -csM \"%s\"");
 const TCHAR Cmd::cAutoComplFileCmd[] =
-        _T("\"%s\\global.exe\" -cPM --match-part=first \"%s\"");
+        _T("\"%s\\global.exe\" -cPM --match-part=all \"%s\"");
 const TCHAR Cmd::cFindFileCmd[] =
         _T("\"%s\\global.exe\" -PM \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
