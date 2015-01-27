@@ -1,9 +1,19 @@
+What's new in v2.0.2
+=======================
+
+- Remove the last empty line from the ScintillaUI window
+- ScintillaUI double-click action made smarter - now it detects double-click on the whole line
+- New DocLocation entry added only if the last one is not the same
+- Activity window show delay is handled better
+
+
 What's new in v2.0.1
 =======================
 
 - Use Scintilla to display results - colorized results and better navigation
 - Code refactoring and optimization
 - Minor fixes to GTags binaries v6.3.3
+
 
 What's new in v1.1.1
 =======================
