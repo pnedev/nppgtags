@@ -56,12 +56,12 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    ActivityWindow(HWND hOwner, HANDLE procHndl, int showDelay_ms);
+    ActivityWindow(HWND hOwner, HANDLE procHndl);
     ActivityWindow(const ActivityWindow &);
     ~ActivityWindow();
 
     void adjustSizeAndPos(HWND hwnd, int width, int height);
-    HWND composeWindow(int width, const TCHAR* text, int showDelay_ms);
+    HWND composeWindow(int width, const TCHAR* text);
     void onTimerRefresh(HWND hwnd);
 
     HWND _hOwner;
@@ -69,7 +69,6 @@ private:
     HFONT _hFont;
     HWND _hBtn;
     UINT_PTR _timerID;
-    int _showDelay_ms;
     int _initRefCount;
     int _isCancelled;
 };

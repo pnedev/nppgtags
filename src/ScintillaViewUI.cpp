@@ -152,8 +152,6 @@ void ScintillaViewUI::Tab::parseCmd(CTextA& dst, const char* src)
         dst.append(src, lineResEnd - src);
         src = lineResEnd;
     }
-
-    dst += "\n";
 }
 
 
@@ -178,8 +176,6 @@ void ScintillaViewUI::Tab::parseFindFile(CTextA& dst, const char* src)
         dst.append(src, eol - src);
         src = eol;
     }
-
-    dst += "\n";
 }
 
 

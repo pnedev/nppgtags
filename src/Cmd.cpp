@@ -33,20 +33,30 @@
 namespace GTags
 {
 
-const TCHAR Cmd::cCreateDatabaseCmd[]  = _T("\"%s\\gtags.exe\" -c");
-const TCHAR Cmd::cUpdateSingleCmd[]    = _T("\"%s\\gtags.exe\" -c")
-                                        _T(" --single-update \"%s\"");
-const TCHAR Cmd::cAutoComplCmd[]       = _T("\"%s\\global.exe\" -cM \"%s\"");
-const TCHAR Cmd::cAutoComplSymCmd[]    = _T("\"%s\\global.exe\" -csM \"%s\"");
-const TCHAR Cmd::cAutoComplFileCmd[]   = _T("\"%s\\global.exe\" -cPM \"%s\"");
-const TCHAR Cmd::cFindFileCmd[]        = _T("\"%s\\global.exe\" -PM \"%s\"");
-const TCHAR Cmd::cFindDefinitionCmd[]  = _T("\"%s\\global.exe\" -dxM \"%s\"");
-const TCHAR Cmd::cFindReferenceCmd[]   = _T("\"%s\\global.exe\" -rxM \"%s\"");
-const TCHAR Cmd::cFindSymbolCmd[]      = _T("\"%s\\global.exe\" -sxM \"%s\"");
-const TCHAR Cmd::cGrepCmd[]            = _T("\"%s\\global.exe\" -gxME \"%s\"");
-const TCHAR Cmd::cFindLiteralCmd[]     = _T("\"%s\\global.exe\" -gxM")
-                                        _T(" --literal \"%s\"");
-const TCHAR Cmd::cVersionCmd[]         = _T("\"%s\\global.exe\" --version");
+const TCHAR Cmd::cCreateDatabaseCmd[] =
+        _T("\"%s\\gtags.exe\" -c");
+const TCHAR Cmd::cUpdateSingleCmd[] =
+        _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
+const TCHAR Cmd::cAutoComplCmd[]       =
+        _T("\"%s\\global.exe\" -cM \"%s\"");
+const TCHAR Cmd::cAutoComplSymCmd[] =
+        _T("\"%s\\global.exe\" -csM \"%s\"");
+const TCHAR Cmd::cAutoComplFileCmd[] =
+        _T("\"%s\\global.exe\" -cPM --match-part=first \"%s\"");
+const TCHAR Cmd::cFindFileCmd[] =
+        _T("\"%s\\global.exe\" -PM \"%s\"");
+const TCHAR Cmd::cFindDefinitionCmd[] =
+        _T("\"%s\\global.exe\" -dxM \"%s\"");
+const TCHAR Cmd::cFindReferenceCmd[] =
+        _T("\"%s\\global.exe\" -rxM \"%s\"");
+const TCHAR Cmd::cFindSymbolCmd[] =
+        _T("\"%s\\global.exe\" -sxM \"%s\"");
+const TCHAR Cmd::cGrepCmd[] =
+        _T("\"%s\\global.exe\" -gxME \"%s\"");
+const TCHAR Cmd::cFindLiteralCmd[] =
+        _T("\"%s\\global.exe\" -gxM --literal \"%s\"");
+const TCHAR Cmd::cVersionCmd[] =
+        _T("\"%s\\global.exe\" --version");
 
 
 /**

@@ -89,13 +89,20 @@ int ActivityWindow::Show(HWND hOwner, HANDLE procHndl,
     if (!procHndl)
         return -1;
 
-    DWORD dwRet;
-    GetExitCodeProcess(procHndl, &dwRet);
-    if (dwRet != STILL_ACTIVE)
-        return 0;
+    while (showDelay_ms > 0)
+    {
+        Sleep(cUpdate_ms);
 
-    ActivityWindow aw(hOwner, procHndl, showDelay_ms);
-    if (aw.composeWindow(width, text, showDelay_ms) == NULL)
+        DWORD dwRet;
+        GetExitCodeProcess(procHndl, &dwRet);
+        if (dwRet != STILL_ACTIVE)
+            return 0;
+
+        showDelay_ms -= cUpdate_ms;
+    }
+
+    ActivityWindow aw(hOwner, procHndl);
+    if (aw.composeWindow(width, text) == NULL)
         return -1;
 
     BOOL r;
@@ -113,10 +120,8 @@ int ActivityWindow::Show(HWND hOwner, HANDLE procHndl,
 /**
  *  \brief
  */
-ActivityWindow::ActivityWindow(
-    HWND hOwner, HANDLE procHndl, int showDelay_ms) :
-        _hOwner(hOwner), _hProc(procHndl), _hFont(NULL),
-        _showDelay_ms(showDelay_ms), _isCancelled(1)
+ActivityWindow::ActivityWindow(HWND hOwner, HANDLE procHndl) :
+        _hOwner(hOwner), _hProc(procHndl), _hFont(NULL), _isCancelled(1)
 {
     _initRefCount = InterlockedIncrement(&RefCount);
 }
@@ -184,8 +189,7 @@ void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
 /**
  *  \brief
  */
-HWND ActivityWindow::composeWindow(int width,
-        const TCHAR* text, int showDelay_ms)
+HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
 {
     HWND hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER,
@@ -238,12 +242,9 @@ HWND ActivityWindow::composeWindow(int width,
 
     _timerID = SetTimer(hWnd, 0, cUpdate_ms, NULL);
 
-    if (showDelay_ms <= 0)
-    {
-        ShowWindow(hWnd, SW_SHOWNORMAL);
-        UpdateWindow(hWnd);
-        SetFocus(_hOwner);
-    }
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    UpdateWindow(hWnd);
+    SetFocus(_hOwner);
 
     return hWnd;
 }
@@ -261,16 +262,6 @@ void ActivityWindow::onTimerRefresh(HWND hwnd)
         _isCancelled = 0;
         KillTimer(hwnd, _timerID);
         SendMessage(hwnd, WM_CLOSE, 0, 0);
-    }
-    else if (_showDelay_ms > 0)
-    {
-        _showDelay_ms -= cUpdate_ms;
-        if (_showDelay_ms <= 0)
-        {
-            ShowWindow(hwnd, SW_SHOWNORMAL);
-            UpdateWindow(hwnd);
-            SetFocus(_hOwner);
-        }
     }
     else
     {
