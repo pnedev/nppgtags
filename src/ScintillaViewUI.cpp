@@ -260,7 +260,7 @@ void ScintillaViewUI::Show(const CmdData& cmd)
 
     INpp& npp = INpp::Get();
 
-    if (cmd.GetResultLen() > 100000)
+    if (cmd.GetResultLen() > 262144) // 256k
     {
         TCHAR buf[512];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE,
