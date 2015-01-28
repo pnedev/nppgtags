@@ -28,8 +28,8 @@ If you run one of the plugin's *Find* commands (including *Grep*) it will search
 1. what you have selected if there is selection;
 2. the word that is under the caret if there is no selection;
 3. what you have entered in the text box that will appear if there is no word under the caret.
----
 
+---
 
 *Find File* command will skip step 2, it will directly go to step 3 if there is no selection.
 It will automatically fill the text box (from step 3) with the name of the current file without the extension to make switching between source - header file easier.
