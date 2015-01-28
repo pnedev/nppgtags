@@ -3,7 +3,7 @@ nppgtags
 
 GTags plugin for Notepad++
 
-This is GUI frontend to GNU Global source code tagging system (GTags) for
+This is a frontend to GNU Global source code tagging system (GTags) for
 Notepad++.
 You'll need GTags binaries for Win32 to use this plugin.
 Those are supplied with the plugin binary for convenience.
@@ -40,18 +40,22 @@ the database for:
 under the cursor.
 
 'Find File' command will skip 2), it will directly go to step 3) if there
-is no selection. It will automatically fill in the text box (from step 3)
+is no selection. It will automatically fill the text box (from step 3) with
 the name of the current file without the extension to make switching between
-source <-> header easier.
+source <-> header file easier.
 
-All 'Find' commands will show Notepad++ docking Tree View UI with the results.
-Double-clicking (or hitting 'Space') on search result will take you to the
-source location. Right clicking will close the search result branch that is
-selected (there might be several search result branches - those are with bold
-in the tree view).
+All 'Find' commands will show Notepad++ docking window with the results.
+Each such command will place its results in a separate tab that will
+automatically become active. Clicking on another tab will show that command's
+results. Double-clicking (or hitting 'Space') on search result line will take
+you to the source location. Right clicking will close the currently active
+search results tab.
+
+In GTags' terminology, Symbol is identifier that doesn't have definition.
+
 If you search for Definition/Reference and GTags doesn't find anything the
-plugin will automatically invoke search for Symbol name. This will be reported
-in the search result Tree View UI branch name.
+plugin will automatically invoke search for Symbol. This will be reported
+in the search results window header.
 
 Auto-complete will show found Definitions + found Symbols. It will always look
 for the whole word under the cursor.

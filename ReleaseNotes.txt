@@ -5,6 +5,7 @@ What's new in v2.0.2
 - ScintillaUI double-click action made smarter - now it detects double-click on the whole line
 - New DocLocation entry added only if the last one is not the same
 - Activity window show delay is handled better
+- New global.exe that does case sensitive path/file search
 
 
 What's new in v2.0.1
