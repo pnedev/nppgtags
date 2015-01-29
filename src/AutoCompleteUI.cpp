@@ -141,13 +141,13 @@ HWND AutoCompleteUI::composeWindow()
             0, 0, win.right - win.left, win.bottom - win.top,
             _hwnd, NULL, HMod, NULL);
 
-    HDC hdc = GetWindowDC(hOwner);
+    HDC hdc = GetWindowDC(_hLVWnd);
     _hFont = CreateFont(
             -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName);
-    ReleaseDC(hOwner, hdc);
+    ReleaseDC(_hLVWnd, hdc);
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM) _hFont, (LPARAM) TRUE);
 

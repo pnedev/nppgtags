@@ -61,7 +61,7 @@ private:
     struct Tab
     {
         Tab(const GTags::CmdData& cmd);
-        ~Tab();
+        ~Tab() {}
 
         inline bool operator==(const Tab& tab) const
         {
@@ -76,6 +76,7 @@ private:
         CTextA _uiBuf;
         int _uiLine;
         int _uiFoldLine;
+        int _uiFirstVisibleLine;
 
     private:
         void parseCmd(CTextA& dst, const char* src);
@@ -93,10 +94,13 @@ private:
             WPARAM wparam, LPARAM lparam);
 
     ScintillaViewUI() :
-        _hWnd(NULL), _hSci(NULL), _sciFunc(NULL), _sciPtr(NULL),
+        _hWnd(NULL), _hSci(NULL), _hFont(NULL), _sciFunc(NULL), _sciPtr(NULL),
         _activeTab(NULL) {}
     ScintillaViewUI(const ScintillaViewUI&);
-    ~ScintillaViewUI() { Unregister(); };
+    ~ScintillaViewUI()
+    {
+        Unregister();
+    }
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
@@ -130,6 +134,7 @@ private:
     HWND _hWnd;
     HWND _hSci;
     HWND _hTab;
+    HFONT _hFont;
 	SciFnDirect _sciFunc;
 	sptr_t _sciPtr;
     Tab* _activeTab;

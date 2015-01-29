@@ -297,15 +297,23 @@ inline bool FileExists(TCHAR* file)
 #define Msg(x)     MsgA(x)
 #endif
 
-inline void MsgW(const wchar_t* msg, HWND hWnd = NULL)
+inline void MsgW(const wchar_t* msg)
 {
-    MessageBoxW(hWnd, msg, L"", MB_OK);
+    MessageBoxW(NULL, msg, L"", MB_OK);
 }
 
 
-inline void MsgA(const char* msg, HWND hWnd = NULL)
+inline void MsgA(const char* msg)
 {
-    MessageBoxA(hWnd, msg, "", MB_OK);
+    MessageBoxA(NULL, msg, "", MB_OK);
+}
+
+
+inline void MsgNum(int num, int radix = 10)
+{
+    char buf[128];
+    _itoa_s(num, buf, _countof(buf), radix);
+    MessageBoxA(NULL, buf, "", MB_OK);
 }
 
 #endif

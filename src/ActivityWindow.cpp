@@ -202,17 +202,15 @@ HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
             WS_CHILD | WS_VISIBLE | ES_LEFT | ES_READONLY,
             0, 0, 0, 0, hWnd, NULL, HMod, NULL);
 
-    HDC hdc = GetWindowDC(_hOwner);
+    HDC hdc = GetWindowDC(hWndEdit);
     _hFont = CreateFont(
             -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cFontName);
-    ReleaseDC(_hOwner, hdc);
     if (_hFont)
         SendMessage(hWndEdit, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
-    hdc = GetWindowDC(hWndEdit);
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
     ReleaseDC(hWndEdit, hdc);

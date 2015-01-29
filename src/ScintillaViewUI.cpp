@@ -61,7 +61,7 @@ using namespace GTags;
  *  \brief
  */
 ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd) :
-    _uiLine(1), _uiFoldLine(0)
+    _uiLine(1), _uiFoldLine(0), _uiFirstVisibleLine(0)
 {
     _cmdID = cmd.GetID();
 
@@ -81,14 +81,6 @@ ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd) :
         parseFindFile(_uiBuf, cmd.GetResult());
     else
         parseCmd(_uiBuf, cmd.GetResult());
-}
-
-
-/**
- *  \brief
- */
-ScintillaViewUI::Tab::~Tab()
-{
 }
 
 
@@ -246,6 +238,12 @@ void ScintillaViewUI::Unregister()
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
     _hWnd = NULL;
 
+    if (_hFont)
+    {
+        DeleteObject(_hFont);
+        _hFont = NULL;
+    }
+
     UnregisterClass(cClassName, HMod);
 }
 
@@ -294,9 +292,13 @@ void ScintillaViewUI::Show(const CmdData& cmd)
 
     if (i == 0) // search is completely new - add new tab
     {
+        TCHAR buf[256];
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""),
+                cmd.GetName(), cmd.GetTag());
+
         TCITEM tci  = {0};
         tci.mask    = TCIF_TEXT | TCIF_PARAM;
-        tci.pszText = const_cast<TCHAR*>(cmd.GetTag());
+        tci.pszText = buf;
         tci.lParam  = (LPARAM)tab;
 
         i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
@@ -343,6 +345,23 @@ void ScintillaViewUI::ResetStyle()
     char font[32];
     npp.GetFontName(font, _countof(font));
     int size = npp.GetFontSize();
+
+    TCHAR fontW[32];
+    Tools::AtoW(fontW, _countof(fontW), font);
+
+    if (_hFont)
+        DeleteObject(_hFont);
+
+    HDC hdc = GetWindowDC(_hTab);
+    _hFont = CreateFont(
+            -MulDiv(size - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+            0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+            FF_DONTCARE | DEFAULT_PITCH, fontW);
+    ReleaseDC(_hTab, hdc);
+
+    if (_hFont)
+        SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, cBlack, cWhite, false, false, size, font);
@@ -508,6 +527,7 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
                 sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
         _activeTab->_uiFoldLine =
                 sendSci(SCI_GETFOLDPARENT, _activeTab->_uiLine);
+        _activeTab->_uiFirstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
     }
 
     _activeTab = tab;
@@ -516,7 +536,7 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
     sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_uiBuf.C_str()));
     sendSci(SCI_SETREADONLY, 1);
 
-    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_uiLine > 3 ? tab->_uiLine - 3 : 0);
+    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_uiFirstVisibleLine);
     const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_uiLine);
     sendSci(SCI_SETSEL, pos, pos);
 

@@ -226,13 +226,13 @@ HWND IOWindow::composeWindow(HWND hOwner,
         _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), font);
     SendMessage(hEdit, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
 
-    HDC hdc = GetWindowDC(hOwner);
+    HDC hdc = GetWindowDC(hEdit);
     _hFont = CreateFont(
             -MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, font);
-    ReleaseDC(hOwner, hdc);
+    ReleaseDC(hEdit, hdc);
     if (_hFont)
         SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 

@@ -1,3 +1,10 @@
+What's new in v2.0.3
+=======================
+
+- Show search type in results window tab name
+- Use results font also in the tab name
+
+
 What's new in v2.0.2
 =======================
 
