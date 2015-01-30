@@ -89,6 +89,7 @@ private:
     static const COLORREF cBlue = RGB(0,0,255);
 
     static const TCHAR cClassName[];
+    static const TCHAR cTabFont[];
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);

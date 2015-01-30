@@ -51,7 +51,8 @@ enum
 };
 
 
-const TCHAR ScintillaViewUI::cClassName[] = _T("ScintillaViewUI");
+const TCHAR ScintillaViewUI::cClassName[]   = _T("ScintillaViewUI");
+const TCHAR ScintillaViewUI::cTabFont[]     = _T("Tahoma");
 
 
 using namespace GTags;
@@ -346,18 +347,15 @@ void ScintillaViewUI::ResetStyle()
     npp.GetFontName(font, _countof(font));
     int size = npp.GetFontSize();
 
-    TCHAR fontW[32];
-    Tools::AtoW(fontW, _countof(fontW), font);
-
     if (_hFont)
         DeleteObject(_hFont);
 
     HDC hdc = GetWindowDC(_hTab);
     _hFont = CreateFont(
             -MulDiv(size - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+            0, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, fontW);
+            FF_DONTCARE | DEFAULT_PITCH, cTabFont);
     ReleaseDC(_hTab, hdc);
 
     if (_hFont)
