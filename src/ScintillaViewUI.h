@@ -28,6 +28,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
+#include <vector>
 #include "Scintilla.h"
 #include "Common.h"
 #include "AutoLock.h"
@@ -74,13 +75,18 @@ private:
         char _projectPath[MAX_PATH];
         char _search[GTags::cMaxTagLen];
         CTextA _uiBuf;
-        int _uiLine;
-        int _uiFoldLine;
-        int _uiFirstVisibleLine;
+        int _currentLine;
+        int _firstVisibleLine;
+
+        void SetFolded(int lineNum);
+        void ClearFolded(int lineNum);
+        bool IsFolded(int lineNum);
 
     private:
         void parseCmd(CTextA& dst, const char* src);
         void parseFindFile(CTextA& dst, const char* src);
+
+        std::vector<int> _expandedLines;
     };
 
     static const COLORREF cBlack = RGB(0,0,0);
@@ -123,8 +129,10 @@ private:
     void styleString(int styleID, const char* str,
         int lineNum, int lineOffset = 0,
         bool matchCase = true, bool wholeWord = false);
+    void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);
+    void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);
     void onTabChange();
     void onCloseTab();

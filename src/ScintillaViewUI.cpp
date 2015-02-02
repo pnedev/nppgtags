@@ -62,7 +62,7 @@ using namespace GTags;
  *  \brief
  */
 ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd) :
-    _uiLine(1), _uiFoldLine(0), _uiFirstVisibleLine(0)
+    _currentLine(1), _firstVisibleLine(0)
 {
     _cmdID = cmd.GetID();
 
@@ -169,6 +169,45 @@ void ScintillaViewUI::Tab::parseFindFile(CTextA& dst, const char* src)
         dst.append(src, eol - src);
         src = eol;
     }
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::Tab::SetFolded(int lineNum)
+{
+    for (std::vector<int>::iterator i = _expandedLines.begin();
+            i != _expandedLines.end(); i++)
+        if (*i == lineNum)
+        {
+            _expandedLines.erase(i);
+            break;
+        }
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::Tab::ClearFolded(int lineNum)
+{
+    _expandedLines.push_back(lineNum);
+}
+
+
+/**
+ *  \brief
+ */
+bool ScintillaViewUI::Tab::IsFolded(int lineNum)
+{
+    const int size = _expandedLines.size();
+
+    for (int i = 0; i < size; i++)
+        if (_expandedLines[i] == lineNum)
+            return false;
+
+    return true;
 }
 
 
@@ -420,9 +459,8 @@ void ScintillaViewUI::configScintilla()
     sendSci(SCI_SETMARGINWIDTHN, 1, 20);
     sendSci(SCI_SETFOLDMARGINCOLOUR, 1, cBlack);
     sendSci(SCI_SETFOLDMARGINHICOLOUR, 1, cBlack);
+    sendSci(SCI_SETMARGINSENSITIVEN, 1, true);
     sendSci(SCI_SETFOLDFLAGS, 0);
-    sendSci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW |
-            SC_AUTOMATICFOLD_CLICK | SC_AUTOMATICFOLD_CHANGE);
 
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS);
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS);
@@ -521,11 +559,9 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
     // store current view if there is one
     if (_activeTab)
     {
-        _activeTab->_uiLine =
+        _activeTab->_currentLine =
                 sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
-        _activeTab->_uiFoldLine =
-                sendSci(SCI_GETFOLDPARENT, _activeTab->_uiLine);
-        _activeTab->_uiFirstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
+        _activeTab->_firstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
     }
 
     _activeTab = tab;
@@ -534,8 +570,8 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
     sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_uiBuf.C_str()));
     sendSci(SCI_SETREADONLY, 1);
 
-    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_uiFirstVisibleLine);
-    const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_uiLine);
+    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
+    const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_currentLine);
     sendSci(SCI_SETSEL, pos, pos);
 
     SetFocus(_hSci);
@@ -645,6 +681,19 @@ void ScintillaViewUI::styleString(int styleID, const char* str,
 /**
  *  \brief
  */
+void ScintillaViewUI::toggleFolding(int lineNum)
+{
+    sendSci(SCI_TOGGLEFOLD, lineNum);
+    if (sendSci(SCI_GETFOLDEXPANDED, lineNum))
+        _activeTab->ClearFolded(lineNum);
+    else
+        _activeTab->SetFolded(lineNum);
+}
+
+
+/**
+ *  \brief
+ */
 void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 {
     if (_activeTab == NULL)
@@ -672,8 +721,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 
             sendSci(SCI_STARTSTYLING, startPos, 0xFF);
             sendSci(SCI_SETSTYLING, pathLen, SCE_GTAGS_PROJECT_PATH);
-            sendSci(SCI_SETFOLDLEVEL, lineNum,
-                    SEARCH_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+            sendSci(SCI_SETFOLDLEVEL, lineNum, SEARCH_HEADER_LVL);
         }
         else
         {
@@ -691,7 +739,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 {
                     sendSci(SCI_SETFOLDLEVEL, lineNum,
                             FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
-                    if (lineNum != _activeTab->_uiFoldLine)
+                    if (_activeTab->IsFolded(lineNum))
                         sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
                 }
             }
@@ -741,12 +789,33 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
     // Clear double-click auto-selection
     sendSci(SCI_SETSEL, pos, pos);
 
-    if (sendSci(SCI_LINELENGTH, lineNum))
+    if (lineNum && sendSci(SCI_LINELENGTH, lineNum))
     {
         if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-            sendSci(SCI_TOGGLEFOLD, lineNum);
+            toggleFolding(lineNum);
         else
             openItem(lineNum);
+    }
+
+    _lock.Unlock();
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::onMarginClick(SCNotification* notify)
+{
+    if (!_lock.TryLock())
+        return;
+
+    int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+
+    if (lineNum)
+    {
+        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+        toggleFolding(lineNum);
     }
 
     _lock.Unlock();
@@ -765,10 +834,10 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
     {
         const int lineNum =
                 sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
-        if (sendSci(SCI_LINELENGTH, lineNum))
+        if (lineNum && sendSci(SCI_LINELENGTH, lineNum))
         {
             if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
-                sendSci(SCI_TOGGLEFOLD, lineNum);
+                toggleFolding(lineNum);
             else
                 openItem(lineNum);
         }
@@ -901,6 +970,10 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
 
                 case SCN_DOUBLECLICK:
                     ui->onDoubleClick((SCNotification*)lparam);
+                    return 0;
+
+                case SCN_MARGINCLICK:
+                    ui->onMarginClick((SCNotification*)lparam);
                     return 0;
 
                 case SCN_CHARADDED:
