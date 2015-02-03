@@ -81,41 +81,46 @@ void INpp::ReplaceWord(const char* replText) const
 /**
  *  \brief
  */
-bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord,
+bool INpp::SearchText(const char* text,
+        bool matchCase, bool wholeWord, bool regExpr,
         long startPos = 0, long endPos = 0) const
 {
-    struct TextToFind ttf = {0};
-    int searchFlags = 0;
-
-    ttf.lpstrText = const_cast<char*>(text);
-
     if (startPos < 0)
         startPos = 0;
-    ttf.chrg.cpMin = startPos;
 
     if (endPos <= 0)
         endPos = SendMessage(_hSC, SCI_GETLENGTH, 0, 0);
-    ttf.chrg.cpMax = endPos;
 
-    if (matchCase)
-        searchFlags |= SCFIND_MATCHCASE;
-    if (wholeWord)
-        searchFlags |= SCFIND_WHOLEWORD;
+    int searchFlags = 0;
+    if (regExpr)
+    {
+        searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
+    }
+    else
+    {
+        if (matchCase)
+            searchFlags |= SCFIND_MATCHCASE;
+        if (wholeWord)
+            searchFlags |= SCFIND_WHOLEWORD;
+    }
+
+    SendMessage(_hSC, SCI_SETSEARCHFLAGS, (WPARAM)searchFlags, 0);
+    SendMessage(_hSC, SCI_SETTARGETSTART, (WPARAM)startPos, 0);
+    SendMessage(_hSC, SCI_SETTARGETEND, (WPARAM)endPos, 0);
 
     SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
-    if (SendMessage(_hSC, SCI_FINDTEXT,
-            (WPARAM)searchFlags, (LPARAM)&ttf) == -1)
+    if (SendMessage(_hSC, SCI_SEARCHINTARGET, strlen(text),
+            reinterpret_cast<LPARAM>(text)) < 0)
         return false;
 
-    startPos = ttf.chrgText.cpMin;
-    endPos = ttf.chrgText.cpMax;
+    startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
+    endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
 
     long lineNum =
-        SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)startPos, 0);
-    if (lineNum >= 5)
-        lineNum -= 5;
-    lineNum -= SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-    SendMessage(_hSC, SCI_LINESCROLL, 0, (LPARAM)lineNum);
+        SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)startPos, 0) - 5;
+    if (lineNum < 0)
+        lineNum = 0;
+    SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, (WPARAM)lineNum, 0);
     SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
 
     return true;

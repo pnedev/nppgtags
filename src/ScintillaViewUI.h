@@ -128,7 +128,7 @@ private:
 
     void styleString(int styleID, const char* str,
         int lineNum, int lineOffset = 0,
-        bool matchCase = true, bool wholeWord = false);
+        bool matchCase = true, bool wholeWord = false, bool regExpr = false);
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);

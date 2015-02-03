@@ -260,7 +260,8 @@ public:
 
     long GetWord(char* buf, int bufSize, bool select) const;
     void ReplaceWord(const char* replText) const;
-    bool SearchText(const char* text, bool matchCase, bool wholeWord,
+    bool SearchText(const char* text,
+            bool matchCase, bool wholeWord, bool regExpr,
             long startPos, long endPos) const;
 
     inline void Backspace() const

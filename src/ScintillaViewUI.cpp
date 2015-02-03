@@ -30,6 +30,7 @@
 #include "DBManager.h"
 #include "DocLocation.h"
 #include <commctrl.h>
+#include "Common.h"
 
 
 // Scintilla user defined styles IDs
@@ -638,8 +639,9 @@ bool ScintillaViewUI::openItem(int lineNum)
 
     bool wholeWord =
             (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
+    bool regExpr = (_activeTab->_cmdID == GREP);
 
-    if (!npp.SearchText(_activeTab->_search, true, wholeWord,
+    if (!npp.SearchText(_activeTab->_search, true, wholeWord, regExpr,
             npp.PositionFromLine(line), npp.LineEndPosition(line)))
     {
         MessageBox(npp.GetHandle(),
@@ -655,25 +657,37 @@ bool ScintillaViewUI::openItem(int lineNum)
  *  \brief
  */
 void ScintillaViewUI::styleString(int styleID, const char* str,
-        int lineNum, int lineOffset, bool matchCase, bool wholeWord)
+        int lineNum, int lineOffset,
+        bool matchCase, bool wholeWord, bool regExpr)
 {
-    struct TextToFind ttf = {0};
-    ttf.lpstrText = const_cast<char*>(str);
-    ttf.chrg.cpMin = sendSci(SCI_POSITIONFROMLINE, lineNum) + lineOffset;
-    ttf.chrg.cpMax = sendSci(SCI_GETLINEENDPOSITION, lineNum);
-
+    int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum) + lineOffset;
+    int endPos = sendSci(SCI_GETLINEENDPOSITION, lineNum);
     int searchFlags = 0;
-    if (matchCase)
-        searchFlags |= SCFIND_MATCHCASE;
-    if (wholeWord)
-        searchFlags |= SCFIND_WHOLEWORD;
 
-    if (sendSci(SCI_FINDTEXT, searchFlags,
-            reinterpret_cast<LPARAM>(&ttf)) != -1)
+    if (regExpr)
     {
-        sendSci(SCI_STARTSTYLING, ttf.chrgText.cpMin, 0xFF);
-        sendSci(SCI_SETSTYLING, ttf.chrgText.cpMax - ttf.chrgText.cpMin,
-                styleID);
+        searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
+    }
+    else
+    {
+        if (matchCase)
+            searchFlags |= SCFIND_MATCHCASE;
+        if (wholeWord)
+            searchFlags |= SCFIND_WHOLEWORD;
+    }
+
+    sendSci(SCI_SETSEARCHFLAGS, searchFlags);
+    sendSci(SCI_SETTARGETSTART, startPos);
+    sendSci(SCI_SETTARGETEND, endPos);
+
+    if (sendSci(SCI_SEARCHINTARGET, strlen(str),
+            reinterpret_cast<LPARAM>(str)) >= 0)
+    {
+        startPos = sendSci(SCI_GETTARGETSTART);
+        endPos = sendSci(SCI_GETTARGETEND);
+        Tools::MsgNum(startPos);
+        sendSci(SCI_STARTSTYLING, startPos, 0xFF);
+        sendSci(SCI_SETSTYLING, endPos - startPos, styleID);
     }
 }
 
@@ -699,8 +713,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
     if (_activeTab == NULL)
         return;
 
-    int lineNum = sendSci(SCI_LINEFROMPOSITION,
-            sendSci(SCI_GETENDSTYLED));
+    int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
     const int endPos = notify->position;
 
     for (int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum);
@@ -708,7 +721,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
         startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
     {
         int lineLen = sendSci(SCI_LINELENGTH, lineNum);
-        if (lineLen == 0)
+        if (lineLen <= 0)
             continue;
 
         if ((char)sendSci(SCI_GETCHARAT, startPos) != '\t')
@@ -745,10 +758,14 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             }
             else
             {
-                bool wholeWord = (_activeTab->_cmdID == GREP ||
-                        _activeTab->_cmdID == FIND_LITERAL) ? false : true;
+                sendSci(SCI_STARTSTYLING, startPos, 0xFF);
+                sendSci(SCI_SETSTYLING, lineLen, STYLE_DEFAULT);
+                bool wholeWord = (_activeTab->_cmdID != GREP &&
+                        _activeTab->_cmdID != FIND_LITERAL);
+                bool regExpr = (_activeTab->_cmdID == GREP);
                 styleString(SCE_GTAGS_WORD2SEARCH,
-                        _activeTab->_search, lineNum, 7, true, wholeWord);
+                        _activeTab->_search, lineNum, 7,
+                        true, wholeWord, regExpr);
                 sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
             }
         }
