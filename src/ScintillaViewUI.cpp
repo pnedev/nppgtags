@@ -815,6 +815,7 @@ void ScintillaViewUI::onMarginClick(SCNotification* notify)
     {
         if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
             lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+        sendSci(SCI_GOTOLINE, lineNum);
         toggleFolding(lineNum);
     }
 
