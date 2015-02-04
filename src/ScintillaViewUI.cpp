@@ -38,6 +38,7 @@ enum
     SCE_GTAGS_HEADER = 151,
     SCE_GTAGS_PROJECT_PATH,
     SCE_GTAGS_FILE,
+    SCE_GTAGS_LINE_NUM,
     SCE_GTAGS_WORD2SEARCH
 };
 
@@ -375,7 +376,7 @@ void ScintillaViewUI::Show(const CmdData& cmd)
 /**
  *  \brief
  */
-void ScintillaViewUI::ResetStyle()
+void ScintillaViewUI::ApplyStyle()
 {
     if (_hWnd == NULL)
         return;
@@ -407,6 +408,7 @@ void ScintillaViewUI::ResetStyle()
     setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
     setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
     setStyle(SCE_GTAGS_FILE, cBlue, cWhite, true);
+    setStyle(SCE_GTAGS_LINE_NUM, RGB(130,130,130), cWhite, false, true);
     setStyle(SCE_GTAGS_WORD2SEARCH, cRed, cWhite, true);
 }
 
@@ -449,7 +451,7 @@ void ScintillaViewUI::configScintilla()
     // Implement lexer in the container
     sendSci(SCI_SETLEXER, 0);
 
-    ResetStyle();
+    ApplyStyle();
 
     sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
             reinterpret_cast<LPARAM>("1"));
@@ -763,7 +765,11 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             }
             else
             {
-                int findBegin = startPos + 7;
+                // "\t\tline: Num" - 'N' is at position 8
+                int previewPos = startPos + 8;
+                for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t';
+                        previewPos++);
+                int findBegin = previewPos;
                 int findEnd = endPos;
                 bool wholeWord = (_activeTab->_cmdID != GREP &&
                         _activeTab->_cmdID != FIND_LITERAL);
@@ -772,8 +778,11 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
                         true, wholeWord, regExpr))
                 {
-                    sendSci(SCI_SETSTYLING, findBegin - startPos,
-                            STYLE_DEFAULT);
+                    sendSci(SCI_SETSTYLING, previewPos - startPos,
+                            SCE_GTAGS_LINE_NUM);
+                    if (findBegin - previewPos)
+                        sendSci(SCI_SETSTYLING, findBegin - previewPos,
+                                STYLE_DEFAULT);
                     sendSci(SCI_SETSTYLING, findEnd - findBegin,
                             SCE_GTAGS_WORD2SEARCH);
                     sendSci(SCI_SETSTYLING, endPos - findEnd,
@@ -846,13 +855,13 @@ void ScintillaViewUI::onMarginClick(SCNotification* notify)
 
     int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
 
-    if (lineNum)
-    {
-        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-        sendSci(SCI_GOTOLINE, lineNum);
+    if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+        lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+    if (lineNum > 0)
         toggleFolding(lineNum);
-    }
+    else
+        lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+    sendSci(SCI_GOTOLINE, lineNum);
 
     _lock.Unlock();
 }

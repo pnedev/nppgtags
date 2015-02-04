@@ -162,7 +162,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             npp.GetFontName(font, _countof(font));
             Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
             GTags::UIFontSize = (unsigned)npp.GetFontSize();
-            ScintillaViewUI::Get().ResetStyle();
+            ScintillaViewUI::Get().ApplyStyle();
         }
         break;
 

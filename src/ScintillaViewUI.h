@@ -52,7 +52,7 @@ public:
     int Register();
     void Unregister();
     void Show(const GTags::CmdData& cmd);
-    void ResetStyle();
+    void ApplyStyle();
 
 private:
     /**
