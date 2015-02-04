@@ -92,17 +92,12 @@ bool INpp::SearchText(const char* text,
         endPos = SendMessage(_hSC, SCI_GETLENGTH, 0, 0);
 
     int searchFlags = 0;
+    if (matchCase)
+        searchFlags |= SCFIND_MATCHCASE;
+    if (wholeWord)
+        searchFlags |= SCFIND_WHOLEWORD;
     if (regExpr)
-    {
         searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
-    }
-    else
-    {
-        if (matchCase)
-            searchFlags |= SCFIND_MATCHCASE;
-        if (wholeWord)
-            searchFlags |= SCFIND_WHOLEWORD;
-    }
 
     SendMessage(_hSC, SCI_SETSEARCHFLAGS, (WPARAM)searchFlags, 0);
     SendMessage(_hSC, SCI_SETTARGETSTART, (WPARAM)startPos, 0);

@@ -30,7 +30,6 @@
 #include "DBManager.h"
 #include "DocLocation.h"
 #include <commctrl.h>
-#include "Common.h"
 
 
 // Scintilla user defined styles IDs
@@ -656,39 +655,30 @@ bool ScintillaViewUI::openItem(int lineNum)
 /**
  *  \brief
  */
-void ScintillaViewUI::styleString(int styleID, const char* str,
-        int lineNum, int lineOffset,
+bool ScintillaViewUI::findString(const char* str, int* startPos, int* endPos,
         bool matchCase, bool wholeWord, bool regExpr)
 {
-    int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum) + lineOffset;
-    int endPos = sendSci(SCI_GETLINEENDPOSITION, lineNum);
     int searchFlags = 0;
-
+    if (matchCase)
+        searchFlags |= SCFIND_MATCHCASE;
+    if (wholeWord)
+        searchFlags |= SCFIND_WHOLEWORD;
     if (regExpr)
-    {
         searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
-    }
-    else
-    {
-        if (matchCase)
-            searchFlags |= SCFIND_MATCHCASE;
-        if (wholeWord)
-            searchFlags |= SCFIND_WHOLEWORD;
-    }
 
     sendSci(SCI_SETSEARCHFLAGS, searchFlags);
-    sendSci(SCI_SETTARGETSTART, startPos);
-    sendSci(SCI_SETTARGETEND, endPos);
+    sendSci(SCI_SETTARGETSTART, *startPos);
+    sendSci(SCI_SETTARGETEND, *endPos);
 
     if (sendSci(SCI_SEARCHINTARGET, strlen(str),
             reinterpret_cast<LPARAM>(str)) >= 0)
     {
-        startPos = sendSci(SCI_GETTARGETSTART);
-        endPos = sendSci(SCI_GETTARGETEND);
-        Tools::MsgNum(startPos);
-        sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-        sendSci(SCI_SETSTYLING, endPos - startPos, styleID);
+        *startPos = sendSci(SCI_GETTARGETSTART);
+        *endPos = sendSci(SCI_GETTARGETEND);
+        return true;
     }
+
+    return false;
 }
 
 
@@ -714,42 +704,57 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
         return;
 
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
-    const int endPos = notify->position;
+    const int endStylingPos = notify->position;
 
     for (int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum);
-        endPos > startPos;
+        endStylingPos > startPos;
         startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
     {
-        int lineLen = sendSci(SCI_LINELENGTH, lineNum);
+        const int lineLen = sendSci(SCI_LINELENGTH, lineNum);
         if (lineLen <= 0)
             continue;
 
+        int endPos = startPos + lineLen;
+
+        sendSci(SCI_STARTSTYLING, startPos, 0xFF);
+
         if ((char)sendSci(SCI_GETCHARAT, startPos) != '\t')
         {
-            sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-            sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_HEADER);
-
             int pathLen = strlen(_activeTab->_projectPath);
-            startPos = sendSci(SCI_GETLINEENDPOSITION, lineNum) - pathLen - 1;
 
-            sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-            sendSci(SCI_SETSTYLING, pathLen, SCE_GTAGS_PROJECT_PATH);
+            // 2 * '"' + LF + CR = 4
+            sendSci(SCI_SETSTYLING, lineLen - pathLen - 4, SCE_GTAGS_HEADER);
+            sendSci(SCI_SETSTYLING, pathLen + 4, SCE_GTAGS_PROJECT_PATH);
             sendSci(SCI_SETFOLDLEVEL, lineNum, SEARCH_HEADER_LVL);
         }
         else
         {
             if ((char)sendSci(SCI_GETCHARAT, startPos + 1) != '\t')
             {
-                sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-                sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
                 if (_activeTab->_cmdID == FIND_FILE)
                 {
-                    styleString(SCE_GTAGS_WORD2SEARCH,
-                            _activeTab->_search, lineNum);
+                    int findBegin = startPos;
+                    int findEnd = endPos;
+
+                    if (findString(_activeTab->_search, &findBegin, &findEnd))
+                    {
+                        sendSci(SCI_SETSTYLING, findBegin - startPos,
+                                SCE_GTAGS_FILE);
+                        sendSci(SCI_SETSTYLING, findEnd - findBegin,
+                                SCE_GTAGS_WORD2SEARCH);
+                        sendSci(SCI_SETSTYLING, endPos - findEnd,
+                                SCE_GTAGS_FILE);
+                    }
+                    else
+                    {
+                        sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
+                    }
+
                     sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
                 }
                 else
                 {
+                    sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
                     sendSci(SCI_SETFOLDLEVEL, lineNum,
                             FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
                     if (_activeTab->IsFolded(lineNum))
@@ -758,14 +763,27 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             }
             else
             {
-                sendSci(SCI_STARTSTYLING, startPos, 0xFF);
-                sendSci(SCI_SETSTYLING, lineLen, STYLE_DEFAULT);
+                int findBegin = startPos + 7;
+                int findEnd = endPos;
                 bool wholeWord = (_activeTab->_cmdID != GREP &&
                         _activeTab->_cmdID != FIND_LITERAL);
                 bool regExpr = (_activeTab->_cmdID == GREP);
-                styleString(SCE_GTAGS_WORD2SEARCH,
-                        _activeTab->_search, lineNum, 7,
-                        true, wholeWord, regExpr);
+
+                if (findString(_activeTab->_search, &findBegin, &findEnd,
+                        true, wholeWord, regExpr))
+                {
+                    sendSci(SCI_SETSTYLING, findBegin - startPos,
+                            STYLE_DEFAULT);
+                    sendSci(SCI_SETSTYLING, findEnd - findBegin,
+                            SCE_GTAGS_WORD2SEARCH);
+                    sendSci(SCI_SETSTYLING, endPos - findEnd,
+                            STYLE_DEFAULT);
+                }
+                else
+                {
+                    sendSci(SCI_SETSTYLING, lineLen, STYLE_DEFAULT);
+                }
+
                 sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
             }
         }

@@ -126,8 +126,7 @@ private:
     void loadTab(Tab* tab);
     bool openItem(int lineNum);
 
-    void styleString(int styleID, const char* str,
-        int lineNum, int lineOffset = 0,
+    bool findString(const char* str, int* startPos, int* endPos,
         bool matchCase = true, bool wholeWord = false, bool regExpr = false);
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);

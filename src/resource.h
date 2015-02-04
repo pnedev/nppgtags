@@ -1,8 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <tchar.h>
 
-#define VER_VERSION         2,0,3,0
-#define VER_VERSION_STR     _T("2.0.3\0")
+#define VER_VERSION         2,1,0,0
+#define VER_VERSION_STR     _T("2.1.0\0")
 
 #define VER_AUTHOR          _T("Pavel Nedev\0")
 #define VER_COPYRIGHT       _T("Copyright(C) 2014-2015 Pavel Nedev\0")
