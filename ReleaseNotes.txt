@@ -1,4 +1,4 @@
-What's new in v2.0.3
+What's new in v2.1.0
 =======================
 
 - Show search type in results window tab name
@@ -6,6 +6,10 @@ What's new in v2.0.3
 - Clicking anywhere in expanded fold margin now collapses it (it is no longer necessary to click exactly [-] to collaps)
 - Header info is no longer foldable
 - Tab name font is "Tahoma" and the font size is results font size - 1
+- Colorize search results line numbers for better viewing
+- Colorize and open regexp (GREP) search results correctly
+- Various fixes
+- Update GTags binaries to v6.3.4. This is a bug fix release
 
 
 What's new in v2.0.2
