@@ -46,8 +46,7 @@ enum
 // Scintilla fold levels
 enum
 {
-    SEARCH_HEADER_LVL = SC_FOLDLEVELBASE + 1,
-    FILE_HEADER_LVL,
+    FILE_HEADER_LVL = SC_FOLDLEVELBASE,
     RESULT_LVL
 };
 
@@ -575,8 +574,6 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
     const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_currentLine);
     sendSci(SCI_SETSEL, pos, pos);
-
-    SetFocus(_hSci);
 }
 
 
@@ -727,7 +724,6 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             // 2 * '"' + LF + CR = 4
             sendSci(SCI_SETSTYLING, lineLen - pathLen - 4, SCE_GTAGS_HEADER);
             sendSci(SCI_SETSTYLING, pathLen + 4, SCE_GTAGS_PROJECT_PATH);
-            sendSci(SCI_SETFOLDLEVEL, lineNum, SEARCH_HEADER_LVL);
         }
         else
         {
@@ -751,8 +747,6 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                     {
                         sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
                     }
-
-                    sendSci(SCI_SETFOLDLEVEL, lineNum, RESULT_LVL);
                 }
                 else
                 {
