@@ -565,9 +565,13 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
         _activeTab->_firstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
     }
 
-    _activeTab = tab;
+    _activeTab = NULL;
 
     sendSci(SCI_SETREADONLY, 0);
+    sendSci(SCI_CLEARALL);
+
+    _activeTab = tab;
+
     sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_uiBuf.C_str()));
     sendSci(SCI_SETREADONLY, 1);
 
