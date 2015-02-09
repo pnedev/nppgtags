@@ -1,3 +1,12 @@
+What's new in v2.1.1
+=======================
+
+- Fix styling bug when switching from FindFile tab to other search tab and vice-versa
+- Fix race condition crash during styling
+- Make folding view more appealing
+- Make search word in the result clickable as a link to ease code navigation
+
+
 What's new in v2.1.0
 =======================
 

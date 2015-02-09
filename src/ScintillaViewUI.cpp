@@ -409,6 +409,7 @@ void ScintillaViewUI::ApplyStyle()
     setStyle(SCE_GTAGS_FILE, cBlue, cWhite, true);
     setStyle(SCE_GTAGS_LINE_NUM, RGB(130,130,130), cWhite, false, true);
     setStyle(SCE_GTAGS_WORD2SEARCH, cRed, cWhite, true);
+    sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
 }
 
 
@@ -442,8 +443,9 @@ void ScintillaViewUI::configScintilla()
     sendSci(SCI_SETCURSOR, SC_CURSORARROW);
     sendSci(SCI_SETCARETSTYLE, CARETSTYLE_INVISIBLE);
     sendSci(SCI_SETCARETLINEBACK, RGB(222,222,238));
-    sendSci(SCI_SETCARETLINEVISIBLE, 1);
-    sendSci(SCI_SETCARETLINEVISIBLEALWAYS, 1);
+    sendSci(SCI_SETCARETLINEVISIBLE, true);
+    sendSci(SCI_SETCARETLINEVISIBLEALWAYS, true);
+    sendSci(SCI_SETHOTSPOTACTIVEUNDERLINE, true);
 
     sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_DOCUMENT);
 
@@ -706,6 +708,9 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
     if (_activeTab == NULL)
         return;
 
+    if (!_lock.TryLock())
+        return;
+
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
     const int endStylingPos = notify->position;
 
@@ -795,6 +800,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             }
         }
     }
+
+    _lock.Unlock();
 }
 
 
@@ -1011,6 +1018,7 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                     ui->onStyleNeeded((SCNotification*)lparam);
                     return 0;
 
+                case SCN_HOTSPOTCLICK:
                 case SCN_DOUBLECLICK:
                     ui->onDoubleClick((SCNotification*)lparam);
                     return 0;
