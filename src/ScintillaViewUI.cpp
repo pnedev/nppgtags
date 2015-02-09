@@ -440,12 +440,12 @@ void ScintillaViewUI::configScintilla()
     sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
     sendSci(SCI_USEPOPUP, false);
     sendSci(SCI_SETUNDOCOLLECTION, false);
-    sendSci(SCI_SETCURSOR, SC_CURSORARROW);
+    sendSci(SCI_SETCURSOR, SC_CURSORNORMAL);
     sendSci(SCI_SETCARETSTYLE, CARETSTYLE_INVISIBLE);
     sendSci(SCI_SETCARETLINEBACK, RGB(222,222,238));
     sendSci(SCI_SETCARETLINEVISIBLE, true);
     sendSci(SCI_SETCARETLINEVISIBLEALWAYS, true);
-    sendSci(SCI_SETHOTSPOTACTIVEUNDERLINE, true);
+    sendSci(SCI_SETHOTSPOTACTIVEUNDERLINE, false);
 
     sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_DOCUMENT);
 
@@ -559,6 +559,8 @@ ScintillaViewUI::Tab* ScintillaViewUI::getTab(int i)
  */
 void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
 {
+    sendSci(SCI_SETCURSOR, SC_CURSORWAIT);
+
     // store current view if there is one
     if (_activeTab)
     {
@@ -580,6 +582,8 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
     const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_currentLine);
     sendSci(SCI_SETSEL, pos, pos);
+
+    sendSci(SCI_SETCURSOR, SC_CURSORNORMAL);
 }
 
 
