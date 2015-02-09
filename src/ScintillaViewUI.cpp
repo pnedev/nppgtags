@@ -580,8 +580,7 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
     sendSci(SCI_SETREADONLY, 1);
 
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
-    const int pos = sendSci(SCI_POSITIONFROMLINE, tab->_currentLine);
-    sendSci(SCI_SETSEL, pos, pos);
+    sendSci(SCI_GOTOLINE, tab->_currentLine);
 
     sendSci(SCI_SETCURSOR, SC_CURSORNORMAL);
 }
@@ -592,6 +591,8 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
  */
 bool ScintillaViewUI::openItem(int lineNum)
 {
+    sendSci(SCI_GOTOLINE, lineNum);
+
     int lineLen = sendSci(SCI_LINELENGTH, lineNum);
     char* lineTxt = new char[lineLen + 1];
 
@@ -696,6 +697,7 @@ bool ScintillaViewUI::findString(const char* str, int* startPos, int* endPos,
  */
 void ScintillaViewUI::toggleFolding(int lineNum)
 {
+    sendSci(SCI_GOTOLINE, lineNum);
     sendSci(SCI_TOGGLEFOLD, lineNum);
     if (sendSci(SCI_GETFOLDEXPANDED, lineNum))
         _activeTab->ClearFolded(lineNum);
@@ -726,7 +728,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
         if (lineLen <= 0)
             continue;
 
-        int endPos = startPos + lineLen;
+        const int endPos = startPos + lineLen;
 
         sendSci(SCI_STARTSTYLING, startPos, 0xFF);
 
@@ -749,10 +751,20 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 
                     if (findString(_activeTab->_search, &findBegin, &findEnd))
                     {
-                        sendSci(SCI_SETSTYLING, findBegin - startPos,
-                                SCE_GTAGS_FILE);
-                        sendSci(SCI_SETSTYLING, findEnd - findBegin,
-                                SCE_GTAGS_WORD2SEARCH);
+                        int newBegin = findBegin;
+                        int newEnd = findEnd;
+                        do
+                        {
+                            if (newBegin - startPos)
+                                sendSci(SCI_SETSTYLING, newBegin - startPos,
+                                        SCE_GTAGS_FILE);
+                            sendSci(SCI_SETSTYLING, newEnd - newBegin,
+                                    SCE_GTAGS_WORD2SEARCH);
+                            startPos = newBegin = newEnd;
+                            findEnd = newEnd;
+                        } while (findString(_activeTab->_search,
+                                &newBegin, &findEnd));
+
                         sendSci(SCI_SETSTYLING, endPos - findEnd,
                                 SCE_GTAGS_FILE);
                     }
@@ -839,10 +851,7 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
         }
     }
 
-    // Clear double-click auto-selection
-    sendSci(SCI_SETSEL, pos, pos);
-
-    if (lineNum && sendSci(SCI_LINELENGTH, lineNum))
+    if (lineNum > 0 && sendSci(SCI_LINELENGTH, lineNum))
     {
         if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
             toggleFolding(lineNum);
@@ -867,10 +876,14 @@ void ScintillaViewUI::onMarginClick(SCNotification* notify)
     if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
         lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
     if (lineNum > 0)
+    {
         toggleFolding(lineNum);
+    }
     else
+    {
         lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
-    sendSci(SCI_GOTOLINE, lineNum);
+        sendSci(SCI_GOTOLINE, lineNum);
+    }
 
     _lock.Unlock();
 }
@@ -884,17 +897,31 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
     if (!_lock.TryLock())
         return;
 
+    int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
+
     if (notify->ch == ' ')
     {
-        const int lineNum =
-                sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
-        if (lineNum && sendSci(SCI_LINELENGTH, lineNum))
+        if (lineNum > 0 && sendSci(SCI_LINELENGTH, lineNum))
         {
             if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
                 toggleFolding(lineNum);
             else
                 openItem(lineNum);
         }
+    }
+    else if (notify->ch == '+')
+    {
+        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+        if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
+            toggleFolding(lineNum);
+    }
+    else if (notify->ch == '-')
+    {
+        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+        if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
+            toggleFolding(lineNum);
     }
 
     _lock.Unlock();
