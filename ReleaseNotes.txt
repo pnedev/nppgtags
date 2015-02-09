@@ -5,6 +5,7 @@ What's new in v2.1.1
 - Fix race condition crash during styling
 - Make folding view more appealing
 - Make search word in the result clickable as a link to ease code navigation
+- Change cursor to reflect its position and the tab switch action
 
 
 What's new in v2.1.0
