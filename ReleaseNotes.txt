@@ -1,4 +1,4 @@
-What's new in v2.1.1
+What's new in v2.2.0
 =======================
 
 - Fix styling bug when switching from FindFile tab to other search tab and vice-versa
@@ -6,6 +6,7 @@ What's new in v2.1.1
 - Make folding view more appealing
 - Make search word in the result clickable as a link to ease code navigation
 - Change cursor to reflect its position and the tab switch action
+- Highlight all search word occurrences in a single line
 
 
 What's new in v2.1.0

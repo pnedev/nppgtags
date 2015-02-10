@@ -262,11 +262,16 @@ public:
     void ReplaceWord(const char* replText) const;
     bool SearchText(const char* text,
             bool matchCase, bool wholeWord, bool regExpr,
-            long startPos, long endPos) const;
+            long* startPos = NULL, long* endPos = NULL) const;
 
     inline void Backspace() const
     {
         SendMessage(_hSC, SCI_DELETEBACK, 0, 0);
+    }
+
+    inline char GetChar(long pos) const
+    {
+        return (char)SendMessage(_hSC, SCI_GETCHARAT, (WPARAM)pos, 0);
     }
 
     inline void AddText(char* txt, int len) const

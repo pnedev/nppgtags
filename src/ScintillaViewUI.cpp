@@ -589,7 +589,7 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
 /**
  *  \brief
  */
-bool ScintillaViewUI::openItem(int lineNum)
+bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
 
@@ -632,7 +632,7 @@ bool ScintillaViewUI::openItem(int lineNum)
         MessageBox(npp.GetHandle(),
                 _T("File not found, update database and search again"),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
-        return true;
+        return false;
     }
 
     DocLocation::Get().Push();
@@ -650,12 +650,19 @@ bool ScintillaViewUI::openItem(int lineNum)
             (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
     bool regExpr = (_activeTab->_cmdID == GREP);
 
-    if (!npp.SearchText(_activeTab->_search, true, wholeWord, regExpr,
-            npp.PositionFromLine(line), npp.LineEndPosition(line)))
+    const long endPos = npp.LineEndPosition(line);
+
+    for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
+        matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        MessageBox(npp.GetHandle(),
-                _T("Look-up mismatch, update database and search again"),
-                cPluginName, MB_OK | MB_ICONINFORMATION);
+        if (!npp.SearchText(_activeTab->_search, true, wholeWord, regExpr,
+                &findBegin, &findEnd))
+        {
+            MessageBox(npp.GetHandle(),
+                    _T("Look-up mismatch, update database and search again"),
+                    cPluginName, MB_OK | MB_ICONEXCLAMATION);
+            return false;
+        }
     }
 
     return true;
@@ -751,22 +758,21 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 
                     if (findString(_activeTab->_search, &findBegin, &findEnd))
                     {
-                        int newBegin = findBegin;
-                        int newEnd = findEnd;
                         do
                         {
-                            if (newBegin - startPos)
-                                sendSci(SCI_SETSTYLING, newBegin - startPos,
+                            if (findBegin - startPos)
+                                sendSci(SCI_SETSTYLING, findBegin - startPos,
                                         SCE_GTAGS_FILE);
-                            sendSci(SCI_SETSTYLING, newEnd - newBegin,
+                            sendSci(SCI_SETSTYLING, findEnd - findBegin,
                                     SCE_GTAGS_WORD2SEARCH);
-                            startPos = newBegin = newEnd;
-                            findEnd = newEnd;
+                            startPos = findBegin = findEnd;
+                            findEnd = endPos;
                         } while (findString(_activeTab->_search,
-                                &newBegin, &findEnd));
+                                &findBegin, &findEnd));
 
-                        sendSci(SCI_SETSTYLING, endPos - findEnd,
-                                SCE_GTAGS_FILE);
+                        if (endPos - startPos)
+                            sendSci(SCI_SETSTYLING, endPos - startPos,
+                                    SCE_GTAGS_FILE);
                     }
                     else
                     {
@@ -788,6 +794,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 int previewPos = startPos + 8;
                 for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t';
                         previewPos++);
+
                 int findBegin = previewPos;
                 int findEnd = endPos;
                 bool wholeWord = (_activeTab->_cmdID != GREP &&
@@ -799,13 +806,21 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos,
                             SCE_GTAGS_LINE_NUM);
-                    if (findBegin - previewPos)
-                        sendSci(SCI_SETSTYLING, findBegin - previewPos,
+                    do
+                    {
+                        if (findBegin - previewPos)
+                            sendSci(SCI_SETSTYLING, findBegin - previewPos,
+                                    STYLE_DEFAULT);
+                        sendSci(SCI_SETSTYLING, findEnd - findBegin,
+                                SCE_GTAGS_WORD2SEARCH);
+                        previewPos = findBegin = findEnd;
+                        findEnd = endPos;
+                    } while (findString(_activeTab->_search,
+                            &findBegin, &findEnd));
+
+                    if (endPos - previewPos)
+                        sendSci(SCI_SETSTYLING, endPos - previewPos,
                                 STYLE_DEFAULT);
-                    sendSci(SCI_SETSTYLING, findEnd - findBegin,
-                            SCE_GTAGS_WORD2SEARCH);
-                    sendSci(SCI_SETSTYLING, endPos - findEnd,
-                            STYLE_DEFAULT);
                 }
                 else
                 {
@@ -816,6 +831,39 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
             }
         }
     }
+
+    _lock.Unlock();
+}
+
+
+/**
+ *  \brief
+ */
+void ScintillaViewUI::onHotspotClick(SCNotification* notify)
+{
+    if (!_lock.TryLock())
+        return;
+
+    const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+    const int endLine = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+
+    // "\t\tline: Num" - 'N' is at position 8
+    int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
+    for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
+
+    bool wholeWord =
+            (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
+    bool regExpr = (_activeTab->_cmdID == GREP);
+
+    unsigned matchNum = 1;
+    for (int findEnd = endLine;
+            findString(_activeTab->_search, &findBegin, &findEnd,
+                    true, wholeWord, regExpr);
+            findBegin = findEnd, findEnd = endLine, matchNum++)
+        if (notify->position >= findBegin && notify->position <= findEnd)
+            break;
+
+    openItem(lineNum, matchNum);
 
     _lock.Unlock();
 }
@@ -1050,6 +1098,9 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
                     return 0;
 
                 case SCN_HOTSPOTCLICK:
+                    ui->onHotspotClick((SCNotification*)lparam);
+                    return 0;
+
                 case SCN_DOUBLECLICK:
                     ui->onDoubleClick((SCNotification*)lparam);
                     return 0;

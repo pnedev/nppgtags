@@ -124,12 +124,13 @@ private:
 
     Tab* getTab(int i = -1);
     void loadTab(Tab* tab);
-    bool openItem(int lineNum);
+    bool openItem(int lineNum, unsigned matchNum = 1);
 
     bool findString(const char* str, int* startPos, int* endPos,
         bool matchCase = true, bool wholeWord = false, bool regExpr = false);
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
+    void onHotspotClick(SCNotification* notify);
     void onDoubleClick(SCNotification* notify);
     void onMarginClick(SCNotification* notify);
     void onCharAddTry(SCNotification* notify);

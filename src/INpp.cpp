@@ -83,13 +83,13 @@ void INpp::ReplaceWord(const char* replText) const
  */
 bool INpp::SearchText(const char* text,
         bool matchCase, bool wholeWord, bool regExpr,
-        long startPos = 0, long endPos = 0) const
+        long* startPos, long* endPos) const
 {
-    if (startPos < 0)
-        startPos = 0;
+    if (startPos == NULL || *startPos < 0)
+        *startPos = 0;
 
-    if (endPos <= 0)
-        endPos = SendMessage(_hSC, SCI_GETLENGTH, 0, 0);
+    if (endPos == NULL || *endPos <= 0)
+        *endPos = SendMessage(_hSC, SCI_GETLENGTH, 0, 0);
 
     int searchFlags = 0;
     if (matchCase)
@@ -100,23 +100,23 @@ bool INpp::SearchText(const char* text,
         searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
 
     SendMessage(_hSC, SCI_SETSEARCHFLAGS, (WPARAM)searchFlags, 0);
-    SendMessage(_hSC, SCI_SETTARGETSTART, (WPARAM)startPos, 0);
-    SendMessage(_hSC, SCI_SETTARGETEND, (WPARAM)endPos, 0);
+    SendMessage(_hSC, SCI_SETTARGETSTART, (WPARAM)*startPos, 0);
+    SendMessage(_hSC, SCI_SETTARGETEND, (WPARAM)*endPos, 0);
 
-    SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
+    SendMessage(_hSC, SCI_SETSEL, (WPARAM)*startPos, (LPARAM)*endPos);
     if (SendMessage(_hSC, SCI_SEARCHINTARGET, strlen(text),
             reinterpret_cast<LPARAM>(text)) < 0)
         return false;
 
-    startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
-    endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
+    *startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
+    *endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
 
     long lineNum =
-        SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)startPos, 0) - 5;
+        SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)*startPos, 0) - 5;
     if (lineNum < 0)
         lineNum = 0;
     SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, (WPARAM)lineNum, 0);
-    SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
+    SendMessage(_hSC, SCI_SETSEL, (WPARAM)*startPos, (LPARAM)*endPos);
 
     return true;
 }
