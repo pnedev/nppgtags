@@ -849,25 +849,29 @@ void ScintillaViewUI::onHotspotClick(SCNotification* notify)
         return;
 
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
-    const int endLine = sendSci(SCI_GETLINEENDPOSITION, lineNum);
-
-    // "\t\tline: Num" - 'N' is at position 8
-    int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
-    for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
-
-    bool wholeWord =
-            (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
-    bool regExpr = (_activeTab->_cmdID == GREP);
-
-    // Find which hotspot was clicked in case there are more than one
-    // matches on single result line
     unsigned matchNum = 1;
-    for (int findEnd = endLine;
-            findString(_activeTab->_search, &findBegin, &findEnd,
-                    true, wholeWord, regExpr);
-            findBegin = findEnd, findEnd = endLine, matchNum++)
-        if (notify->position >= findBegin && notify->position <= findEnd)
-            break;
+
+    if (_activeTab->_cmdID != FIND_FILE)
+    {
+        const int endLine = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+
+        // "\t\tline: Num" - 'N' is at position 8
+        int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
+        for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
+
+        bool wholeWord = (_activeTab->_cmdID != GREP &&
+                _activeTab->_cmdID != FIND_LITERAL);
+        bool regExpr = (_activeTab->_cmdID == GREP);
+
+        // Find which hotspot was clicked in case there are more than one
+        // matches on single result line
+        for (int findEnd = endLine;
+                findString(_activeTab->_search, &findBegin, &findEnd,
+                        true, wholeWord, regExpr);
+                findBegin = findEnd, findEnd = endLine, matchNum++)
+            if (notify->position >= findBegin && notify->position <= findEnd)
+                break;
+    }
 
     openItem(lineNum, matchNum);
 
