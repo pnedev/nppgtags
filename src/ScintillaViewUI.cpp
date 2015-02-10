@@ -652,6 +652,8 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
 
     const long endPos = npp.LineEndPosition(line);
 
+    // Highlight the corresponding match number if there are more than one
+    // matches on single result line
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
@@ -758,6 +760,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 
                     if (findString(_activeTab->_search, &findBegin, &findEnd))
                     {
+                        // Highlight all matches in a single result line
                         do
                         {
                             if (findBegin - startPos)
@@ -806,6 +809,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos,
                             SCE_GTAGS_LINE_NUM);
+                    // Highlight all matches in a single result line
                     do
                     {
                         if (findBegin - previewPos)
@@ -855,6 +859,8 @@ void ScintillaViewUI::onHotspotClick(SCNotification* notify)
             (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
     bool regExpr = (_activeTab->_cmdID == GREP);
 
+    // Find which hotspot was clicked in case there are more than one
+    // matches on single result line
     unsigned matchNum = 1;
     for (int findEnd = endLine;
             findString(_activeTab->_search, &findBegin, &findEnd,
