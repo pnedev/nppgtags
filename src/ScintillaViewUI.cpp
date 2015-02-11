@@ -594,14 +594,17 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
     sendSci(SCI_GOTOLINE, lineNum);
 
     int lineLen = sendSci(SCI_LINELENGTH, lineNum);
+    if (lineLen <= 0)
+        return false;
+
     char* lineTxt = new char[lineLen + 1];
 
     sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt));
 
-    long line = -1;
+    int line = 0;
     int i;
 
-    if (lineTxt[1] == '\t')
+    if (_activeTab->_cmdID != FIND_FILE)
     {
         for (i = 7; lineTxt[i] != ':'; i++);
         lineTxt[i] = 0;
@@ -613,6 +616,9 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
             return false;
 
         lineLen = sendSci(SCI_LINELENGTH, lineNum);
+        if (lineLen <= 0)
+            return false;
+
         lineTxt = new char[lineLen + 1];
         sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt));
     }
@@ -639,12 +645,8 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
     npp.OpenFile(file.C_str());
     SetFocus(npp.ReadSciHandle());
 
-    // GTags command is FIND_FILE
-    if (line == -1)
-    {
-        npp.ClearSelection();
+    if (_activeTab->_cmdID == FIND_FILE)
         return true;
-    }
 
     bool wholeWord =
             (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
@@ -768,7 +770,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                                         SCE_GTAGS_FILE);
                             sendSci(SCI_SETSTYLING, findEnd - findBegin,
                                     SCE_GTAGS_WORD2SEARCH);
-                            startPos = findBegin = findEnd;
+                            findBegin = startPos = findEnd;
                             findEnd = endPos;
                         } while (findString(_activeTab->_search,
                                 &findBegin, &findEnd));
@@ -817,10 +819,10 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                                     STYLE_DEFAULT);
                         sendSci(SCI_SETSTYLING, findEnd - findBegin,
                                 SCE_GTAGS_WORD2SEARCH);
-                        previewPos = findBegin = findEnd;
+                        findBegin = previewPos = findEnd;
                         findEnd = endPos;
                     } while (findString(_activeTab->_search,
-                            &findBegin, &findEnd));
+                            &findBegin, &findEnd, true, wholeWord, regExpr));
 
                     if (endPos - previewPos)
                         sendSci(SCI_SETSTYLING, endPos - previewPos,
@@ -909,7 +911,7 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
         }
     }
 
-    if (lineNum > 0 && sendSci(SCI_LINELENGTH, lineNum))
+    if (lineNum > 0)
     {
         if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
             toggleFolding(lineNum);
@@ -959,7 +961,7 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 
     if (notify->ch == ' ')
     {
-        if (lineNum > 0 && sendSci(SCI_LINELENGTH, lineNum))
+        if (lineNum > 0)
         {
             if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
                 toggleFolding(lineNum);
