@@ -1,3 +1,9 @@
+What's new in v2.2.1
+=======================
+
+- Fix bug in hotspot click for Find File command
+
+
 What's new in v2.2.0
 =======================
 
