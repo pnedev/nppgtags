@@ -2,10 +2,10 @@
 ======================
 **GTags plugin for Notepad++**
 
-This is a frontend to GNU Global source code tagging system (GTags) for Notepad++.
+This is a frontend to GNU Global source code tagging system (GTags) for Notepad++. It provides various functions to ease project code navigation - search for file, definition, reference, literal, regular expression, perform auto-completion.
+
 You'll need GTags binaries for Win32 to use this plugin. Those are supplied with the plugin binary for convenience.
-You can also download them from [GNU Global official website](http://www.gnu.org/software/global/global.html) - look for the Win32 port.
-Put GTags Win32 binaries in folder named *NppGTags*.
+You can also download them from [GNU Global official website](http://www.gnu.org/software/global/global.html) - look for the Win32 port. Put GTags Win32 binaries in folder named *NppGTags*.
 
 
 **Installation**
@@ -18,6 +18,7 @@ Copy *NppGTags.dll* and *NppGTags* folder containing GTags binaries to your Note
 ======================
 
 You can find all supported commands in the NppGTags plugin menu.
+To make your life easier use Notepad++'s shortcut settings to assign whatever shortcuts you like to the plugin commands. There are no predefined shortcuts in the plugin to avoid possible conflicts with other Notepad++ plugins.
 
 First you need to create GTags database for your project - **Create Database**. In the dialog simply select your project's top folder and GTags will index all supported source files recursively.
 It will create database files (*GTAGS*, *GRTAGS* and *GPATH*) in the selected folder.
