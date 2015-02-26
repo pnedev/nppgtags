@@ -39,16 +39,11 @@
 class CPath
 {
 public:
-    enum
-    {
-        MAX_LEN = MAX_PATH
-    };
-
     CPath(const TCHAR* pathStr = NULL)
     {
         _str[0] = 0;
         if (pathStr)
-            _tcscpy_s(_str, MAX_LEN, pathStr);
+            _tcscpy_s(_str, MAX_PATH, pathStr);
     }
 
     CPath(const char* pathStr)
@@ -57,20 +52,20 @@ public:
         if (pathStr)
         {
             size_t cnt;
-            mbstowcs_s(&cnt, _str, MAX_LEN, pathStr, _TRUNCATE);
+            mbstowcs_s(&cnt, _str, MAX_PATH, pathStr, _TRUNCATE);
         }
     }
 
     CPath(const CPath& path)
     {
-        _tcscpy_s(_str, MAX_LEN, path._str);
+        _tcscpy_s(_str, MAX_PATH, path._str);
     }
 
     ~CPath() {}
 
     inline const CPath& operator=(const TCHAR* pathStr)
     {
-        _tcscpy_s(_str, MAX_LEN, pathStr);
+        _tcscpy_s(_str, MAX_PATH, pathStr);
         return *this;
     }
 
@@ -78,7 +73,7 @@ public:
     {
         if (this != &path)
         {
-            _tcscpy_s(_str, MAX_LEN, path._str);
+            _tcscpy_s(_str, MAX_PATH, path._str);
         }
         return *this;
     }
@@ -95,13 +90,13 @@ public:
 
     inline const CPath& operator+=(const TCHAR* str)
     {
-        _tcscat_s(_str, MAX_LEN, str);
+        _tcscat_s(_str, MAX_PATH, str);
         return *this;
     }
 
     inline const CPath& operator+=(const CPath& path)
     {
-        _tcscat_s(_str, MAX_LEN, path._str);
+        _tcscat_s(_str, MAX_PATH, path._str);
         return *this;
     }
 
@@ -130,7 +125,7 @@ public:
     bool IsContainedIn(const CPath& path) const;
 
 private:
-    TCHAR _str[MAX_LEN];
+    TCHAR _str[MAX_PATH];
 };
 
 
