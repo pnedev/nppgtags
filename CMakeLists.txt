@@ -1,8 +1,8 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
-set (CMAKE_SYSROOT "/home/paveln/bin/cross")
+set (CMAKE_SYSROOT "$ENV{HOME}/bin/cross")
 
 set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM  NEVER)
 set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY  ONLY)
@@ -24,7 +24,7 @@ set (defs
 )
 
 set (CMAKE_CXX_FLAGS
-    "-O3 -mwindows -mthreads -municode -mdll -Wall -Wno-unknown-pragmas"
+    "-O3 -mwindows -mthreads -municode -Wall -Wno-unknown-pragmas"
 )
 
 set (CMAKE_MODULE_LINKER_FLAGS
