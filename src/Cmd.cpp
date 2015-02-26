@@ -64,7 +64,7 @@ const TCHAR Cmd::cVersionCmd[] =
  */
 CmdData::CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag,
         DBhandle db, const char* result) :
-    _id(id), _error(false), _result(NULL), _len(0)
+    _id(id), _error(false), _tag(NULL), _result(NULL), _len(0)
 {
     if (db)
         _dbPath = *db;
@@ -73,9 +73,12 @@ CmdData::CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag,
     if (name)
         _tcscpy_s(_name, _countof(_name), name);
 
-    _tag[0] = 0;
     if (tag)
-        _tcscpy_s(_tag, _countof(_tag), tag);
+    {
+        int tagLen = _tcslen(tag) + 1;
+        _tag = new TCHAR[tagLen];
+        _tcscpy_s(_tag, tagLen, tag);
+    }
 
     if (result)
     {
@@ -91,6 +94,8 @@ CmdData::CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag,
  */
 CmdData::~CmdData()
 {
+    if (_tag)
+        delete [] _tag;
     if (_result)
         delete [] _result;
 }
@@ -322,14 +327,14 @@ bool Cmd::runProcess()
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
 
-        if (errorPipe.GetOutput())
+        if (dataPipe.GetOutput())
+        {
+            _cmd.AppendResult(dataPipe.GetOutput());
+        }
+        else if (errorPipe.GetOutput())
         {
             _cmd._error = true;
             _cmd.SetResult(errorPipe.GetOutput());
-        }
-        else if (dataPipe.GetOutput())
-        {
-            _cmd.AppendResult(dataPipe.GetOutput());
         }
     }
     else

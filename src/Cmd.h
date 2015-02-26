@@ -89,7 +89,7 @@ private:
     friend class Cmd;
 
     TCHAR _name[32];
-    TCHAR _tag[cMaxTagLen];
+    TCHAR* _tag;
     CPath _dbPath;
     char* _result;
     unsigned _len;

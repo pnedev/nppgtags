@@ -161,6 +161,11 @@ public:
                 0, (LPARAM)filePath);
     }
 
+    inline int GetCaretLineBack() const
+    {
+        return SendMessage(_hSC, SCI_GETCARETLINEBACK, 0, 0);
+    }
+
     inline void GetFontName(char* fontName, int size) const
     {
         SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)STYLE_DEFAULT,
@@ -170,6 +175,11 @@ public:
     inline int GetFontSize() const
     {
         return SendMessage(_hSC, SCI_STYLEGETSIZE, (WPARAM)STYLE_DEFAULT, 0);
+    }
+
+    inline int GetForegroundColor() const
+    {
+        return SendMessage(_hSC, SCI_STYLEGETFORE, (WPARAM)STYLE_DEFAULT, 0);
     }
 
     inline int GetBackgroundColor() const

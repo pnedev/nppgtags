@@ -385,6 +385,8 @@ void ScintillaViewUI::ApplyStyle()
     char font[32];
     npp.GetFontName(font, _countof(font));
     int size = npp.GetFontSize();
+    int caretLineBackColor = npp.GetCaretLineBack();
+    int foreColor = npp.GetForegroundColor();
     int backColor = npp.GetBackgroundColor();
 
     if (_hFont)
@@ -402,9 +404,10 @@ void ScintillaViewUI::ApplyStyle()
         SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
-    setStyle(STYLE_DEFAULT, cBlack, backColor, false, false, size, font);
+    setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);
     sendSci(SCI_STYLECLEARALL);
 
+    sendSci(SCI_SETCARETLINEBACK, caretLineBackColor);
     setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
     setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
     setStyle(SCE_GTAGS_FILE, cBlue, backColor, true);
@@ -443,7 +446,6 @@ void ScintillaViewUI::configScintilla()
     sendSci(SCI_SETUNDOCOLLECTION, false);
     sendSci(SCI_SETCURSOR, SC_CURSORNORMAL);
     sendSci(SCI_SETCARETSTYLE, CARETSTYLE_INVISIBLE);
-    sendSci(SCI_SETCARETLINEBACK, RGB(222,222,238));
     sendSci(SCI_SETCARETLINEVISIBLE, true);
     sendSci(SCI_SETCARETLINEVISIBLEALWAYS, true);
     sendSci(SCI_SETHOTSPOTACTIVEUNDERLINE, false);
