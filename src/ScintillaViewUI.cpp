@@ -385,6 +385,7 @@ void ScintillaViewUI::ApplyStyle()
     char font[32];
     npp.GetFontName(font, _countof(font));
     int size = npp.GetFontSize();
+    int backColor = npp.GetBackgroundColor();
 
     if (_hFont)
         DeleteObject(_hFont);
@@ -401,14 +402,14 @@ void ScintillaViewUI::ApplyStyle()
         SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
-    setStyle(STYLE_DEFAULT, cBlack, cWhite, false, false, size, font);
+    setStyle(STYLE_DEFAULT, cBlack, backColor, false, false, size, font);
     sendSci(SCI_STYLECLEARALL);
 
     setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
     setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
-    setStyle(SCE_GTAGS_FILE, cBlue, cWhite, true);
-    setStyle(SCE_GTAGS_LINE_NUM, RGB(130,130,130), cWhite, false, true);
-    setStyle(SCE_GTAGS_WORD2SEARCH, cRed, cWhite, true);
+    setStyle(SCE_GTAGS_FILE, cBlue, backColor, true);
+    setStyle(SCE_GTAGS_LINE_NUM, RGB(130,130,130), backColor, false, true);
+    setStyle(SCE_GTAGS_WORD2SEARCH, cRed, backColor, true);
     sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
 }
 

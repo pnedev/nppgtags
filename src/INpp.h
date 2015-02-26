@@ -172,6 +172,11 @@ public:
         return SendMessage(_hSC, SCI_STYLEGETSIZE, (WPARAM)STYLE_DEFAULT, 0);
     }
 
+    inline int GetBackgroundColor() const
+    {
+        return SendMessage(_hSC, SCI_STYLEGETBACK, (WPARAM)STYLE_DEFAULT, 0);
+    }
+
     inline int GetTextHeight() const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
