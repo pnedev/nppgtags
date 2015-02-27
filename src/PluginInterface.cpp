@@ -99,9 +99,9 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     npp.SetData(nppData);
 
     char font[32];
-    npp.GetFontName(font, _countof(font));
+    npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
     Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
-    GTags::UIFontSize = (unsigned)npp.GetFontSize();
+    GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
 
     if (ScintillaViewUI::Get().Register())
         MessageBox(npp.GetHandle(),
@@ -159,9 +159,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         {
             INpp& npp = INpp::Get();
             char font[32];
-            npp.GetFontName(font, _countof(font));
+            npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
             Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
-            GTags::UIFontSize = (unsigned)npp.GetFontSize();
+            GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
             ScintillaViewUI::Get().ApplyStyle();
         }
         break;

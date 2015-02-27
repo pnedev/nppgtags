@@ -383,11 +383,12 @@ void ScintillaViewUI::ApplyStyle()
     INpp& npp = INpp::Get();
 
     char font[32];
-    npp.GetFontName(font, _countof(font));
-    int size = npp.GetFontSize();
+    npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
+    int size = npp.GetFontSize(STYLE_DEFAULT);
     int caretLineBackColor = npp.GetCaretLineBack();
-    int foreColor = npp.GetForegroundColor();
-    int backColor = npp.GetBackgroundColor();
+    int foreColor = npp.GetForegroundColor(STYLE_DEFAULT);
+    int backColor = npp.GetBackgroundColor(STYLE_DEFAULT);
+    int lineNumColor = npp.GetForegroundColor(STYLE_LINENUMBER);
 
     if (_hFont)
         DeleteObject(_hFont);
@@ -407,13 +408,17 @@ void ScintillaViewUI::ApplyStyle()
     setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);
     sendSci(SCI_STYLECLEARALL);
 
+    setStyle(SCE_GTAGS_HEADER, foreColor, caretLineBackColor, true);
+    setStyle(SCE_GTAGS_PROJECT_PATH,
+            foreColor, caretLineBackColor, true, true);
+    setStyle(SCE_GTAGS_FILE, RGB(0,128,128), backColor, true);
+    setStyle(SCE_GTAGS_LINE_NUM, lineNumColor, backColor, false, true);
+    setStyle(SCE_GTAGS_WORD2SEARCH, RGB(225,0,0), backColor, true);
+
     sendSci(SCI_SETCARETLINEBACK, caretLineBackColor);
-    setStyle(SCE_GTAGS_HEADER, cBlack, RGB(179,217,217), true);
-    setStyle(SCE_GTAGS_PROJECT_PATH, cBlack, RGB(179,217,217), true, true);
-    setStyle(SCE_GTAGS_FILE, cBlue, backColor, true);
-    setStyle(SCE_GTAGS_LINE_NUM, RGB(130,130,130), backColor, false, true);
-    setStyle(SCE_GTAGS_WORD2SEARCH, cRed, backColor, true);
     sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
+    sendSci(SCI_STYLESETUNDERLINE, SCE_GTAGS_HEADER, true);
+    sendSci(SCI_STYLESETUNDERLINE, SCE_GTAGS_PROJECT_PATH, true);
 }
 
 

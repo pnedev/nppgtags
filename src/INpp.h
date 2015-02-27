@@ -166,25 +166,25 @@ public:
         return SendMessage(_hSC, SCI_GETCARETLINEBACK, 0, 0);
     }
 
-    inline void GetFontName(char* fontName, int size) const
+    inline void GetFontName(int style, char* fontName, int size) const
     {
-        SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)STYLE_DEFAULT,
+        SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)style,
                 (LPARAM)fontName);
     }
 
-    inline int GetFontSize() const
+    inline int GetFontSize(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETSIZE, (WPARAM)STYLE_DEFAULT, 0);
+        return SendMessage(_hSC, SCI_STYLEGETSIZE, (WPARAM)style, 0);
     }
 
-    inline int GetForegroundColor() const
+    inline int GetForegroundColor(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETFORE, (WPARAM)STYLE_DEFAULT, 0);
+        return SendMessage(_hSC, SCI_STYLEGETFORE, (WPARAM)style, 0);
     }
 
-    inline int GetBackgroundColor() const
+    inline int GetBackgroundColor(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETBACK, (WPARAM)STYLE_DEFAULT, 0);
+        return SendMessage(_hSC, SCI_STYLEGETBACK, (WPARAM)style, 0);
     }
 
     inline int GetTextHeight() const
