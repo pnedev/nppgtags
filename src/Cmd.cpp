@@ -299,6 +299,10 @@ bool Cmd::runProcess()
         _sntprintf_s(header, _countof(header), _TRUNCATE,
                 _T("%s - \"%s\""), _cmd.GetName(), _cmd.GetTag());
 
+    TCHAR env[2048];
+    _tcscpy_s(env, _countof(env), _T("GTAGSLIBPATH="));
+    _tcscat_s(env, _countof(env), _T("/usr/include"));
+
     ReadPipe errorPipe;
     ReadPipe dataPipe;
 
@@ -310,7 +314,8 @@ bool Cmd::runProcess()
 
     PROCESS_INFORMATION pi;
     if (!CreateProcess(NULL, cmd, NULL, NULL, TRUE,
-            NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL,
+            NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW |
+            CREATE_UNICODE_ENVIRONMENT, env,
             _cmd._id == VERSION ? NULL : _cmd.GetDBPath(), &si, &pi))
         return false;
 
