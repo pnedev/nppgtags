@@ -90,60 +90,49 @@ ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd) :
  */
 void ScintillaViewUI::Tab::parseCmd(CTextA& dst, const char* src)
 {
-    unsigned tagLen = strlen(_search);
-    const char* lineRes;
-    const char* lineResEnd;
-    const char* fileResEnd;
-    const char* prevFile = NULL;
-    unsigned prevFileLen = 0;
+    const char* pLine;
+    const char* pPreviousFile = NULL;
+    unsigned pPreviousFileLen = 0;
 
     for (;;)
     {
-        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+        while (*src == '\n' || *src == '\r')
             src++;
         if (*src == 0) break;
 
-        src += tagLen; // skip search word from result buffer
-        while (*src == ' ' || *src == '\t')
-            src++;
-
-        lineRes = lineResEnd = src;
-        while (*lineResEnd != ' ' && *lineResEnd != '\t')
-            lineResEnd++;
-
-        src = lineResEnd;
-        while (*src == ' ' || *src == '\t')
-            src++;
-
-        fileResEnd = src;
-        while (*fileResEnd != ' ' && *fileResEnd != '\t')
-            fileResEnd++;
+        pLine = src;
+        while (*pLine != ':')
+            pLine++;
 
         // add new file name to the UI buffer only if it is different
         // than the previous one
-        if (prevFile == NULL || (unsigned)(fileResEnd - src) != prevFileLen ||
-            strncmp(src, prevFile, prevFileLen))
+        if (pPreviousFile == NULL ||
+            (unsigned)(pLine - src) != pPreviousFileLen ||
+            strncmp(src, pPreviousFile, pPreviousFileLen))
         {
-            prevFile = src;
-            prevFileLen = fileResEnd - src;
+            pPreviousFile = src;
+            pPreviousFileLen = pLine - src;
             dst += "\n\t";
-            dst.append(prevFile, prevFileLen);
+            dst.append(pPreviousFile, pPreviousFileLen);
         }
 
-        dst += "\n\t\tline ";
-        dst.append(lineRes, lineResEnd - lineRes);
-        dst += ":\t";
-
-        src = fileResEnd;
-        while (*src == ' ' || *src == '\t')
+        src = ++pLine;
+        while (*src != ':')
             src++;
 
-        lineResEnd = src;
-        while (*lineResEnd != '\n' && *lineResEnd != '\r')
-            lineResEnd++;
+        dst += "\n\t\tline ";
+        dst.append(pLine, src - pLine);
+        dst += ":\t";
 
-        dst.append(src, lineResEnd - src);
-        src = lineResEnd;
+        pLine = ++src;
+        while (*pLine == ' ' || *pLine == '\t')
+            pLine++;
+
+        src = pLine + 1;
+        while (*src != '\n' && *src != '\r')
+            src++;
+
+        dst.append(pLine, src - pLine);
     }
 }
 

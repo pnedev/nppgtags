@@ -38,7 +38,7 @@ const TCHAR Cmd::cCreateDatabaseCmd[] =
 const TCHAR Cmd::cUpdateSingleCmd[] =
         _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
 const TCHAR Cmd::cAutoComplCmd[]       =
-        _T("\"%s\\global.exe\" -cM \"%s\"");
+        _T("\"%s\\global.exe\" -cMT \"%s\"");
 const TCHAR Cmd::cAutoComplSymCmd[] =
         _T("\"%s\\global.exe\" -csM \"%s\"");
 const TCHAR Cmd::cAutoComplFileCmd[] =
@@ -46,15 +46,15 @@ const TCHAR Cmd::cAutoComplFileCmd[] =
 const TCHAR Cmd::cFindFileCmd[] =
         _T("\"%s\\global.exe\" -PM \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -dxM \"%s\"");
+        _T("\"%s\\global.exe\" -dMT --result=grep \"%s\"");
 const TCHAR Cmd::cFindReferenceCmd[] =
-        _T("\"%s\\global.exe\" -rxM \"%s\"");
+        _T("\"%s\\global.exe\" -rM --result=grep \"%s\"");
 const TCHAR Cmd::cFindSymbolCmd[] =
-        _T("\"%s\\global.exe\" -sxM \"%s\"");
+        _T("\"%s\\global.exe\" -sM --result=grep \"%s\"");
 const TCHAR Cmd::cGrepCmd[] =
-        _T("\"%s\\global.exe\" -gxME \"%s\"");
+        _T("\"%s\\global.exe\" -gME --result=grep \"%s\"");
 const TCHAR Cmd::cFindLiteralCmd[] =
-        _T("\"%s\\global.exe\" -gxM --literal \"%s\"");
+        _T("\"%s\\global.exe\" -gM --result=grep --literal \"%s\"");
 const TCHAR Cmd::cVersionCmd[] =
         _T("\"%s\\global.exe\" --version");
 
@@ -299,9 +299,20 @@ bool Cmd::runProcess()
         _sntprintf_s(header, _countof(header), _TRUNCATE,
                 _T("%s - \"%s\""), _cmd.GetName(), _cmd.GetTag());
 
-    TCHAR env[2048];
-    _tcscpy_s(env, _countof(env), _T("GTAGSLIBPATH="));
-    _tcscat_s(env, _countof(env), _T("/usr/include"));
+    DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
+    const TCHAR* environment = NULL;
+    const TCHAR* currentDir = NULL;
+
+    CText env(_T("GTAGSLIBPATH="));
+    env += _T("/usr/include");
+
+    if (_cmd._id == VERSION)
+        currentDir = _cmd.GetDBPath();
+    else if (_cmd._id == AUTOCOMPLETE || _cmd._id == FIND_DEFINITION)
+    {
+        environment = env.C_str();
+        createFlags |= CREATE_UNICODE_ENVIRONMENT;
+    }
 
     ReadPipe errorPipe;
     ReadPipe dataPipe;
@@ -313,10 +324,8 @@ bool Cmd::runProcess()
     si.hStdOutput   = dataPipe.GetInputHandle();
 
     PROCESS_INFORMATION pi;
-    if (!CreateProcess(NULL, cmd, NULL, NULL, TRUE,
-            NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW |
-            CREATE_UNICODE_ENVIRONMENT, env,
-            _cmd._id == VERSION ? NULL : _cmd.GetDBPath(), &si, &pi))
+    if (!CreateProcess(NULL, cmd, NULL, NULL, TRUE, createFlags,
+        (LPVOID)environment, currentDir, &si, &pi))
         return false;
 
     SetThreadPriority(pi.hThread, THREAD_PRIORITY_NORMAL);
