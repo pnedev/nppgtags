@@ -301,13 +301,13 @@ bool Cmd::runProcess()
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* environment = NULL;
-    const TCHAR* currentDir = NULL;
+    const TCHAR* currentDir = _cmd.GetDBPath();
 
     CText env(_T("GTAGSLIBPATH="));
     env += _T("/usr/include");
 
     if (_cmd._id == VERSION)
-        currentDir = _cmd.GetDBPath();
+        currentDir = NULL;
     else if (_cmd._id == AUTOCOMPLETE || _cmd._id == FIND_DEFINITION)
     {
         environment = env.C_str();
