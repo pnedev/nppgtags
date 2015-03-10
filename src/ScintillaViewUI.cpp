@@ -51,17 +51,17 @@ enum
 };
 
 
+namespace GTags
+{
+
 const TCHAR ScintillaViewUI::cClassName[]   = _T("ScintillaViewUI");
 const TCHAR ScintillaViewUI::cTabFont[]     = _T("Tahoma");
-
-
-using namespace GTags;
 
 
 /**
  *  \brief
  */
-ScintillaViewUI::Tab::Tab(const GTags::CmdData& cmd) :
+ScintillaViewUI::Tab::Tab(const CmdData& cmd) :
     _currentLine(1), _firstVisibleLine(0)
 {
     _cmdID = cmd.GetID();
@@ -1146,3 +1146,5 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
+
+} // namespace GTags

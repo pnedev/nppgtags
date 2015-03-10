@@ -36,6 +36,9 @@
 #include "Cmd.h"
 
 
+namespace GTags
+{
+
 /**
  *  \class  ScintillaViewUI
  *  \brief
@@ -51,7 +54,7 @@ public:
 
     int Register();
     void Unregister();
-    void Show(const GTags::CmdData& cmd);
+    void Show(const CmdData& cmd);
     void ApplyStyle();
 
 private:
@@ -61,7 +64,7 @@ private:
      */
     struct Tab
     {
-        Tab(const GTags::CmdData& cmd);
+        Tab(const CmdData& cmd);
         ~Tab() {}
 
         inline bool operator==(const Tab& tab) const
@@ -73,7 +76,7 @@ private:
 
         int _cmdID;
         char _projectPath[MAX_PATH];
-        char _search[GTags::cMaxTagLen];
+        char _search[cMaxTagLen];
         CTextA _uiBuf;
         int _currentLine;
         int _firstVisibleLine;
@@ -148,3 +151,5 @@ private:
 	sptr_t _sciPtr;
     Tab* _activeTab;
 };
+
+} // namespace GTags

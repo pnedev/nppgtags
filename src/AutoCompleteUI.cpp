@@ -33,11 +33,11 @@
 #include "GTags.h"
 
 
+namespace GTags
+{
+
 const TCHAR AutoCompleteUI::cClassName[]    = _T("AutoCompleteUI");
 const int AutoCompleteUI::cBackgroundColor  = COLOR_INFOBK;
-
-
-using namespace GTags;
 
 
 /**
@@ -474,3 +474,5 @@ LRESULT APIENTRY AutoCompleteUI::wndProc(HWND hwnd, UINT umsg,
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
+
+} // namespace GTags

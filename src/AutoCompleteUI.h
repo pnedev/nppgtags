@@ -31,6 +31,9 @@
 #include "Cmd.h"
 
 
+namespace GTags
+{
+
 /**
  *  \class  AutoCompleteUI
  *  \brief
@@ -41,7 +44,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static BOOL Show(const GTags::CmdData& cmd);
+    static BOOL Show(const CmdData& cmd);
 
 private:
     static const TCHAR cClassName[];
@@ -50,7 +53,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    AutoCompleteUI(const GTags::CmdData& cmd);
+    AutoCompleteUI(const CmdData& cmd);
     AutoCompleteUI(const AutoCompleteUI&);
     ~AutoCompleteUI();
 
@@ -65,6 +68,8 @@ private:
     HWND _hwnd;
     HWND _hLVWnd;
     HFONT _hFont;
-    const GTags::CmdData& _cmd;
+    const CmdData& _cmd;
     TCHAR* _result;
 };
+
+} // namespace GTags

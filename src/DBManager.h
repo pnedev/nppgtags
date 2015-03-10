@@ -32,6 +32,9 @@
 #include "AutoLock.h"
 
 
+namespace GTags
+{
+
 typedef const CPath* DBhandle;
 
 
@@ -119,3 +122,5 @@ private:
     Mutex _lock;
     std::list<GTagsDB> _dbList;
 };
+
+} // namespace GTags

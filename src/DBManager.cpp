@@ -27,6 +27,9 @@
 #include <windows.h>
 
 
+namespace GTags
+{
+
 DBManager DBManager::Instance;
 
 
@@ -212,3 +215,5 @@ DBhandle DBManager::lockDB(const CPath& filePath, bool writeEn, bool* success)
 
     return NULL;
 }
+
+} // namespace GTags

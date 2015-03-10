@@ -103,7 +103,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
     GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
 
-    if (ScintillaViewUI::Get().Register())
+    if (GTags::ScintillaViewUI::Get().Register())
         MessageBox(npp.GetHandle(),
             _T("ScintillaViewUI init failed, plugin will not be operational"),
             GTags::cPluginName, MB_OK | MB_ICONERROR);
@@ -162,7 +162,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
             Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
             GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
-            ScintillaViewUI::Get().ApplyStyle();
+            GTags::ScintillaViewUI::Get().ApplyStyle();
         }
         break;
 
