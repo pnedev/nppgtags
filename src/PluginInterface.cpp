@@ -31,6 +31,8 @@ namespace
 const int cFuncCount = 15;
 FuncItem InterfaceFunc[cFuncCount];
 
+// TCHAR* NotificationData = NULL;
+
 
 /**
  *  \brief
@@ -79,6 +81,11 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
             return GTags::PluginInit(hModule);
 
         case DLL_PROCESS_DETACH:
+            // if (NotificationData)
+            // {
+                // delete [] NotificationData;
+                // NotificationData = NULL;
+            // }
             GTags::PluginDeInit();
         break;
 
@@ -122,7 +129,8 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     addMenuItem(GTags::cCreateDatabase, GTags::CreateDatabase);
     addMenuItem(_T("Delete Database"), GTags::DeleteDatabase);
     addMenuItem(); // separator
-    addMenuItem(_T("Auto-update on file save"), autoUpdate, GTags::AutoUpdate);
+    addMenuItem(_T("Auto-update on file change"), autoUpdate,
+            GTags::AutoUpdate);
     addMenuItem(); // separator
     addMenuItem(GTags::cVersion, GTags::About);
 }
@@ -146,14 +154,80 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     switch (notifyCode->nmhdr.code)
     {
         case NPPN_FILESAVED:
+        case NPPN_FILERENAMED:
             if (GTags::AutoUpdate)
             {
                 TCHAR file[MAX_PATH];
                 INpp::Get().GetFilePathFromBufID(
                         notifyCode->nmhdr.idFrom, file);
+
                 GTags::UpdateSingleFile(file);
             }
         break;
+
+        // case NPPN_FILEBEFORERENAME:
+        // case NPPN_FILEBEFOREDELETE:
+            // if (GTags::AutoUpdate)
+            // {
+                // if (!NotificationData)
+                    // NotificationData = new TCHAR[MAX_PATH];
+
+                // INpp::Get().GetFilePathFromBufID(
+                        // notifyCode->nmhdr.idFrom, NotificationData);
+            // }
+        // break;
+
+        // case NPPN_FILERENAMECANCEL:
+        // case NPPN_FILEDELETEFAILED:
+            // if (NotificationData)
+            // {
+                // delete [] NotificationData;
+                // NotificationData = NULL;
+            // }
+        // break;
+
+        // case NPPN_FILERENAMED:
+            // if (GTags::AutoUpdate)
+            // {
+                // if (NotificationData)
+                // {
+                    // GTags::UpdateSingleFile(NotificationData);
+
+                    // INpp::Get().GetFilePathFromBufID(
+                            // notifyCode->nmhdr.idFrom, NotificationData);
+
+                    // GTags::UpdateSingleFile(NotificationData);
+                // }
+            // }
+            // if (NotificationData)
+            // {
+                // delete [] NotificationData;
+                // NotificationData = NULL;
+            // }
+        // break;
+
+        // case NPPN_FILEDELETED:
+            // if (GTags::AutoUpdate)
+            // {
+                // if (NotificationData)
+                // {
+                    // GTags::UpdateSingleFile(NotificationData);
+                // }
+                // else
+                // {
+                    // TCHAR file[MAX_PATH];
+                    // INpp::Get().GetFilePathFromBufID(
+                            // notifyCode->nmhdr.idFrom, file);
+
+                    // GTags::UpdateSingleFile(file);
+                // }
+            // }
+            // if (NotificationData)
+            // {
+                // delete [] NotificationData;
+                // NotificationData = NULL;
+            // }
+        // break;
 
         case NPPN_WORDSTYLESUPDATED:
         {
@@ -167,6 +241,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         break;
 
         case NPPN_SHUTDOWN:
+            // if (NotificationData)
+            // {
+                // delete [] NotificationData;
+                // NotificationData = NULL;
+            // }
             GTags::PluginDeInit();
         break;
     }
