@@ -406,11 +406,7 @@ CPath DllPath;
 TCHAR UIFontName[32];
 unsigned UIFontSize;
 
-#ifndef DEVELOPMENT
 bool AutoUpdate = true;
-#else
-bool AutoUpdate = false;
-#endif
 
 
 /**

@@ -36,7 +36,7 @@ namespace GTags
 {
 
 const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
-const TCHAR cBinsDir[]          = _T("NppGTags");
+const TCHAR cBinsDir[]          = VER_PLUGIN_NAME;
 const unsigned cMaxTagLen       = 128;
 
 const TCHAR cCreateDatabase[]   = _T("Create Database");

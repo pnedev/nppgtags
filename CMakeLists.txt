@@ -65,5 +65,5 @@ target_link_libraries (NppGTags ${comctl32})
 
 install (FILES ${CMAKE_BINARY_DIR}/libNppGTags.dll
     DESTINATION "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins"
-    RENAME devNppGTags.dll
+    RENAME NppGTags.dll
 )
