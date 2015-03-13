@@ -31,7 +31,7 @@ namespace
 const int cFuncCount = 15;
 FuncItem InterfaceFunc[cFuncCount];
 
-// TCHAR* NotificationData = NULL;
+CPathContainer StoredPath;
 
 
 /**
@@ -52,21 +52,10 @@ void addMenuItem(const TCHAR* itemName = NULL,
 /**
  *  \brief
  */
-void autoUpdate()
+void openSettings()
 {
-    int NppCmdID = -1;
-
-    GTags::AutoUpdate = !GTags::AutoUpdate;
-
-    for (int i = 0; i < cFuncCount; i++)
-        if (InterfaceFunc[i]._pFunc == autoUpdate)
-        {
-            NppCmdID = InterfaceFunc[i]._cmdID;
-            break;
-        }
-
-    if (NppCmdID != -1)
-        INpp::Get().SetPluginMenuFlag(NppCmdID, GTags::AutoUpdate);
+    MessageBox(INpp::Get().GetHandle(), _T("Not implemented yet"),
+            GTags::cPluginName, MB_OK | MB_ICONEXCLAMATION);
 }
 
 }
@@ -81,11 +70,6 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
             return GTags::PluginInit(hModule);
 
         case DLL_PROCESS_DETACH:
-            // if (NotificationData)
-            // {
-                // delete [] NotificationData;
-                // NotificationData = NULL;
-            // }
             GTags::PluginDeInit();
         break;
 
@@ -129,8 +113,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     addMenuItem(GTags::cCreateDatabase, GTags::CreateDatabase);
     addMenuItem(_T("Delete Database"), GTags::DeleteDatabase);
     addMenuItem(); // separator
-    addMenuItem(_T("Auto-update on file change"), autoUpdate,
-            GTags::AutoUpdate);
+    addMenuItem(_T("Settings"), openSettings);
     addMenuItem(); // separator
     addMenuItem(GTags::cVersion, GTags::About);
 }
@@ -154,80 +137,64 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     switch (notifyCode->nmhdr.code)
     {
         case NPPN_FILESAVED:
+            if (GTags::AutoUpdate)
+            {
+                TCHAR file[MAX_PATH];
+                INpp::Get().GetFilePathFromBufID(
+                        notifyCode->nmhdr.idFrom, file);
+                GTags::UpdateSingleFile(file);
+            }
+        break;
+
+        case NPPN_FILEBEFORERENAME:
+        case NPPN_FILEBEFOREDELETE:
+            if (GTags::AutoUpdate)
+            {
+                TCHAR file[MAX_PATH];
+                INpp::Get().GetFilePathFromBufID(
+                        notifyCode->nmhdr.idFrom, file);
+                StoredPath = file;
+            }
+        break;
+
+        case NPPN_FILERENAMECANCEL:
+        case NPPN_FILEDELETEFAILED:
+            StoredPath.Delete();
+        break;
+
         case NPPN_FILERENAMED:
             if (GTags::AutoUpdate)
             {
                 TCHAR file[MAX_PATH];
                 INpp::Get().GetFilePathFromBufID(
                         notifyCode->nmhdr.idFrom, file);
-
                 GTags::UpdateSingleFile(file);
+
+                if (StoredPath())
+                {
+                    GTags::UpdateSingleFile(StoredPath()->C_str());
+                    StoredPath.Delete();
+                }
             }
         break;
 
-        // case NPPN_FILEBEFORERENAME:
-        // case NPPN_FILEBEFOREDELETE:
-            // if (GTags::AutoUpdate)
-            // {
-                // if (!NotificationData)
-                    // NotificationData = new TCHAR[MAX_PATH];
-
-                // INpp::Get().GetFilePathFromBufID(
-                        // notifyCode->nmhdr.idFrom, NotificationData);
-            // }
-        // break;
-
-        // case NPPN_FILERENAMECANCEL:
-        // case NPPN_FILEDELETEFAILED:
-            // if (NotificationData)
-            // {
-                // delete [] NotificationData;
-                // NotificationData = NULL;
-            // }
-        // break;
-
-        // case NPPN_FILERENAMED:
-            // if (GTags::AutoUpdate)
-            // {
-                // if (NotificationData)
-                // {
-                    // GTags::UpdateSingleFile(NotificationData);
-
-                    // INpp::Get().GetFilePathFromBufID(
-                            // notifyCode->nmhdr.idFrom, NotificationData);
-
-                    // GTags::UpdateSingleFile(NotificationData);
-                // }
-            // }
-            // if (NotificationData)
-            // {
-                // delete [] NotificationData;
-                // NotificationData = NULL;
-            // }
-        // break;
-
-        // case NPPN_FILEDELETED:
-            // if (GTags::AutoUpdate)
-            // {
-                // if (NotificationData)
-                // {
-                    // GTags::UpdateSingleFile(NotificationData);
-                // }
-                // else
-                // {
-                    // TCHAR file[MAX_PATH];
-                    // INpp::Get().GetFilePathFromBufID(
-                            // notifyCode->nmhdr.idFrom, file);
-
-                    // GTags::UpdateSingleFile(file);
-                // }
-            // }
-            // if (NotificationData)
-            // {
-                // delete [] NotificationData;
-                // NotificationData = NULL;
-            // }
-        // break;
+        case NPPN_FILEDELETED:
+            if (GTags::AutoUpdate)
+            {
+                if (StoredPath())
+                {
+                    GTags::UpdateSingleFile(StoredPath()->C_str());
+                    StoredPath.Delete();
+                }
+                else
+                {
+                    TCHAR file[MAX_PATH];
+                    INpp::Get().GetFilePathFromBufID(
+                            notifyCode->nmhdr.idFrom, file);
+                    GTags::UpdateSingleFile(file);
+                }
+            }
+        break;
 
         case NPPN_WORDSTYLESUPDATED:
         {
@@ -241,11 +208,6 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         break;
 
         case NPPN_SHUTDOWN:
-            // if (NotificationData)
-            // {
-                // delete [] NotificationData;
-                // NotificationData = NULL;
-            // }
             GTags::PluginDeInit();
         break;
     }
