@@ -68,24 +68,25 @@ private:
             const TCHAR *font, unsigned fontSize, bool readOnly,
             int minWidth, int minHeight,
             const TCHAR *header, TCHAR *text, int txtLimit);
-    static RECT adjustSizeAndPos(DWORD styleEx, DWORD style,
-            int width, int height);
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    IOWindow(bool readOnly, int minWidth, int minHeight, TCHAR* text) :
-            _minWidth(minWidth), _minHeight(minHeight), _text(text),
-            _success(false) {}
+    IOWindow(HWND hOwner, bool readOnly,
+            int minWidth, int minHeight, TCHAR* text) :
+            _hOwner(hOwner), _minWidth(minWidth), _minHeight(minHeight),
+            _text(text), _success(false) {}
     IOWindow(const IOWindow &);
     ~IOWindow();
 
-    HWND composeWindow(HWND hOwner,
-            const TCHAR* font, unsigned fontSize, bool readOnly,
-            int minWidth, int minHeight,
+    RECT adjustSizeAndPos(DWORD styleEx, DWORD style,
+            int width, int height);
+    HWND composeWindow(const TCHAR* font, unsigned fontSize,
+            bool readOnly, int minWidth, int minHeight,
             const TCHAR* header, const TCHAR* text, int txtLimit);
     int onKeyDown(DWORD key);
     int onAutoSize(REQRESIZE* pReqResize);
 
+    HWND _hOwner;
     HWND _hWnd;
     HFONT _hFont;
     int _minWidth;

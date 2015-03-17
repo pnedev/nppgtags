@@ -101,8 +101,8 @@ bool IOWindow::create(HWND hOwner,
         ReleaseDC(hOwner, hdc);
     }
 
-    IOWindow iow(readOnly, minWidth, minHeight, text);
-    if (iow.composeWindow(hOwner, font, fontSize, readOnly,
+    IOWindow iow(hOwner, readOnly, minWidth, minHeight, text);
+    if (iow.composeWindow(font, fontSize, readOnly,
             minWidth, minHeight, header, text, txtLimit) == NULL)
         return false;
 
@@ -127,7 +127,10 @@ RECT IOWindow::adjustSizeAndPos(DWORD styleEx, DWORD style,
     RECT win, maxWin;
     int dontAdjust = 0;
 
-    SystemParametersInfo(SPI_GETWORKAREA, 0, &maxWin, 0);
+    if (_hOwner)
+        GetWindowRect(_hOwner, &maxWin);
+    else
+        SystemParametersInfo(SPI_GETWORKAREA, 0, &maxWin, 0);
 
     win = maxWin;
     if (width <= 0) width = 100;
@@ -190,9 +193,8 @@ IOWindow::~IOWindow()
 /**
  *  \brief
  */
-HWND IOWindow::composeWindow(HWND hOwner,
-        const TCHAR* font, unsigned fontSize, bool readOnly,
-        int minWidth, int minHeight,
+HWND IOWindow::composeWindow(const TCHAR* font, unsigned fontSize,
+        bool readOnly, int minWidth, int minHeight,
         const TCHAR* header, const TCHAR* text, int txtLimit)
 {
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
@@ -201,7 +203,7 @@ HWND IOWindow::composeWindow(HWND hOwner,
     _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HMod, (LPVOID) this);
+            _hOwner, NULL, HMod, (LPVOID) this);
     if (_hWnd == NULL)
         return NULL;
 
