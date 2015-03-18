@@ -24,14 +24,21 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include "Settings.h"
-#include <string>
 #include <fstream>
+#include "INpp.h"
+#include "Common.h"
 
 
 namespace GTags
 {
 
+static const char cAutoUpdateKey[]  = "AutoUpdate";
+static const char cLibraryPathKey[] = "LibraryPath";
+
 Settings Settings::Instance;
+
+
+using namespace std;
 
 
 /**
@@ -39,6 +46,29 @@ Settings Settings::Instance;
  */
 bool Read(const TCHAR* configFile)
 {
+    if (configFile == NULL)
+        return false;
+
+    char cfgFileA[MAX_PATH];
+    Tools::WtoA(cfgFileA, _countof(cfgFileA), configFile);
+
+    fstream fs;
+    fs.open(cfgFileA, fstream::in);
+    if (!fs.is_open())
+        return false;
+
+    string line;
+    while (getline(fs, line) != eofbit)
+    {
+        if (!readKey(line))
+        {
+            fs.close();
+            return false;
+        }
+    }
+
+    fs.close();
+
     return true;
 }
 

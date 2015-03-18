@@ -28,6 +28,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
+#include <string>
 
 
 namespace GTags
@@ -46,6 +47,9 @@ public:
     bool Store(const TCHAR* configFile) const;
 
 private:
+    static const char cAutoUpdateKey[];
+    static const char cLibraryPathKey[];
+
     static Settings Instance;
 
     Settings();
@@ -53,6 +57,8 @@ private:
 
     Settings(const Settings&);
     const Settings& operator=(const Settings&);
+
+    bool readKey(const string& str);
 };
 
 } // namespace GTags
