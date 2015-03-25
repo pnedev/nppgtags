@@ -124,56 +124,57 @@ bool IOWindow::create(HWND hOwner,
 RECT IOWindow::adjustSizeAndPos(DWORD styleEx, DWORD style,
         int width, int height)
 {
-    RECT win, maxWin;
-    int dontAdjust = 0;
-
-    if (_hOwner)
-        GetWindowRect(_hOwner, &maxWin);
-    else
-        SystemParametersInfo(SPI_GETWORKAREA, 0, &maxWin, 0);
-
-    win = maxWin;
     if (width <= 0) width = 100;
     if (height <= 0) height = 100;
 
-    if ((int) width < maxWin.right - maxWin.left)
-        win.right = win.left + width;
+    RECT maxWin;
+    GetWindowRect(GetDesktopWindow(), &maxWin);
+
+    POINT center;
+    if (_hOwner)
+    {
+        RECT biasWin;
+        GetWindowRect(_hOwner, &biasWin);
+        center.x = (biasWin.right + biasWin.left) / 2;
+        center.y = (biasWin.bottom + biasWin.top) / 2;
+    }
     else
-        dontAdjust++;
+    {
+        center.x = (maxWin.right + maxWin.left) / 2;
+        center.y = (maxWin.bottom + maxWin.top) / 2;
+    }
+
+    RECT win = {0};
+    win.right = width;
+    win.bottom = height;
+
+    AdjustWindowRectEx(&win, style, FALSE, styleEx);
+
+    width = win.right - win.left;
+    height = win.bottom - win.top;
+
+    if (width < maxWin.right - maxWin.left)
+    {
+        win.left = center.x - width / 2;
+        if (win.left < maxWin.left) win.left = maxWin.left;
+        win.right = win.left + width;
+    }
+    else
+    {
+        win.left = maxWin.left;
+        win.right = maxWin.right;
+    }
 
     if (height < maxWin.bottom - maxWin.top)
-        win.bottom = win.top + height;
-    else
-        dontAdjust++;
-
-    if (dontAdjust < 2)
     {
-        AdjustWindowRectEx(&win, style, FALSE, styleEx);
-
-        width = win.right - win.left;
-        height = win.bottom - win.top;
-
-        if (width < maxWin.right - maxWin.left)
-        {
-            win.left = (maxWin.right - width) / 2;
-            win.right = win.left + width;
-        }
-        else
-        {
-            win.left = maxWin.left;
-            win.right = maxWin.right;
-        }
-
-        if (height < maxWin.bottom - maxWin.top)
-        {
-            win.top = (maxWin.bottom - height) / 2;
-            win.bottom = win.top + height;
-        }
-        else
-        {
-            win.top = maxWin.top;
-            win.bottom = maxWin.bottom;
-        }
+        win.top = center.y - height / 2;
+        if (win.top < maxWin.top) win.top = maxWin.top;
+        win.bottom = win.top + height;
+    }
+    else
+    {
+        win.top = maxWin.top;
+        win.bottom = maxWin.bottom;
     }
 
     return win;
