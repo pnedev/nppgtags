@@ -32,8 +32,8 @@
 namespace GTags
 {
 
-static const char cAutoUpdateKey[]  = "AutoUpdate";
-static const char cLibraryPathKey[] = "LibraryPath";
+static const char Settings::cAutoUpdateKey[]  = "AutoUpdate";
+static const char Settings::cLibraryPathKey[] = "LibraryPath";
 
 Settings Settings::Instance;
 

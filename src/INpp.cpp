@@ -111,8 +111,12 @@ bool INpp::SearchText(const char* text,
     *startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
     *endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
 
-    long lineNum =
-        SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)*startPos, 0) - 5;
+    long lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION,
+            (WPARAM)*startPos, 0);
+    SendMessage(_hSC, SCI_ENSUREVISIBLE, (WPARAM)lineNum, 0);
+
+    lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE,
+            (WPARAM)lineNum, 0) - 5;
     if (lineNum < 0)
         lineNum = 0;
     SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, (WPARAM)lineNum, 0);
