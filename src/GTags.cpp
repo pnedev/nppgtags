@@ -470,13 +470,14 @@ void AutoComplete()
 void AutoCompleteFile()
 {
     TCHAR tag[cMaxTagLen];
-    if (!getSelection(tag, true, true))
+    if (!getSelection(&tag[1], true, true))
         return;
 
     DBhandle db = getDatabase();
     if (!db)
         return;
 
+    tag[0] = '/';
     releaseKeys();
     Cmd::Run(AUTOCOMPLETE_FILE, cAutoComplFile, tag, db, autoComplReady);
 }
