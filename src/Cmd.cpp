@@ -44,17 +44,17 @@ const TCHAR Cmd::cAutoComplSymCmd[] =
 const TCHAR Cmd::cAutoComplFileCmd[] =
         _T("\"%s\\global.exe\" -cPM --match-part=all \"%s\"");
 const TCHAR Cmd::cFindFileCmd[] =
-        _T("\"%s\\global.exe\" -PM \"%s\"");
+        _T("\"%s\\global.exe\" -PME \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -dMT --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -dMET --result=grep \"%s\"");
 const TCHAR Cmd::cFindReferenceCmd[] =
-        _T("\"%s\\global.exe\" -rM --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -rME --result=grep \"%s\"");
 const TCHAR Cmd::cFindSymbolCmd[] =
-        _T("\"%s\\global.exe\" -sM --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -sME --result=grep \"%s\"");
 const TCHAR Cmd::cGrepCmd[] =
         _T("\"%s\\global.exe\" -gME --result=grep \"%s\"");
 const TCHAR Cmd::cFindLiteralCmd[] =
-        _T("\"%s\\global.exe\" -gM --result=grep --literal \"%s\"");
+        _T("\"%s\\global.exe\" -gME --result=grep --literal \"%s\"");
 const TCHAR Cmd::cVersionCmd[] =
         _T("\"%s\\global.exe\" --version");
 

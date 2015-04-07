@@ -198,22 +198,22 @@ HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
     if (hWnd == NULL)
         return NULL;
 
-    HWND hWndEdit = CreateWindowEx(0, _T("EDIT"), _T("Text"),
-            WS_CHILD | WS_VISIBLE | ES_LEFT | ES_READONLY,
+    HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), _T("Text"),
+            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, hWnd, NULL, HMod, NULL);
 
-    HDC hdc = GetWindowDC(hWndEdit);
+    HDC hdc = GetWindowDC(hWndTxt);
     _hFont = CreateFont(
             -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cFontName);
     if (_hFont)
-        SendMessage(hWndEdit, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
-    ReleaseDC(hWndEdit, hdc);
+    ReleaseDC(hWndTxt, hdc);
 
     int textHeight = tm.tmHeight;
     adjustSizeAndPos(hWnd, width, textHeight + 25);
@@ -223,9 +223,9 @@ HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
     width = win.right - win.left;
     int height = win.bottom - win.top;
 
-    MoveWindow(hWndEdit, 5, 5, width - 95, textHeight, TRUE);
+    MoveWindow(hWndTxt, 5, 5, width - 95, textHeight, TRUE);
 
-    Edit_SetText(hWndEdit, text);
+    SetWindowText(hWndTxt, text);
 
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, _T("Progress Bar"),
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
