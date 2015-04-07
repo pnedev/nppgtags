@@ -2,7 +2,7 @@ What's new in v2.3.0
 =======================
 
 - Set fore, back and line colors from the selected Notepad++ theme
-- If the command reports warning or error but there are results anywhere, show them
+- If the command reports warning or error but there are results anyway, show them
 - Fix bug when auto-updating DB for files with path lenght > 128
 
 

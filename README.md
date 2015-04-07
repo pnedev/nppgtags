@@ -66,12 +66,4 @@ While auto complete results window is active you can narrow the results shown by
 Double-clicking or pressing *Enter*, *Tab* or *Space* will insert the selected auto complete result.
 
 **AutoComplete File** is useful if you will be including headers for example.
-Have in mind however that the results shown start from the matched string to the end of the found path
-and since the matched string might be in the middle of a filename the result might not be valid.
-
-For example if your file is *inc/Source.h* inside the project directory and you try to auto complete file string '*our*'
-you will get as result *ource.h* which is obviously not what you need.
-
-To work-around this always start **AutoComplete File** for the desired place in the file path.
-What I mean is if you want to include *Source.h* you should type '*Sou*', invoke **AutoComplete File** and you will get as result *Source.h*.
-If you want to specify the path with the include type '*inc/S*', invoke **AutoComplete File** and you will get as result *inc/Source.h*.
+The completion occurs actually for the whole file path relative to the project root. For example if you have *inc* folder and you run autocomplete string *in* you'll get all source files under *inc* folder - *inc/file1.cpp*, *inc/file2.h*, etc. You will also get all files in other folders staring with *in* or all files which names start with *in*.
