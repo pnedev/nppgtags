@@ -193,7 +193,8 @@ int AutoCompleteUI::fillLV()
     for (TCHAR* pToken = _tcstok_s(_result, _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
-        lvItem.pszText = pToken + 1;
+        lvItem.pszText =
+                (_cmd.GetID() == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);
         lvItem.iItem++;
     }
