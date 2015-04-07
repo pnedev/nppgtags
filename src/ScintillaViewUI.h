@@ -54,7 +54,7 @@ public:
 
     int Register();
     void Unregister();
-    void Show(const CmdData& cmd);
+    void Show(const std::shared_ptr<CmdData>& cmd);
     void ApplyStyle();
 
 private:
@@ -64,7 +64,7 @@ private:
      */
     struct Tab
     {
-        Tab(const CmdData& cmd);
+        Tab(const std::shared_ptr<CmdData>& cmd);
         ~Tab() {}
 
         inline bool operator==(const Tab& tab) const

@@ -38,23 +38,21 @@ const TCHAR Cmd::cCreateDatabaseCmd[] =
 const TCHAR Cmd::cUpdateSingleCmd[] =
         _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
 const TCHAR Cmd::cAutoComplCmd[]       =
-        _T("\"%s\\global.exe\" -cMT \"%s\"");
+        _T("\"%s\\global.exe\" -c \"%s\"");
 const TCHAR Cmd::cAutoComplSymCmd[] =
-        _T("\"%s\\global.exe\" -csM \"%s\"");
+        _T("\"%s\\global.exe\" -cs \"%s\"");
 const TCHAR Cmd::cAutoComplFileCmd[] =
-        _T("\"%s\\global.exe\" -cPM --match-part=all \"%s\"");
+        _T("\"%s\\global.exe\" -cP --match-part=all \"%s\"");
 const TCHAR Cmd::cFindFileCmd[] =
-        _T("\"%s\\global.exe\" -PME \"%s\"");
+        _T("\"%s\\global.exe\" -PE \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -dMET --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -dET --result=grep \"%s\"");
 const TCHAR Cmd::cFindReferenceCmd[] =
-        _T("\"%s\\global.exe\" -rME --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -rE --result=grep \"%s\"");
 const TCHAR Cmd::cFindSymbolCmd[] =
-        _T("\"%s\\global.exe\" -sME --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -sE --result=grep \"%s\"");
 const TCHAR Cmd::cGrepCmd[] =
-        _T("\"%s\\global.exe\" -gME --result=grep \"%s\"");
-const TCHAR Cmd::cFindLiteralCmd[] =
-        _T("\"%s\\global.exe\" -gME --result=grep --literal \"%s\"");
+        _T("\"%s\\global.exe\" -gE --result=grep \"%s\"");
 const TCHAR Cmd::cVersionCmd[] =
         _T("\"%s\\global.exe\" --version");
 
@@ -62,9 +60,10 @@ const TCHAR Cmd::cVersionCmd[] =
 /**
  *  \brief
  */
-CmdData::CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag,
-        DBhandle db, const char* result) :
-    _id(id), _error(false), _tag(NULL), _result(NULL), _len(0)
+CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
+        bool regexp, bool matchCase) :
+    _id(id), _error(false), _tag(NULL), _regexp(regexp), _matchCase(matchCase),
+    _result(NULL), _len(0)
 {
     if (db)
         _dbPath = *db;
@@ -78,13 +77,6 @@ CmdData::CmdData(CmdID_t id, const TCHAR* name, const TCHAR* tag,
         int tagLen = _tcslen(tag) + 1;
         _tag = new TCHAR[tagLen];
         _tcscpy_s(_tag, tagLen, tag);
-    }
-
-    if (result)
-    {
-        _len = strlen(result);
-        _result = new char[_len + 1];
-        strcpy_s(_result, _len + 1, result);
     }
 }
 
@@ -145,10 +137,10 @@ void CmdData::AppendResult(const char* result)
 /**
  *  \brief
  */
-bool Cmd::Run(CmdID_t id, const TCHAR* name, const TCHAR* tag, DBhandle db,
-        CompletionCB complCB, const char* result)
+bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, CompletionCB complCB,
+        DBhandle db)
 {
-    Cmd* cmd = new Cmd(id, name, tag, db, complCB, result);
+    Cmd* cmd = new Cmd(cmdData, complCB, db);
 
     cmd->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
             (void*)cmd, 0, NULL);
@@ -197,7 +189,7 @@ unsigned Cmd::thread()
     {
         if (_db)
         {
-            if (_cmd._id == CREATE_DATABASE)
+            if (_cmd->_id == CREATE_DATABASE)
                 DBManager::Get().UnregisterDB(_db);
             else
                 DBManager::Get().PutDB(_db);
@@ -220,7 +212,7 @@ unsigned Cmd::thread()
  */
 const TCHAR* Cmd::getCmdLine()
 {
-    switch (_cmd._id)
+    switch (_cmd->_id)
     {
         case CREATE_DATABASE:
             return cCreateDatabaseCmd;
@@ -242,8 +234,6 @@ const TCHAR* Cmd::getCmdLine()
             return cFindSymbolCmd;
         case GREP:
             return cGrepCmd;
-        case FIND_LITERAL:
-            return cFindLiteralCmd;
         case VERSION:
             return cVersionCmd;
     }
@@ -261,13 +251,13 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
     path.StripFilename();
     path += cBinsDir;
 
-    if (_cmd._id == CREATE_DATABASE || _cmd._id == VERSION)
+    if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
         _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str());
     else
         _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str(),
-                _cmd.GetTag());
+                _cmd->GetTag());
 
-    if (_cmd._id == CREATE_DATABASE || _cmd._id == UPDATE_SINGLE)
+    if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
     {
         path += _T("\\gtags.conf");
         if (path.FileExists())
@@ -289,26 +279,26 @@ bool Cmd::runProcess()
     composeCmd(cmd, _countof(cmd));
 
     TCHAR header[512];
-    if (_cmd._id == CREATE_DATABASE)
+    if (_cmd->_id == CREATE_DATABASE)
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _cmd.GetName(), _cmd.GetDBPath());
-    else if (_cmd._id == VERSION)
+                _T("%s - \"%s\""), _cmd->GetName(), _cmd->GetDBPath());
+    else if (_cmd->_id == VERSION)
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s"), _cmd.GetName());
+                _T("%s"), _cmd->GetName());
     else
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _cmd.GetName(), _cmd.GetTag());
+                _T("%s - \"%s\""), _cmd->GetName(), _cmd->GetTag());
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* environment = NULL;
-    const TCHAR* currentDir = _cmd.GetDBPath();
+    const TCHAR* currentDir = _cmd->GetDBPath();
 
     CText env(_T("GTAGSLIBPATH="));
     env += _T("/usr/include");
 
-    if (_cmd._id == VERSION)
+    if (_cmd->_id == VERSION)
         currentDir = NULL;
-    else if (_cmd._id == AUTOCOMPLETE || _cmd._id == FIND_DEFINITION)
+    else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
     {
         environment = env.C_str();
         createFlags |= CREATE_UNICODE_ENVIRONMENT;
@@ -334,7 +324,7 @@ bool Cmd::runProcess()
     if (ret)
         ret = !ActivityWindow::Show(INpp::Get().GetSciHandle(), pi.hProcess,
                 600, header,
-                (_cmd._id == CREATE_DATABASE || _cmd._id == UPDATE_SINGLE) ?
+                (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
                 0 : 300);
     if (ret)
     {
@@ -343,12 +333,12 @@ bool Cmd::runProcess()
 
         if (dataPipe.GetOutput())
         {
-            _cmd.AppendResult(dataPipe.GetOutput());
+            _cmd->AppendResult(dataPipe.GetOutput());
         }
         else if (errorPipe.GetOutput())
         {
-            _cmd._error = true;
-            _cmd.SetResult(errorPipe.GetOutput());
+            _cmd->_error = true;
+            _cmd->SetResult(errorPipe.GetOutput());
         }
     }
     else

@@ -48,7 +48,6 @@ const TCHAR cFindDefinition[]   = _T("Find Definition");
 const TCHAR cFindReference[]    = _T("Find Reference");
 const TCHAR cFindSymbol[]       = _T("Find Symbol");
 const TCHAR cGrep[]             = _T("Grep");
-const TCHAR cFindLiteral[]      = _T("Find Literal");
 const TCHAR cVersion[]          = _T("About");
 
 
@@ -68,7 +67,6 @@ void FindFile();
 void FindDefinition();
 void FindReference();
 void Grep();
-void FindLiteral();
 void GoBack();
 void CreateDatabase();
 bool UpdateSingleFile(const TCHAR* file = NULL);

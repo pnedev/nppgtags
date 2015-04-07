@@ -24,7 +24,7 @@ set (defs
 )
 
 set (CMAKE_CXX_FLAGS
-    "-O3 -mwindows -mthreads -municode -Wall -Wno-unknown-pragmas"
+    "-std=c++11 -O3 -mwindows -mthreads -municode -Wall -Wno-unknown-pragmas"
 )
 
 set (CMAKE_MODULE_LINKER_FLAGS

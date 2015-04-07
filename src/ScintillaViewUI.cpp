@@ -61,16 +61,16 @@ const TCHAR ScintillaViewUI::cTabFont[]     = _T("Tahoma");
 /**
  *  \brief
  */
-ScintillaViewUI::Tab::Tab(const CmdData& cmd) :
+ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
     _currentLine(1), _firstVisibleLine(0)
 {
-    _cmdID = cmd.GetID();
+    _cmdID = cmd->GetID();
 
-    Tools::WtoA(_projectPath, _countof(_projectPath), cmd.GetDBPath());
-    Tools::WtoA(_search, _countof(_search), cmd.GetTag());
+    Tools::WtoA(_projectPath, _countof(_projectPath), cmd->GetDBPath());
+    Tools::WtoA(_search, _countof(_search), cmd->GetTag());
 
     // Add the search header - cmd name + search word + project path
-    _uiBuf = cmd.GetName();
+    _uiBuf = cmd->GetName();
     _uiBuf += " \"";
     _uiBuf += _search;
     _uiBuf += "\" in \"";
@@ -79,9 +79,9 @@ ScintillaViewUI::Tab::Tab(const CmdData& cmd) :
 
     // parsing result buffer and composing UI buffer
     if (_cmdID == FIND_FILE)
-        parseFindFile(_uiBuf, cmd.GetResult());
+        parseFindFile(_uiBuf, cmd->GetResult());
     else
-        parseCmd(_uiBuf, cmd.GetResult());
+        parseCmd(_uiBuf, cmd->GetResult());
 }
 
 
@@ -280,21 +280,21 @@ void ScintillaViewUI::Unregister()
 /**
  *  \brief
  */
-void ScintillaViewUI::Show(const CmdData& cmd)
+void ScintillaViewUI::Show(const std::shared_ptr<CmdData>& cmd)
 {
     if (_hWnd == NULL)
         return;
 
     INpp& npp = INpp::Get();
 
-    if (cmd.GetResultLen() > 262144) // 256k
+    if (cmd->GetResultLen() > 262144) // 256k
     {
         TCHAR buf[512];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE,
                 _T("%s \"%s\": A lot of matches were found, ")
                 _T("parsing those will be rather slow.\n")
                 _T("Are you sure you want to proceed?"),
-                cmd.GetName(), cmd.GetTag());
+                cmd->GetName(), cmd->GetTag());
         int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
@@ -323,7 +323,7 @@ void ScintillaViewUI::Show(const CmdData& cmd)
     {
         TCHAR buf[256];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""),
-                cmd.GetName(), cmd.GetTag());
+                cmd->GetName(), cmd->GetTag());
 
         TCITEM tci  = {0};
         tci.mask    = TCIF_TEXT | TCIF_PARAM;
@@ -645,8 +645,7 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
     if (_activeTab->_cmdID == FIND_FILE)
         return true;
 
-    bool wholeWord =
-            (_activeTab->_cmdID != GREP && _activeTab->_cmdID != FIND_LITERAL);
+    bool wholeWord = (_activeTab->_cmdID != GREP);
     bool regExpr = (_activeTab->_cmdID == GREP);
 
     const long endPos = npp.LineEndPosition(line);
@@ -799,8 +798,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 
                 int findBegin = previewPos;
                 int findEnd = endPos;
-                bool wholeWord = (_activeTab->_cmdID != GREP &&
-                        _activeTab->_cmdID != FIND_LITERAL);
+                bool wholeWord = (_activeTab->_cmdID != GREP);
                 bool regExpr = (_activeTab->_cmdID == GREP);
 
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
@@ -858,8 +856,7 @@ void ScintillaViewUI::onHotspotClick(SCNotification* notify)
         int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
 
-        bool wholeWord = (_activeTab->_cmdID != GREP &&
-                _activeTab->_cmdID != FIND_LITERAL);
+        bool wholeWord = (_activeTab->_cmdID != GREP);
         bool regExpr = (_activeTab->_cmdID == GREP);
 
         // Find which hotspot was clicked in case there are more than one

@@ -75,7 +75,7 @@ void AutoCompleteUI::Unregister()
 /**
  *  \brief
  */
-BOOL AutoCompleteUI::Show(const CmdData& cmd)
+BOOL AutoCompleteUI::Show(const std::shared_ptr<CmdData>& cmd)
 {
     AutoCompleteUI ui(cmd);
     if (ui.composeWindow() == NULL)
@@ -96,12 +96,12 @@ BOOL AutoCompleteUI::Show(const CmdData& cmd)
 /**
  *  \brief
  */
-AutoCompleteUI::AutoCompleteUI(const CmdData& cmd) :
+AutoCompleteUI::AutoCompleteUI(const std::shared_ptr<CmdData>& cmd) :
     _hwnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
 {
-    unsigned len = cmd.GetResultLen();
+    unsigned len = cmd->GetResultLen();
     _result = new TCHAR[len + 1];
-    Tools::AtoW(_result, len + 1, cmd.GetResult());
+    Tools::AtoW(_result, len + 1, cmd->GetResult());
 }
 
 
@@ -155,7 +155,7 @@ HWND AutoCompleteUI::composeWindow()
             LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     TCHAR buf[32];
-    _tcscpy_s(buf, _countof(buf), _cmd.GetName());
+    _tcscpy_s(buf, _countof(buf), _cmd->GetName());
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
@@ -194,7 +194,7 @@ int AutoCompleteUI::fillLV()
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         lvItem.pszText =
-                (_cmd.GetID() == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
+                (_cmd->GetID() == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);
         lvItem.iItem++;
     }
@@ -221,7 +221,7 @@ int AutoCompleteUI::filterLV(const TCHAR* filter)
     int len = _tcslen(filter);
 
     TCHAR* pRes = _result;
-    TCHAR* pEnd = pRes + _cmd.GetResultLen();
+    TCHAR* pEnd = pRes + _cmd->GetResultLen();
 
     ListView_DeleteAllItems(_hLVWnd);
 
@@ -379,7 +379,7 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
             INpp& npp = INpp::Get();
             npp.ClearSelection();
             npp.Backspace();
-            if (npp.GetWordSize() < (int)_cmd.GetTagLen())
+            if (npp.GetWordSize() < (int)_cmd->GetTagLen())
             {
                 SendMessage(_hwnd, WM_CLOSE, 0, 0);
                 return true;
