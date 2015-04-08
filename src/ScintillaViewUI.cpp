@@ -62,9 +62,11 @@ const TCHAR ScintillaViewUI::cTabFont[]     = _T("Tahoma");
  *  \brief
  */
 ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
-    _currentLine(1), _firstVisibleLine(0)
+    _currentLine{1}, _firstVisibleLine{0}
 {
     _cmdID = cmd->GetID();
+    _regexp = cmd->IsRegExp();
+    _matchCase = cmd->IsMatchCase();
 
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->GetDBPath());
     Tools::WtoA(_search, _countof(_search), cmd->GetTag());
@@ -73,7 +75,10 @@ ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
     _uiBuf = cmd->GetName();
     _uiBuf += " \"";
     _uiBuf += _search;
-    _uiBuf += "\" in \"";
+    _uiBuf += "\" (";
+    _uiBuf += _regexp ? "regexp, ": "literal, ";
+    _uiBuf += _matchCase ? "match case": "ignore case";
+    _uiBuf += ") in \"";
     _uiBuf += _projectPath;
     _uiBuf += "\"";
 
@@ -497,7 +502,7 @@ HWND ScintillaViewUI::composeWindow()
                 (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
         _sciPtr = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
     }
-    if (_hSci == NULL || _sciFunc == NULL || _sciPtr == NULL)
+    if (_hSci == NULL || _sciFunc == NULL || _sciPtr == 0)
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
         _hWnd = NULL;
@@ -645,9 +650,6 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
     if (_activeTab->_cmdID == FIND_FILE)
         return true;
 
-    bool wholeWord = (_activeTab->_cmdID != GREP);
-    bool regExpr = (_activeTab->_cmdID == GREP);
-
     const long endPos = npp.LineEndPosition(line);
 
     // Highlight the corresponding match number if there are more than one
@@ -655,8 +657,8 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        if (!npp.SearchText(_activeTab->_search, true, wholeWord, regExpr,
-                &findBegin, &findEnd))
+        if (!npp.SearchText(_activeTab->_search, true, !_activeTab->_regexp,
+                _activeTab->_regexp, &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, update database and search again"),
@@ -756,7 +758,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                     int findBegin = startPos;
                     int findEnd = endPos;
 
-                    if (findString(_activeTab->_search, &findBegin, &findEnd))
+                    if (findString(_activeTab->_search, &findBegin, &findEnd,
+                        _activeTab->_matchCase, false, _activeTab->_regexp))
                     {
                         // Highlight all matches in a single result line
                         do
@@ -769,7 +772,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                             findBegin = startPos = findEnd;
                             findEnd = endPos;
                         } while (findString(_activeTab->_search,
-                                &findBegin, &findEnd));
+                                &findBegin, &findEnd, _activeTab->_matchCase,
+                                false, _activeTab->_regexp));
 
                         if (endPos - startPos)
                             sendSci(SCI_SETSTYLING, endPos - startPos,
@@ -798,11 +802,12 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 
                 int findBegin = previewPos;
                 int findEnd = endPos;
-                bool wholeWord = (_activeTab->_cmdID != GREP);
-                bool regExpr = (_activeTab->_cmdID == GREP);
+
+                bool wholeWord =
+                    (!_activeTab->_regexp) && (_activeTab->_cmdID != GREP);
 
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
-                        true, wholeWord, regExpr))
+                    _activeTab->_matchCase, wholeWord, _activeTab->_regexp))
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos,
                             SCE_GTAGS_LINE_NUM);
@@ -817,7 +822,8 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                         findBegin = previewPos = findEnd;
                         findEnd = endPos;
                     } while (findString(_activeTab->_search,
-                            &findBegin, &findEnd, true, wholeWord, regExpr));
+                            &findBegin, &findEnd, _activeTab->_matchCase,
+                            wholeWord, _activeTab->_regexp));
 
                     if (endPos - previewPos)
                         sendSci(SCI_SETSTYLING, endPos - previewPos,
@@ -856,14 +862,14 @@ void ScintillaViewUI::onHotspotClick(SCNotification* notify)
         int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
 
-        bool wholeWord = (_activeTab->_cmdID != GREP);
-        bool regExpr = (_activeTab->_cmdID == GREP);
+        bool wholeWord =
+            (!_activeTab->_regexp) && (_activeTab->_cmdID != GREP);
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
         for (int findEnd = endLine;
                 findString(_activeTab->_search, &findBegin, &findEnd,
-                        true, wholeWord, regExpr);
+                    _activeTab->_matchCase, wholeWord, _activeTab->_regexp);
                 findBegin = findEnd, findEnd = endLine, matchNum++)
             if (notify->position >= findBegin && notify->position <= findEnd)
                 break;

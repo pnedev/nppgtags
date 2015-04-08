@@ -75,6 +75,8 @@ private:
         }
 
         int _cmdID;
+        bool _regexp;
+        bool _matchCase;
         char _projectPath[MAX_PATH];
         char _search[cMaxTagLen];
         CTextA _uiBuf;
@@ -104,8 +106,8 @@ private:
             WPARAM wparam, LPARAM lparam);
 
     ScintillaViewUI() :
-        _hWnd(NULL), _hSci(NULL), _hFont(NULL), _sciFunc(NULL), _sciPtr(NULL),
-        _activeTab(NULL) {}
+        _hWnd{NULL}, _hSci{NULL}, _hFont{NULL}, _sciFunc{NULL},
+        _sciPtr{NULL}, _activeTab{NULL} {}
     ScintillaViewUI(const ScintillaViewUI&);
     ~ScintillaViewUI()
     {
@@ -130,7 +132,7 @@ private:
     bool openItem(int lineNum, unsigned matchNum = 1);
 
     bool findString(const char* str, int* startPos, int* endPos,
-        bool matchCase = true, bool wholeWord = false, bool regExpr = false);
+        bool matchCase, bool wholeWord, bool regExpr);
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
     void onHotspotClick(SCNotification* notify);

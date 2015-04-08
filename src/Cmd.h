@@ -150,7 +150,7 @@ private:
 
     Cmd(std::shared_ptr<CmdData>& cmdData, CompletionCB complCB,
             DBhandle db = NULL) :
-        _cmd(cmdData), _complCB(complCB), _db(db), _hThread(NULL) {}
+        _cmd{cmdData}, _complCB{complCB}, _db{db}, _hThread{NULL} {}
     ~Cmd();
 
     unsigned thread();

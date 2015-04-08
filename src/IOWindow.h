@@ -73,8 +73,8 @@ private:
 
     IOWindow(HWND hOwner, bool readOnly,
             int minWidth, int minHeight, TCHAR* text) :
-            _hOwner(hOwner), _minWidth(minWidth), _minHeight(minHeight),
-            _text(text), _success(false) {}
+            _hOwner{hOwner}, _minWidth{minWidth}, _minHeight{minHeight},
+            _text{text}, _success{false} {}
     IOWindow(const IOWindow &);
     ~IOWindow();
 

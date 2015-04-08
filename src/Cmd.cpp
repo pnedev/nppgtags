@@ -44,15 +44,15 @@ const TCHAR Cmd::cAutoComplSymCmd[] =
 const TCHAR Cmd::cAutoComplFileCmd[] =
         _T("\"%s\\global.exe\" -cP --match-part=all \"%s\"");
 const TCHAR Cmd::cFindFileCmd[] =
-        _T("\"%s\\global.exe\" -PE \"%s\"");
+        _T("\"%s\\global.exe\" -P \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -dET --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
 const TCHAR Cmd::cFindReferenceCmd[] =
-        _T("\"%s\\global.exe\" -rE --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
 const TCHAR Cmd::cFindSymbolCmd[] =
-        _T("\"%s\\global.exe\" -sE --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
 const TCHAR Cmd::cGrepCmd[] =
-        _T("\"%s\\global.exe\" -gE --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
 const TCHAR Cmd::cVersionCmd[] =
         _T("\"%s\\global.exe\" --version");
 
@@ -62,8 +62,8 @@ const TCHAR Cmd::cVersionCmd[] =
  */
 CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
         bool regexp, bool matchCase) :
-    _id(id), _error(false), _tag(NULL), _regexp(regexp), _matchCase(matchCase),
-    _result(NULL), _len(0)
+    _id{id}, _error{false}, _tag{NULL}, _regexp{regexp}, _matchCase{matchCase},
+    _result{NULL}, _len{0}
 {
     if (db)
         _dbPath = *db;

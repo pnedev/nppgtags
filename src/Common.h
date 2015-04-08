@@ -136,7 +136,7 @@ private:
 class CPathContainer
 {
 public:
-    CPathContainer() : _path(NULL) {}
+    CPathContainer() : _path{NULL} {}
     ~CPathContainer()
     {
         if (_path)
@@ -200,7 +200,7 @@ private:
     wchar_t _buf[ALLOC_CHUNK_SIZE];
 
 public:
-    CTextW() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
+    CTextW() : _size(ALLOC_CHUNK_SIZE), _len{0}, _str{_buf} { _buf[0] = 0; }
     CTextW(unsigned size);
     CTextW(const wchar_t* str);
     CTextW(const char* str);
@@ -257,7 +257,7 @@ private:
     char _buf[ALLOC_CHUNK_SIZE];
 
 public:
-    CTextA() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
+    CTextA() : _size(ALLOC_CHUNK_SIZE), _len{0}, _str{_buf} { _buf[0] = 0; }
     CTextA(unsigned size);
     CTextA(const char* str);
     CTextA(const wchar_t* str);
