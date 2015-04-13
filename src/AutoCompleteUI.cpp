@@ -97,7 +97,7 @@ BOOL AutoCompleteUI::Show(const std::shared_ptr<CmdData>& cmd)
  *  \brief
  */
 AutoCompleteUI::AutoCompleteUI(const std::shared_ptr<CmdData>& cmd) :
-    _hwnd{NULL}, _hLVWnd{NULL}, _hFont{NULL}, _cmd{cmd}
+    _hwnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
 {
     unsigned len = cmd->GetResultLen();
     _result = new TCHAR[len + 1];

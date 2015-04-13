@@ -31,7 +31,7 @@
 #include "DBManager.h"
 #include "Cmd.h"
 #include "DocLocation.h"
-#include "IOWindow.h"
+#include "SearchUI.h"
 #include "ActivityWindow.h"
 #include "AutoCompleteUI.h"
 #include "ScintillaViewUI.h"
@@ -47,7 +47,7 @@ using namespace GTags;
 
 
 const TCHAR cAbout[] = {
-    _T("\n%s\n\n")
+    _T("%s\n\n")
     _T("Version: %s\n")
     _T("Build date: %s %s\n")
     _T("%s <pg.nedev@gmail.com>\n\n")
@@ -72,7 +72,7 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData);
 unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
         bool skipPreSelect = false);
 DBhandle getDatabase(bool writeEn = false);
-bool enterTag(TCHAR* tag, const TCHAR* uiName = NULL,
+bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName = NULL,
         const TCHAR* defaultTag = NULL);
 
 void sheduleForUpdate(const CPath& file);
@@ -209,15 +209,14 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-bool enterTag(TCHAR* tag, const TCHAR* uiName, const TCHAR* defaultTag)
+bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
+        const TCHAR* defaultTag)
 {
     if (defaultTag)
-        _tcscpy_s(tag, cMaxTagLen, defaultTag);
-    else
-        tag[0] = 0;
+        _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
 
-    return IOWindow::In(INpp::Get().GetHandle(), UIFontName,
-            UIFontSize + 2, 400, uiName, tag, cMaxTagLen - 1);
+    return SearchUI::Show(INpp::Get().GetHandle(), UIFontName,
+            UIFontSize + 1, 400, uiName, searchData);
 }
 
 
@@ -402,8 +401,7 @@ void showInfo(std::shared_ptr<CmdData>& cmd)
             cmd->Error() || cmd->NoResult() ?
             _T("VERSION READ FAILED\n") : msg.C_str());
 
-    IOWindow::Out(INpp::Get().GetHandle(), UIFontName, UIFontSize,
-            cVersion, text);
+    MessageBox(INpp::Get().GetHandle(), text, _T("About"), MB_OK);
 }
 
 } // anonymous namespace
@@ -435,7 +433,7 @@ BOOL PluginInit(HINSTANCE hMod)
     HMod = hMod;
 
     ActivityWindow::Register(hMod);
-    IOWindow::Register(hMod);
+    SearchUI::Register(hMod);
     AutoCompleteUI::Register();
 
     return TRUE;
@@ -448,7 +446,7 @@ BOOL PluginInit(HINSTANCE hMod)
 void PluginDeInit()
 {
     ActivityWindow::Unregister();
-    IOWindow::Unregister();
+    SearchUI::Unregister();
 	AutoCompleteUI::Unregister();
 
     ScintillaViewUI::Get().Unregister();
@@ -473,7 +471,7 @@ void AutoComplete()
     releaseKeys();
 
     std::shared_ptr<CmdData>
-        cmd{new CmdData{AUTOCOMPLETE, cAutoCompl, db, tag}};
+        cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
     Cmd::Run(cmd, autoComplHalf, db);
 }
 
@@ -495,7 +493,7 @@ void AutoCompleteFile()
     releaseKeys();
 
     std::shared_ptr<CmdData>
-            cmd{new CmdData{AUTOCOMPLETE_FILE, cAutoComplFile, db, tag}};
+            cmd(new CmdData(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
     Cmd::Run(cmd, autoComplReady, db);
 }
 
@@ -505,15 +503,15 @@ void AutoCompleteFile()
  */
 void FindFile()
 {
-    TCHAR tag[cMaxTagLen];
-    if (!getSelection(tag))
+    SearchData searchData(NULL, false, true);
+    if (!getSelection(searchData._str))
     {
         TCHAR fileName[MAX_PATH];
         INpp::Get().GetFileNamePart(fileName);
         if (_tcslen(fileName) >= cMaxTagLen)
             fileName[cMaxTagLen - 1] = 0;
 
-        if (!enterTag(tag, cFindFile, fileName))
+        if (!enterTag(&searchData, cFindFile, fileName))
             return;
     }
 
@@ -523,7 +521,9 @@ void FindFile()
 
     releaseKeys();
 
-    std::shared_ptr<CmdData> cmd{new CmdData{FIND_FILE, cFindFile, db, tag}};
+    std::shared_ptr<CmdData>
+            cmd(new CmdData(FIND_FILE, cFindFile, db,
+            searchData._str, searchData._regExp, searchData._matchCase));
     Cmd::Run(cmd, showResult, db);
 }
 
@@ -533,10 +533,10 @@ void FindFile()
  */
 void FindDefinition()
 {
-    TCHAR tag[cMaxTagLen];
-    if (!getSelection(tag, true))
+    SearchData searchData(NULL, false, true);
+    if (!getSelection(searchData._str, true))
     {
-        if (!enterTag(tag, cFindDefinition))
+        if (!enterTag(&searchData, cFindDefinition))
             return;
     }
 
@@ -547,7 +547,8 @@ void FindDefinition()
     releaseKeys();
 
     std::shared_ptr<CmdData>
-            cmd{new CmdData{FIND_DEFINITION, cFindDefinition, db, tag}};
+            cmd(new CmdData(FIND_DEFINITION, cFindDefinition, db,
+            searchData._str, searchData._regExp, searchData._matchCase));
     Cmd::Run(cmd, findReady, db);
 }
 
@@ -557,10 +558,10 @@ void FindDefinition()
  */
 void FindReference()
 {
-    TCHAR tag[cMaxTagLen];
-    if (!getSelection(tag, true))
+    SearchData searchData(NULL, false, true);
+    if (!getSelection(searchData._str, true))
     {
-        if (!enterTag(tag, cFindReference))
+        if (!enterTag(&searchData, cFindReference))
             return;
     }
 
@@ -571,7 +572,8 @@ void FindReference()
     releaseKeys();
 
     std::shared_ptr<CmdData>
-            cmd{new CmdData{FIND_REFERENCE, cFindReference, db, tag}};
+            cmd(new CmdData(FIND_REFERENCE, cFindReference, db,
+            searchData._str, searchData._regExp, searchData._matchCase));
     Cmd::Run(cmd, findReady, db);
 }
 
@@ -581,10 +583,10 @@ void FindReference()
  */
 void Grep()
 {
-    TCHAR tag[cMaxTagLen];
-    if (!getSelection(tag, true))
+    SearchData searchData(NULL, true, true);
+    if (!getSelection(searchData._str, true))
     {
-        if (!enterTag(tag, cGrep))
+        if (!enterTag(&searchData, cGrep))
             return;
     }
 
@@ -594,7 +596,9 @@ void Grep()
 
     releaseKeys();
 
-    std::shared_ptr<CmdData> cmd{new CmdData{GREP, cGrep, db, tag}};
+    std::shared_ptr<CmdData>
+            cmd(new CmdData(GREP, cGrep, db,
+            searchData._str, searchData._regExp, searchData._matchCase));
     Cmd::Run(cmd, showResult, db);
 }
 
@@ -666,7 +670,7 @@ void CreateDatabase()
     releaseKeys();
 
     std::shared_ptr<CmdData>
-            cmd{new CmdData{CREATE_DATABASE, cCreateDatabase, db}};
+            cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
     Cmd::Run(cmd, cmdReady, db);
 }
 
@@ -698,8 +702,8 @@ bool UpdateSingleFile(const TCHAR* file)
     releaseKeys();
 
     std::shared_ptr<CmdData>
-            cmd{new CmdData{UPDATE_SINGLE, cUpdateSingle, db,
-                    currentFile.C_str()}};
+            cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,
+                    currentFile.C_str()));
     if (!Cmd::Run(cmd, cmdReady, db))
         return false;
 
@@ -745,7 +749,7 @@ void About()
 {
     releaseKeys();
 
-    std::shared_ptr<CmdData> cmd{new CmdData{VERSION, cVersion}};
+    std::shared_ptr<CmdData> cmd(new CmdData(VERSION, cVersion));
     Cmd::Run(cmd, showInfo);
 }
 

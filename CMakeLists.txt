@@ -45,7 +45,7 @@ set (project_sources
     src/DBManager.cpp
     src/DocLocation.cpp
     src/ActivityWindow.cpp
-    src/IOWindow.cpp
+    src/SearchUI.cpp
     src/AutoCompleteUI.cpp
     src/ScintillaViewUI.cpp
 )

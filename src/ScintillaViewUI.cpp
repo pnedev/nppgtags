@@ -62,10 +62,10 @@ const TCHAR ScintillaViewUI::cTabFont[]     = _T("Tahoma");
  *  \brief
  */
 ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
-    _currentLine{1}, _firstVisibleLine{0}
+    _currentLine(1), _firstVisibleLine(0)
 {
     _cmdID = cmd->GetID();
-    _regexp = cmd->IsRegExp();
+    _regExp = cmd->IsRegExp();
     _matchCase = cmd->IsMatchCase();
 
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->GetDBPath());
@@ -76,7 +76,7 @@ ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
     _uiBuf += " \"";
     _uiBuf += _search;
     _uiBuf += "\" (";
-    _uiBuf += _regexp ? "regexp, ": "literal, ";
+    _uiBuf += _regExp ? "regexp, ": "literal, ";
     _uiBuf += _matchCase ? "match case": "ignore case";
     _uiBuf += ") in \"";
     _uiBuf += _projectPath;
@@ -657,8 +657,8 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        if (!npp.SearchText(_activeTab->_search, true, !_activeTab->_regexp,
-                _activeTab->_regexp, &findBegin, &findEnd))
+        if (!npp.SearchText(_activeTab->_search, true, !_activeTab->_regExp,
+                _activeTab->_regExp, &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, update database and search again"),
@@ -759,7 +759,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                     int findEnd = endPos;
 
                     if (findString(_activeTab->_search, &findBegin, &findEnd,
-                        _activeTab->_matchCase, false, _activeTab->_regexp))
+                        _activeTab->_matchCase, false, _activeTab->_regExp))
                     {
                         // Highlight all matches in a single result line
                         do
@@ -773,7 +773,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                             findEnd = endPos;
                         } while (findString(_activeTab->_search,
                                 &findBegin, &findEnd, _activeTab->_matchCase,
-                                false, _activeTab->_regexp));
+                                false, _activeTab->_regExp));
 
                         if (endPos - startPos)
                             sendSci(SCI_SETSTYLING, endPos - startPos,
@@ -804,10 +804,10 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                 int findEnd = endPos;
 
                 bool wholeWord =
-                    (!_activeTab->_regexp) && (_activeTab->_cmdID != GREP);
+                    (!_activeTab->_regExp) && (_activeTab->_cmdID != GREP);
 
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
-                    _activeTab->_matchCase, wholeWord, _activeTab->_regexp))
+                    _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos,
                             SCE_GTAGS_LINE_NUM);
@@ -823,7 +823,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
                         findEnd = endPos;
                     } while (findString(_activeTab->_search,
                             &findBegin, &findEnd, _activeTab->_matchCase,
-                            wholeWord, _activeTab->_regexp));
+                            wholeWord, _activeTab->_regExp));
 
                     if (endPos - previewPos)
                         sendSci(SCI_SETSTYLING, endPos - previewPos,
@@ -863,13 +863,13 @@ void ScintillaViewUI::onHotspotClick(SCNotification* notify)
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
 
         bool wholeWord =
-            (!_activeTab->_regexp) && (_activeTab->_cmdID != GREP);
+            (!_activeTab->_regExp) && (_activeTab->_cmdID != GREP);
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
         for (int findEnd = endLine;
                 findString(_activeTab->_search, &findBegin, &findEnd,
-                    _activeTab->_matchCase, wholeWord, _activeTab->_regexp);
+                    _activeTab->_matchCase, wholeWord, _activeTab->_regExp);
                 findBegin = findEnd, findEnd = endLine, matchNum++)
             if (notify->position >= findBegin && notify->position <= findEnd)
                 break;

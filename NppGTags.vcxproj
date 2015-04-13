@@ -31,8 +31,8 @@
     <ClInclude Include="src\DocLocation.h" />
     <ClCompile Include="src\ActivityWindow.cpp" />
     <ClInclude Include="src\ActivityWindow.h" />
-    <ClCompile Include="src\IOWindow.cpp" />
-    <ClInclude Include="src\IOWindow.h" />
+    <ClCompile Include="src\SearchUI.cpp" />
+    <ClInclude Include="src\SearchUI.h" />
     <ClCompile Include="src\AutoCompleteUI.cpp" />
     <ClInclude Include="src\AutoCompleteUI.h" />
     <ClCompile Include="src\ScintillaViewUI.cpp" />

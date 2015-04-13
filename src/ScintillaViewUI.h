@@ -75,7 +75,7 @@ private:
         }
 
         int _cmdID;
-        bool _regexp;
+        bool _regExp;
         bool _matchCase;
         char _projectPath[MAX_PATH];
         char _search[cMaxTagLen];
@@ -106,8 +106,8 @@ private:
             WPARAM wparam, LPARAM lparam);
 
     ScintillaViewUI() :
-        _hWnd{NULL}, _hSci{NULL}, _hFont{NULL}, _sciFunc{NULL},
-        _sciPtr{NULL}, _activeTab{NULL} {}
+        _hWnd(NULL), _hSci(NULL), _hFont(NULL), _sciFunc(NULL),
+        _sciPtr(0), _activeTab(NULL) {}
     ScintillaViewUI(const ScintillaViewUI&);
     ~ScintillaViewUI()
     {

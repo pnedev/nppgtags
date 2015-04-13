@@ -61,9 +61,9 @@ const TCHAR Cmd::cVersionCmd[] =
  *  \brief
  */
 CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
-        bool regexp, bool matchCase) :
-    _id{id}, _error{false}, _tag{NULL}, _regexp{regexp}, _matchCase{matchCase},
-    _result{NULL}, _len{0}
+        bool regExp, bool matchCase) :
+    _id(id), _error(false), _tag(NULL), _regExp(regExp), _matchCase(matchCase),
+    _result(NULL), _len(0)
 {
     if (db)
         _dbPath = *db;
@@ -266,6 +266,16 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
             _tcscat_s(cmd, len, path.C_str());
             _tcscat_s(cmd, len, _T("\""));
         }
+    }
+    else if (_cmd->_id != VERSION)
+    {
+        if (_cmd->_matchCase)
+            _tcscat_s(cmd, len, _T(" -M"));
+        else
+            _tcscat_s(cmd, len, _T(" -i"));
+
+        if (!_cmd->_regExp)
+            _tcscat_s(cmd, len, _T(" --literal"));
     }
 }
 

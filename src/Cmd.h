@@ -62,7 +62,7 @@ class CmdData
 public:
     CmdData(CmdID_t id, const TCHAR* name, DBhandle db = NULL,
             const TCHAR* tag = NULL,
-            bool regexp = false, bool matchCase = true);
+            bool regExp = false, bool matchCase = true);
     ~CmdData();
 
     inline void SetID(CmdID_t id) { _id = id; }
@@ -85,7 +85,7 @@ public:
     inline const TCHAR* GetTag() const { return _tag; }
     inline unsigned GetTagLen() const { return _tcslen(_tag); }
 
-    inline bool IsRegExp() const { return _regexp; }
+    inline bool IsRegExp() const { return _regExp; }
     inline bool IsMatchCase() const { return _matchCase; }
 
     inline bool Error() const { return _error; }
@@ -107,7 +107,7 @@ private:
 
     TCHAR _name[32];
     TCHAR* _tag;
-    bool _regexp;
+    bool _regExp;
     bool _matchCase;
     CPath _dbPath;
     char* _result;
@@ -150,7 +150,7 @@ private:
 
     Cmd(std::shared_ptr<CmdData>& cmdData, CompletionCB complCB,
             DBhandle db = NULL) :
-        _cmd{cmdData}, _complCB{complCB}, _db{db}, _hThread{NULL} {}
+        _cmd(cmdData), _complCB(complCB), _db(db), _hThread(NULL) {}
     ~Cmd();
 
     unsigned thread();
