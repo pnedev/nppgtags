@@ -380,12 +380,14 @@ LRESULT APIENTRY SearchUI::wndProc(HWND hwnd, UINT umsg,
             {
                 case EN_MSGFILTER:
                 {
-                    SearchUI* iow =
-                            reinterpret_cast<SearchUI*>(static_cast<LONG_PTR>
-                                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
                     if (pMsgFilter->msg == WM_KEYDOWN)
+                    {
+                        SearchUI* iow = reinterpret_cast<SearchUI*>
+                                (static_cast<LONG_PTR>
+                                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                         return iow->onKeyDown(pMsgFilter->wParam);
+                    }
                     return 0;
                 }
             }
@@ -393,9 +395,6 @@ LRESULT APIENTRY SearchUI::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
         {
-            SearchUI* iow =
-                    reinterpret_cast<SearchUI*>(static_cast<LONG_PTR>
-                            (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             DestroyCaret();
             PostQuitMessage(0);
             return 0;
