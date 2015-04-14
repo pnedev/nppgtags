@@ -26,7 +26,7 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "SearchUI.h"
+#include "SearchWin.h"
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
@@ -36,25 +36,16 @@
 namespace GTags
 {
 
-const TCHAR SearchUI::cClassName[]      = _T("SearchUI");
-const int SearchUI::cBackgroundColor    = COLOR_INFOBK;
-const TCHAR SearchUI::cBtnFont[]        = _T("Tahoma");
-
-
-HINSTANCE SearchUI::HMod = NULL;
+const TCHAR SearchWin::cClassName[]     = _T("SearchWin");
+const int SearchWin::cBackgroundColor   = COLOR_INFOBK;
+const TCHAR SearchWin::cBtnFont[]       = _T("Tahoma");
 
 
 /**
  *  \brief
  */
-void SearchUI::Register(HINSTANCE hMod)
+void SearchWin::Register()
 {
-    HMod = hMod;
-    if (hMod == NULL)
-        GetModuleHandleEx(
-                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HMod);
-
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
@@ -77,7 +68,7 @@ void SearchUI::Register(HINSTANCE hMod)
 /**
  *  \brief
  */
-void SearchUI::Unregister()
+void SearchWin::Unregister()
 {
     UnregisterClass(cClassName, HMod);
     FreeLibrary(GetModuleHandle(_T("Riched20.dll")));
@@ -87,15 +78,16 @@ void SearchUI::Unregister()
 /**
  *  \brief
  */
-bool SearchUI::Show(HWND hOwner,
+bool SearchWin::Show(HWND hOwner,
         const TCHAR* font, unsigned fontSize, int width,
         const TCHAR* header, SearchData* searchData)
 {
     if (!searchData)
         return false;
 
-    SearchUI iow(hOwner, width, searchData);
-    if (iow.composeWindow(font, fontSize, width, header, searchData) == NULL)
+    SearchWin sw(searchData);
+    if (sw.composeWindow(hOwner, font, fontSize, width, header,
+            searchData) == NULL)
         return false;
 
     BOOL r;
@@ -106,14 +98,14 @@ bool SearchUI::Show(HWND hOwner,
         DispatchMessage(&msg);
     }
 
-    return iow._success;
+    return sw._success;
 }
 
 
 /**
  *  \brief
  */
-RECT SearchUI::adjustSizeAndPos(DWORD styleEx, DWORD style,
+RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
         int width, int height)
 {
     if (width <= 0) width = 200;
@@ -122,10 +114,10 @@ RECT SearchUI::adjustSizeAndPos(DWORD styleEx, DWORD style,
     GetWindowRect(GetDesktopWindow(), &maxWin);
 
     POINT center;
-    if (_hOwner)
+    if (hOwner)
     {
         RECT biasWin;
-        GetWindowRect(_hOwner, &biasWin);
+        GetWindowRect(hOwner, &biasWin);
         center.x = (biasWin.right + biasWin.left) / 2;
         center.y = (biasWin.bottom + biasWin.top) / 2;
     }
@@ -175,7 +167,7 @@ RECT SearchUI::adjustSizeAndPos(DWORD styleEx, DWORD style,
 /**
  *  \brief
  */
-SearchUI::~SearchUI()
+SearchWin::~SearchWin()
 {
     if (_hBtnFont)
         DeleteObject(_hBtnFont);
@@ -187,11 +179,12 @@ SearchUI::~SearchUI()
 /**
  *  \brief
  */
-HWND SearchUI::composeWindow(const TCHAR* font, unsigned fontSize,
+HWND SearchWin::composeWindow(HWND hOwner,
+        const TCHAR* font, unsigned fontSize,
         int width, const TCHAR* header, const SearchData* searchData)
 {
     TEXTMETRIC tm;
-    HDC hdc = GetWindowDC(_hOwner);
+    HDC hdc = GetWindowDC(hOwner);
     GetTextMetrics(hdc, &tm);
     int txtHeight = MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
             tm.tmInternalLeading;
@@ -207,43 +200,43 @@ HWND SearchUI::composeWindow(const TCHAR* font, unsigned fontSize,
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cBtnFont);
-    ReleaseDC(_hOwner, hdc);
+    ReleaseDC(hOwner, hdc);
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
-    RECT win = adjustSizeAndPos(styleEx, style, width,
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, width,
             txtHeight + btnHeight + 6);
     width = win.right - win.left;
-    _hWnd = CreateWindowEx(styleEx, cClassName, header,
+    HWND hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, win.bottom - win.top,
-            _hOwner, NULL, HMod, (LPVOID) this);
-    if (_hWnd == NULL)
+            hOwner, NULL, HMod, (LPVOID) this);
+    if (hWnd == NULL)
         return NULL;
 
-    GetClientRect(_hWnd, &win);
+    GetClientRect(hWnd, &win);
     width = win.right - win.left;
 
-    style = WS_CHILD | WS_VISIBLE | WS_HSCROLL;
+    style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL;
     _hEditWnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style,
             0, 0, width, txtHeight,
-            _hWnd, NULL, HMod, NULL);
+            hWnd, NULL, HMod, NULL);
 
     width = (width - 12) / 3;
 
     _hRegExp = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             3, txtHeight + 3, width, btnHeight,
-            _hWnd, NULL, HMod, NULL);
+            hWnd, NULL, HMod, NULL);
 
     _hMatchCase = CreateWindowEx(0, _T("BUTTON"), _T("MatchCase"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             width + 6, txtHeight + 3, width, btnHeight,
-            _hWnd, NULL, HMod, NULL);
+            hWnd, NULL, HMod, NULL);
 
     _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
             2 * width + 9, txtHeight + 3, width, btnHeight,
-            _hWnd, NULL, HMod, NULL);
+            hWnd, NULL, HMod, NULL);
 
     SendMessage(_hEditWnd, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(cBackgroundColor));
@@ -282,17 +275,17 @@ HWND SearchUI::composeWindow(const TCHAR* font, unsigned fontSize,
     Button_SetCheck(_hMatchCase, searchData->_matchCase ?
             BST_CHECKED : BST_UNCHECKED);
 
-    ShowWindow(_hWnd, SW_SHOWNORMAL);
-    UpdateWindow(_hWnd);
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    UpdateWindow(hWnd);
 
-    return _hWnd;
+    return hWnd;
 }
 
 
 /**
  *  \brief
  */
-void SearchUI::onOK()
+void SearchWin::onOK(HWND hWnd)
 {
     int len = Edit_GetTextLength(_hEditWnd) + 1;
     if (len > 1)
@@ -306,24 +299,24 @@ void SearchUI::onOK()
                 true : false;
         _success = true;
     }
-    SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    SendMessage(hWnd, WM_CLOSE, 0, 0);
 }
 
 
 /**
  *  \brief
  */
-int SearchUI::onKeyDown(DWORD key)
+int SearchWin::onKeyDown(HWND hWnd, DWORD key)
 {
     switch (key)
     {
         case VK_ESCAPE:
         case VK_TAB:
-            SendMessage(_hWnd, WM_CLOSE, 0, 0);
+            SendMessage(hWnd, WM_CLOSE, 0, 0);
             return 1;
 
         case VK_RETURN:
-            onOK();
+            onOK(hWnd);
             return 1;
     }
 
@@ -334,25 +327,25 @@ int SearchUI::onKeyDown(DWORD key)
 /**
  *  \brief
  */
-LRESULT APIENTRY SearchUI::wndProc(HWND hwnd, UINT umsg,
+LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
     switch (umsg)
     {
         case WM_CREATE:
         {
-            SearchUI* iow =
-                    (SearchUI*)((LPCREATESTRUCT)lparam)->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(iow));
+            SearchWin* sw =
+                    (SearchWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
+            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(sw));
             return 0;
         }
 
         case WM_SETFOCUS:
         {
-            SearchUI* iow =
-                    reinterpret_cast<SearchUI*>(static_cast<LONG_PTR>
+            SearchWin* sw =
+                    reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
                             (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            SetFocus(iow->_hEditWnd);
+            SetFocus(sw->_hEditWnd);
             return 0;
         }
 
@@ -364,12 +357,12 @@ LRESULT APIENTRY SearchUI::wndProc(HWND hwnd, UINT umsg,
             }
             else if (HIWORD(wparam) == BN_CLICKED)
             {
-                SearchUI* iow =
-                        reinterpret_cast<SearchUI*>(static_cast<LONG_PTR>
+                SearchWin* sw =
+                        reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
                                 (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                if ((HWND)lparam == iow->_hOK)
+                if ((HWND)lparam == sw->_hOK)
                 {
-                    iow->onOK();
+                    sw->onOK(hwnd);
                     return 0;
                 }
             }
@@ -383,10 +376,10 @@ LRESULT APIENTRY SearchUI::wndProc(HWND hwnd, UINT umsg,
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
                     if (pMsgFilter->msg == WM_KEYDOWN)
                     {
-                        SearchUI* iow = reinterpret_cast<SearchUI*>
+                        SearchWin* sw = reinterpret_cast<SearchWin*>
                                 (static_cast<LONG_PTR>
                                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                        return iow->onKeyDown(pMsgFilter->wParam);
+                        return sw->onKeyDown(hwnd, pMsgFilter->wParam);
                     }
                     return 0;
                 }

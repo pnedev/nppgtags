@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags AutoComplete UI
+ *  \brief  Process Activity window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -28,48 +28,51 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
-#include "Cmd.h"
 
 
 namespace GTags
 {
 
 /**
- *  \class  AutoCompleteUI
+ *  \class  ActivityWin
  *  \brief
  */
-class AutoCompleteUI
+class ActivityWin
 {
 public:
     static void Register();
     static void Unregister();
 
-    static BOOL Show(const std::shared_ptr<CmdData>& cmd);
+    static int Show(HWND hOwner, HANDLE procHndl, int width,
+            const TCHAR *text, int showDelay_ms);
 
 private:
     static const TCHAR cClassName[];
+    static const unsigned cUpdate_ms;
+    static const TCHAR cFont[];
+    static const unsigned cFontSize;
     static const int cBackgroundColor;
+
+    static volatile LONG RefCount;
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    AutoCompleteUI(const std::shared_ptr<CmdData>& cmd);
-    AutoCompleteUI(const AutoCompleteUI&);
-    ~AutoCompleteUI();
+    ActivityWin(HWND hOwner, HANDLE procHndl);
+    ActivityWin(const ActivityWin&);
+    ~ActivityWin();
 
-    HWND composeWindow();
-    int fillLV();
-    int filterLV(const TCHAR* filter);
-    void resizeLV();
+    void adjustSizeAndPos(HWND hwnd, int width, int height);
+    HWND composeWindow(int width, const TCHAR* text);
+    void onTimerRefresh(HWND hwnd);
 
-    void onDblClick();
-    bool onKeyDown(int keyCode);
-
-    HWND _hwnd;
-    HWND _hLVWnd;
+    HWND _hOwner;
+    HANDLE _hProc;
     HFONT _hFont;
-    const std::shared_ptr<CmdData>& _cmd;
-    TCHAR* _result;
+    HWND _hBtn;
+    UINT_PTR _timerID;
+    int _initRefCount;
+    int _isCancelled;
 };
 
 } // namespace GTags

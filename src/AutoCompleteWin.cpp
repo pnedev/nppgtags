@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags AutoComplete UI
+ *  \brief  GTags AutoComplete window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -26,7 +26,7 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "AutoCompleteUI.h"
+#include "AutoCompleteWin.h"
 #include <commctrl.h>
 #include "Common.h"
 #include "INpp.h"
@@ -36,14 +36,14 @@
 namespace GTags
 {
 
-const TCHAR AutoCompleteUI::cClassName[]    = _T("AutoCompleteUI");
-const int AutoCompleteUI::cBackgroundColor  = COLOR_INFOBK;
+const TCHAR AutoCompleteWin::cClassName[]    = _T("AutoCompleteWin");
+const int AutoCompleteWin::cBackgroundColor  = COLOR_INFOBK;
 
 
 /**
  *  \brief
  */
-void AutoCompleteUI::Register()
+void AutoCompleteWin::Register()
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -66,7 +66,7 @@ void AutoCompleteUI::Register()
 /**
  *  \brief
  */
-void AutoCompleteUI::Unregister()
+void AutoCompleteWin::Unregister()
 {
     UnregisterClass(cClassName, HMod);
 }
@@ -75,9 +75,9 @@ void AutoCompleteUI::Unregister()
 /**
  *  \brief
  */
-BOOL AutoCompleteUI::Show(const std::shared_ptr<CmdData>& cmd)
+BOOL AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
 {
-    AutoCompleteUI ui(cmd);
+    AutoCompleteWin ui(cmd);
     if (ui.composeWindow() == NULL)
         return -1;
 
@@ -96,7 +96,7 @@ BOOL AutoCompleteUI::Show(const std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-AutoCompleteUI::AutoCompleteUI(const std::shared_ptr<CmdData>& cmd) :
+AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdData>& cmd) :
     _hwnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
 {
     unsigned len = cmd->GetResultLen();
@@ -108,7 +108,7 @@ AutoCompleteUI::AutoCompleteUI(const std::shared_ptr<CmdData>& cmd) :
 /**
  *  \brief
  */
-AutoCompleteUI::~AutoCompleteUI()
+AutoCompleteWin::~AutoCompleteWin()
 {
     if (_result)
         delete [] _result;
@@ -120,7 +120,7 @@ AutoCompleteUI::~AutoCompleteUI()
 /**
  *  \brief
  */
-HWND AutoCompleteUI::composeWindow()
+HWND AutoCompleteWin::composeWindow()
 {
     HWND hOwner = INpp::Get().GetSciHandle();
     RECT win;
@@ -184,7 +184,7 @@ HWND AutoCompleteUI::composeWindow()
 /**
  *  \brief
  */
-int AutoCompleteUI::fillLV()
+int AutoCompleteWin::fillLV()
 {
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
@@ -213,7 +213,7 @@ int AutoCompleteUI::fillLV()
 /**
  *  \brief
  */
-int AutoCompleteUI::filterLV(const TCHAR* filter)
+int AutoCompleteWin::filterLV(const TCHAR* filter)
 {
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
@@ -255,7 +255,7 @@ int AutoCompleteUI::filterLV(const TCHAR* filter)
 /**
  *  \brief
  */
-void AutoCompleteUI::resizeLV()
+void AutoCompleteWin::resizeLV()
 {
     bool scroll = false;
     int rowsCount = ListView_GetItemCount(_hLVWnd) - 1;
@@ -327,7 +327,7 @@ void AutoCompleteUI::resizeLV()
 /**
  *  \brief
  */
-void AutoCompleteUI::onDblClick()
+void AutoCompleteWin::onDblClick()
 {
     TCHAR itemTxt[MAX_PATH];
     LVITEM lvItem       = {0};
@@ -349,7 +349,7 @@ void AutoCompleteUI::onDblClick()
 /**
  *  \brief
  */
-bool AutoCompleteUI::onKeyDown(int keyCode)
+bool AutoCompleteWin::onKeyDown(int keyCode)
 {
     switch (keyCode)
     {
@@ -428,26 +428,26 @@ bool AutoCompleteUI::onKeyDown(int keyCode)
 /**
  *  \brief
  */
-LRESULT APIENTRY AutoCompleteUI::wndProc(HWND hwnd, UINT umsg,
+LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
-    AutoCompleteUI* ui;
+    AutoCompleteWin* ui;
 
     switch (umsg)
     {
         case WM_CREATE:
-            ui = (AutoCompleteUI*)((LPCREATESTRUCT)lparam)->lpCreateParams;
+            ui = (AutoCompleteWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(ui));
             return 0;
 
         case WM_SETFOCUS:
-            ui = reinterpret_cast<AutoCompleteUI*>(static_cast<LONG_PTR>
+            ui = reinterpret_cast<AutoCompleteWin*>(static_cast<LONG_PTR>
                             (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(ui->_hLVWnd);
             return 0;
 
         case WM_NOTIFY:
-            ui = reinterpret_cast<AutoCompleteUI*>(static_cast<LONG_PTR>
+            ui = reinterpret_cast<AutoCompleteWin*>(static_cast<LONG_PTR>
                             (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
 
             switch (((LPNMHDR)lparam)->code)

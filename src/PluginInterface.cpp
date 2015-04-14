@@ -22,7 +22,7 @@
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
-#include "ScintillaViewUI.h"
+#include "ResultWin.h"
 
 
 namespace
@@ -94,9 +94,9 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
     GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
 
-    if (GTags::ScintillaViewUI::Get().Register())
+    if (GTags::ResultWin::Get().Register())
         MessageBox(npp.GetHandle(),
-            _T("ScintillaViewUI init failed, plugin will not be operational"),
+            _T("ResultWin init failed, plugin will not be operational"),
             GTags::cPluginName, MB_OK | MB_ICONERROR);
 
     ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
@@ -202,7 +202,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
             Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
             GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
-            GTags::ScintillaViewUI::Get().ApplyStyle();
+            GTags::ResultWin::Get().ApplyStyle();
         }
         break;
 

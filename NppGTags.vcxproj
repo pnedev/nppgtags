@@ -29,14 +29,16 @@
     <ClInclude Include="src\DBManager.h" />
     <ClCompile Include="src\DocLocation.cpp" />
     <ClInclude Include="src\DocLocation.h" />
-    <ClCompile Include="src\ActivityWindow.cpp" />
-    <ClInclude Include="src\ActivityWindow.h" />
-    <ClCompile Include="src\SearchUI.cpp" />
-    <ClInclude Include="src\SearchUI.h" />
-    <ClCompile Include="src\AutoCompleteUI.cpp" />
-    <ClInclude Include="src\AutoCompleteUI.h" />
-    <ClCompile Include="src\ScintillaViewUI.cpp" />
-    <ClInclude Include="src\ScintillaViewUI.h" />
+    <ClCompile Include="src\ActivityWin.cpp" />
+    <ClInclude Include="src\ActivityWin.h" />
+    <ClCompile Include="src\SearchWin.cpp" />
+    <ClInclude Include="src\SearchWin.h" />
+    <ClCompile Include="src\AboutWin.cpp" />
+    <ClInclude Include="src\AboutWin.h" />
+    <ClCompile Include="src\AutoCompleteWin.cpp" />
+    <ClInclude Include="src\AutoCompleteWin.h" />
+    <ClCompile Include="src\ResultWin.cpp" />
+    <ClInclude Include="src\ResultWin.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\nppgtags.rc" />

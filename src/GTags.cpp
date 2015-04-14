@@ -31,10 +31,11 @@
 #include "DBManager.h"
 #include "Cmd.h"
 #include "DocLocation.h"
-#include "SearchUI.h"
-#include "ActivityWindow.h"
-#include "AutoCompleteUI.h"
-#include "ScintillaViewUI.h"
+#include "SearchWin.h"
+#include "ActivityWin.h"
+#include "AutoCompleteWin.h"
+#include "ResultWin.h"
+#include "AboutWin.h"
 
 
 #define LINUX_WINE_WORKAROUNDS
@@ -44,22 +45,6 @@ namespace
 {
 
 using namespace GTags;
-
-
-const TCHAR cAbout[] = {
-    _T("%s\n\n")
-    _T("Version: %s\n")
-    _T("Build date: %s %s\n")
-    _T("%s <pg.nedev@gmail.com>\n\n")
-    _T("Licensed under GNU GPLv2 ")
-    _T("as published by the Free Software Foundation.\n\n")
-    _T("This plugin is frontend to ")
-    _T("GNU Global source code tagging system (GTags):\n")
-    _T("http://www.gnu.org/software/global/global.html\n")
-    _T("Thanks to its developers and to ")
-    _T("Jason Hood for porting it to Windows.\n\n")
-    _T("Current GTags version:\n%s")
-};
 
 
 std::list<CPath> UpdateList;
@@ -215,7 +200,7 @@ bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
     if (defaultTag)
         _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
 
-    return SearchUI::Show(INpp::Get().GetHandle(), UIFontName,
+    return SearchWin::Show(INpp::Get().GetHandle(), UIFontName,
             UIFontSize + 1, 400, uiName, searchData);
 }
 
@@ -330,7 +315,7 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
     if (cmd->NoResult())
         npp.ClearSelection();
     else
-        AutoCompleteUI::Show(cmd);
+        AutoCompleteWin::Show(cmd);
 }
 
 
@@ -384,7 +369,7 @@ void showResult(std::shared_ptr<CmdData>& cmd)
         return;
     }
 
-    ScintillaViewUI::Get().Show(cmd);
+    ResultWin::Get().Show(cmd);
 }
 
 
@@ -393,15 +378,10 @@ void showResult(std::shared_ptr<CmdData>& cmd)
  */
 void showInfo(std::shared_ptr<CmdData>& cmd)
 {
-    TCHAR text[2048];
     CText msg(cmd->GetResult());
-    _sntprintf_s(text, _countof(text), _TRUNCATE, cAbout,
-            VER_DESCRIPTION, VER_VERSION_STR,
-            _T(__DATE__), _T(__TIME__), VER_COPYRIGHT,
-            cmd->Error() || cmd->NoResult() ?
-            _T("VERSION READ FAILED\n") : msg.C_str());
 
-    MessageBox(INpp::Get().GetHandle(), text, _T("About"), MB_OK);
+    AboutWin::Show(INpp::Get().GetHandle(), cmd->Error() || cmd->NoResult() ?
+            _T("VERSION READ FAILED\n") : msg.C_str());
 }
 
 } // anonymous namespace
@@ -432,9 +412,9 @@ BOOL PluginInit(HINSTANCE hMod)
 
     HMod = hMod;
 
-    ActivityWindow::Register(hMod);
-    SearchUI::Register(hMod);
-    AutoCompleteUI::Register();
+    ActivityWin::Register();
+    SearchWin::Register();
+    AutoCompleteWin::Register();
 
     return TRUE;
 }
@@ -445,11 +425,11 @@ BOOL PluginInit(HINSTANCE hMod)
  */
 void PluginDeInit()
 {
-    ActivityWindow::Unregister();
-    SearchUI::Unregister();
-	AutoCompleteUI::Unregister();
+    ActivityWin::Unregister();
+    SearchWin::Unregister();
+	AutoCompleteWin::Unregister();
 
-    ScintillaViewUI::Get().Unregister();
+    ResultWin::Get().Unregister();
 
     HMod = NULL;
 }

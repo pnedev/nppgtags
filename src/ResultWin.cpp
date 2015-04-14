@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags result Scintilla view UI
+ *  \brief  GTags result Scintilla view window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -25,7 +25,7 @@
 #pragma comment (lib, "comctl32")
 
 
-#include "ScintillaViewUI.h"
+#include "ResultWin.h"
 #include "INpp.h"
 #include "DBManager.h"
 #include "DocLocation.h"
@@ -54,14 +54,14 @@ enum
 namespace GTags
 {
 
-const TCHAR ScintillaViewUI::cClassName[]   = _T("ScintillaViewUI");
-const TCHAR ScintillaViewUI::cTabFont[]     = _T("Tahoma");
+const TCHAR ResultWin::cClassName[]   = _T("ResultWin");
+const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
 
 
 /**
  *  \brief
  */
-ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
+ResultWin::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
     _currentLine(1), _firstVisibleLine(0)
 {
     _cmdID = cmd->GetID();
@@ -93,7 +93,7 @@ ScintillaViewUI::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
 /**
  *  \brief
  */
-void ScintillaViewUI::Tab::parseCmd(CTextA& dst, const char* src)
+void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
 {
     const char* pLine;
     const char* pPreviousFile = NULL;
@@ -145,7 +145,7 @@ void ScintillaViewUI::Tab::parseCmd(CTextA& dst, const char* src)
 /**
  *  \brief
  */
-void ScintillaViewUI::Tab::parseFindFile(CTextA& dst, const char* src)
+void ResultWin::Tab::parseFindFile(CTextA& dst, const char* src)
 {
     const char* eol;
 
@@ -169,7 +169,7 @@ void ScintillaViewUI::Tab::parseFindFile(CTextA& dst, const char* src)
 /**
  *  \brief
  */
-void ScintillaViewUI::Tab::SetFolded(int lineNum)
+void ResultWin::Tab::SetFolded(int lineNum)
 {
     for (std::vector<int>::iterator i = _expandedLines.begin();
             i != _expandedLines.end(); i++)
@@ -184,7 +184,7 @@ void ScintillaViewUI::Tab::SetFolded(int lineNum)
 /**
  *  \brief
  */
-void ScintillaViewUI::Tab::ClearFolded(int lineNum)
+void ResultWin::Tab::ClearFolded(int lineNum)
 {
     _expandedLines.push_back(lineNum);
 }
@@ -193,7 +193,7 @@ void ScintillaViewUI::Tab::ClearFolded(int lineNum)
 /**
  *  \brief
  */
-bool ScintillaViewUI::Tab::IsFolded(int lineNum)
+bool ResultWin::Tab::IsFolded(int lineNum)
 {
     const int size = _expandedLines.size();
 
@@ -208,7 +208,7 @@ bool ScintillaViewUI::Tab::IsFolded(int lineNum)
 /**
  *  \brief
  */
-int ScintillaViewUI::Register()
+int ResultWin::Register()
 {
     if (_hWnd)
         return 0;
@@ -253,7 +253,7 @@ int ScintillaViewUI::Register()
 /**
  *  \brief
  */
-void ScintillaViewUI::Unregister()
+void ResultWin::Unregister()
 {
     if (_hWnd == NULL)
         return;
@@ -285,7 +285,7 @@ void ScintillaViewUI::Unregister()
 /**
  *  \brief
  */
-void ScintillaViewUI::Show(const std::shared_ptr<CmdData>& cmd)
+void ResultWin::Show(const std::shared_ptr<CmdData>& cmd)
 {
     if (_hWnd == NULL)
         return;
@@ -369,7 +369,7 @@ void ScintillaViewUI::Show(const std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void ScintillaViewUI::ApplyStyle()
+void ResultWin::ApplyStyle()
 {
     if (_hWnd == NULL)
         return;
@@ -419,7 +419,7 @@ void ScintillaViewUI::ApplyStyle()
 /**
  *  \brief
  */
-void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
+void ResultWin::setStyle(int style, COLORREF fore, COLORREF back,
         bool bold, bool italic, int size, const char *font)
 {
     sendSci(SCI_STYLESETEOLFILLED, style, 1);
@@ -437,7 +437,7 @@ void ScintillaViewUI::setStyle(int style, COLORREF fore, COLORREF back,
 /**
  *  \brief
  */
-void ScintillaViewUI::configScintilla()
+void ResultWin::configScintilla()
 {
     sendSci(SCI_SETCODEPAGE, SC_CP_UTF8);
     sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
@@ -481,7 +481,7 @@ void ScintillaViewUI::configScintilla()
 /**
  *  \brief
  */
-HWND ScintillaViewUI::composeWindow()
+HWND ResultWin::composeWindow()
 {
     INpp& npp = INpp::Get();
     HWND hOwner = npp.GetHandle();
@@ -537,7 +537,7 @@ HWND ScintillaViewUI::composeWindow()
 /**
  *  \brief
  */
-ScintillaViewUI::Tab* ScintillaViewUI::getTab(int i)
+ResultWin::Tab* ResultWin::getTab(int i)
 {
     if (i == -1)
     {
@@ -559,7 +559,7 @@ ScintillaViewUI::Tab* ScintillaViewUI::getTab(int i)
 /**
  *  \brief
  */
-void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
+void ResultWin::loadTab(ResultWin::Tab* tab)
 {
     sendSci(SCI_SETCURSOR, SC_CURSORWAIT);
 
@@ -591,7 +591,7 @@ void ScintillaViewUI::loadTab(ScintillaViewUI::Tab* tab)
 /**
  *  \brief
  */
-bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
+bool ResultWin::openItem(int lineNum, unsigned matchNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
 
@@ -674,7 +674,7 @@ bool ScintillaViewUI::openItem(int lineNum, unsigned matchNum)
 /**
  *  \brief
  */
-bool ScintillaViewUI::findString(const char* str, int* startPos, int* endPos,
+bool ResultWin::findString(const char* str, int* startPos, int* endPos,
         bool matchCase, bool wholeWord, bool regExpr)
 {
     int searchFlags = 0;
@@ -704,7 +704,7 @@ bool ScintillaViewUI::findString(const char* str, int* startPos, int* endPos,
 /**
  *  \brief
  */
-void ScintillaViewUI::toggleFolding(int lineNum)
+void ResultWin::toggleFolding(int lineNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
     sendSci(SCI_TOGGLEFOLD, lineNum);
@@ -718,7 +718,7 @@ void ScintillaViewUI::toggleFolding(int lineNum)
 /**
  *  \brief
  */
-void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
+void ResultWin::onStyleNeeded(SCNotification* notify)
 {
     if (_activeTab == NULL)
         return;
@@ -846,7 +846,7 @@ void ScintillaViewUI::onStyleNeeded(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onHotspotClick(SCNotification* notify)
+void ResultWin::onHotspotClick(SCNotification* notify)
 {
     if (!_lock.TryLock())
         return;
@@ -884,7 +884,7 @@ void ScintillaViewUI::onHotspotClick(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onDoubleClick(SCNotification* notify)
+void ResultWin::onDoubleClick(SCNotification* notify)
 {
     if (!_lock.TryLock())
         return;
@@ -926,7 +926,7 @@ void ScintillaViewUI::onDoubleClick(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onMarginClick(SCNotification* notify)
+void ResultWin::onMarginClick(SCNotification* notify)
 {
     if (!_lock.TryLock())
         return;
@@ -952,7 +952,7 @@ void ScintillaViewUI::onMarginClick(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onCharAddTry(SCNotification* notify)
+void ResultWin::onCharAddTry(SCNotification* notify)
 {
     if (!_lock.TryLock())
         return;
@@ -991,7 +991,7 @@ void ScintillaViewUI::onCharAddTry(SCNotification* notify)
 /**
  *  \brief
  */
-void ScintillaViewUI::onTabChange()
+void ResultWin::onTabChange()
 {
     if (!_lock.TryLock())
         return;
@@ -1007,7 +1007,7 @@ void ScintillaViewUI::onTabChange()
 /**
  *  \brief
  */
-void ScintillaViewUI::onCloseTab()
+void ResultWin::onCloseTab()
 {
     if (!_lock.TryLock())
         return;
@@ -1044,7 +1044,7 @@ void ScintillaViewUI::onCloseTab()
 /**
  *  \brief
  */
-void ScintillaViewUI::closeAllTabs()
+void ResultWin::closeAllTabs()
 {
     _activeTab = NULL;
 
@@ -1067,7 +1067,7 @@ void ScintillaViewUI::closeAllTabs()
 /**
  *  \brief
  */
-void ScintillaViewUI::onResize(int width, int height)
+void ResultWin::onResize(int width, int height)
 {
     RECT win = {0, 0, width, height};
 
@@ -1081,26 +1081,26 @@ void ScintillaViewUI::onResize(int width, int height)
 /**
  *  \brief
  */
-LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
+LRESULT APIENTRY ResultWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
-    ScintillaViewUI* ui;
+    ResultWin* ui;
 
     switch (umsg)
     {
         case WM_CREATE:
-            ui = (ScintillaViewUI*)((LPCREATESTRUCT)lparam)->lpCreateParams;
+            ui = (ResultWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(ui));
             return 0;
 
         case WM_SETFOCUS:
-            ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
+            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(ui->_hSci);
             return 0;
 
         case WM_NOTIFY:
-            ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
+            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
 
             switch (((LPNMHDR)lparam)->code)
@@ -1132,13 +1132,13 @@ LRESULT APIENTRY ScintillaViewUI::wndProc(HWND hwnd, UINT umsg,
         break;
 
         case WM_CONTEXTMENU:
-            ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
+            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             ui->onCloseTab();
         break;
 
         case WM_SIZE:
-            ui = reinterpret_cast<ScintillaViewUI*>(static_cast<LONG_PTR>
+            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             ui->onResize(LOWORD(lparam), HIWORD(lparam));
             return 0;

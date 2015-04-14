@@ -25,7 +25,7 @@
 #include "Cmd.h"
 #include "GTags.h"
 #include "INpp.h"
-#include "ActivityWindow.h"
+#include "ActivityWin.h"
 #include "ReadPipe.h"
 #include <process.h>
 
@@ -332,7 +332,7 @@ bool Cmd::runProcess()
 
     bool ret = errorPipe.Open() && dataPipe.Open();
     if (ret)
-        ret = !ActivityWindow::Show(INpp::Get().GetSciHandle(), pi.hProcess,
+        ret = !ActivityWin::Show(INpp::Get().GetSciHandle(), pi.hProcess,
                 600, header,
                 (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
                 0 : 300);

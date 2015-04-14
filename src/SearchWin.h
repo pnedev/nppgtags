@@ -57,13 +57,13 @@ struct SearchData
 
 
 /**
- *  \class  SearchUI
+ *  \class  SearchWin
  *  \brief
  */
-class SearchUI
+class SearchWin
 {
 public:
-    static void Register(HINSTANCE hMod = NULL);
+    static void Register();
     static void Unregister();
 
     static bool Show(HWND hOwner,
@@ -75,24 +75,21 @@ private:
     static const int cBackgroundColor;
     static const TCHAR cBtnFont[];
 
-    static HINSTANCE HMod;
-
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
+    static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
+            int width, int height);
 
-    SearchUI(HWND hOwner, int width, SearchData* searchData) :
-            _hOwner(hOwner), _searchData(searchData), _success(false) {}
-    SearchUI(const SearchUI &);
-    ~SearchUI();
+    SearchWin(SearchData* searchData) :
+            _searchData(searchData), _success(false) {}
+    SearchWin(const SearchWin&);
+    ~SearchWin();
 
-    RECT adjustSizeAndPos(DWORD styleEx, DWORD style, int width, int height);
-    HWND composeWindow(const TCHAR* font, unsigned fontSize, int width,
-            const TCHAR* header, const SearchData* searchData);
-    void onOK();
-    int onKeyDown(DWORD key);
+    HWND composeWindow(HWND hOwner, const TCHAR* font, unsigned fontSize,
+            int width, const TCHAR* header, const SearchData* searchData);
+    void onOK(HWND hWnd);
+    int onKeyDown(HWND hWnd, DWORD key);
 
-    HWND _hOwner;
-    HWND _hWnd;
     HWND _hEditWnd;
     HWND _hRegExp;
     HWND _hMatchCase;

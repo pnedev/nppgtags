@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  Process Activity Window
+ *  \brief  Process Activity window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -26,33 +26,30 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "ActivityWindow.h"
+#include "ActivityWin.h"
 #include <windowsx.h>
 #include <commctrl.h>
+#include "GTags.h"
 
 
-const TCHAR ActivityWindow::cClassName[]    = _T("ActivityWindow");
-const unsigned ActivityWindow::cUpdate_ms   = 50;
-const TCHAR ActivityWindow::cFontName[]     = _T("Tahoma");
-const unsigned ActivityWindow::cFontSize    = 8;
-const int ActivityWindow::cBackgroundColor  = COLOR_WINDOW;
+namespace GTags
+{
+
+const TCHAR ActivityWin::cClassName[]   = _T("ActivityWin");
+const unsigned ActivityWin::cUpdate_ms  = 50;
+const TCHAR ActivityWin::cFont[]        = _T("Tahoma");
+const unsigned ActivityWin::cFontSize   = 8;
+const int ActivityWin::cBackgroundColor = COLOR_WINDOW;
 
 
-volatile LONG ActivityWindow::RefCount = 0;
-HINSTANCE ActivityWindow::HMod = NULL;
+volatile LONG ActivityWin::RefCount = 0;
 
 
 /**
  *  \brief
  */
-void ActivityWindow::Register(HINSTANCE hMod)
+void ActivityWin::Register()
 {
-    HMod = hMod;
-    if (hMod == NULL)
-        GetModuleHandleEx(
-                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                GET_MODULE_HANDLE_EX_FLAG_PIN, cClassName, &HMod);
-
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
@@ -74,7 +71,7 @@ void ActivityWindow::Register(HINSTANCE hMod)
 /**
  *  \brief
  */
-void ActivityWindow::Unregister()
+void ActivityWin::Unregister()
 {
     UnregisterClass(cClassName, HMod);
 }
@@ -83,7 +80,7 @@ void ActivityWindow::Unregister()
 /**
  *  \brief
  */
-int ActivityWindow::Show(HWND hOwner, HANDLE procHndl,
+int ActivityWin::Show(HWND hOwner, HANDLE procHndl,
         int width, const TCHAR* text, int showDelay_ms)
 {
     if (!procHndl)
@@ -101,7 +98,7 @@ int ActivityWindow::Show(HWND hOwner, HANDLE procHndl,
         showDelay_ms -= cUpdate_ms;
     }
 
-    ActivityWindow aw(hOwner, procHndl);
+    ActivityWin aw(hOwner, procHndl);
     if (aw.composeWindow(width, text) == NULL)
         return -1;
 
@@ -120,7 +117,7 @@ int ActivityWindow::Show(HWND hOwner, HANDLE procHndl,
 /**
  *  \brief
  */
-ActivityWindow::ActivityWindow(HWND hOwner, HANDLE procHndl) :
+ActivityWin::ActivityWin(HWND hOwner, HANDLE procHndl) :
         _hOwner(hOwner), _hProc(procHndl), _hFont(NULL), _isCancelled(1)
 {
     _initRefCount = InterlockedIncrement(&RefCount);
@@ -130,7 +127,7 @@ ActivityWindow::ActivityWindow(HWND hOwner, HANDLE procHndl) :
 /**
  *  \brief
  */
-ActivityWindow::~ActivityWindow()
+ActivityWin::~ActivityWin()
 {
     if (_hFont)
         DeleteObject(_hFont);
@@ -142,7 +139,7 @@ ActivityWindow::~ActivityWindow()
 /**
  *  \brief
  */
-void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
+void ActivityWin::adjustSizeAndPos(HWND hwnd, int width, int height)
 {
     RECT win, maxWin;
     bool noAdjust = false;
@@ -189,7 +186,7 @@ void ActivityWindow::adjustSizeAndPos(HWND hwnd, int width, int height)
 /**
  *  \brief
  */
-HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
+HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 {
     HWND hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER,
@@ -207,7 +204,7 @@ HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
             -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cFontName);
+            FF_DONTCARE | DEFAULT_PITCH, cFont);
     if (_hFont)
         SendMessage(hWndTxt, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
@@ -251,7 +248,7 @@ HWND ActivityWindow::composeWindow(int width, const TCHAR* text)
 /**
  *  \brief
  */
-void ActivityWindow::onTimerRefresh(HWND hwnd)
+void ActivityWin::onTimerRefresh(HWND hwnd)
 {
     DWORD dwRet;
     GetExitCodeProcess(_hProc, &dwRet);
@@ -279,20 +276,20 @@ void ActivityWindow::onTimerRefresh(HWND hwnd)
 /**
  *  \brief
  */
-LRESULT APIENTRY ActivityWindow::wndProc(HWND hwnd, UINT umsg,
+LRESULT APIENTRY ActivityWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
-    ActivityWindow* aw;
+    ActivityWin* aw;
 
     switch (umsg)
     {
         case WM_CREATE:
-            aw = (ActivityWindow*)((LPCREATESTRUCT)lparam)->lpCreateParams;
+            aw = (ActivityWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(aw));
             return 0;
 
         case WM_SETFOCUS:
-            aw = reinterpret_cast<ActivityWindow*>(static_cast<LONG_PTR>
+            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(aw->_hBtn);
             return 0;
@@ -302,14 +299,14 @@ LRESULT APIENTRY ActivityWindow::wndProc(HWND hwnd, UINT umsg,
             return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
         case WM_TIMER:
-            aw = reinterpret_cast<ActivityWindow*>(static_cast<LONG_PTR>
+            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             aw->onTimerRefresh(hwnd);
             return 0;
 
         case WM_COMMAND:
             if (HIWORD(wparam) == BN_CLICKED) {
-                aw = reinterpret_cast<ActivityWindow*>(static_cast<LONG_PTR>
+                aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                         (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                 KillTimer(hwnd, aw->_timerID);
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
@@ -324,3 +321,5 @@ LRESULT APIENTRY ActivityWindow::wndProc(HWND hwnd, UINT umsg,
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
+
+} // namespace GTags

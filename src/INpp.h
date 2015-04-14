@@ -83,7 +83,7 @@ public:
                 MODELESSDIALOGREMOVE, (LPARAM)hwnd);
     }
 
-    inline void RegisterDockingWin(tTbData &data) const
+    inline void RegisterDockingWin(tTbData& data) const
     {
         SendMessage(_nppData._nppHandle, NPPM_DMMREGASDCKDLG,
                 0, (LPARAM)&data);

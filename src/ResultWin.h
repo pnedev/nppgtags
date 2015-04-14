@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags result Scintilla view UI
+ *  \brief  GTags result Scintilla view window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -40,15 +40,15 @@ namespace GTags
 {
 
 /**
- *  \class  ScintillaViewUI
+ *  \class  ResultWin
  *  \brief
  */
-class ScintillaViewUI
+class ResultWin
 {
 public:
-    static ScintillaViewUI& Get()
+    static ResultWin& Get()
     {
-        static ScintillaViewUI Instance;
+        static ResultWin Instance;
         return Instance;
     }
 
@@ -105,11 +105,11 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    ScintillaViewUI() :
+    ResultWin() :
         _hWnd(NULL), _hSci(NULL), _hFont(NULL), _sciFunc(NULL),
         _sciPtr(0), _activeTab(NULL) {}
-    ScintillaViewUI(const ScintillaViewUI&);
-    ~ScintillaViewUI()
+    ResultWin(const ResultWin&);
+    ~ResultWin()
     {
         Unregister();
     }
