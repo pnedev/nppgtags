@@ -311,7 +311,6 @@ int SearchWin::onKeyDown(HWND hWnd, DWORD key)
     switch (key)
     {
         case VK_ESCAPE:
-        case VK_TAB:
             SendMessage(hWnd, WM_CLOSE, 0, 0);
             return 1;
 

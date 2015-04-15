@@ -149,8 +149,8 @@ private:
     HWND _hSci;
     HWND _hTab;
     HFONT _hFont;
-	SciFnDirect _sciFunc;
-	sptr_t _sciPtr;
+    SciFnDirect _sciFunc;
+    sptr_t _sciPtr;
     Tab* _activeTab;
 };
 

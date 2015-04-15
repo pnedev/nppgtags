@@ -427,7 +427,7 @@ void PluginDeInit()
 {
     ActivityWin::Unregister();
     SearchWin::Unregister();
-	AutoCompleteWin::Unregister();
+    AutoCompleteWin::Unregister();
 
     ResultWin::Get().Unregister();
 
@@ -643,7 +643,7 @@ void CreateDatabase()
         }
 
         currentFile = path;
-		currentFile += _T("\\");
+        currentFile += _T("\\");
         db = DBManager::Get().RegisterDB(currentFile, true);
     }
 

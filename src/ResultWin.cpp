@@ -631,7 +631,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     CPath file(_activeTab->_projectPath);
     CText str(&lineTxt[1]);
-	file += str.C_str();
+    file += str.C_str();
     delete [] lineTxt;
 
     INpp& npp = INpp::Get();
