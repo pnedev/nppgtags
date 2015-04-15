@@ -49,6 +49,7 @@ void DocLocation::SetDepth(unsigned depth)
         _locList.resize(depth);
     }
     _maxDepth = depth;
+    _currentIdx = _locList.size() - 1;
 }
 
 
@@ -59,19 +60,20 @@ void DocLocation::Push()
 {
     AUTOLOCK(_lock);
 
-    if (_locList.size() == _maxDepth)
+    if (_currentIdx + 1 < (int)_locList.size())
+        _locList.erase(_locList.begin() + _currentIdx + 1, _locList.end());
+    else if (_locList.size() == _maxDepth)
         _locList.erase(_locList.begin());
 
-    INpp& npp = INpp::Get();
     Location loc;
-
+    INpp& npp = INpp::Get();
     npp.GetFilePath(loc.filePath);
     npp.GetView(&loc.firstVisibleLine, &loc.posInFile);
 
-    if (!_locList.empty() && (loc == _locList.back()))
-        return;
+    if (_locList.empty() || !(loc == _locList.back()))
+        _locList.push_back(loc);
 
-    _locList.push_back(loc);
+    _currentIdx = _locList.size() - 1;
 }
 
 
@@ -82,17 +84,70 @@ void DocLocation::Pop()
 {
     AUTOLOCK(_lock);
 
-    if (_locList.empty())
-        return;
-
-    Location& loc = _locList.back();
-
-    if (Tools::FileExists(loc.filePath))
+    while (!_locList.empty())
     {
-        INpp& npp = INpp::Get();
-        npp.OpenFile(loc.filePath);
-        npp.SetView(loc.firstVisibleLine, loc.posInFile);
+        Location& loc = _locList.back();
+
+        if (Tools::FileExists(loc.filePath))
+        {
+            INpp& npp = INpp::Get();
+            npp.OpenFile(loc.filePath);
+            npp.SetView(loc.firstVisibleLine, loc.posInFile);
+        }
+
+        _locList.pop_back();
     }
 
-    _locList.pop_back();
+    _currentIdx = _locList.size() - 1;
+}
+
+
+/**
+ *  \brief
+ */
+void DocLocation::Back()
+{
+    AUTOLOCK(_lock);
+
+    while (_currentIdx >= 0)
+    {
+        Location& loc = _locList.at(_currentIdx--);
+
+        if (Tools::FileExists(loc.filePath))
+        {
+            Location newLoc;
+            INpp& npp = INpp::Get();
+            npp.GetFilePath(newLoc.filePath);
+            npp.GetView(&newLoc.firstVisibleLine, &newLoc.posInFile);
+            npp.OpenFile(loc.filePath);
+            npp.SetView(loc.firstVisibleLine, loc.posInFile);
+            loc = newLoc;
+            break;
+        }
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void DocLocation::Forward()
+{
+    AUTOLOCK(_lock);
+
+    while (_currentIdx + 1 <= (int)_locList.size())
+    {
+        Location& loc = _locList.at(++_currentIdx);
+
+        if (Tools::FileExists(loc.filePath))
+        {
+            Location newLoc;
+            INpp& npp = INpp::Get();
+            npp.GetFilePath(newLoc.filePath);
+            npp.GetView(&newLoc.firstVisibleLine, &newLoc.posInFile);
+            npp.OpenFile(loc.filePath);
+            npp.SetView(loc.firstVisibleLine, loc.posInFile);
+            break;
+        }
+    }
 }

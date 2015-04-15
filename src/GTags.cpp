@@ -588,7 +588,16 @@ void Grep()
  */
 void GoBack()
 {
-    DocLocation::Get().Pop();
+    DocLocation::Get().Back();
+}
+
+
+/**
+ *  \brief
+ */
+void GoForward()
+{
+    DocLocation::Get().Forward();
 }
 
 

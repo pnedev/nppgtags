@@ -40,10 +40,12 @@ class DocLocation
 public:
     static DocLocation& Get() { return Instance; }
 
-    unsigned GetDepth() { return _maxDepth; }
+    unsigned GetDepth() const { return _maxDepth; }
     void SetDepth(unsigned depth);
     void Push();
     void Pop();
+    void Back();
+    void Forward();
 
 private:
     /**
@@ -56,6 +58,14 @@ private:
         long firstVisibleLine;
         long posInFile;
 
+        inline const Location& operator=(const Location& loc)
+        {
+            posInFile = loc.posInFile;
+            firstVisibleLine = loc.firstVisibleLine;
+            _tcscpy_s(filePath, MAX_PATH, loc.filePath);
+            return loc;
+        }
+
         inline bool operator==(const Location& loc) const
         {
             return (posInFile == loc.posInFile &&
@@ -66,7 +76,7 @@ private:
     static const unsigned cInitialDepth;
     static DocLocation Instance;
 
-    DocLocation() : _maxDepth(cInitialDepth) {}
+    DocLocation() : _maxDepth(cInitialDepth), _currentIdx(-1) {}
     DocLocation(const DocLocation&);
     ~DocLocation() {}
 
@@ -74,4 +84,5 @@ private:
 
     Mutex _lock;
     std::vector<Location> _locList;
+    int _currentIdx;
 };

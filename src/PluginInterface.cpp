@@ -28,7 +28,7 @@
 namespace
 {
 
-const int cFuncCount = 14;
+const int cFuncCount = 16;
 FuncItem InterfaceFunc[cFuncCount];
 
 CPathContainer StoredPath;
@@ -107,7 +107,9 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     addMenuItem(GTags::cFindDefinition, GTags::FindDefinition);
     addMenuItem(GTags::cFindReference, GTags::FindReference);
     addMenuItem(GTags::cGrep, GTags::Grep);
+    addMenuItem(); // separator
     addMenuItem(_T("Go Back"), GTags::GoBack);
+    addMenuItem(_T("Go Forward"), GTags::GoForward);
     addMenuItem(); // separator
     addMenuItem(GTags::cCreateDatabase, GTags::CreateDatabase);
     addMenuItem(_T("Delete Database"), GTags::DeleteDatabase);

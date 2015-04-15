@@ -68,6 +68,7 @@ void FindDefinition();
 void FindReference();
 void Grep();
 void GoBack();
+void GoForward();
 void CreateDatabase();
 bool UpdateSingleFile(const TCHAR* file = NULL);
 void DeleteDatabase();
