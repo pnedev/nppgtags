@@ -303,10 +303,6 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                     return 1;
                 }
 
-                case EN_SAVECLIPBOARD:
-                    MessageBoxA(NULL, "EN_SAVECLIPBOARD", "", MB_OK);
-                    return 0;
-
                 case EN_LINK:
                 {
                     ENLINK* pEnLink = (ENLINK*)lparam;
