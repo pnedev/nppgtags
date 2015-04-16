@@ -135,7 +135,7 @@ void DocLocation::Forward()
 {
     AUTOLOCK(_lock);
 
-    while (_currentIdx + 1 <= (int)_locList.size())
+    while (_currentIdx + 2 <= (int)_locList.size())
     {
         Location& loc = _locList.at(++_currentIdx);
 
@@ -147,6 +147,7 @@ void DocLocation::Forward()
             npp.GetView(&newLoc.firstVisibleLine, &newLoc.posInFile);
             npp.OpenFile(loc.filePath);
             npp.SetView(loc.firstVisibleLine, loc.posInFile);
+            loc = newLoc;
             break;
         }
     }
