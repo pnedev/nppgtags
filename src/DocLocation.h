@@ -43,7 +43,6 @@ public:
     unsigned GetDepth() const { return _maxDepth; }
     void SetDepth(unsigned depth);
     void Push();
-    void Pop();
     void Back();
     void Forward();
 
@@ -76,13 +75,14 @@ private:
     static const unsigned cInitialDepth;
     static DocLocation Instance;
 
-    DocLocation() : _maxDepth(cInitialDepth), _currentIdx(-1) {}
+    DocLocation() : _maxDepth(cInitialDepth), _backLocIdx(-1) {}
     DocLocation(const DocLocation&);
     ~DocLocation() {}
 
-    unsigned _maxDepth;
+    void swapView(Location& loc);
 
+    unsigned _maxDepth;
+    int _backLocIdx;
     Mutex _lock;
     std::vector<Location> _locList;
-    int _currentIdx;
 };

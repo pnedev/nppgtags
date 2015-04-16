@@ -803,8 +803,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                 int findBegin = previewPos;
                 int findEnd = endPos;
 
-                bool wholeWord =
-                    (!_activeTab->_regExp) && (_activeTab->_cmdID != GREP);
+                bool wholeWord = (_activeTab->_cmdID != GREP);
 
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
@@ -862,8 +861,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
         int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
 
-        bool wholeWord =
-            (!_activeTab->_regExp) && (_activeTab->_cmdID != GREP);
+        bool wholeWord = (_activeTab->_cmdID != GREP);
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
