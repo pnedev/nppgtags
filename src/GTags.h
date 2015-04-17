@@ -50,12 +50,35 @@ const TCHAR cFindSymbol[]       = _T("Find Symbol");
 const TCHAR cGrep[]             = _T("Grep");
 const TCHAR cVersion[]          = _T("About");
 
+const TCHAR cParsers[][16] = {
+    _T("default"),
+    _T("ctags"),
+    _T("pygments")
+};
+
+
+/**
+ *  \struct
+ *  \brief
+ */
+struct Settings
+{
+    Settings(const TCHAR* parser = NULL, bool autoUpdate = true,
+            const TCHAR* libraryDBsPath = NULL);
+    const Settings& operator=(const Settings& settings);
+
+    TCHAR   _parser[16];
+    bool    _autoUpdate;
+    TCHAR   _libraryDBsPath[1024];
+};
+
 
 extern HINSTANCE HMod;
 extern CPath DllPath;
 extern TCHAR UIFontName[32];
 extern unsigned UIFontSize;
-extern bool AutoUpdate;
+
+extern Settings Config;
 
 
 BOOL PluginInit(HINSTANCE hMod);
@@ -72,6 +95,7 @@ void GoForward();
 void CreateDatabase();
 bool UpdateSingleFile(const TCHAR* file = NULL);
 void DeleteDatabase();
+void SettingsCfg();
 void About();
 
 } // namespace GTags

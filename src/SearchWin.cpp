@@ -37,7 +37,7 @@ namespace GTags
 {
 
 const TCHAR SearchWin::cClassName[]     = _T("SearchWin");
-const int SearchWin::cBackgroundColor   = COLOR_INFOBK;
+const int SearchWin::cBackgroundColor   = COLOR_WINDOW;
 const TCHAR SearchWin::cBtnFont[]       = _T("Tahoma");
 
 
@@ -51,7 +51,7 @@ void SearchWin::Register()
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
+    wc.hbrBackground    = GetSysColorBrush(COLOR_BTNFACE);
     wc.lpszClassName    = cClassName;
 
     RegisterClass(&wc);
@@ -216,8 +216,8 @@ HWND SearchWin::composeWindow(HWND hOwner,
     GetClientRect(hWnd, &win);
     width = win.right - win.left;
 
-    style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL;
-    _hEditWnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style,
+    _hEditWnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
             0, 0, width, txtHeight,
             hWnd, NULL, HMod, NULL);
 
@@ -253,10 +253,8 @@ HWND SearchWin::composeWindow(HWND hOwner,
     if (_hTxtFont)
         SendMessage(_hEditWnd, WM_SETFONT, (WPARAM)_hTxtFont, (LPARAM)TRUE);
 
-    DWORD events = ENM_KEYEVENTS;
-
     SendMessage(_hEditWnd, EM_EXLIMITTEXT, 0, (LPARAM)(cMaxTagLen - 1));
-    SendMessage(_hEditWnd, EM_SETEVENTMASK, 0, (LPARAM)events);
+    SendMessage(_hEditWnd, EM_SETEVENTMASK, 0, (LPARAM)ENM_KEYEVENTS);
 
     if (_tcslen(searchData->_str))
     {

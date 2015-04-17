@@ -265,7 +265,8 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
             _tcscat_s(cmd, len, _T(" --gtagsconf \""));
             _tcscat_s(cmd, len, path.C_str());
             _tcscat_s(cmd, len, _T("\""));
-            // _tcscat_s(cmd, len, _T(" --gtagslabel=ctags"));
+            _tcscat_s(cmd, len, _T(" --gtagslabel="));
+            _tcscat_s(cmd, len, Config._parser);
         }
     }
     else if (_cmd->_id != VERSION)
@@ -305,7 +306,7 @@ bool Cmd::runProcess()
     const TCHAR* currentDir = _cmd->GetDBPath();
 
     CText env(_T("GTAGSLIBPATH="));
-    // env += _T("/usr/include");
+    env += Config._libraryDBsPath;
 
     if (_cmd->_id == VERSION)
         currentDir = NULL;

@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags settings
+ *  \brief  GTags settings window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -28,37 +28,50 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
-#include <string>
 
 
 namespace GTags
 {
 
+struct Settings;
+
+
 /**
- *  \class  Settings
+ *  \class  SettingsWin
  *  \brief
  */
-class Settings
+class SettingsWin
 {
 public:
-    static Settings& Get() { return Instance; }
-
-    bool Read(const TCHAR* configFile);
-    bool Store(const TCHAR* configFile) const;
+    static void Show(HWND hOwner, Settings* _settings);
 
 private:
-    static const char cAutoUpdateKey[];
-    static const char cLibraryPathKey[];
+    static const TCHAR cClassName[];
+    static const TCHAR cHeader[];
+    static const int cBackgroundColor;
+    static const TCHAR cFont[];
+    static const int cFontSize;
 
-    static Settings Instance;
+    static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
+            WPARAM wparam, LPARAM lparam);
+    static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
+            int width, int height);
 
-    Settings();
-    ~Settings();
+    SettingsWin(Settings* settings) : _settings(settings) {}
+    SettingsWin(const SettingsWin&);
+    ~SettingsWin();
 
-    Settings(const Settings&);
-    const Settings& operator=(const Settings&);
+    HWND composeWindow(HWND hOwner);
 
-    bool readKey(const string& str);
+    void onOK(HWND hWnd);
+
+    Settings* _settings;
+    HWND _hParser;
+    HWND _hAutoUpdate;
+    HWND _hLibraryDBs;
+    HWND _hOK;
+    HWND _hCancel;
+    HFONT _hFont;
 };
 
 } // namespace GTags

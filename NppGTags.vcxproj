@@ -33,6 +33,8 @@
     <ClInclude Include="src\ActivityWin.h" />
     <ClCompile Include="src\SearchWin.cpp" />
     <ClInclude Include="src\SearchWin.h" />
+    <ClCompile Include="src\SettingsWin.cpp" />
+    <ClInclude Include="src\SettingsWin.h" />
     <ClCompile Include="src\AboutWin.cpp" />
     <ClInclude Include="src\AboutWin.h" />
     <ClCompile Include="src\AutoCompleteWin.cpp" />

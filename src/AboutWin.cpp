@@ -96,8 +96,6 @@ void AboutWin::Show(HWND hOwner, const TCHAR* info)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
-    return;
 }
 
 

@@ -48,16 +48,6 @@ void addMenuItem(const TCHAR* itemName = NULL,
     InterfaceFunc[i++]._init2Check = initCheckMark;
 }
 
-
-/**
- *  \brief
- */
-void openSettings()
-{
-    MessageBox(INpp::Get().GetHandle(), _T("Not implemented yet"),
-            GTags::cPluginName, MB_OK | MB_ICONEXCLAMATION);
-}
-
 }
 
 
@@ -114,7 +104,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     addMenuItem(GTags::cCreateDatabase, GTags::CreateDatabase);
     addMenuItem(_T("Delete Database"), GTags::DeleteDatabase);
     addMenuItem(); // separator
-    addMenuItem(_T("Settings"), openSettings);
+    addMenuItem(_T("Settings"), GTags::SettingsCfg);
     addMenuItem(); // separator
     addMenuItem(GTags::cVersion, GTags::About);
 }
@@ -138,7 +128,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     switch (notifyCode->nmhdr.code)
     {
         case NPPN_FILESAVED:
-            if (GTags::AutoUpdate)
+            if (GTags::Config._autoUpdate)
             {
                 TCHAR file[MAX_PATH];
                 INpp::Get().GetFilePathFromBufID(
@@ -149,7 +139,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
 
         case NPPN_FILEBEFORERENAME:
         case NPPN_FILEBEFOREDELETE:
-            if (GTags::AutoUpdate)
+            if (GTags::Config._autoUpdate)
             {
                 TCHAR file[MAX_PATH];
                 INpp::Get().GetFilePathFromBufID(
@@ -164,7 +154,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         break;
 
         case NPPN_FILERENAMED:
-            if (GTags::AutoUpdate)
+            if (GTags::Config._autoUpdate)
             {
                 TCHAR file[MAX_PATH];
                 INpp::Get().GetFilePathFromBufID(
@@ -180,7 +170,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         break;
 
         case NPPN_FILEDELETED:
-            if (GTags::AutoUpdate)
+            if (GTags::Config._autoUpdate)
             {
                 if (StoredPath())
                 {

@@ -35,6 +35,7 @@
 #include "ActivityWin.h"
 #include "AutoCompleteWin.h"
 #include "ResultWin.h"
+#include "SettingsWin.h"
 #include "AboutWin.h"
 
 
@@ -395,7 +396,7 @@ CPath DllPath;
 TCHAR UIFontName[32];
 unsigned UIFontSize;
 
-bool AutoUpdate = true;
+Settings Config(cParsers[0], true, _T(""));
 
 
 /**
@@ -432,6 +433,36 @@ void PluginDeInit()
     ResultWin::Get().Unregister();
 
     HMod = NULL;
+}
+
+
+/**
+ *  \brief
+ */
+Settings::Settings(const TCHAR* parser, bool autoUpdate,
+        const TCHAR* libraryDBsPath) : _autoUpdate(autoUpdate)
+{
+    if (parser)
+        _tcscpy_s(_parser, _countof(_parser), parser);
+    else
+        _parser[0] = _T('\0');
+    if (libraryDBsPath)
+        _tcscpy_s(_libraryDBsPath, _countof(_libraryDBsPath), libraryDBsPath);
+    else
+        _libraryDBsPath[0] = _T('\0');
+}
+
+
+/**
+ *  \brief
+ */
+const Settings& Settings::operator=(const Settings& settings)
+{
+    _autoUpdate = settings._autoUpdate;
+    _tcscpy_s(_parser, _countof(_parser), settings._parser);
+    _tcscpy_s(_libraryDBsPath, _countof(_libraryDBsPath),
+            settings._libraryDBsPath);
+    return settings;
 }
 
 
@@ -728,6 +759,15 @@ void DeleteDatabase()
         MessageBox(npp.GetHandle(),
                 _T("Deleting database failed, is it read-only?"),
                 cPluginName, MB_OK | MB_ICONERROR);
+}
+
+
+/**
+ *  \brief
+ */
+void SettingsCfg()
+{
+    SettingsWin::Show(INpp::Get().GetHandle(), &Config);
 }
 
 
