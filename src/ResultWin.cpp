@@ -515,7 +515,7 @@ HWND ResultWin::composeWindow()
             win.right - win.left, win.bottom - win.top, TRUE);
     GetClientRect(_hWnd, &win);
 
-    _hTab = CreateWindowEx(0, WC_TABCONTROL, _T("TabCtrl"),
+    _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);

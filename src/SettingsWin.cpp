@@ -37,7 +37,6 @@ namespace GTags
 {
 
 const TCHAR SettingsWin::cClassName[]   = _T("SettingsWin");
-const TCHAR SettingsWin::cHeader[]      = _T("NppGTags Settings");
 const int SettingsWin::cBackgroundColor = COLOR_BTNFACE;
 const TCHAR SettingsWin::cFont[]        = _T("Tahoma");
 const int SettingsWin::cFontSize        = 10;
@@ -175,7 +174,9 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             600, 2 * txtHeight + 70);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
-    HWND hWnd = CreateWindowEx(styleEx, cClassName, cHeader,
+	TCHAR header[32] = {VER_PLUGIN_NAME};
+    _tcscat_s(header, _countof(header), _T(" Settings"));
+    HWND hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,
             hOwner, NULL, HMod, (LPVOID) this);
     if (hWnd == NULL)
@@ -187,20 +188,21 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     int hPos = 10;
 
-    _hParser = CreateWindowEx(0, WC_COMBOBOX, _T("Parser"),
+    _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_HASSTRINGS,
             10, hPos, (width - 30) / 3, txtHeight,
             hWnd, NULL, HMod, NULL);
 
     _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"),
-            _T("Auto update database on file change"),
+            _T("Auto update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            20 + (width - 30) / 3, hPos, 2 * (width - 30) / 3, txtHeight,
+            width - (10 + (width - 30) / 3), hPos,
+            (width - 30) / 3, txtHeight,
             hWnd, NULL, HMod, NULL);
 
     hPos += (txtHeight + 15);
-    _hLibraryDBs = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
-            WS_CHILD | WS_BORDER | WS_VISIBLE | ES_AUTOHSCROLL,
+    _hLibraryDBs = CreateWindowEx(WS_EX_CLIENTEDGE, RICHEDIT_CLASS, NULL,
+            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
             10, hPos, width - 20, txtHeight,
             hWnd, NULL, HMod, NULL);
 
@@ -233,7 +235,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibraryDBs, EM_EXLIMITTEXT, 0,
             (LPARAM)(_countof(_settings->_libraryDBsPath) - 1));
-    SendMessage(_hLibraryDBs, EM_SETEVENTMASK, 0, (LPARAM)ENM_KEYEVENTS);
+    SendMessage(_hLibraryDBs, EM_SETEVENTMASK, 0, 0);
 
     if (_tcslen(_settings->_libraryDBsPath))
         Edit_SetText(_hLibraryDBs, _settings->_libraryDBsPath);
@@ -247,10 +249,10 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     Button_SetCheck(_hAutoUpdate, _settings->_autoUpdate ?
             BST_CHECKED : BST_UNCHECKED);
 
-    TCHAR buf[16];
     int sel = 0;
     for (int i = 0; i < 3; i++)
     {
+        TCHAR buf[16];
         _tcscpy_s(buf, _countof(buf), cParsers[i]);
         if (_tcscmp(_settings->_parser, buf) == 0)
             sel = i;

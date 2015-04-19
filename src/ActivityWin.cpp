@@ -195,7 +195,7 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     if (hWnd == NULL)
         return NULL;
 
-    HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), _T("Text"),
+    HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, hWnd, NULL, HMod, NULL);
 
@@ -224,7 +224,7 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 
     SetWindowText(hWndTxt, text);
 
-    HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, _T("Progress Bar"),
+    HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, NULL,
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
             hWnd, NULL, HMod, NULL);
