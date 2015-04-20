@@ -87,9 +87,9 @@ private:
 
     HWND composeWindow(HWND hOwner, const TCHAR* font, unsigned fontSize,
             int width, const TCHAR* header, const SearchData* searchData);
-    void onOK(HWND hWnd);
-    int onKeyDown(HWND hWnd, DWORD key);
+    void onOK();
 
+    HWND _hWnd;
     HWND _hEditWnd;
     HWND _hRegExp;
     HWND _hMatchCase;

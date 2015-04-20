@@ -64,8 +64,8 @@ void ConfigWin::Show(HWND hOwner, Settings* settings)
     InitCommonControlsEx(&icex);
     LoadLibrary(_T("Riched20.dll"));
 
-    ConfigWin sw(settings);
-    if (sw.composeWindow(hOwner) == NULL)
+    ConfigWin cw(settings);
+    if (cw.composeWindow(hOwner) == NULL)
         return;
 
     BOOL r;
@@ -143,6 +143,9 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 ConfigWin::~ConfigWin()
 {
+    UnregisterHotKey(_hWnd, 1);
+    UnregisterHotKey(_hWnd, 2);
+
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -171,53 +174,69 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            600, 2 * txtHeight + 70);
+            400, 4 * txtHeight + 100);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
     TCHAR header[32] = {VER_PLUGIN_NAME};
     _tcscat_s(header, _countof(header), _T(" Settings"));
-    HWND hWnd = CreateWindowEx(styleEx, cClassName, header,
+    _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,
             hOwner, NULL, HMod, (LPVOID) this);
-    if (hWnd == NULL)
+    if (_hWnd == NULL)
         return NULL;
 
-    GetClientRect(hWnd, &win);
+    GetClientRect(_hWnd, &win);
     width = win.right - win.left;
     height = win.bottom - win.top;
 
-    int hPos = 10;
+    int yPos = 10;
+    HWND hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
+            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
+            10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
+    SetWindowText(hStatic, _T("Parser (requires database re-creation)"));
 
+    yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_HASSTRINGS,
-            10, hPos, (width - 30) / 3, txtHeight,
-            hWnd, NULL, HMod, NULL);
+            10, yPos, (width - 40) / 2, txtHeight,
+            _hWnd, NULL, HMod, NULL);
 
     _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"),
             _T("Auto update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            width - (10 + (width - 30) / 3), hPos,
-            (width - 30) / 3, txtHeight,
-            hWnd, NULL, HMod, NULL);
+            width - 10 - ((width - 40) / 2), yPos + 5,
+            (width - 40) / 2, txtHeight,
+            _hWnd, NULL, HMod, NULL);
 
-    hPos += (txtHeight + 15);
-    _hLibraryDBs = CreateWindowEx(WS_EX_CLIENTEDGE, RICHEDIT_CLASS, NULL,
-            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-            10, hPos, width - 20, txtHeight,
-            hWnd, NULL, HMod, NULL);
+    yPos += (txtHeight + 25);
+    hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
+            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
+            10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
+    SetWindowText(hStatic, _T("Library database paths"));
 
+    yPos += (txtHeight + 5);
+    styleEx = WS_EX_CLIENTEDGE;
+    style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL;
+    win.top = 0;
+    win.bottom = txtHeight;
+    win.left = 0;
+    win.right = width - 20;
+    AdjustWindowRectEx(&win, style, FALSE, styleEx);
+    _hLibraryDBs = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+            10, yPos, win.right - win.left - 20, win.bottom - win.top,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (win.bottom - win.top + 15);
     width = width / 5;
-
-    hPos += (txtHeight + 10);
     _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
-            width, hPos, width, 25,
-            hWnd, NULL, HMod, NULL);
+            width, yPos, width, 25,
+            _hWnd, NULL, HMod, NULL);
 
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
-            3 * width, hPos, width, 25,
-            hWnd, NULL, HMod, NULL);
+            3 * width, yPos, width, 25,
+            _hWnd, NULL, HMod, NULL);
 
     SendMessage(_hLibraryDBs, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(COLOR_WINDOW));
@@ -261,17 +280,20 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hParser, CB_SETCURSEL, (WPARAM)sel, 0);
 
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    UpdateWindow(hWnd);
+    RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
+    RegisterHotKey(_hWnd, 2, 0, VK_RETURN);
 
-    return hWnd;
+    ShowWindow(_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(_hWnd);
+
+    return _hWnd;
 }
 
 
 /**
  *  \brief
  */
-void ConfigWin::onOK(HWND hWnd)
+void ConfigWin::onOK()
 {
     int len = Edit_GetTextLength(_hLibraryDBs) + 1;
     if (len > 1)
@@ -286,7 +308,7 @@ void ConfigWin::onOK(HWND hWnd)
     SendMessage(_hParser, CB_GETLBTEXT, (WPARAM)idx,
             (LPARAM)_settings->_parser);
 
-    SendMessage(hWnd, WM_CLOSE, 0, 0);
+    SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
 
@@ -300,11 +322,25 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
     {
         case WM_CREATE:
         {
-            ConfigWin* sw =
+            ConfigWin* cw =
                     (ConfigWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(sw));
+            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(cw));
             return 0;
         }
+
+        case WM_HOTKEY:
+            if (HIWORD(lparam) == VK_ESCAPE)
+            {
+                SendMessage(hwnd, WM_CLOSE, 0, 0);
+            }
+            else if (HIWORD(lparam) == VK_RETURN)
+            {
+                ConfigWin* cw =
+                        reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>
+                                (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                cw->onOK();
+            }
+            return 0;
 
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_KILLFOCUS)
@@ -314,15 +350,15 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
             }
             else if (HIWORD(wparam) == BN_CLICKED)
             {
-                ConfigWin* sw =
+                ConfigWin* cw =
                         reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>
                                 (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                if ((HWND)lparam == sw->_hOK)
+                if ((HWND)lparam == cw->_hOK)
                 {
-                    sw->onOK(hwnd);
+                    cw->onOK();
                     return 0;
                 }
-                if ((HWND)lparam == sw->_hCancel)
+                if ((HWND)lparam == cw->_hCancel)
                 {
                     SendMessage(hwnd, WM_CLOSE, 0, 0);
                     return 0;

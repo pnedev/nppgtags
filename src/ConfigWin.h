@@ -63,9 +63,10 @@ private:
 
     HWND composeWindow(HWND hOwner);
 
-    void onOK(HWND hWnd);
+    void onOK();
 
     Settings* _settings;
+    HWND _hWnd;
     HWND _hParser;
     HWND _hAutoUpdate;
     HWND _hLibraryDBs;

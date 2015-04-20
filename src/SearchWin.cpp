@@ -169,6 +169,9 @@ RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 SearchWin::~SearchWin()
 {
+    UnregisterHotKey(_hWnd, 1);
+    UnregisterHotKey(_hWnd, 2);
+
     if (_hBtnFont)
         DeleteObject(_hBtnFont);
     if (_hTxtFont)
@@ -207,36 +210,36 @@ HWND SearchWin::composeWindow(HWND hOwner,
     RECT win = adjustSizeAndPos(hOwner, styleEx, style, width,
             txtHeight + btnHeight + 6);
     width = win.right - win.left;
-    HWND hWnd = CreateWindowEx(styleEx, cClassName, header,
+    _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, win.bottom - win.top,
             hOwner, NULL, HMod, (LPVOID) this);
-    if (hWnd == NULL)
+    if (_hWnd == NULL)
         return NULL;
 
-    GetClientRect(hWnd, &win);
+    GetClientRect(_hWnd, &win);
     width = win.right - win.left;
 
     _hEditWnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
             WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
             0, 0, width, txtHeight,
-            hWnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
 
     width = (width - 12) / 3;
 
     _hRegExp = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             3, txtHeight + 3, width, btnHeight,
-            hWnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
 
     _hMatchCase = CreateWindowEx(0, _T("BUTTON"), _T("MatchCase"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             width + 6, txtHeight + 3, width, btnHeight,
-            hWnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
 
     _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
             2 * width + 9, txtHeight + 3, width, btnHeight,
-            hWnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
 
     SendMessage(_hEditWnd, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(cBackgroundColor));
@@ -254,7 +257,7 @@ HWND SearchWin::composeWindow(HWND hOwner,
         SendMessage(_hEditWnd, WM_SETFONT, (WPARAM)_hTxtFont, (LPARAM)TRUE);
 
     SendMessage(_hEditWnd, EM_EXLIMITTEXT, 0, (LPARAM)(cMaxTagLen - 1));
-    SendMessage(_hEditWnd, EM_SETEVENTMASK, 0, (LPARAM)ENM_KEYEVENTS);
+    SendMessage(_hEditWnd, EM_SETEVENTMASK, 0, 0);
 
     if (_tcslen(searchData->_str))
     {
@@ -273,17 +276,20 @@ HWND SearchWin::composeWindow(HWND hOwner,
     Button_SetCheck(_hMatchCase, searchData->_matchCase ?
             BST_CHECKED : BST_UNCHECKED);
 
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    UpdateWindow(hWnd);
+    RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
+    RegisterHotKey(_hWnd, 2, 0, VK_RETURN);
 
-    return hWnd;
+    ShowWindow(_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(_hWnd);
+
+    return _hWnd;
 }
 
 
 /**
  *  \brief
  */
-void SearchWin::onOK(HWND hWnd)
+void SearchWin::onOK()
 {
     int len = Edit_GetTextLength(_hEditWnd) + 1;
     if (len > 1)
@@ -297,27 +303,7 @@ void SearchWin::onOK(HWND hWnd)
                 true : false;
         _success = true;
     }
-    SendMessage(hWnd, WM_CLOSE, 0, 0);
-}
-
-
-/**
- *  \brief
- */
-int SearchWin::onKeyDown(HWND hWnd, DWORD key)
-{
-    switch (key)
-    {
-        case VK_ESCAPE:
-            SendMessage(hWnd, WM_CLOSE, 0, 0);
-            return 1;
-
-        case VK_RETURN:
-            onOK(hWnd);
-            return 1;
-    }
-
-    return 0;
+    SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
 
@@ -346,38 +332,34 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
             return 0;
         }
 
+        case WM_HOTKEY:
+            if (HIWORD(lparam) == VK_ESCAPE)
+            {
+                SendMessage(hwnd, WM_CLOSE, 0, 0);
+            }
+            else if (HIWORD(lparam) == VK_RETURN)
+            {
+                SearchWin* sw =
+                        reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
+                                (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                sw->onOK();
+            }
+            return 0;
+
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_KILLFOCUS)
             {
                 DestroyCaret();
                 return 0;
             }
-            else if (HIWORD(wparam) == BN_CLICKED)
+            if (HIWORD(wparam) == BN_CLICKED)
             {
                 SearchWin* sw =
                         reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
                                 (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                 if ((HWND)lparam == sw->_hOK)
                 {
-                    sw->onOK(hwnd);
-                    return 0;
-                }
-            }
-        break;
-
-        case WM_NOTIFY:
-            switch (((LPNMHDR)lparam)->code)
-            {
-                case EN_MSGFILTER:
-                {
-                    MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
-                    if (pMsgFilter->msg == WM_KEYDOWN)
-                    {
-                        SearchWin* sw = reinterpret_cast<SearchWin*>
-                                (static_cast<LONG_PTR>
-                                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                        return sw->onKeyDown(hwnd, pMsgFilter->wParam);
-                    }
+                    sw->onOK();
                     return 0;
                 }
             }
