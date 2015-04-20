@@ -46,7 +46,7 @@ set (project_sources
     src/DocLocation.cpp
     src/ActivityWin.cpp
     src/SearchWin.cpp
-    src/SettingsWin.cpp
+    src/ConfigWin.cpp
     src/AboutWin.cpp
     src/AutoCompleteWin.cpp
     src/ResultWin.cpp

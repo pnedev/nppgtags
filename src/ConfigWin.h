@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags settings window
+ *  \brief  GTags config window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -37,10 +37,10 @@ struct Settings;
 
 
 /**
- *  \class  SettingsWin
+ *  \class  ConfigWin
  *  \brief
  */
-class SettingsWin
+class ConfigWin
 {
 public:
     static void Show(HWND hOwner, Settings* _settings);
@@ -57,9 +57,9 @@ private:
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
-    SettingsWin(Settings* settings) : _settings(settings) {}
-    SettingsWin(const SettingsWin&);
-    ~SettingsWin();
+    ConfigWin(Settings* settings) : _settings(settings) {}
+    ConfigWin(const ConfigWin&);
+    ~ConfigWin();
 
     HWND composeWindow(HWND hOwner);
 

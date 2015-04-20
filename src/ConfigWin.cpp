@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags _settings window
+ *  \brief  GTags config window
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -26,7 +26,7 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "SettingsWin.h"
+#include "ConfigWin.h"
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
@@ -36,16 +36,16 @@
 namespace GTags
 {
 
-const TCHAR SettingsWin::cClassName[]   = _T("SettingsWin");
-const int SettingsWin::cBackgroundColor = COLOR_BTNFACE;
-const TCHAR SettingsWin::cFont[]        = _T("Tahoma");
-const int SettingsWin::cFontSize        = 10;
+const TCHAR ConfigWin::cClassName[]   = _T("ConfigWin");
+const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
+const TCHAR ConfigWin::cFont[]        = _T("Tahoma");
+const int ConfigWin::cFontSize        = 10;
 
 
 /**
  *  \brief
  */
-void SettingsWin::Show(HWND hOwner, Settings* settings)
+void ConfigWin::Show(HWND hOwner, Settings* settings)
 {
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -64,7 +64,7 @@ void SettingsWin::Show(HWND hOwner, Settings* settings)
     InitCommonControlsEx(&icex);
     LoadLibrary(_T("Riched20.dll"));
 
-    SettingsWin sw(settings);
+    ConfigWin sw(settings);
     if (sw.composeWindow(hOwner) == NULL)
         return;
 
@@ -81,7 +81,7 @@ void SettingsWin::Show(HWND hOwner, Settings* settings)
 /**
  *  \brief
  */
-RECT SettingsWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
+RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
         int width, int height)
 {
     RECT maxWin;
@@ -141,7 +141,7 @@ RECT SettingsWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
 /**
  *  \brief
  */
-SettingsWin::~SettingsWin()
+ConfigWin::~ConfigWin()
 {
     if (_hFont)
         DeleteObject(_hFont);
@@ -154,7 +154,7 @@ SettingsWin::~SettingsWin()
 /**
  *  \brief
  */
-HWND SettingsWin::composeWindow(HWND hOwner)
+HWND ConfigWin::composeWindow(HWND hOwner)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
@@ -174,7 +174,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             600, 2 * txtHeight + 70);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
-	TCHAR header[32] = {VER_PLUGIN_NAME};
+    TCHAR header[32] = {VER_PLUGIN_NAME};
     _tcscat_s(header, _countof(header), _T(" Settings"));
     HWND hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,
@@ -271,7 +271,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 /**
  *  \brief
  */
-void SettingsWin::onOK(HWND hWnd)
+void ConfigWin::onOK(HWND hWnd)
 {
     int len = Edit_GetTextLength(_hLibraryDBs) + 1;
     if (len > 1)
@@ -293,15 +293,15 @@ void SettingsWin::onOK(HWND hWnd)
 /**
  *  \brief
  */
-LRESULT APIENTRY SettingsWin::wndProc(HWND hwnd, UINT umsg,
+LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
     switch (umsg)
     {
         case WM_CREATE:
         {
-            SettingsWin* sw =
-                    (SettingsWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
+            ConfigWin* sw =
+                    (ConfigWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(sw));
             return 0;
         }
@@ -314,8 +314,8 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hwnd, UINT umsg,
             }
             else if (HIWORD(wparam) == BN_CLICKED)
             {
-                SettingsWin* sw =
-                        reinterpret_cast<SettingsWin*>(static_cast<LONG_PTR>
+                ConfigWin* sw =
+                        reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>
                                 (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                 if ((HWND)lparam == sw->_hOK)
                 {

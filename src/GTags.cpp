@@ -35,7 +35,7 @@
 #include "ActivityWin.h"
 #include "AutoCompleteWin.h"
 #include "ResultWin.h"
-#include "SettingsWin.h"
+#include "ConfigWin.h"
 #include "AboutWin.h"
 
 
@@ -50,25 +50,6 @@ using namespace GTags;
 
 std::list<CPath> UpdateList;
 Mutex UpdateLock;
-
-
-void releaseKeys();
-int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData);
-
-unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
-        bool skipPreSelect = false);
-DBhandle getDatabase(bool writeEn = false);
-bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName = NULL,
-        const TCHAR* defaultTag = NULL);
-
-void sheduleForUpdate(const CPath& file);
-bool runSheduledUpdate(const TCHAR* dbPath);
-
-void autoComplHalf(std::shared_ptr<CmdData>& cmd);
-void autoComplReady(std::shared_ptr<CmdData>& cmd);
-void findReady(std::shared_ptr<CmdData>& cmd);
-void showResult(std::shared_ptr<CmdData>& cmd);
-void showInfo(std::shared_ptr<CmdData>& cmd);
 
 
 /**
@@ -121,7 +102,8 @@ inline void releaseKeys()
 /**
  *  \brief
  */
-unsigned getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
+unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
+        bool skipPreSelect = false)
 {
     INpp& npp = INpp::Get();
 
@@ -156,7 +138,7 @@ unsigned getSelection(TCHAR* sel, bool autoSelectWord, bool skipPreSelect)
 /**
  *  \brief
  */
-DBhandle getDatabase(bool writeEn)
+DBhandle getDatabase(bool writeEn = false)
 {
     INpp& npp = INpp::Get();
     bool success;
@@ -195,8 +177,8 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
-        const TCHAR* defaultTag)
+bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName = NULL,
+        const TCHAR* defaultTag = NULL)
 {
     if (defaultTag)
         _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
@@ -274,30 +256,6 @@ void cmdReady(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void autoComplHalf(std::shared_ptr<CmdData>& cmd)
-{
-    if (cmd->Error())
-    {
-        CText msg(cmd->GetResult());
-        msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->GetName(),
-                MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    DBhandle db = getDatabase();
-    if (db)
-    {
-        cmd->SetID(AUTOCOMPLETE_SYMBOL);
-        cmd->SetDB(db);
-        Cmd::Run(cmd, autoComplReady, db);
-    }
-}
-
-
-/**
- *  \brief
- */
 void autoComplReady(std::shared_ptr<CmdData>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
@@ -323,22 +281,24 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void findReady(std::shared_ptr<CmdData>& cmd)
+void autoComplHalf(std::shared_ptr<CmdData>& cmd)
 {
-    if (cmd->NoResult())
+    if (cmd->Error())
     {
-        DBhandle db = getDatabase();
-        if (db)
-        {
-            cmd->SetID(FIND_SYMBOL);
-            cmd->SetName(cFindSymbol);
-            cmd->SetDB(db);
-            Cmd::Run(cmd, showResult, db);
-        }
+        CText msg(cmd->GetResult());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->GetName(),
+                MB_OK | MB_ICONERROR);
         return;
     }
 
-    showResult(cmd);
+    DBhandle db = getDatabase();
+    if (db)
+    {
+        cmd->SetID(AUTOCOMPLETE_SYMBOL);
+        cmd->SetDB(db);
+        Cmd::Run(cmd, autoComplReady, db);
+    }
 }
 
 
@@ -371,6 +331,28 @@ void showResult(std::shared_ptr<CmdData>& cmd)
     }
 
     ResultWin::Get().Show(cmd);
+}
+
+
+/**
+ *  \brief
+ */
+void findReady(std::shared_ptr<CmdData>& cmd)
+{
+    if (cmd->NoResult())
+    {
+        DBhandle db = getDatabase();
+        if (db)
+        {
+            cmd->SetID(FIND_SYMBOL);
+            cmd->SetName(cFindSymbol);
+            cmd->SetDB(db);
+            Cmd::Run(cmd, showResult, db);
+        }
+        return;
+    }
+
+    showResult(cmd);
 }
 
 
@@ -471,6 +453,8 @@ const Settings& Settings::operator=(const Settings& settings)
  */
 void AutoComplete()
 {
+    releaseKeys();
+
     TCHAR tag[cMaxTagLen];
     if (!getSelection(tag, true, true))
         return;
@@ -478,8 +462,6 @@ void AutoComplete()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
         cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
@@ -492,6 +474,8 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
+    releaseKeys();
+
     TCHAR tag[cMaxTagLen];
     if (!getSelection(&tag[1], true, true))
         return;
@@ -501,8 +485,6 @@ void AutoCompleteFile()
         return;
 
     tag[0] = '/';
-    releaseKeys();
-
     std::shared_ptr<CmdData>
             cmd(new CmdData(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
     Cmd::Run(cmd, autoComplReady, db);
@@ -514,6 +496,8 @@ void AutoCompleteFile()
  */
 void FindFile()
 {
+    releaseKeys();
+
     SearchData searchData(NULL, false, true);
     if (!getSelection(searchData._str))
     {
@@ -530,8 +514,6 @@ void FindFile()
     if (!db)
         return;
 
-    releaseKeys();
-
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_FILE, cFindFile, db,
             searchData._str, searchData._regExp, searchData._matchCase));
@@ -544,6 +526,8 @@ void FindFile()
  */
 void FindDefinition()
 {
+    releaseKeys();
+
     SearchData searchData(NULL, false, true);
     if (!getSelection(searchData._str, true))
     {
@@ -554,8 +538,6 @@ void FindDefinition()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_DEFINITION, cFindDefinition, db,
@@ -569,6 +551,8 @@ void FindDefinition()
  */
 void FindReference()
 {
+    releaseKeys();
+
     SearchData searchData(NULL, false, true);
     if (!getSelection(searchData._str, true))
     {
@@ -579,8 +563,6 @@ void FindReference()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_REFERENCE, cFindReference, db,
@@ -594,6 +576,8 @@ void FindReference()
  */
 void Grep()
 {
+    releaseKeys();
+
     SearchData searchData(NULL, true, true);
     if (!getSelection(searchData._str, true))
     {
@@ -604,8 +588,6 @@ void Grep()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(GREP, cGrep, db,
@@ -637,6 +619,8 @@ void GoForward()
  */
 void CreateDatabase()
 {
+    releaseKeys();
+
     INpp& npp = INpp::Get();
     bool success;
     TCHAR path[MAX_PATH];
@@ -687,8 +671,6 @@ void CreateDatabase()
         db = DBManager::Get().RegisterDB(currentFile, true);
     }
 
-    releaseKeys();
-
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
     Cmd::Run(cmd, cmdReady, db);
@@ -700,6 +682,8 @@ void CreateDatabase()
  */
 bool UpdateSingleFile(const TCHAR* file)
 {
+    releaseKeys();
+
     CPath currentFile(file);
     if (!file)
     {
@@ -718,8 +702,6 @@ bool UpdateSingleFile(const TCHAR* file)
         sheduleForUpdate(currentFile);
         return true;
     }
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,
@@ -767,7 +749,7 @@ void DeleteDatabase()
  */
 void SettingsCfg()
 {
-    SettingsWin::Show(INpp::Get().GetHandle(), &Config);
+    ConfigWin::Show(INpp::Get().GetHandle(), &Config);
 }
 
 
