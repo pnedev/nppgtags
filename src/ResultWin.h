@@ -132,7 +132,7 @@ private:
     bool openItem(int lineNum, unsigned matchNum = 1);
 
     bool findString(const char* str, int* startPos, int* endPos,
-        bool matchCase, bool wholeWord, bool regExpr);
+        bool matchCase, bool wholeWord, bool regExp);
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
     void onHotspotClick(SCNotification* notify);

@@ -421,6 +421,41 @@ void PluginDeInit()
 /**
  *  \brief
  */
+void EnablePluginMenuItem(int itemIdx, bool enable)
+{
+    HMENU hMenu = INpp::Get().GetPluginMenu();
+
+    MENUITEMINFO mi = {0};
+    mi.cbSize       = sizeof(mi);
+    mi.fMask        = MIIM_FTYPE | MIIM_STRING;
+
+    int idx;
+    int itemsCount = GetMenuItemCount(hMenu);
+    for (idx = 0; idx < itemsCount; idx++)
+    {
+        GetMenuItemInfo(hMenu, idx, TRUE, &mi);
+        if ((mi.fType & MFT_STRING) && !_tcscmp(cPluginName, mi.dwTypeData))
+            break;
+    }
+    if (idx == itemsCount)
+        return;
+
+    hMenu = GetSubMenu(hMenu, idx);
+
+    GetMenuItemInfo(hMenu, itemIdx, TRUE, &mi);
+    if (!(mi.fType & MFT_STRING))
+        return;
+
+    UINT flags = MF_BYPOSITION;
+    flags |= enable ? MF_ENABLED : MF_GRAYED;
+
+    EnableMenuItem(hMenu, itemIdx, flags);
+}
+
+
+/**
+ *  \brief
+ */
 Settings::Settings(const TCHAR* parser, bool autoUpdate,
         const TCHAR* libraryDBsPath) : _autoUpdate(autoUpdate)
 {

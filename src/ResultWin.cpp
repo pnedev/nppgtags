@@ -675,14 +675,14 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
  *  \brief
  */
 bool ResultWin::findString(const char* str, int* startPos, int* endPos,
-        bool matchCase, bool wholeWord, bool regExpr)
+        bool matchCase, bool wholeWord, bool regExp)
 {
     int searchFlags = 0;
     if (matchCase)
         searchFlags |= SCFIND_MATCHCASE;
     if (wholeWord)
         searchFlags |= SCFIND_WHOLEWORD;
-    if (regExpr)
+    if (regExp)
         searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
 
     sendSci(SCI_SETSEARCHFLAGS, searchFlags);

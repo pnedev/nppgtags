@@ -83,6 +83,7 @@ extern Settings Config;
 
 BOOL PluginInit(HINSTANCE hMod);
 void PluginDeInit();
+void EnablePluginMenuItem(int itemIdx, bool enable = true);
 
 void AutoComplete();
 void AutoCompleteFile();

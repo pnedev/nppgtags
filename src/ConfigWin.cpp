@@ -143,8 +143,9 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 ConfigWin::~ConfigWin()
 {
-    UnregisterHotKey(_hWnd, 1);
-    UnregisterHotKey(_hWnd, 2);
+    if (_hWnd)
+        UnregisterHotKey(_hWnd, 1);
+        UnregisterHotKey(_hWnd, 2);
 
     if (_hFont)
         DeleteObject(_hFont);
@@ -173,12 +174,15 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
+
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
             400, 4 * txtHeight + 100);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
+
     TCHAR header[32] = {VER_PLUGIN_NAME};
     _tcscat_s(header, _countof(header), _T(" Settings"));
+
     _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,
             hOwner, NULL, HMod, (LPVOID) this);
@@ -212,18 +216,18 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
-    SetWindowText(hStatic, _T("Library database paths"));
+    SetWindowText(hStatic, _T("Paths to library databases"));
 
     yPos += (txtHeight + 5);
     styleEx = WS_EX_CLIENTEDGE;
     style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL;
-    win.top = 0;
-    win.bottom = txtHeight;
-    win.left = 0;
-    win.right = width - 20;
+    win.top = yPos;
+    win.bottom = win.top + txtHeight;
+    win.left = 10;
+    win.right = width - 10;
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hLibraryDBs = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
-            10, yPos, win.right - win.left - 20, win.bottom - win.top,
+            win.left, win.top, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (win.bottom - win.top + 15);
@@ -308,6 +312,11 @@ void ConfigWin::onOK()
     SendMessage(_hParser, CB_GETLBTEXT, (WPARAM)idx,
             (LPARAM)_settings->_parser);
 
+    if (_tcscmp(_settings->_parser, cParsers[1]))
+        EnablePluginMenuItem(4);
+    else
+        EnablePluginMenuItem(4, false);
+
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
@@ -332,15 +341,17 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
             if (HIWORD(lparam) == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
+                return 0;
             }
-            else if (HIWORD(lparam) == VK_RETURN)
+            if (HIWORD(lparam) == VK_RETURN)
             {
                 ConfigWin* cw =
                         reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>
                                 (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                 cw->onOK();
+                return 0;
             }
-            return 0;
+        break;
 
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_KILLFOCUS)
@@ -348,7 +359,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                 DestroyCaret();
                 return 0;
             }
-            else if (HIWORD(wparam) == BN_CLICKED)
+            if (HIWORD(wparam) == BN_CLICKED)
             {
                 ConfigWin* cw =
                         reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>

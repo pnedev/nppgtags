@@ -82,7 +82,7 @@ void INpp::ReplaceWord(const char* replText) const
  *  \brief
  */
 bool INpp::SearchText(const char* text,
-        bool matchCase, bool wholeWord, bool regExpr,
+        bool matchCase, bool wholeWord, bool regExp,
         long* startPos, long* endPos) const
 {
     if (startPos == NULL || *startPos < 0)
@@ -96,7 +96,7 @@ bool INpp::SearchText(const char* text,
         searchFlags |= SCFIND_MATCHCASE;
     if (wholeWord)
         searchFlags |= SCFIND_WHOLEWORD;
-    if (regExpr)
+    if (regExp)
         searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
 
     SendMessage(_hSC, SCI_SETSEARCHFLAGS, (WPARAM)searchFlags, 0);

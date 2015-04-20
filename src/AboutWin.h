@@ -58,6 +58,7 @@ private:
 
     HWND composeWindow(HWND hOwner, const TCHAR* info);
 
+    HWND _hWnd;
     HFONT _hFont;
 };
 

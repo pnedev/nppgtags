@@ -71,6 +71,12 @@ public:
                 (WPARAM)cmdID, (LPARAM)enable);
     }
 
+    inline HMENU GetPluginMenu() const
+    {
+        return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE,
+                (WPARAM)NPPPLUGINMENU, 0);
+    }
+
     inline void RegisterWin(HWND hwnd) const
     {
         SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG,
@@ -276,7 +282,7 @@ public:
     long GetWord(char* buf, int bufSize, bool select) const;
     void ReplaceWord(const char* replText) const;
     bool SearchText(const char* text,
-            bool matchCase, bool wholeWord, bool regExpr,
+            bool matchCase, bool wholeWord, bool regExp,
             long* startPos = NULL, long* endPos = NULL) const;
 
     inline void Backspace() const

@@ -165,6 +165,9 @@ RECT AboutWin::adjustSizeAndPos(HWND hWnd, int width, int height)
  */
 AboutWin::~AboutWin()
 {
+    if (_hWnd)
+        UnregisterHotKey(_hWnd, 1);
+
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -181,20 +184,20 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
 
-    HWND hWnd = CreateWindowEx(styleEx, cClassName, _T("About"),
+    _hWnd = CreateWindowEx(styleEx, cClassName, _T("About"),
             style, 0, 0, 100, 100, hOwner, NULL, HMod, NULL);
-    if (hWnd == NULL)
+    if (_hWnd == NULL)
         return NULL;
 
     RECT win;
-    GetClientRect(hWnd, &win);
+    GetClientRect(_hWnd, &win);
 
     style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |
             ES_MULTILINE | ES_READONLY;
 
     HWND hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style, 0, 0,
             win.right - win.left, win.bottom - win.top,
-            hWnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
 
     SendMessage(hEdit, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(cBackgroundColor));
@@ -228,10 +231,12 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
             _T(__DATE__), _T(__TIME__), VER_COPYRIGHT, info);
     Edit_SetText(hEdit, text);
 
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    UpdateWindow(hWnd);
+    RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
 
-    return hWnd;
+    ShowWindow(_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(_hWnd);
+
+    return _hWnd;
 }
 
 
@@ -246,19 +251,17 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
         case WM_CREATE:
             return 0;
 
-        case WM_SETFOCUS:
-            SetFocus(GetTopWindow(hwnd));
-            return 0;
-
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_SETFOCUS)
             {
                 DestroyCaret();
                 return 0;
             }
-            if (HIWORD(wparam) == EN_KILLFOCUS)
+        break;
+
+        case WM_HOTKEY:
+            if (HIWORD(lparam) == VK_ESCAPE)
             {
-                DestroyCaret();
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }
@@ -272,16 +275,9 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                     DestroyCaret();
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
                     if (pMsgFilter->msg == WM_KEYDOWN)
-                    {
-                        if (pMsgFilter->wParam == VK_ESCAPE ||
-                            pMsgFilter->wParam == VK_TAB)
-                        {
-                            SendMessage(hwnd, WM_CLOSE, 0, 0);
-                            return 1;
-                        }
-                    }
-                    return 0;
+                        return 1;
                 }
+                break;
 
                 case EN_REQUESTRESIZE:
                 {
@@ -324,6 +320,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
         break;
 
         case WM_DESTROY:
+            DestroyCaret();
             PostQuitMessage(0);
             return 0;
     }

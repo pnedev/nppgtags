@@ -169,8 +169,9 @@ RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 SearchWin::~SearchWin()
 {
-    UnregisterHotKey(_hWnd, 1);
-    UnregisterHotKey(_hWnd, 2);
+    if (_hWnd)
+        UnregisterHotKey(_hWnd, 1);
+        UnregisterHotKey(_hWnd, 2);
 
     if (_hBtnFont)
         DeleteObject(_hBtnFont);
@@ -336,15 +337,17 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
             if (HIWORD(lparam) == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
+                return 0;
             }
-            else if (HIWORD(lparam) == VK_RETURN)
+            if (HIWORD(lparam) == VK_RETURN)
             {
                 SearchWin* sw =
                         reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
                                 (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                 sw->onOK();
+                return 0;
             }
-            return 0;
+        break;
 
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_KILLFOCUS)
