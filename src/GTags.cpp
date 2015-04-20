@@ -440,11 +440,15 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
     if (idx == itemsCount)
         return;
 
+    Tools::MsgA("plugin menu idx found");
+
     hMenu = GetSubMenu(hMenu, idx);
 
     GetMenuItemInfo(hMenu, itemIdx, TRUE, &mi);
     if (!(mi.fType & MFT_STRING))
         return;
+
+    Tools::MsgA("plugin submenu idx found");
 
     UINT flags = MF_BYPOSITION;
     flags |= enable ? MF_ENABLED : MF_GRAYED;

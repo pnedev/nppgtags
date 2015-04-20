@@ -176,7 +176,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD style = WS_POPUP | WS_CAPTION;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            400, 4 * txtHeight + 100);
+            500, 4 * txtHeight + 100);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -201,7 +201,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
-            WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_HASSTRINGS,
+            WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
             10, yPos, (width - 40) / 2, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
@@ -313,9 +313,9 @@ void ConfigWin::onOK()
             (LPARAM)_settings->_parser);
 
     if (_tcscmp(_settings->_parser, cParsers[1]))
-        EnablePluginMenuItem(4);
+        EnablePluginMenuItem(0);
     else
-        EnablePluginMenuItem(4, false);
+        EnablePluginMenuItem(0, false);
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
