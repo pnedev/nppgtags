@@ -30,6 +30,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <stdlib.h>
 #include "GTags.h"
 
 
@@ -202,14 +203,13 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
-            10, yPos, (width - 40) / 2, txtHeight,
+            10, yPos, (width / 2) - 20, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"),
             _T("Auto update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            width - 10 - ((width - 40) / 2), yPos + 5,
-            (width - 40) / 2, txtHeight,
+            (width / 2) + 10, yPos + 5, (width / 2) - 20, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 25);
@@ -272,17 +272,13 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     Button_SetCheck(_hAutoUpdate, _settings->_autoUpdate ?
             BST_CHECKED : BST_UNCHECKED);
 
-    int sel = 0;
-    for (int i = 0; i < 3; i++)
+    bool sel = false;
+    for (unsigned i = 0; i < _countof(cParsers); i++)
     {
-        TCHAR buf[16];
-        _tcscpy_s(buf, _countof(buf), cParsers[i]);
-        if (_tcscmp(_settings->_parser, buf) == 0)
-            sel = i;
-        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)buf);
+        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)cParsers[i]);
+        if (!sel && !_tcscmp(_settings->_parser, cParsers[i]))
+            SendMessage(_hParser, CB_SETCURSEL, (WPARAM)i, 0);
     }
-
-    SendMessage(_hParser, CB_SETCURSEL, (WPARAM)sel, 0);
 
     RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
     RegisterHotKey(_hWnd, 2, 0, VK_RETURN);
@@ -303,7 +299,7 @@ void ConfigWin::onOK()
     if (len > 1)
         Edit_GetText(_hLibraryDBs, _settings->_libraryDBsPath, len);
     else
-        _settings->_libraryDBsPath[0] = _T('\0');
+        _settings->_libraryDBsPath[0] = 0;
 
     _settings->_autoUpdate =
             (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
@@ -312,10 +308,10 @@ void ConfigWin::onOK()
     SendMessage(_hParser, CB_GETLBTEXT, (WPARAM)idx,
             (LPARAM)_settings->_parser);
 
-    if (_tcscmp(_settings->_parser, cParsers[1]))
-        EnablePluginMenuItem(0);
+    if (_tcscmp(_settings->_parser, cCtagsParser))
+        EnablePluginMenuItem(cFindReferenceIdx);
     else
-        EnablePluginMenuItem(0, false);
+        EnablePluginMenuItem(cFindReferenceIdx, false);
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }

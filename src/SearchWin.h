@@ -66,9 +66,8 @@ public:
     static void Register();
     static void Unregister();
 
-    static bool Show(HWND hOwner,
-            const TCHAR *font, unsigned fontSize, int width,
-            const TCHAR *header, SearchData* searchData);
+    static bool Show(HWND hOwner, int width, const TCHAR *header,
+            SearchData* searchData, bool enMatchCase, bool enRegExp);
 
 private:
     static const TCHAR cClassName[];
@@ -85,8 +84,8 @@ private:
     SearchWin(const SearchWin&);
     ~SearchWin();
 
-    HWND composeWindow(HWND hOwner, const TCHAR* font, unsigned fontSize,
-            int width, const TCHAR* header, const SearchData* searchData);
+    HWND composeWindow(HWND hOwner, int width, const TCHAR* header,
+            const SearchData* searchData, bool enMatchCase, bool enRegExp);
     void onOK();
 
     HWND _hWnd;

@@ -78,16 +78,15 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-bool SearchWin::Show(HWND hOwner,
-        const TCHAR* font, unsigned fontSize, int width,
-        const TCHAR* header, SearchData* searchData)
+bool SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
+        SearchData* searchData, bool enMatchCase, bool enRegExp)
 {
     if (!searchData)
         return false;
 
     SearchWin sw(searchData);
-    if (sw.composeWindow(hOwner, font, fontSize, width, header,
-            searchData) == NULL)
+    if (sw.composeWindow(hOwner, width, header, searchData,
+            enMatchCase, enRegExp) == NULL)
         return false;
 
     BOOL r;
@@ -183,24 +182,24 @@ SearchWin::~SearchWin()
 /**
  *  \brief
  */
-HWND SearchWin::composeWindow(HWND hOwner,
-        const TCHAR* font, unsigned fontSize,
-        int width, const TCHAR* header, const SearchData* searchData)
+HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
+        const SearchData* searchData, bool enMatchCase, bool enRegExp)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
     GetTextMetrics(hdc, &tm);
-    int txtHeight = MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
-            tm.tmInternalLeading;
-    int btnHeight = MulDiv(fontSize - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
+    int txtHeight =
+            MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
+                tm.tmInternalLeading;
+    int btnHeight = MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
             tm.tmInternalLeading;
     _hTxtFont = CreateFont(
-            -MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+            -MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, font);
+            FF_DONTCARE | DEFAULT_PITCH, UIFontName);
     _hBtnFont = CreateFont(
-            -MulDiv(fontSize - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+            -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cBtnFont);
@@ -249,9 +248,8 @@ HWND SearchWin::composeWindow(HWND hOwner,
     fmt.cbSize      = sizeof(fmt);
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
     fmt.dwEffects   = CFE_AUTOCOLOR;
-    fmt.yHeight     = fontSize * 20;
-    if (font)
-        _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), font);
+    fmt.yHeight     = UIFontSize * 20;
+    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), UIFontName);
     SendMessage(_hEditWnd, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
 
     if (_hTxtFont)
@@ -276,6 +274,11 @@ HWND SearchWin::composeWindow(HWND hOwner,
             BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hMatchCase, searchData->_matchCase ?
             BST_CHECKED : BST_UNCHECKED);
+
+    if (!enMatchCase)
+        EnableWindow(_hMatchCase, FALSE);
+    if (!enRegExp)
+        EnableWindow(_hRegExp, FALSE);
 
     RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
     RegisterHotKey(_hWnd, 2, 0, VK_RETURN);

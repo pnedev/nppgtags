@@ -129,49 +129,6 @@ private:
 };
 
 
-/**
- *  \class  CPathContainer
- *  \brief
- */
-class CPathContainer
-{
-public:
-    CPathContainer() : _path(NULL) {}
-    ~CPathContainer()
-    {
-        if (_path)
-            delete _path;
-    }
-
-    inline const CPathContainer& operator=(const TCHAR* pathStr)
-    {
-        if (_path)
-            *_path = pathStr;
-        else
-            _path = new CPath(pathStr);
-
-        return *this;
-    }
-
-    inline CPath* operator()() const
-    {
-        return _path;
-    }
-
-    inline void Delete()
-    {
-        if (_path)
-        {
-            delete _path;
-            _path = NULL;
-        }
-    }
-
-private:
-    CPath* _path;
-};
-
-
 #ifdef UNICODE
 #define CText     CTextW
 #else

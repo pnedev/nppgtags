@@ -47,6 +47,16 @@ struct ShortcutKey {
 };
 
 struct FuncItem {
+    FuncItem(const TCHAR* itemName = NULL, PFUNCPLUGINCMD pFunc = NULL,
+            bool init2Check = false, ShortcutKey* pShKey = NULL) :
+        _pFunc(pFunc), _init2Check(init2Check), _pShKey(pShKey)
+    {
+        if (itemName != NULL)
+            _tcscpy_s(_itemName, PLUGIN_ITEM_SIZE, itemName);
+        else
+            _itemName[0] = 0;
+    }
+
     TCHAR _itemName[PLUGIN_ITEM_SIZE];
     PFUNCPLUGINCMD _pFunc;
     int _cmdID;

@@ -29,33 +29,37 @@
 #include <windows.h>
 #include <tchar.h>
 #include "resource.h"
-#include "Common.h"
+
+
+class CPath;
+struct FuncItem;
 
 
 namespace GTags
 {
 
-const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
-const TCHAR cBinsDir[]          = VER_PLUGIN_NAME;
-const unsigned cMaxTagLen       = 128;
+const TCHAR cPluginName[]           = VER_PLUGIN_NAME;
+const TCHAR cBinsDir[]              = VER_PLUGIN_NAME;
+const unsigned cMaxTagLen           = 128;
 
-const TCHAR cCreateDatabase[]   = _T("Create Database");
-const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
-const TCHAR cAutoCompl[]        = _T("AutoComplete");
-const TCHAR cAutoComplFile[]    = _T("AutoComplete File");
-const TCHAR cFindFile[]         = _T("Find File");
-const TCHAR cFindDefinition[]   = _T("Find Definition");
-const TCHAR cFindReference[]    = _T("Find Reference");
-const TCHAR cFindSymbol[]       = _T("Find Symbol");
-const TCHAR cGrep[]             = _T("Grep");
-const TCHAR cVersion[]          = _T("About");
+const TCHAR cCreateDatabase[]       = _T("Create Database");
+const TCHAR cUpdateSingle[]         = _T("Database Single File Update");
+const TCHAR cAutoCompl[]            = _T("AutoComplete");
+const TCHAR cAutoComplFile[]        = _T("AutoComplete File");
+const TCHAR cFindFile[]             = _T("Find File");
+const TCHAR cFindDefinition[]       = _T("Find Definition");
+const TCHAR cFindReference[]        = _T("Find Reference");
+const TCHAR cFindSymbol[]           = _T("Find Symbol");
+const TCHAR cGrep[]                 = _T("Grep");
+const TCHAR cVersion[]              = _T("About");
 
-const TCHAR cParsers[][16] = {
-    _T("default"),
-    _T("ctags"),
-    _T("pygments")
-};
+const TCHAR cDefaultParser[]        = _T("default");
+const TCHAR cCtagsParser[]          = _T("ctags");
+const TCHAR cPygmentsParser[]       = _T("pygments");
 
+const unsigned cFindReferenceIdx    = 4;
+const unsigned cGoBackIdx           = 7;
+const unsigned cGoForwardIdx        = 8;
 
 /**
  *  \struct
@@ -63,21 +67,24 @@ const TCHAR cParsers[][16] = {
  */
 struct Settings
 {
-    Settings(const TCHAR* parser = NULL, bool autoUpdate = true,
+    Settings(const TCHAR* parser = cDefaultParser, bool autoUpdate = true,
             const TCHAR* libraryDBsPath = NULL);
-    const Settings& operator=(const Settings& settings);
 
-    TCHAR   _parser[16];
+    TCHAR   _parser[32];
     bool    _autoUpdate;
     TCHAR   _libraryDBsPath[1024];
 };
 
 
+extern FuncItem Menu[16];
+
 extern HINSTANCE HMod;
 extern CPath DllPath;
+
 extern TCHAR UIFontName[32];
 extern unsigned UIFontSize;
 
+extern const TCHAR* cParsers[3];
 extern Settings Config;
 
 

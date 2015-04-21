@@ -23,30 +23,13 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "ResultWin.h"
+#include <memory>
 
 
 namespace
 {
 
-const int cFuncCount = 16;
-FuncItem InterfaceFunc[cFuncCount];
-
-CPathContainer StoredPath;
-
-
-/**
- *  \brief
- */
-void addMenuItem(const TCHAR* itemName = NULL,
-        PFUNCPLUGINCMD cmdFunc = NULL, bool initCheckMark = false)
-{
-    static int i = 0;
-
-    if (itemName != NULL)
-        _tcscpy_s(InterfaceFunc[i]._itemName, PLUGIN_ITEM_SIZE, itemName);
-    InterfaceFunc[i]._pFunc = cmdFunc;
-    InterfaceFunc[i++]._init2Check = initCheckMark;
-}
+std::unique_ptr<CPath> ChangedFile;
 
 }
 
@@ -88,25 +71,6 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
         MessageBox(npp.GetHandle(),
             _T("ResultWin init failed, plugin will not be operational"),
             GTags::cPluginName, MB_OK | MB_ICONERROR);
-
-    ZeroMemory(InterfaceFunc, sizeof(InterfaceFunc));
-
-    addMenuItem(GTags::cAutoCompl, GTags::AutoComplete);
-    addMenuItem(GTags::cAutoComplFile, GTags::AutoCompleteFile);
-    addMenuItem(GTags::cFindFile, GTags::FindFile);
-    addMenuItem(GTags::cFindDefinition, GTags::FindDefinition);
-    addMenuItem(GTags::cFindReference, GTags::FindReference);
-    addMenuItem(GTags::cGrep, GTags::Grep);
-    addMenuItem(); // separator
-    addMenuItem(_T("Go Back"), GTags::GoBack);
-    addMenuItem(_T("Go Forward"), GTags::GoForward);
-    addMenuItem(); // separator
-    addMenuItem(GTags::cCreateDatabase, GTags::CreateDatabase);
-    addMenuItem(_T("Delete Database"), GTags::DeleteDatabase);
-    addMenuItem(); // separator
-    addMenuItem(_T("Settings"), GTags::SettingsCfg);
-    addMenuItem(); // separator
-    addMenuItem(GTags::cVersion, GTags::About);
 }
 
 
@@ -118,8 +82,8 @@ extern "C" __declspec(dllexport) const TCHAR* getName()
 
 extern "C" __declspec(dllexport) FuncItem* getFuncsArray(int* nbF)
 {
-    *nbF = cFuncCount;
-    return InterfaceFunc;
+    *nbF = _countof(GTags::Menu);
+    return GTags::Menu;
 }
 
 
@@ -144,13 +108,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
                 TCHAR file[MAX_PATH];
                 INpp::Get().GetFilePathFromBufID(
                         notifyCode->nmhdr.idFrom, file);
-                StoredPath = file;
+                ChangedFile.reset(new CPath(file));
             }
         break;
 
         case NPPN_FILERENAMECANCEL:
         case NPPN_FILEDELETEFAILED:
-            StoredPath.Delete();
+            ChangedFile.reset();
         break;
 
         case NPPN_FILERENAMED:
@@ -161,10 +125,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
                         notifyCode->nmhdr.idFrom, file);
                 GTags::UpdateSingleFile(file);
 
-                if (StoredPath())
+                if (ChangedFile)
                 {
-                    GTags::UpdateSingleFile(StoredPath()->C_str());
-                    StoredPath.Delete();
+                    GTags::UpdateSingleFile(ChangedFile->C_str());
+                    ChangedFile.reset();
                 }
             }
         break;
@@ -172,10 +136,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         case NPPN_FILEDELETED:
             if (GTags::Config._autoUpdate)
             {
-                if (StoredPath())
+                if (ChangedFile)
                 {
-                    GTags::UpdateSingleFile(StoredPath()->C_str());
-                    StoredPath.Delete();
+                    GTags::UpdateSingleFile(ChangedFile->C_str());
+                    ChangedFile.reset();
                 }
                 else
                 {

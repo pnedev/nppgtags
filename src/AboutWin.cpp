@@ -31,6 +31,7 @@
 #include <shellapi.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <stdlib.h>
 #include "GTags.h"
 
 
@@ -274,7 +275,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                 {
                     DestroyCaret();
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
-                    if (pMsgFilter->msg == WM_KEYDOWN)
+                    if (pMsgFilter->msg != WM_LBUTTONUP)
                         return 1;
                 }
                 break;

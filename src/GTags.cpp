@@ -48,6 +48,7 @@ namespace
 using namespace GTags;
 
 
+HMENU HMenu = NULL;
 std::list<CPath> UpdateList;
 Mutex UpdateLock;
 
@@ -177,14 +178,15 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName = NULL,
-        const TCHAR* defaultTag = NULL)
+bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
+        const TCHAR* defaultTag = NULL,
+        bool enMatchCase = true, bool enRegExp = false)
 {
     if (defaultTag)
         _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
 
-    return SearchWin::Show(INpp::Get().GetHandle(), UIFontName,
-            UIFontSize + 1, 400, uiName, searchData);
+    return SearchWin::Show(INpp::Get().GetHandle(), 400, uiName,
+            searchData, enMatchCase, enRegExp);
 }
 
 
@@ -373,12 +375,39 @@ void showInfo(std::shared_ptr<CmdData>& cmd)
 namespace GTags
 {
 
+FuncItem Menu[16] = {
+    /* 0 */  FuncItem(cAutoCompl, AutoComplete),
+    /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
+    /* 2 */  FuncItem(cFindFile, FindFile),
+    /* 3 */  FuncItem(cFindDefinition, FindDefinition),
+    /* 4 */  FuncItem(cFindReference, FindReference),
+    /* 5 */  FuncItem(cGrep, Grep),
+    /* 6 */  FuncItem(),
+    /* 7 */  FuncItem(_T("Go Back"), GoBack),
+    /* 8 */  FuncItem(_T("Go Forward"), GoForward),
+    /* 9 */  FuncItem(),
+    /* 10 */ FuncItem(cCreateDatabase, CreateDatabase),
+    /* 11 */ FuncItem(_T("Delete Database"), DeleteDatabase),
+    /* 12 */ FuncItem(),
+    /* 13 */ FuncItem(_T("Settings"), SettingsCfg),
+    /* 14 */ FuncItem(),
+    /* 15 */ FuncItem(cVersion, About)
+};
+
 HINSTANCE HMod = NULL;
 CPath DllPath;
+
 TCHAR UIFontName[32];
 unsigned UIFontSize;
 
-Settings Config(cParsers[0], true, _T(""));
+const TCHAR* cParsers[3] = {
+    cDefaultParser,
+    cCtagsParser,
+    cPygmentsParser
+};
+
+Settings Config;
+
 
 
 /**
@@ -423,37 +452,37 @@ void PluginDeInit()
  */
 void EnablePluginMenuItem(int itemIdx, bool enable)
 {
-    HMENU hMenu = INpp::Get().GetPluginMenu();
-
-    MENUITEMINFO mi = {0};
-    mi.cbSize       = sizeof(mi);
-    mi.fMask        = MIIM_FTYPE | MIIM_STRING;
-
-    int idx;
-    int itemsCount = GetMenuItemCount(hMenu);
-    for (idx = 0; idx < itemsCount; idx++)
+    if (HMenu == NULL)
     {
-        GetMenuItemInfo(hMenu, idx, TRUE, &mi);
-        if ((mi.fType & MFT_STRING) && !_tcscmp(cPluginName, mi.dwTypeData))
-            break;
+        TCHAR buf[PLUGIN_ITEM_SIZE];
+        HMENU hMenu = INpp::Get().GetPluginMenu();
+
+        MENUITEMINFO mi = {0};
+        mi.cbSize       = sizeof(mi);
+        mi.fMask        = MIIM_STRING;
+
+        int idx;
+        int itemsCount = GetMenuItemCount(hMenu);
+        for (idx = 0; idx < itemsCount; idx++)
+        {
+            mi.dwTypeData = NULL;
+            GetMenuItemInfo(hMenu, idx, TRUE, &mi);
+            mi.dwTypeData = buf;
+            mi.cch++;
+            GetMenuItemInfo(hMenu, idx, TRUE, &mi);
+            if (!_tcscmp(cPluginName, mi.dwTypeData))
+                break;
+        }
+        if (idx == itemsCount)
+            return;
+
+        HMenu = GetSubMenu(hMenu, idx);
     }
-    if (idx == itemsCount)
-        return;
-
-    Tools::MsgA("plugin menu idx found");
-
-    hMenu = GetSubMenu(hMenu, idx);
-
-    GetMenuItemInfo(hMenu, itemIdx, TRUE, &mi);
-    if (!(mi.fType & MFT_STRING))
-        return;
-
-    Tools::MsgA("plugin submenu idx found");
 
     UINT flags = MF_BYPOSITION;
     flags |= enable ? MF_ENABLED : MF_GRAYED;
 
-    EnableMenuItem(hMenu, itemIdx, flags);
+    EnableMenuItem(HMenu, itemIdx, flags);
 }
 
 
@@ -466,24 +495,11 @@ Settings::Settings(const TCHAR* parser, bool autoUpdate,
     if (parser)
         _tcscpy_s(_parser, _countof(_parser), parser);
     else
-        _parser[0] = _T('\0');
+        _parser[0] = 0;
     if (libraryDBsPath)
         _tcscpy_s(_libraryDBsPath, _countof(_libraryDBsPath), libraryDBsPath);
     else
-        _libraryDBsPath[0] = _T('\0');
-}
-
-
-/**
- *  \brief
- */
-const Settings& Settings::operator=(const Settings& settings)
-{
-    _autoUpdate = settings._autoUpdate;
-    _tcscpy_s(_parser, _countof(_parser), settings._parser);
-    _tcscpy_s(_libraryDBsPath, _countof(_libraryDBsPath),
-            settings._libraryDBsPath);
-    return settings;
+        _libraryDBsPath[0] = 0;
 }
 
 
@@ -545,7 +561,7 @@ void FindFile()
         if (_tcslen(fileName) >= cMaxTagLen)
             fileName[cMaxTagLen - 1] = 0;
 
-        if (!enterTag(&searchData, cFindFile, fileName))
+        if (!enterTag(&searchData, cFindFile, fileName, true, true))
             return;
     }
 
@@ -620,7 +636,7 @@ void Grep()
     SearchData searchData(NULL, true, true);
     if (!getSelection(searchData._str, true))
     {
-        if (!enterTag(&searchData, cGrep))
+        if (!enterTag(&searchData, cGrep, NULL, true, true))
             return;
     }
 
