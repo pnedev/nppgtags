@@ -174,8 +174,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             FF_DONTCARE | DEFAULT_PITCH, cFont);
     ReleaseDC(hOwner, hdc);
 
-    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW |
-            WS_EX_CONTROLPARENT;
+    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
@@ -354,6 +353,8 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
         }
 
         case WM_HOTKEY:
+            if (hwnd != GetFocus())
+                break;
             if (HIWORD(lparam) == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);

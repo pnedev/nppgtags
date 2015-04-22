@@ -92,7 +92,7 @@ void AboutWin::Show(HWND hOwner, const TCHAR* info)
 
     BOOL r;
     MSG msg;
-    while ((r = GetMessage(&msg, aw._hWnd, 0, 0)) != 0 && r != -1)
+    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -262,10 +262,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_HOTKEY:
             if (hwnd != GetFocus())
-            {
-                Tools::MsgA("does not own the focus");
                 break;
-            }
             if (HIWORD(lparam) == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);

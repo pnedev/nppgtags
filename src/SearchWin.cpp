@@ -207,9 +207,11 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
+
     RECT win = adjustSizeAndPos(hOwner, styleEx, style, width,
             txtHeight + btnHeight + 6);
     width = win.right - win.left;
+
     _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, win.bottom - win.top,
             hOwner, NULL, HMod, (LPVOID) this);
@@ -337,6 +339,8 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         }
 
         case WM_HOTKEY:
+            if (hwnd != GetFocus())
+                break;
             if (HIWORD(lparam) == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
