@@ -198,7 +198,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     HWND hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
-    SetWindowText(hStatic, _T("Parser (requires database re-creation)"));
+    SetWindowText(hStatic,
+            _T("Parser (requires database re-creation on change)"));
 
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,

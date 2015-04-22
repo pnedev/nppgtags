@@ -45,10 +45,13 @@
 namespace
 {
 
+const TCHAR cDefaultParser[]    = _T("default");
+const TCHAR cCtagsParser[]      = _T("ctags");
+const TCHAR cPygmentsParser[]   = _T("pygments");
+
+
 using namespace GTags;
 
-
-HMENU HMenu = NULL;
 std::list<CPath> UpdateList;
 Mutex UpdateLock;
 
@@ -452,6 +455,8 @@ void PluginDeInit()
  */
 void EnablePluginMenuItem(int itemIdx, bool enable)
 {
+    static HMENU HMenu = NULL;
+
     if (HMenu == NULL)
     {
         TCHAR buf[PLUGIN_ITEM_SIZE];

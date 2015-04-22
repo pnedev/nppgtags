@@ -28,7 +28,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
-#include <stdlib.h>
 #include "Notepad_plus_msgs.h"
 #include "Docking.h"
 #include "PluginInterface.h"

@@ -638,7 +638,8 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     if (!file.FileExists())
     {
         MessageBox(npp.GetHandle(),
-                _T("File not found, update database and search again"),
+                _T("File not found, present results are obsolete.")
+                _T("\nRedo the search"),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
         return false;
     }
@@ -661,7 +662,8 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
                 _activeTab->_regExp, &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
-                    _T("Look-up mismatch, update database and search again"),
+                    _T("Look-up mismatch, present results are obsolete.")
+                    _T("\nRedo the search"),
                     cPluginName, MB_OK | MB_ICONEXCLAMATION);
             return false;
         }

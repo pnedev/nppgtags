@@ -53,10 +53,6 @@ const TCHAR cFindSymbol[]           = _T("Find Symbol");
 const TCHAR cGrep[]                 = _T("Grep");
 const TCHAR cVersion[]              = _T("About");
 
-const TCHAR cDefaultParser[]        = _T("default");
-const TCHAR cCtagsParser[]          = _T("ctags");
-const TCHAR cPygmentsParser[]       = _T("pygments");
-
 enum
 {
     DEFAULT_PARSER = 0,

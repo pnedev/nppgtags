@@ -275,7 +275,8 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                 {
                     DestroyCaret();
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
-                    if (pMsgFilter->msg != WM_LBUTTONDOWN)
+                    if (pMsgFilter->msg != WM_MOUSEMOVE &&
+                            pMsgFilter->msg != WM_LBUTTONUP)
                         return 1;
                 }
                 break;
@@ -301,7 +302,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                 case EN_LINK:
                 {
                     ENLINK* pEnLink = (ENLINK*)lparam;
-                    if (pEnLink->msg == WM_LBUTTONDOWN)
+                    if (pEnLink->msg == WM_LBUTTONUP)
                     {
                         TCHAR* link = new TCHAR[
                                 pEnLink->chrg.cpMax - pEnLink->chrg.cpMin + 1];
