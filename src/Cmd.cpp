@@ -266,7 +266,7 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
             _tcscat_s(cmd, len, path.C_str());
             _tcscat_s(cmd, len, _T("\""));
             _tcscat_s(cmd, len, _T(" --gtagslabel="));
-            _tcscat_s(cmd, len, Config._parser);
+            _tcscat_s(cmd, len, cParsers[Config._parserIdx]);
         }
     }
     else if (_cmd->_id != VERSION)

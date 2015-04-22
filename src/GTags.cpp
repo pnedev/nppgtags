@@ -400,11 +400,7 @@ CPath DllPath;
 TCHAR UIFontName[32];
 unsigned UIFontSize;
 
-const TCHAR* cParsers[3] = {
-    cDefaultParser,
-    cCtagsParser,
-    cPygmentsParser
-};
+const TCHAR* cParsers[3];
 
 Settings Config;
 
@@ -423,6 +419,10 @@ BOOL PluginInit(HINSTANCE hMod)
         return FALSE;
 
     HMod = hMod;
+
+    cParsers[DEFAULT_PARSER]    = cDefaultParser;
+    cParsers[CTAGS_PARSER]      = cCtagsParser;
+    cParsers[PYGMENTS_PARSER]   = cPygmentsParser;
 
     ActivityWin::Register();
     SearchWin::Register();
@@ -489,13 +489,10 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
 /**
  *  \brief
  */
-Settings::Settings(const TCHAR* parser, bool autoUpdate,
-        const TCHAR* libraryDBsPath) : _autoUpdate(autoUpdate)
+Settings::Settings(int parserIdx, bool autoUpdate,
+        const TCHAR* libraryDBsPath) :
+    _parserIdx(parserIdx), _autoUpdate(autoUpdate)
 {
-    if (parser)
-        _tcscpy_s(_parser, _countof(_parser), parser);
-    else
-        _parser[0] = 0;
     if (libraryDBsPath)
         _tcscpy_s(_libraryDBsPath, _countof(_libraryDBsPath), libraryDBsPath);
     else
@@ -607,6 +604,14 @@ void FindDefinition()
 void FindReference()
 {
     releaseKeys();
+
+    if (Config._parserIdx == CTAGS_PARSER)
+    {
+        MessageBox(INpp::Get().GetHandle(),
+                _T("Ctags parser doesn't support reference search"),
+                cPluginName, MB_OK | MB_ICONINFORMATION);
+        return;
+    }
 
     SearchData searchData(NULL, false, true);
     if (!getSelection(searchData._str, true))

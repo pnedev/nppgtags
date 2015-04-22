@@ -57,9 +57,13 @@ const TCHAR cDefaultParser[]        = _T("default");
 const TCHAR cCtagsParser[]          = _T("ctags");
 const TCHAR cPygmentsParser[]       = _T("pygments");
 
-const unsigned cFindReferenceIdx    = 4;
-const unsigned cGoBackIdx           = 7;
-const unsigned cGoForwardIdx        = 8;
+enum
+{
+    DEFAULT_PARSER = 0,
+    CTAGS_PARSER,
+    PYGMENTS_PARSER
+};
+
 
 /**
  *  \struct
@@ -67,10 +71,10 @@ const unsigned cGoForwardIdx        = 8;
  */
 struct Settings
 {
-    Settings(const TCHAR* parser = cDefaultParser, bool autoUpdate = true,
+    Settings(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
             const TCHAR* libraryDBsPath = NULL);
 
-    TCHAR   _parser[32];
+    int     _parserIdx;
     bool    _autoUpdate;
     TCHAR   _libraryDBsPath[1024];
 };

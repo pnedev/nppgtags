@@ -272,13 +272,10 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     Button_SetCheck(_hAutoUpdate, _settings->_autoUpdate ?
             BST_CHECKED : BST_UNCHECKED);
 
-    bool sel = false;
     for (unsigned i = 0; i < _countof(cParsers); i++)
-    {
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)cParsers[i]);
-        if (!sel && !_tcscmp(_settings->_parser, cParsers[i]))
-            SendMessage(_hParser, CB_SETCURSEL, (WPARAM)i, 0);
-    }
+
+    SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_settings->_parserIdx, 0);
 
     RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
     RegisterHotKey(_hWnd, 2, 0, VK_RETURN);
@@ -304,14 +301,7 @@ void ConfigWin::onOK()
     _settings->_autoUpdate =
             (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
 
-    int idx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
-    SendMessage(_hParser, CB_GETLBTEXT, (WPARAM)idx,
-            (LPARAM)_settings->_parser);
-
-    if (_tcscmp(_settings->_parser, cCtagsParser))
-        EnablePluginMenuItem(cFindReferenceIdx);
-    else
-        EnablePluginMenuItem(cFindReferenceIdx, false);
+    _settings->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
