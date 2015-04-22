@@ -110,7 +110,7 @@ DBhandle DBManager::GetDB(const CPath& filePath, bool writeEn, bool* success)
 
     int len;
     while ((len = dbPath.Up()))
-        if (dbExistsInFolder(dbPath))
+        if (DB_ExistsInFolder(dbPath))
             break;
 
     if (len == 0)
@@ -149,7 +149,7 @@ bool DBManager::PutDB(DBhandle db)
 /**
  *  \brief
  */
-inline bool DBManager::dbExistsInFolder(const CPath& folder)
+bool DBManager::DB_ExistsInFolder(const CPath& folder)
 {
     CPath db(folder);
     db += _T("GTAGS");
@@ -203,7 +203,7 @@ DBhandle DBManager::lockDB(const CPath& filePath, bool writeEn, bool* success)
     {
         if (dbi->_path.Contains(filePath))
         {
-            if (!dbExistsInFolder(dbi->_path))
+            if (!DB_ExistsInFolder(dbi->_path))
             {
                 _dbList.erase(dbi);
                 return NULL;

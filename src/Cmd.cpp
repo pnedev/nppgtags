@@ -46,7 +46,7 @@ const TCHAR Cmd::cAutoComplFileCmd[] =
 const TCHAR Cmd::cFindFileCmd[] =
         _T("\"%s\\global.exe\" -P \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -d --result=grep \"%s\"");
 const TCHAR Cmd::cFindReferenceCmd[] =
         _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
 const TCHAR Cmd::cFindSymbolCmd[] =
@@ -137,8 +137,8 @@ void CmdData::AppendResult(const char* result)
 /**
  *  \brief
  */
-bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, CompletionCB complCB,
-        DBhandle db)
+bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, DBhandle db,
+        CompletionCB complCB)
 {
     Cmd* cmd = new Cmd(cmdData, complCB, db);
 
@@ -151,6 +151,9 @@ bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, CompletionCB complCB,
         delete cmd;
         return false;
     }
+
+    if (!complCB)
+        WaitForSingleObject(cmd->_hThread, INFINITE);
 
     return true;
 }
@@ -306,7 +309,8 @@ bool Cmd::runProcess()
     const TCHAR* currentDir = _cmd->GetDBPath();
 
     CText env(_T("GTAGSLIBPATH="));
-    env += Config._libraryDBsPath;
+    if (Config._useLibraryDB)
+        env += Config._libraryDBpath;
 
     if (_cmd->_id == VERSION)
         currentDir = NULL;

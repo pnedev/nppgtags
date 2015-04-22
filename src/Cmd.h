@@ -126,7 +126,7 @@ class Cmd
 {
 public:
     static bool Run(std::shared_ptr<CmdData>& cmdData,
-            CompletionCB complCB, DBhandle db = NULL);
+            DBhandle db = NULL, CompletionCB complCB = NULL);
 
 private:
     static const TCHAR cCreateDatabaseCmd[];

@@ -51,6 +51,7 @@ public:
     bool UnregisterDB(DBhandle db);
     DBhandle GetDB(const CPath& filePath, bool writeEn, bool* success);
     bool PutDB(DBhandle db);
+    bool DB_ExistsInFolder(const CPath& folder);
 
 private:
     /**
@@ -114,7 +115,6 @@ private:
     DBManager(const DBManager&);
     ~DBManager() {}
 
-    bool dbExistsInFolder(const CPath& folder);
     bool deleteDB(CPath& dbPath);
     DBhandle addDB(const CPath& dbPath, bool writeEn);
     DBhandle lockDB(const CPath& filePath, bool writeEn, bool* success);

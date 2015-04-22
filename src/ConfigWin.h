@@ -69,7 +69,9 @@ private:
     HWND _hWnd;
     HWND _hParser;
     HWND _hAutoUpdate;
-    HWND _hLibraryDBs;
+    HWND _hEnLibDB;
+    HWND _hCreateDB;
+    HWND _hLibDB;
     HWND _hOK;
     HWND _hCancel;
     HFONT _hFont;

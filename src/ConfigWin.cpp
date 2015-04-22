@@ -32,6 +32,7 @@
 #include <richedit.h>
 #include <stdlib.h>
 #include "GTags.h"
+#include "Common.h"
 
 
 namespace GTags
@@ -173,11 +174,12 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             FF_DONTCARE | DEFAULT_PITCH, cFont);
     ReleaseDC(hOwner, hdc);
 
-    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
+    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW |
+            WS_EX_CONTROLPARENT;
     DWORD style = WS_POPUP | WS_CAPTION;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            500, 4 * txtHeight + 100);
+            500, 5 * txtHeight + 120);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -213,11 +215,23 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             (width / 2) + 10, yPos + 5, (width / 2) - 20, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (txtHeight + 25);
+    yPos += (txtHeight + 35);
+    _hEnLibDB = CreateWindowEx(0, _T("BUTTON"),
+            _T("Enable library databases"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            10, yPos, (width / 2) - 20, txtHeight,
+            _hWnd, NULL, HMod, NULL);
+
+    _hCreateDB = CreateWindowEx(0, _T("BUTTON"), _T("Add Library DB"),
+            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            (width / 2) + 10, yPos, (width / 2) - 20, 25,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (((txtHeight > 25) ? txtHeight : 25) + 10);
     hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
-    SetWindowText(hStatic, _T("Paths to library databases"));
+    SetWindowText(hStatic, _T("Paths to library databases (';' separated)"));
 
     yPos += (txtHeight + 5);
     styleEx = WS_EX_CLIENTEDGE;
@@ -227,7 +241,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     win.left = 10;
     win.right = width - 10;
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
-    _hLibraryDBs = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+    _hLibDB = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -243,7 +257,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
-    SendMessage(_hLibraryDBs, EM_SETBKGNDCOLOR, 0,
+    SendMessage(_hLibDB, EM_SETBKGNDCOLOR, 0,
             (LPARAM)GetSysColor(COLOR_WINDOW));
 
     CHARFORMAT fmt  = {0};
@@ -252,25 +266,31 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
-    SendMessage(_hLibraryDBs, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
+    SendMessage(_hLibDB, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
 
     if (_hFont)
-        SendMessage(_hLibraryDBs, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hLibDB, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
-    SendMessage(_hLibraryDBs, EM_EXLIMITTEXT, 0,
-            (LPARAM)(_countof(_settings->_libraryDBsPath) - 1));
-    SendMessage(_hLibraryDBs, EM_SETEVENTMASK, 0, 0);
+    SendMessage(_hLibDB, EM_SETEVENTMASK, 0, 0);
 
-    if (_tcslen(_settings->_libraryDBsPath))
-        Edit_SetText(_hLibraryDBs, _settings->_libraryDBsPath);
+    if (_settings->_libraryDBpath.Len())
+        Edit_SetText(_hLibDB, _settings->_libraryDBpath.C_str());
+    if (!_settings->_useLibraryDB)
+    {
+        EnableWindow(_hLibDB, FALSE);
+        EnableWindow(_hCreateDB, FALSE);
+    }
 
     if (_hFont)
     {
         SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hEnLibDB, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
     }
 
     Button_SetCheck(_hAutoUpdate, _settings->_autoUpdate ?
+            BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hEnLibDB, _settings->_useLibraryDB ?
             BST_CHECKED : BST_UNCHECKED);
 
     for (unsigned i = 0; i < _countof(cParsers); i++)
@@ -293,14 +313,23 @@ HWND ConfigWin::composeWindow(HWND hOwner)
  */
 void ConfigWin::onOK()
 {
-    int len = Edit_GetTextLength(_hLibraryDBs) + 1;
+    int len = Edit_GetTextLength(_hLibDB) + 1;
     if (len > 1)
-        Edit_GetText(_hLibraryDBs, _settings->_libraryDBsPath, len);
+    {
+        TCHAR* buf = new TCHAR[len];
+        Edit_GetText(_hLibDB, buf, len);
+        _settings->_libraryDBpath = buf;
+        delete [] buf;
+    }
     else
-        _settings->_libraryDBsPath[0] = 0;
+    {
+        _settings->_libraryDBpath = _T("");
+    }
 
     _settings->_autoUpdate =
             (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
+    _settings->_useLibraryDB =
+            (Button_GetCheck(_hEnLibDB) == BST_CHECKED) ? true : false;
 
     _settings->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
@@ -359,6 +388,32 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                 if ((HWND)lparam == cw->_hCancel)
                 {
                     SendMessage(hwnd, WM_CLOSE, 0, 0);
+                    return 0;
+                }
+                if ((HWND)lparam == cw->_hEnLibDB)
+                {
+                    BOOL en =
+                        (Button_GetCheck(cw->_hEnLibDB) == BST_CHECKED) ?
+                            TRUE : FALSE;
+                    EnableWindow(cw->_hCreateDB, en);
+                    EnableWindow(cw->_hLibDB, en);
+                    return 0;
+                }
+                if ((HWND)lparam == cw->_hCreateDB)
+                {
+                    CPath libraryPath = CreateLibraryDatabase(hwnd);
+                    if (libraryPath.Len())
+                    {
+                        int len = Edit_GetTextLength(cw->_hLibDB) +
+                                libraryPath.Len() + 2;
+                        TCHAR* buf = new TCHAR[len];
+                        Edit_GetText(cw->_hLibDB, buf, len);
+                        if (buf[0])
+                            _tcscat_s(buf, len, _T(";"));
+                        _tcscat_s(buf, len, libraryPath.C_str());
+                        Edit_SetText(cw->_hLibDB, buf);
+                        delete [] buf;
+                    }
                     return 0;
                 }
             }

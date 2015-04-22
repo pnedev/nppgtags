@@ -96,8 +96,6 @@ private:
 
     static const COLORREF cBlack = RGB(0,0,0);
     static const COLORREF cWhite = RGB(255,255,255);
-    static const COLORREF cRed = RGB(255,0,0);
-    static const COLORREF cBlue = RGB(0,0,255);
 
     static const TCHAR cClassName[];
     static const TCHAR cTabFont[];

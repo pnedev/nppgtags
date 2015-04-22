@@ -245,7 +245,7 @@ bool runSheduledUpdate(const TCHAR* dbPath)
 /**
  *  \brief
  */
-void cmdReady(std::shared_ptr<CmdData>& cmd)
+void checkError(std::shared_ptr<CmdData>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
 
@@ -286,7 +286,7 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void autoComplHalf(std::shared_ptr<CmdData>& cmd)
+void autoComplHalfReady(std::shared_ptr<CmdData>& cmd)
 {
     if (cmd->Error())
     {
@@ -302,7 +302,7 @@ void autoComplHalf(std::shared_ptr<CmdData>& cmd)
     {
         cmd->SetID(AUTOCOMPLETE_SYMBOL);
         cmd->SetDB(db);
-        Cmd::Run(cmd, autoComplReady, db);
+        Cmd::Run(cmd, db, autoComplReady);
     }
 }
 
@@ -352,7 +352,7 @@ void findReady(std::shared_ptr<CmdData>& cmd)
             cmd->SetID(FIND_SYMBOL);
             cmd->SetName(cFindSymbol);
             cmd->SetDB(db);
-            Cmd::Run(cmd, showResult, db);
+            Cmd::Run(cmd, db, showResult);
         }
         return;
     }
@@ -494,20 +494,6 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
 /**
  *  \brief
  */
-Settings::Settings(int parserIdx, bool autoUpdate,
-        const TCHAR* libraryDBsPath) :
-    _parserIdx(parserIdx), _autoUpdate(autoUpdate)
-{
-    if (libraryDBsPath)
-        _tcscpy_s(_libraryDBsPath, _countof(_libraryDBsPath), libraryDBsPath);
-    else
-        _libraryDBsPath[0] = 0;
-}
-
-
-/**
- *  \brief
- */
 void AutoComplete()
 {
     releaseKeys();
@@ -522,7 +508,7 @@ void AutoComplete()
 
     std::shared_ptr<CmdData>
         cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
-    Cmd::Run(cmd, autoComplHalf, db);
+    Cmd::Run(cmd, db, autoComplHalfReady);
 }
 
 
@@ -544,7 +530,7 @@ void AutoCompleteFile()
     tag[0] = '/';
     std::shared_ptr<CmdData>
             cmd(new CmdData(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
-    Cmd::Run(cmd, autoComplReady, db);
+    Cmd::Run(cmd, db, autoComplReady);
 }
 
 
@@ -574,7 +560,7 @@ void FindFile()
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_FILE, cFindFile, db,
             searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, showResult, db);
+    Cmd::Run(cmd, db, showResult);
 }
 
 
@@ -599,7 +585,7 @@ void FindDefinition()
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_DEFINITION, cFindDefinition, db,
             searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, findReady, db);
+    Cmd::Run(cmd, db, findReady);
 }
 
 
@@ -632,7 +618,7 @@ void FindReference()
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_REFERENCE, cFindReference, db,
             searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, findReady, db);
+    Cmd::Run(cmd, db, findReady);
 }
 
 
@@ -657,7 +643,7 @@ void Grep()
     std::shared_ptr<CmdData>
             cmd(new CmdData(GREP, cGrep, db,
             searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, showResult, db);
+    Cmd::Run(cmd, db, showResult);
 }
 
 
@@ -713,7 +699,7 @@ void CreateDatabase()
         BROWSEINFO bi       = {0};
         bi.hwndOwner        = npp.GetHandle();
         bi.pszDisplayName   = path;
-        bi.lpszTitle        = _T("Point to the root of your project");
+        bi.lpszTitle        = _T("Select the project root");
         bi.ulFlags          = BIF_RETURNONLYFSDIRS;
         bi.lpfn             = browseFolderCB;
         bi.lParam           = (DWORD)currentFile.C_str();
@@ -738,7 +724,66 @@ void CreateDatabase()
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
-    Cmd::Run(cmd, cmdReady, db);
+    Cmd::Run(cmd, db, checkError);
+}
+
+
+/**
+ *  \brief
+ */
+const CPath CreateLibraryDatabase(HWND hwnd)
+{
+    releaseKeys();
+
+    TCHAR path[MAX_PATH];
+    CPath libraryPath;
+
+    BROWSEINFO bi       = {0};
+    bi.hwndOwner        = hwnd;
+    bi.pszDisplayName   = path;
+    bi.lpszTitle        = _T("Select the library root");
+    bi.ulFlags          = BIF_RETURNONLYFSDIRS;
+    bi.lpfn             = browseFolderCB;
+
+    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+    if (!pidl)
+        return libraryPath;
+
+    SHGetPathFromIDList(pidl, path);
+
+    IMalloc* imalloc = NULL;
+    if (SUCCEEDED(SHGetMalloc(&imalloc)))
+    {
+        imalloc->Free(pidl);
+        imalloc->Release();
+    }
+
+    libraryPath = path;
+    libraryPath += _T("\\");
+
+    if (DBManager::Get().DB_ExistsInFolder(libraryPath))
+    {
+        TCHAR buf[512];
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE,
+                _T("Database at\n\"%s\" exists.\nRe-create?"),
+                libraryPath.C_str());
+        int choice = MessageBox(hwnd, buf, cPluginName,
+                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+        if (choice != IDYES)
+            return libraryPath;
+    }
+
+    DBhandle db = DBManager::Get().RegisterDB(libraryPath, true);
+
+    std::shared_ptr<CmdData>
+            cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
+    Cmd::Run(cmd, db);
+
+    checkError(cmd);
+    if (cmd->Error())
+        libraryPath = _T("");
+
+    return libraryPath;
 }
 
 
@@ -771,7 +816,7 @@ bool UpdateSingleFile(const TCHAR* file)
     std::shared_ptr<CmdData>
             cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,
                     currentFile.C_str()));
-    if (!Cmd::Run(cmd, cmdReady, db))
+    if (!Cmd::Run(cmd, db, checkError))
         return false;
 
     return true;
@@ -826,7 +871,7 @@ void About()
     releaseKeys();
 
     std::shared_ptr<CmdData> cmd(new CmdData(VERSION, cVersion));
-    Cmd::Run(cmd, showInfo);
+    Cmd::Run(cmd, NULL, showInfo);
 }
 
 } // namespace GTags

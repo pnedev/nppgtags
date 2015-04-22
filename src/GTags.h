@@ -29,9 +29,9 @@
 #include <windows.h>
 #include <tchar.h>
 #include "resource.h"
+#include "Common.h"
 
 
-class CPath;
 struct FuncItem;
 
 
@@ -68,11 +68,13 @@ enum
 struct Settings
 {
     Settings(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
-            const TCHAR* libraryDBsPath = NULL);
+            bool useLibraryDB = false) : _parserIdx(parserIdx),
+        _autoUpdate(autoUpdate), _useLibraryDB(useLibraryDB) {}
 
     int     _parserIdx;
     bool    _autoUpdate;
-    TCHAR   _libraryDBsPath[1024];
+    bool    _useLibraryDB;
+    CText   _libraryDBpath;
 };
 
 
@@ -101,6 +103,7 @@ void Grep();
 void GoBack();
 void GoForward();
 void CreateDatabase();
+const CPath CreateLibraryDatabase(HWND hwnd);
 bool UpdateSingleFile(const TCHAR* file = NULL);
 void DeleteDatabase();
 void SettingsCfg();
