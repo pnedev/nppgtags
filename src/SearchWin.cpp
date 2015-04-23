@@ -78,26 +78,33 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-bool SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
+void SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
         SearchData* searchData, bool enMatchCase, bool enRegExp)
 {
     if (!searchData)
-        return false;
+        return;
 
     SearchWin sw(searchData);
     if (sw.composeWindow(hOwner, width, header, searchData,
             enMatchCase, enRegExp) == NULL)
-        return false;
+    {
+        searchData->_str[0] = 0;
+        return;
+    }
+
+    EnableWindow(hOwner, FALSE);
 
     BOOL r;
     MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
+    while ((r = GetMessage(&msg, sw._hWnd, 0, 0)) != 0 && r != -1)
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    return sw._success;
+    while (PeekMessage(&msg, hOwner, 0, 0, PM_QS_INPUT | PM_REMOVE));
+
+    EnableWindow(hOwner, TRUE);
 }
 
 
@@ -183,7 +190,7 @@ SearchWin::~SearchWin()
  *  \brief
  */
 HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
-        const SearchData* searchData, bool enMatchCase, bool enRegExp)
+        SearchData* searchData, bool enMatchCase, bool enRegExp)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
@@ -264,6 +271,7 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     {
         Edit_SetText(_hEditWnd, searchData->_str);
         Edit_SetSel(_hEditWnd, 0, -1);
+        searchData->_str[0] = 0;
     }
 
     if (_hBtnFont)
@@ -307,7 +315,6 @@ void SearchWin::onOK()
         _searchData->_matchCase =
                 (Button_GetCheck(_hMatchCase) == BST_CHECKED) ?
                 true : false;
-        _success = true;
     }
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
@@ -326,21 +333,18 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
             SearchWin* sw =
                     (SearchWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(sw));
-            return 0;
         }
+        return 0;
 
         case WM_SETFOCUS:
         {
-            SearchWin* sw =
-                    reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
+            SearchWin* sw = reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
                             (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(sw->_hEditWnd);
-            return 0;
         }
+        return 0;
 
         case WM_HOTKEY:
-            if (hwnd != GetFocus())
-                break;
             if (HIWORD(lparam) == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
@@ -376,11 +380,9 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         break;
 
         case WM_DESTROY:
-        {
             DestroyCaret();
             PostQuitMessage(0);
-            return 0;
-        }
+        return 0;
     }
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);

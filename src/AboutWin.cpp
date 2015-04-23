@@ -59,13 +59,19 @@ const TCHAR AboutWin::cAbout[] = {
 };
 
 
+AboutWin* AboutWin::AW = NULL;
+
+
 /**
  *  \brief
  */
 void AboutWin::Show(HWND hOwner, const TCHAR* info)
 {
-    if (!info)
+    if (AW)
+    {
+        SetFocus(AW->_hWnd);
         return;
+    }
     else
     {
         WNDCLASS wc         = {0};
@@ -86,16 +92,11 @@ void AboutWin::Show(HWND hOwner, const TCHAR* info)
         LoadLibrary(_T("Riched20.dll"));
     }
 
-    AboutWin aw;
-    if (aw.composeWindow(hOwner, info) == NULL)
-        return;
-
-    BOOL r;
-    MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
+    AW = new AboutWin;
+    if (AW->composeWindow(hOwner, info) == NULL)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        delete AW;
+        AW = NULL;
     }
 }
 
@@ -166,9 +167,6 @@ RECT AboutWin::adjustSizeAndPos(HWND hWnd, int width, int height)
  */
 AboutWin::~AboutWin()
 {
-    if (_hWnd)
-        UnregisterHotKey(_hWnd, 1);
-
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -185,8 +183,11 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION;
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, _T("About"),
-            style, 0, 0, 100, 100, hOwner, NULL, HMod, NULL);
+    TCHAR header[32] = {_T("About ")};
+    _tcscat_s(header, _countof(header), VER_PLUGIN_NAME);
+
+    _hWnd = CreateWindowEx(styleEx, cClassName, header,
+            style, 0, 0, 200, 200, hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
@@ -232,8 +233,6 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
             _T(__DATE__), _T(__TIME__), VER_COPYRIGHT, info);
     Edit_SetText(hEdit, text);
 
-    RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
-
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
 
@@ -250,7 +249,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
     switch (umsg)
     {
         case WM_CREATE:
-            return 0;
+        return 0;
 
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_SETFOCUS)
@@ -260,10 +259,8 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
             }
         break;
 
-        case WM_HOTKEY:
-            if (hwnd != GetFocus())
-                break;
-            if (HIWORD(lparam) == VK_ESCAPE)
+        case WM_KEYDOWN:
+            if (wparam == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
                 return 0;
@@ -277,8 +274,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                 {
                     DestroyCaret();
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
-                    if (pMsgFilter->msg != WM_MOUSEMOVE &&
-                            pMsgFilter->msg != WM_LBUTTONUP)
+                    if (pMsgFilter->msg != WM_LBUTTONUP)
                         return 1;
                 }
                 break;
@@ -298,8 +294,8 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                     GetClientRect(hwnd, &win);
                     MoveWindow(hEdit, 0, 0,
                             win.right - win.left, win.bottom - win.top, TRUE);
-                    return 1;
                 }
+                return 1;
 
                 case EN_LINK:
                 {
@@ -324,8 +320,9 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             DestroyCaret();
-            PostQuitMessage(0);
-            return 0;
+            delete AW;
+            AW = NULL;
+        return 0;
     }
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);

@@ -152,10 +152,22 @@ bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, DBhandle db,
         return false;
     }
 
-    if (!complCB)
-        WaitForSingleObject(cmd->_hThread, INFINITE);
+    if (complCB)
+        return true;
 
-    return true;
+    // If no callback is given then block until command is ready and return
+    // the exit code. On false, command has failed or has been terminated
+    WaitForSingleObject(cmd->_hThread, INFINITE);
+
+    DWORD exitCode;
+    if (!GetExitCodeThread(cmd->_hThread, &exitCode))
+    {
+        Tools::MsgNum(GetLastError());
+    }
+
+    delete cmd;
+
+    return !exitCode;
 }
 
 
@@ -177,7 +189,12 @@ unsigned __stdcall Cmd::threadFunc(void* data)
     Cmd* cmd = static_cast<Cmd*>(data);
     unsigned r = cmd->thread();
 
-    delete cmd;
+    if (cmd->_complCB)
+    {
+        if (!r)
+            cmd->_complCB(cmd->_cmd);
+        delete cmd;
+    }
 
     return r;
 }
@@ -202,9 +219,6 @@ unsigned Cmd::thread()
 
     if (_db)
         DBManager::Get().PutDB(_db);
-
-    if (_complCB)
-        _complCB(_cmd);
 
     return 0;
 }

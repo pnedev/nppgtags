@@ -125,9 +125,9 @@ HWND AutoCompleteWin::composeWindow()
     HWND hOwner = INpp::Get().GetSciHandle();
     RECT win;
     GetWindowRect(hOwner, &win);
-    DWORD style = WS_POPUP | WS_BORDER;
+
     _hwnd = CreateWindow(cClassName, NULL,
-            style, win.left, win.top,
+            WS_POPUP | WS_BORDER, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, (LPVOID) this);
     if (_hwnd == NULL)

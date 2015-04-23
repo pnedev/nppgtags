@@ -44,11 +44,20 @@ const TCHAR ConfigWin::cFont[]        = _T("Tahoma");
 const int ConfigWin::cFontSize        = 10;
 
 
+ConfigWin* ConfigWin::CW = NULL;
+
+
 /**
  *  \brief
  */
 void ConfigWin::Show(HWND hOwner, Settings* settings)
 {
+    if (CW)
+    {
+        SetFocus(CW->_hWnd);
+        return;
+    }
+
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
@@ -66,16 +75,11 @@ void ConfigWin::Show(HWND hOwner, Settings* settings)
     InitCommonControlsEx(&icex);
     LoadLibrary(_T("Riched20.dll"));
 
-    ConfigWin cw(settings);
-    if (cw.composeWindow(hOwner) == NULL)
-        return;
-
-    BOOL r;
-    MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
+    CW = new ConfigWin(settings);
+    if (CW->composeWindow(hOwner) == NULL)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        delete CW;
+        CW = NULL;
     }
 }
 
@@ -145,10 +149,6 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 ConfigWin::~ConfigWin()
 {
-    if (_hWnd)
-        UnregisterHotKey(_hWnd, 1);
-        UnregisterHotKey(_hWnd, 2);
-
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -187,7 +187,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,
-            hOwner, NULL, HMod, (LPVOID) this);
+            hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
@@ -297,9 +297,6 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_settings->_parserIdx, 0);
 
-    RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
-    RegisterHotKey(_hWnd, 2, 0, VK_RETURN);
-
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
 
@@ -345,27 +342,12 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
     switch (umsg)
     {
         case WM_CREATE:
-        {
-            ConfigWin* cw =
-                    (ConfigWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(cw));
-            return 0;
-        }
+        return 0;
 
-        case WM_HOTKEY:
-            if (hwnd != GetFocus())
-                break;
-            if (HIWORD(lparam) == VK_ESCAPE)
+        case WM_KEYDOWN:
+            if (wparam == VK_ESCAPE)
             {
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
-                return 0;
-            }
-            if (HIWORD(lparam) == VK_RETURN)
-            {
-                ConfigWin* cw =
-                        reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>
-                                (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                cw->onOK();
                 return 0;
             }
         break;
@@ -378,41 +360,38 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
             }
             if (HIWORD(wparam) == BN_CLICKED)
             {
-                ConfigWin* cw =
-                        reinterpret_cast<ConfigWin*>(static_cast<LONG_PTR>
-                                (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                if ((HWND)lparam == cw->_hOK)
+                if ((HWND)lparam == CW->_hOK)
                 {
-                    cw->onOK();
+                    CW->onOK();
                     return 0;
                 }
-                if ((HWND)lparam == cw->_hCancel)
+                if ((HWND)lparam == CW->_hCancel)
                 {
                     SendMessage(hwnd, WM_CLOSE, 0, 0);
                     return 0;
                 }
-                if ((HWND)lparam == cw->_hEnLibDB)
+                if ((HWND)lparam == CW->_hEnLibDB)
                 {
                     BOOL en =
-                        (Button_GetCheck(cw->_hEnLibDB) == BST_CHECKED) ?
+                        (Button_GetCheck(CW->_hEnLibDB) == BST_CHECKED) ?
                             TRUE : FALSE;
-                    EnableWindow(cw->_hCreateDB, en);
-                    EnableWindow(cw->_hLibDB, en);
+                    EnableWindow(CW->_hCreateDB, en);
+                    EnableWindow(CW->_hLibDB, en);
                     return 0;
                 }
-                if ((HWND)lparam == cw->_hCreateDB)
+                if ((HWND)lparam == CW->_hCreateDB)
                 {
                     CPath libraryPath = CreateLibraryDatabase(hwnd);
                     if (libraryPath.Len())
                     {
-                        int len = Edit_GetTextLength(cw->_hLibDB) +
+                        int len = Edit_GetTextLength(CW->_hLibDB) +
                                 libraryPath.Len() + 2;
                         TCHAR* buf = new TCHAR[len];
-                        Edit_GetText(cw->_hLibDB, buf, len);
+                        Edit_GetText(CW->_hLibDB, buf, len);
                         if (buf[0])
                             _tcscat_s(buf, len, _T(";"));
                         _tcscat_s(buf, len, libraryPath.C_str());
-                        Edit_SetText(cw->_hLibDB, buf);
+                        Edit_SetText(CW->_hLibDB, buf);
                         delete [] buf;
                     }
                     return 0;
@@ -422,8 +401,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             DestroyCaret();
-            PostQuitMessage(0);
-            return 0;
+            delete CW;
+            CW = NULL;
+        return 0;
     }
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);

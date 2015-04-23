@@ -65,6 +65,8 @@ private:
 
     void onOK();
 
+    static ConfigWin* CW;
+
     Settings* _settings;
     HWND _hWnd;
     HWND _hParser;

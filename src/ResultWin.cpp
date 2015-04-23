@@ -487,7 +487,9 @@ HWND ResultWin::composeWindow()
     HWND hOwner = npp.GetHandle();
     RECT win;
     GetWindowRect(hOwner, &win);
+
     DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX;
+
     _hWnd = CreateWindow(cClassName, cPluginName,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,

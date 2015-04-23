@@ -66,7 +66,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static bool Show(HWND hOwner, int width, const TCHAR *header,
+    static void Show(HWND hOwner, int width, const TCHAR *header,
             SearchData* searchData, bool enMatchCase, bool enRegExp);
 
 private:
@@ -79,13 +79,12 @@ private:
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
-    SearchWin(SearchData* searchData) :
-            _searchData(searchData), _success(false) {}
+    SearchWin(SearchData* searchData) : _searchData(searchData) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, int width, const TCHAR* header,
-            const SearchData* searchData, bool enMatchCase, bool enRegExp);
+            SearchData* searchData, bool enMatchCase, bool enRegExp);
     void onOK();
 
     HWND _hWnd;
@@ -96,7 +95,6 @@ private:
     HFONT _hTxtFont;
     HFONT _hBtnFont;
     SearchData* _searchData;
-    bool _success;
 };
 
 } // namespace GTags

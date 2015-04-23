@@ -181,15 +181,17 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-bool enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
+unsigned enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
         const TCHAR* defaultTag = NULL,
         bool enMatchCase = true, bool enRegExp = false)
 {
     if (defaultTag)
         _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
 
-    return SearchWin::Show(INpp::Get().GetHandle(), 400, uiName,
+    SearchWin::Show(INpp::Get().GetHandle(), 400, uiName,
             searchData, enMatchCase, enRegExp);
+
+    return _tcslen(searchData->_str);
 }
 
 
@@ -364,13 +366,13 @@ void findReady(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void showInfo(std::shared_ptr<CmdData>& cmd)
-{
-    CText msg(cmd->GetResult());
+// void showInfo(std::shared_ptr<CmdData>& cmd)
+// {
+    // CText msg(cmd->GetResult());
 
-    AboutWin::Show(INpp::Get().GetHandle(), cmd->Error() || cmd->NoResult() ?
-            _T("VERSION READ FAILED\n") : msg.C_str());
-}
+    // AboutWin::Show(INpp::Get().GetHandle(), cmd->Error() || cmd->NoResult() ?
+            // _T("VERSION READ FAILED\n") : msg.C_str());
+// }
 
 } // anonymous namespace
 
@@ -777,11 +779,16 @@ const CPath CreateLibraryDatabase(HWND hwnd)
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
-    Cmd::Run(cmd, db);
-
-    checkError(cmd);
-    if (cmd->Error())
+    if (Cmd::Run(cmd, db))
+    {
+        checkError(cmd);
+        if (cmd->Error())
+            libraryPath = _T("");
+    }
+    else
+    {
         libraryPath = _T("");
+    }
 
     return libraryPath;
 }
@@ -871,7 +878,15 @@ void About()
     releaseKeys();
 
     std::shared_ptr<CmdData> cmd(new CmdData(VERSION, cVersion));
-    Cmd::Run(cmd, NULL, showInfo);
+    bool success = Cmd::Run(cmd);
+
+    CText msg;
+    if (!success || cmd->Error() || cmd->NoResult())
+        msg = _T("VERSION READ FAILED\n");
+    else
+        msg = cmd->GetResult();
+
+    AboutWin::Show(INpp::Get().GetHandle(), msg.C_str());
 }
 
 } // namespace GTags
