@@ -160,10 +160,7 @@ bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, DBhandle db,
     WaitForSingleObject(cmd->_hThread, INFINITE);
 
     DWORD exitCode;
-    if (!GetExitCodeThread(cmd->_hThread, &exitCode))
-    {
-        Tools::MsgNum(GetLastError());
-    }
+    GetExitCodeThread(cmd->_hThread, &exitCode);
 
     delete cmd;
 

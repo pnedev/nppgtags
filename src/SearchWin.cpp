@@ -381,7 +381,6 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             DestroyCaret();
-            PostQuitMessage(0);
         return 0;
     }
 
