@@ -195,7 +195,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     GetClientRect(_hWnd, &win);
 
     style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |
-            ES_MULTILINE | ES_READONLY;
+            ES_MULTILINE | ES_READONLY | ES_NOOLEDRAGDROP;
 
     HWND hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style, 0, 0,
             win.right - win.left, win.bottom - win.top,

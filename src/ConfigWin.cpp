@@ -234,7 +234,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     yPos += (txtHeight + 5);
     styleEx = WS_EX_CLIENTEDGE;
-    style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL;
+    style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOOLEDRAGDROP;
     win.top = yPos;
     win.bottom = win.top + txtHeight;
     win.left = 10;
@@ -256,9 +256,6 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
-    SendMessage(_hLibDB, EM_SETBKGNDCOLOR, 0,
-            (LPARAM)GetSysColor(COLOR_WINDOW));
-
     CHARFORMAT fmt  = {0};
     fmt.cbSize      = sizeof(fmt);
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
@@ -276,8 +273,15 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         Edit_SetText(_hLibDB, _settings->_libraryDBpath.C_str());
     if (!_settings->_useLibraryDB)
     {
-        EnableWindow(_hLibDB, FALSE);
         EnableWindow(_hCreateDB, FALSE);
+        Edit_Enable(_hLibDB, FALSE);
+        SendMessage(_hLibDB, EM_SETBKGNDCOLOR, 0,
+                (LPARAM)GetSysColor(COLOR_BTNFACE));
+    }
+    else
+    {
+        SendMessage(_hLibDB, EM_SETBKGNDCOLOR, 0,
+                (LPARAM)GetSysColor(COLOR_WINDOW));
     }
 
     if (_hFont)
@@ -372,11 +376,22 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                 }
                 if ((HWND)lparam == CW->_hEnLibDB)
                 {
-                    BOOL en =
-                        (Button_GetCheck(CW->_hEnLibDB) == BST_CHECKED) ?
-                            TRUE : FALSE;
+                    BOOL en;
+                    int color;
+                    if (Button_GetCheck(CW->_hEnLibDB) == BST_CHECKED)
+                    {
+                        en = TRUE;
+                        color = COLOR_WINDOW;
+                    }
+                    else
+                    {
+                        en = FALSE;
+                        color = COLOR_BTNFACE;
+                    }
                     EnableWindow(CW->_hCreateDB, en);
-                    EnableWindow(CW->_hLibDB, en);
+                    Edit_Enable(CW->_hLibDB, en);
+                    SendMessage(CW->_hLibDB, EM_SETBKGNDCOLOR, 0,
+                            (LPARAM)GetSysColor(color));
                     return 0;
                 }
                 if ((HWND)lparam == CW->_hCreateDB)

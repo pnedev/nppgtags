@@ -498,8 +498,6 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
  */
 void AutoComplete()
 {
-    releaseKeys();
-
     TCHAR tag[cMaxTagLen];
     if (!getSelection(tag, true, true))
         return;
@@ -507,6 +505,8 @@ void AutoComplete()
     DBhandle db = getDatabase();
     if (!db)
         return;
+
+    releaseKeys();
 
     std::shared_ptr<CmdData>
         cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
@@ -519,8 +519,6 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
-    releaseKeys();
-
     TCHAR tag[cMaxTagLen];
     if (!getSelection(&tag[1], true, true))
         return;
@@ -528,6 +526,8 @@ void AutoCompleteFile()
     DBhandle db = getDatabase();
     if (!db)
         return;
+
+    releaseKeys();
 
     tag[0] = '/';
     std::shared_ptr<CmdData>
@@ -541,8 +541,6 @@ void AutoCompleteFile()
  */
 void FindFile()
 {
-    releaseKeys();
-
     SearchData searchData(NULL, false, true);
     if (!getSelection(searchData._str))
     {
@@ -559,6 +557,8 @@ void FindFile()
     if (!db)
         return;
 
+    releaseKeys();
+
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_FILE, cFindFile, db,
             searchData._str, searchData._regExp, searchData._matchCase));
@@ -571,8 +571,6 @@ void FindFile()
  */
 void FindDefinition()
 {
-    releaseKeys();
-
     SearchData searchData(NULL, false, true);
     if (!getSelection(searchData._str, true))
     {
@@ -583,6 +581,8 @@ void FindDefinition()
     DBhandle db = getDatabase();
     if (!db)
         return;
+
+    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_DEFINITION, cFindDefinition, db,
@@ -596,8 +596,6 @@ void FindDefinition()
  */
 void FindReference()
 {
-    releaseKeys();
-
     if (Config._parserIdx == CTAGS_PARSER)
     {
         MessageBox(INpp::Get().GetHandle(),
@@ -612,6 +610,8 @@ void FindReference()
         if (!enterTag(&searchData, cFindReference))
             return;
     }
+
+    releaseKeys();
 
     DBhandle db = getDatabase();
     if (!db)
@@ -629,8 +629,6 @@ void FindReference()
  */
 void Grep()
 {
-    releaseKeys();
-
     SearchData searchData(NULL, true, true);
     if (!getSelection(searchData._str, true))
     {
@@ -641,6 +639,8 @@ void Grep()
     DBhandle db = getDatabase();
     if (!db)
         return;
+
+    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(GREP, cGrep, db,
@@ -672,8 +672,6 @@ void GoForward()
  */
 void CreateDatabase()
 {
-    releaseKeys();
-
     INpp& npp = INpp::Get();
     bool success;
     TCHAR path[MAX_PATH];
@@ -724,6 +722,8 @@ void CreateDatabase()
         db = DBManager::Get().RegisterDB(currentFile, true);
     }
 
+    releaseKeys();
+
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
     Cmd::Run(cmd, db, checkError);
@@ -735,8 +735,6 @@ void CreateDatabase()
  */
 const CPath CreateLibraryDatabase(HWND hwnd)
 {
-    releaseKeys();
-
     TCHAR path[MAX_PATH];
     CPath libraryPath;
 
@@ -777,6 +775,8 @@ const CPath CreateLibraryDatabase(HWND hwnd)
 
     DBhandle db = DBManager::Get().RegisterDB(libraryPath, true);
 
+    releaseKeys();
+
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
     if (Cmd::Run(cmd, db))
@@ -799,8 +799,6 @@ const CPath CreateLibraryDatabase(HWND hwnd)
  */
 bool UpdateSingleFile(const TCHAR* file)
 {
-    releaseKeys();
-
     CPath currentFile(file);
     if (!file)
     {
@@ -819,6 +817,8 @@ bool UpdateSingleFile(const TCHAR* file)
         sheduleForUpdate(currentFile);
         return true;
     }
+
+    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,

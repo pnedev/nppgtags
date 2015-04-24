@@ -92,7 +92,9 @@ void SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
         return;
     }
 
+    // Emulate modal window
     EnableWindow(hOwner, FALSE);
+    UpdateWindow(hOwner);
 
     BOOL r;
     MSG msg;
@@ -100,11 +102,15 @@ void SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+        UpdateWindow(hOwner);
     }
 
+    // Pump buffered user input
+    PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
     while (PeekMessage(&msg, hOwner, 0, 0, PM_QS_INPUT | PM_REMOVE));
 
     EnableWindow(hOwner, TRUE);
+    UpdateWindow(hOwner);
 }
 
 
@@ -229,7 +235,7 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     width = win.right - win.left;
 
     _hEditWnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
-            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOOLEDRAGDROP,
             0, 0, width, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
@@ -310,11 +316,9 @@ void SearchWin::onOK()
     {
         Edit_GetText(_hEditWnd, _searchData->_str, len);
         _searchData->_regExp =
-                (Button_GetCheck(_hRegExp) == BST_CHECKED) ?
-                true : false;
+                (Button_GetCheck(_hRegExp) == BST_CHECKED) ? true : false;
         _searchData->_matchCase =
-                (Button_GetCheck(_hMatchCase) == BST_CHECKED) ?
-                true : false;
+                (Button_GetCheck(_hMatchCase) == BST_CHECKED) ? true : false;
     }
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
@@ -381,6 +385,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             DestroyCaret();
+            PostQuitMessage(0);
         return 0;
     }
 
