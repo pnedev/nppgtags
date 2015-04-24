@@ -288,7 +288,7 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void autoComplHalfReady(std::shared_ptr<CmdData>& cmd)
+void autoComplSymbol(std::shared_ptr<CmdData>& cmd)
 {
     if (cmd->Error())
     {
@@ -304,7 +304,8 @@ void autoComplHalfReady(std::shared_ptr<CmdData>& cmd)
     {
         cmd->SetID(AUTOCOMPLETE_SYMBOL);
         cmd->SetDB(db);
-        Cmd::Run(cmd, db, autoComplReady);
+        if (Cmd::Run(cmd, db))
+            autoComplReady(cmd);
     }
 }
 
@@ -510,7 +511,8 @@ void AutoComplete()
 
     std::shared_ptr<CmdData>
         cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
-    Cmd::Run(cmd, db, autoComplHalfReady);
+    if (Cmd::Run(cmd, db))
+        autoComplSymbol(cmd);
 }
 
 
@@ -532,7 +534,8 @@ void AutoCompleteFile()
     tag[0] = '/';
     std::shared_ptr<CmdData>
             cmd(new CmdData(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
-    Cmd::Run(cmd, db, autoComplReady);
+    if (Cmd::Run(cmd, db))
+        autoComplReady(cmd);
 }
 
 
@@ -774,8 +777,6 @@ const CPath CreateLibraryDatabase(HWND hwnd)
     }
 
     DBhandle db = DBManager::Get().RegisterDB(libraryPath, true);
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));

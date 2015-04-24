@@ -40,6 +40,9 @@ const TCHAR AutoCompleteWin::cClassName[]    = _T("AutoCompleteWin");
 const int AutoCompleteWin::cBackgroundColor  = COLOR_INFOBK;
 
 
+AutoCompleteWin* AutoCompleteWin::ACW = NULL;
+
+
 /**
  *  \brief
  */
@@ -75,21 +78,14 @@ void AutoCompleteWin::Unregister()
 /**
  *  \brief
  */
-BOOL AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
+void AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
 {
-    AutoCompleteWin ui(cmd);
-    if (ui.composeWindow() == NULL)
-        return -1;
-
-    BOOL r;
-    MSG msg;
-    while ((r = GetMessage(&msg, NULL, 0, 0)) != 0 && r != -1)
+    ACW = new AutoCompleteWin(cmd);
+    if (ACW->composeWindow() == NULL)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        delete ACW;
+        ACW = NULL;
     }
-
-    return r;
 }
 
 
@@ -97,7 +93,7 @@ BOOL AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
  *  \brief
  */
 AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdData>& cmd) :
-    _hwnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
+    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
 {
     unsigned len = cmd->GetResultLen();
     _result = new TCHAR[len + 1];
@@ -126,20 +122,20 @@ HWND AutoCompleteWin::composeWindow()
     RECT win;
     GetWindowRect(hOwner, &win);
 
-    _hwnd = CreateWindow(cClassName, NULL,
+    _hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HMod, (LPVOID) this);
-    if (_hwnd == NULL)
+            hOwner, NULL, HMod, NULL);
+    if (_hWnd == NULL)
         return NULL;
 
-    GetClientRect(_hwnd, &win);
-    _hLVWnd = CreateWindow(WC_LISTVIEW, _T("List View"),
+    GetClientRect(_hWnd, &win);
+    _hLVWnd = CreateWindow(WC_LISTVIEW, NULL,
             WS_CHILD | WS_VISIBLE |
             LVS_REPORT | LVS_SINGLESEL | LVS_NOLABELWRAP |
             LVS_NOSORTHEADER | LVS_SORTASCENDING,
             0, 0, win.right - win.left, win.bottom - win.top,
-            _hwnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
 
     HDC hdc = GetWindowDC(_hLVWnd);
     _hFont = CreateFont(
@@ -170,14 +166,14 @@ HWND AutoCompleteWin::composeWindow()
 
     if (!fillLV())
     {
-        SendMessage(_hwnd, WM_CLOSE, 0, 0);
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
         return NULL;
     }
 
-    ShowWindow(_hwnd, SW_SHOWNORMAL);
-    UpdateWindow(_hwnd);
+    ShowWindow(_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(_hWnd);
 
-    return _hwnd;
+    return _hWnd;
 }
 
 
@@ -290,7 +286,7 @@ void AutoCompleteWin::resizeLV()
     win.right   = win.left + lvWidth;
     win.bottom  = win.top + lvHeight;
 
-    AdjustWindowRect(&win, GetWindowLongPtr(_hwnd, GWL_STYLE), FALSE);
+    AdjustWindowRect(&win, GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
     lvWidth     = win.right - win.left;
     lvHeight    = win.bottom - win.top;
 
@@ -315,10 +311,10 @@ void AutoCompleteWin::resizeLV()
         win.top     = win.bottom - lvHeight;
     }
 
-    MoveWindow(_hwnd, win.left, win.top,
+    MoveWindow(_hWnd, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);
 
-    GetClientRect(_hwnd, &win);
+    GetClientRect(_hWnd, &win);
     MoveWindow(_hLVWnd, 0, 0,
             win.right - win.left, win.bottom - win.top, TRUE);
 }
@@ -342,7 +338,7 @@ void AutoCompleteWin::onDblClick()
     Tools::WtoA(str, _countof(str), lvItem.pszText);
 
     INpp::Get().ReplaceWord(str);
-    SendMessage(_hwnd, WM_CLOSE, 0, 0);
+    SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
 
@@ -355,24 +351,24 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     {
         case VK_UP:
         case VK_DOWN:
-            return false;
+        return false;
 
         case VK_SPACE:
         case VK_TAB:
         case VK_RETURN:
             onDblClick();
-            return true;
+        return true;
 
         case VK_ESCAPE:
         case VK_CONTROL:
         case VK_MENU:
-            SendMessage(_hwnd, WM_CLOSE, 0, 0);
-            return true;
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        return true;
 
         case VK_DELETE:
             INpp::Get().ReplaceWord("");
-            SendMessage(_hwnd, WM_CLOSE, 0, 0);
-            return true;
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        return true;
 
         case VK_BACK:
         {
@@ -381,7 +377,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
             npp.Backspace();
             if (npp.GetWordSize() < (int)_cmd->GetTagLen())
             {
-                SendMessage(_hwnd, WM_CLOSE, 0, 0);
+                SendMessage(_hWnd, WM_CLOSE, 0, 0);
                 return true;
             }
         }
@@ -410,7 +406,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     Tools::AtoW(word, _countof(word), wordA);
     int lvItemsCnt = filterLV(word);
     if (lvItemsCnt == 0)
-        SendMessage(_hwnd, WM_CLOSE, 0, 0);
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
     else if (lvItemsCnt == 1)
     {
         TCHAR itemTxt[MAX_PATH];
@@ -418,7 +414,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
                 ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
                 itemTxt, _countof(itemTxt));
         if (!_tcscmp(word, itemTxt))
-            SendMessage(_hwnd, WM_CLOSE, 0, 0);
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
     }
 
     return true;
@@ -431,46 +427,38 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
 LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
-    AutoCompleteWin* ui;
-
     switch (umsg)
     {
         case WM_CREATE:
-            ui = (AutoCompleteWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(ui));
-            return 0;
+        return 0;
 
         case WM_SETFOCUS:
-            ui = reinterpret_cast<AutoCompleteWin*>(static_cast<LONG_PTR>
-                            (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            SetFocus(ui->_hLVWnd);
-            return 0;
+            SetFocus(ACW->_hLVWnd);
+        return 0;
 
         case WM_NOTIFY:
-            ui = reinterpret_cast<AutoCompleteWin*>(static_cast<LONG_PTR>
-                            (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-
             switch (((LPNMHDR)lparam)->code)
             {
                 case NM_KILLFOCUS:
                     SendMessage(hwnd, WM_CLOSE, 0, 0);
-                    return 0;
+                return 0;
 
                 case LVN_KEYDOWN:
-                    if (ui->onKeyDown(((LPNMLVKEYDOWN)lparam)->wVKey))
+                    if (ACW->onKeyDown(((LPNMLVKEYDOWN)lparam)->wVKey))
                         return 0;
                 break;
 
                 case NM_DBLCLK:
-                    ui->onDblClick();
-                    return 0;
+                    ACW->onDblClick();
+                return 0;
             }
         break;
 
         case WM_DESTROY:
             INpp::Get().ClearSelection();
-            PostQuitMessage(0);
-            return 0;
+            delete ACW;
+            ACW = NULL;
+        return 0;
     }
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);

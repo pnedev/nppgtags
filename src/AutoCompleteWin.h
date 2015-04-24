@@ -44,7 +44,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static BOOL Show(const std::shared_ptr<CmdData>& cmd);
+    static void Show(const std::shared_ptr<CmdData>& cmd);
 
 private:
     static const TCHAR cClassName[];
@@ -65,10 +65,12 @@ private:
     void onDblClick();
     bool onKeyDown(int keyCode);
 
-    HWND _hwnd;
+    static AutoCompleteWin* ACW;
+
+    HWND _hWnd;
     HWND _hLVWnd;
     HFONT _hFont;
-    const std::shared_ptr<CmdData>& _cmd;
+    const std::shared_ptr<CmdData> _cmd;
     TCHAR* _result;
 };
 
