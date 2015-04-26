@@ -276,7 +276,8 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                 {
                     DestroyCaret();
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
-                    if (pMsgFilter->msg != WM_LBUTTONUP)
+                    if (pMsgFilter->msg != WM_LBUTTONDOWN &&
+                            pMsgFilter->msg != WM_LBUTTONUP)
                         return 1;
                 }
                 break;
