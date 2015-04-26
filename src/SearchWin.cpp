@@ -71,7 +71,9 @@ void SearchWin::Register()
 void SearchWin::Unregister()
 {
     UnregisterClass(cClassName, HMod);
-    FreeLibrary(GetModuleHandle(_T("Riched20.dll")));
+    HMODULE hLib = GetModuleHandle(_T("Riched20.dll"));
+    if (hLib)
+        FreeLibrary(hLib);
 }
 
 
@@ -102,11 +104,9 @@ void SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        UpdateWindow(hOwner);
     }
 
     // Pump buffered user input
-    PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
     while (PeekMessage(&msg, hOwner, 0, 0, PM_QS_INPUT | PM_REMOVE));
 
     EnableWindow(hOwner, TRUE);
@@ -385,7 +385,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             DestroyCaret();
-            PostQuitMessage(0);
+            // PostQuitMessage(0);
         return 0;
     }
 

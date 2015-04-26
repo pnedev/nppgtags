@@ -85,10 +85,13 @@ bool INpp::SearchText(const char* text,
         bool matchCase, bool wholeWord, bool regExp,
         long* startPos, long* endPos) const
 {
-    if (startPos == NULL || *startPos < 0)
+    if (startPos == NULL || endPos == NULL)
+        return false;
+
+    if (*startPos < 0)
         *startPos = 0;
 
-    if (endPos == NULL || *endPos <= 0)
+    if (*endPos <= 0)
         *endPos = SendMessage(_hSC, SCI_GETLENGTH, 0, 0);
 
     int searchFlags = 0;

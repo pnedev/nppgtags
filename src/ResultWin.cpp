@@ -601,19 +601,18 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     if (lineLen <= 0)
         return false;
 
-    char* lineTxt = new char[lineLen + 1];
+    CCharArray lineTxt(lineLen + 1);
 
-    sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt));
+    sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(&lineTxt));
 
     int line = 0;
     int i;
 
     if (_activeTab->_cmdID != FIND_FILE)
     {
-        for (i = 7; lineTxt[i] != ':'; i++);
+        for (i = 7; i <= lineLen && lineTxt[i] != ':'; i++);
         lineTxt[i] = 0;
         line = atoi(&lineTxt[7]) - 1;
-        delete [] lineTxt;
 
         lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
         if (lineNum == -1)
@@ -623,18 +622,18 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
         if (lineLen <= 0)
             return false;
 
-        lineTxt = new char[lineLen + 1];
-        sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt));
+        lineTxt(lineLen + 1);
+        sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(&lineTxt));
     }
 
     lineTxt[lineLen] = 0;
-    for (i = 1; lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
+    for (i = 1; i <= lineLen &&
+            lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
     lineTxt[i] = 0;
 
     CPath file(_activeTab->_projectPath);
     CText str(&lineTxt[1]);
     file += str.C_str();
-    delete [] lineTxt;
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())

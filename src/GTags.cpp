@@ -478,6 +478,7 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
             mi.dwTypeData = buf;
             mi.cch++;
             GetMenuItemInfo(hMenu, idx, TRUE, &mi);
+            mi.dwTypeData[mi.cch - 1] = 0;
             if (!_tcscmp(cPluginName, mi.dwTypeData))
                 break;
         }

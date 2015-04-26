@@ -153,7 +153,9 @@ ConfigWin::~ConfigWin()
         DeleteObject(_hFont);
 
     UnregisterClass(cClassName, HMod);
-    FreeLibrary(GetModuleHandle(_T("Riched20.dll")));
+    HMODULE hLib = GetModuleHandle(_T("Riched20.dll"));
+    if (hLib)
+        FreeLibrary(hLib);
 }
 
 
@@ -316,10 +318,9 @@ void ConfigWin::onOK()
     int len = Edit_GetTextLength(_hLibDB) + 1;
     if (len > 1)
     {
-        TCHAR* buf = new TCHAR[len];
-        Edit_GetText(_hLibDB, buf, len);
-        _settings->_libraryDBpath = buf;
-        delete [] buf;
+        CTcharArray buf(len);
+        Edit_GetText(_hLibDB, &buf, len);
+        _settings->_libraryDBpath = &buf;
     }
     else
     {
@@ -401,13 +402,12 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                     {
                         int len = Edit_GetTextLength(CW->_hLibDB) +
                                 libraryPath.Len() + 2;
-                        TCHAR* buf = new TCHAR[len];
-                        Edit_GetText(CW->_hLibDB, buf, len);
+                        CTcharArray buf(len);
+                        Edit_GetText(CW->_hLibDB, &buf, len);
                         if (buf[0])
-                            _tcscat_s(buf, len, _T(";"));
-                        _tcscat_s(buf, len, libraryPath.C_str());
-                        Edit_SetText(CW->_hLibDB, buf);
-                        delete [] buf;
+                            buf += _T(";");
+                        buf += libraryPath.C_str();
+                        Edit_SetText(CW->_hLibDB, &buf);
                     }
                     return 0;
                 }

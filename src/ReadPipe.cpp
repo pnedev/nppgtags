@@ -149,9 +149,15 @@ unsigned ReadPipe::thread()
     {
         if (!chunkRemainingSize)
         {
-            _output = (char*)realloc(_output, ++allocChunksCnt * cChunkSize);
-            if (!_output)
+            char* newBlock =
+                    (char*)realloc(_output, ++allocChunksCnt * cChunkSize);
+            if (!newBlock)
+            {
+                free(_output);
+                _output = NULL;
                 return 1;
+            }
+            _output = newBlock;
             chunkRemainingSize = cChunkSize;
             ZeroMemory(_output + totalBytesRead, cChunkSize);
         }

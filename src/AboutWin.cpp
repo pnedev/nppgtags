@@ -171,7 +171,9 @@ AboutWin::~AboutWin()
         DeleteObject(_hFont);
 
     UnregisterClass(cClassName, HMod);
-    FreeLibrary(GetModuleHandle(_T("Riched20.dll")));
+    HMODULE hLib = GetModuleHandle(_T("Riched20.dll"));
+    if (hLib)
+        FreeLibrary(hLib);
 }
 
 
@@ -302,16 +304,15 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
                     ENLINK* pEnLink = (ENLINK*)lparam;
                     if (pEnLink->msg == WM_LBUTTONUP)
                     {
-                        TCHAR* link = new TCHAR[
-                                pEnLink->chrg.cpMax - pEnLink->chrg.cpMin + 1];
+                        CTcharArray link(pEnLink->chrg.cpMax -
+                                pEnLink->chrg.cpMin + 1);
                         TEXTRANGE range;
                         range.chrg = pEnLink->chrg;
-                        range.lpstrText = link;
+                        range.lpstrText = &link;
                         SendMessage(pEnLink->nmhdr.hwndFrom, EM_GETTEXTRANGE,
                                 0, (LPARAM) &range);
-                        ShellExecute(NULL, _T("open"), link, NULL, NULL,
+                        ShellExecute(NULL, _T("open"), &link, NULL, NULL,
                                 SW_SHOWNORMAL);
-                        delete [] link;
                         return 1;
                     }
                 }

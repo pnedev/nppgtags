@@ -185,7 +185,7 @@ int AutoCompleteWin::fillLV()
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
-    TCHAR* pTmp;
+    TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_result, _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
@@ -333,6 +333,7 @@ void AutoCompleteWin::onDblClick()
     lvItem.cchTextMax   = _countof(itemTxt);
 
     ListView_GetItem(_hLVWnd, &lvItem);
+    lvItem.pszText[lvItem.cchTextMax - 1] = 0;
 
     char str[MAX_PATH];
     Tools::WtoA(str, _countof(str), lvItem.pszText);
@@ -388,7 +389,8 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
             BYTE keysState[256];
             WORD character;
 
-            GetKeyboardState(keysState);
+            if (!GetKeyboardState(keysState))
+                return false;
             if (ToAscii(keyCode, MapVirtualKey(keyCode, MAPVK_VK_TO_VSC),
                     keysState, &character, 1) != 1)
                 return false;
@@ -410,10 +412,16 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     else if (lvItemsCnt == 1)
     {
         TCHAR itemTxt[MAX_PATH];
-        ListView_GetItemText(_hLVWnd,
-                ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED), 0,
-                itemTxt, _countof(itemTxt));
-        if (!_tcscmp(word, itemTxt))
+        LVITEM lvItem       = {0};
+        lvItem.mask         = LVIF_TEXT;
+        lvItem.iItem        = ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED);
+        lvItem.pszText      = itemTxt;
+        lvItem.cchTextMax   = _countof(itemTxt);
+
+        ListView_GetItem(_hLVWnd, &lvItem);
+        lvItem.pszText[lvItem.cchTextMax - 1] = 0;
+
+        if (!_tcscmp(word, lvItem.pszText))
             SendMessage(_hWnd, WM_CLOSE, 0, 0);
     }
 
