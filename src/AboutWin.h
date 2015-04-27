@@ -39,7 +39,7 @@ namespace GTags
 class AboutWin
 {
 public:
-    static void Show(HWND hOwner, const TCHAR *info);
+    static void Show(const TCHAR *info);
 
 private:
     static const TCHAR cClassName[];

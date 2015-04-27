@@ -25,9 +25,31 @@
 #include "Cmd.h"
 #include "GTags.h"
 #include "INpp.h"
+#include "Common.h"
 #include "ActivityWin.h"
 #include "ReadPipe.h"
 #include <process.h>
+
+
+#define LINUX_WINE_WORKAROUNDS
+
+
+namespace
+{
+
+/**
+*  \brief
+*/
+inline void releaseKeys()
+{
+#ifdef LINUX_WINE_WORKAROUNDS
+    Tools::ReleaseKey(VK_SHIFT);
+    Tools::ReleaseKey(VK_CONTROL);
+    Tools::ReleaseKey(VK_MENU);
+#endif // LINUX_WINE_WORKAROUNDS
+}
+
+} // anonymous namespace
 
 
 namespace GTags
@@ -349,10 +371,14 @@ bool Cmd::runProcess()
 
     bool ret = errorPipe.Open() && dataPipe.Open();
     if (ret)
+    {
+        releaseKeys();
+
         ret = !ActivityWin::Show(INpp::Get().GetSciHandle(), pi.hProcess,
                 600, header,
                 (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
                 0 : 300);
+    }
     if (ret)
     {
         CloseHandle(pi.hProcess);

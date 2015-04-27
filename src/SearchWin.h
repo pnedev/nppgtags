@@ -66,13 +66,14 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(HWND hOwner, int width, const TCHAR *header,
-            SearchData* searchData, bool enMatchCase, bool enRegExp);
+    static void Show(const TCHAR *header, SearchData* searchData,
+            bool enMatchCase, bool enRegExp);
 
 private:
     static const TCHAR cClassName[];
     static const int cBackgroundColor;
     static const TCHAR cBtnFont[];
+    static const int cWidth;
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);

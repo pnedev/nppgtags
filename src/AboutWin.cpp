@@ -32,6 +32,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <stdlib.h>
+#include "INpp.h"
 #include "GTags.h"
 
 
@@ -65,32 +66,32 @@ AboutWin* AboutWin::AW = NULL;
 /**
  *  \brief
  */
-void AboutWin::Show(HWND hOwner, const TCHAR* info)
+void AboutWin::Show(const TCHAR* info)
 {
     if (AW)
     {
         SetFocus(AW->_hWnd);
         return;
     }
-    else
-    {
-        WNDCLASS wc         = {0};
-        wc.style            = CS_HREDRAW | CS_VREDRAW;
-        wc.lpfnWndProc      = wndProc;
-        wc.hInstance        = HMod;
-        wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-        wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
-        wc.lpszClassName    = cClassName;
 
-        RegisterClass(&wc);
+    WNDCLASS wc         = {0};
+    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc      = wndProc;
+    wc.hInstance        = HMod;
+    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
+    wc.lpszClassName    = cClassName;
 
-        INITCOMMONCONTROLSEX icex   = {0};
-        icex.dwSize                 = sizeof(icex);
-        icex.dwICC                  = ICC_STANDARD_CLASSES;
+    RegisterClass(&wc);
 
-        InitCommonControlsEx(&icex);
-        LoadLibrary(_T("Riched20.dll"));
-    }
+    INITCOMMONCONTROLSEX icex   = {0};
+    icex.dwSize                 = sizeof(icex);
+    icex.dwICC                  = ICC_STANDARD_CLASSES;
+
+    InitCommonControlsEx(&icex);
+    LoadLibrary(_T("Riched20.dll"));
+
+    HWND hOwner = INpp::Get().GetHandle();
 
     AW = new AboutWin;
     if (AW->composeWindow(hOwner, info) == NULL)
@@ -257,6 +258,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
             if (HIWORD(wparam) == EN_SETFOCUS)
             {
                 DestroyCaret();
+                SetFocus(hwnd);
                 return 0;
             }
         break;

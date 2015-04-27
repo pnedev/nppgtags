@@ -39,9 +39,6 @@
 #include "AboutWin.h"
 
 
-#define LINUX_WINE_WORKAROUNDS
-
-
 namespace
 {
 
@@ -87,19 +84,6 @@ bool checkForGTagsBinaries(const TCHAR* dllPath)
     }
 
     return true;
-}
-
-
-/**
- *  \brief
- */
-inline void releaseKeys()
-{
-#ifdef LINUX_WINE_WORKAROUNDS
-    Tools::ReleaseKey(VK_SHIFT);
-    Tools::ReleaseKey(VK_CONTROL);
-    Tools::ReleaseKey(VK_MENU);
-#endif // LINUX_WINE_WORKAROUNDS
 }
 
 
@@ -188,8 +172,7 @@ unsigned enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
     if (defaultTag)
         _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
 
-    SearchWin::Show(INpp::Get().GetHandle(), 400, uiName,
-            searchData, enMatchCase, enRegExp);
+    SearchWin::Show(uiName, searchData, enMatchCase, enRegExp);
 
     return _tcslen(searchData->_str);
 }
@@ -267,8 +250,6 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
 
-    INpp& npp = INpp::Get();
-
     if (cmd->Error())
     {
         CText msg(cmd->GetResult());
@@ -279,7 +260,7 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
     }
 
     if (cmd->NoResult())
-        npp.ClearSelection();
+        INpp::Get().ClearSelection();
     else
         AutoCompleteWin::Show(cmd);
 }
@@ -317,8 +298,6 @@ void showResult(std::shared_ptr<CmdData>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
 
-    INpp& npp = INpp::Get();
-
     if (cmd->Error())
     {
         CText msg(cmd->GetResult());
@@ -333,7 +312,7 @@ void showResult(std::shared_ptr<CmdData>& cmd)
         TCHAR msg[cMaxTagLen + 32];
         _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"),
                 cmd->GetTag());
-        MessageBox(npp.GetHandle(), msg, cmd->GetName(),
+        MessageBox(INpp::Get().GetHandle(), msg, cmd->GetName(),
                 MB_OK | MB_ICONEXCLAMATION);
         return;
     }
@@ -362,18 +341,6 @@ void findReady(std::shared_ptr<CmdData>& cmd)
 
     showResult(cmd);
 }
-
-
-/**
- *  \brief
- */
-// void showInfo(std::shared_ptr<CmdData>& cmd)
-// {
-    // CText msg(cmd->GetResult());
-
-    // AboutWin::Show(INpp::Get().GetHandle(), cmd->Error() || cmd->NoResult() ?
-            // _T("VERSION READ FAILED\n") : msg.C_str());
-// }
 
 } // anonymous namespace
 
@@ -508,8 +475,6 @@ void AutoComplete()
     if (!db)
         return;
 
-    releaseKeys();
-
     std::shared_ptr<CmdData>
         cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
     if (Cmd::Run(cmd, db))
@@ -529,8 +494,6 @@ void AutoCompleteFile()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     tag[0] = '/';
     std::shared_ptr<CmdData>
@@ -561,8 +524,6 @@ void FindFile()
     if (!db)
         return;
 
-    releaseKeys();
-
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_FILE, cFindFile, db,
             searchData._str, searchData._regExp, searchData._matchCase));
@@ -585,8 +546,6 @@ void FindDefinition()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(FIND_DEFINITION, cFindDefinition, db,
@@ -615,8 +574,6 @@ void FindReference()
             return;
     }
 
-    releaseKeys();
-
     DBhandle db = getDatabase();
     if (!db)
         return;
@@ -643,8 +600,6 @@ void Grep()
     DBhandle db = getDatabase();
     if (!db)
         return;
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(GREP, cGrep, db,
@@ -725,8 +680,6 @@ void CreateDatabase()
         currentFile += _T("\\");
         db = DBManager::Get().RegisterDB(currentFile, true);
     }
-
-    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
@@ -820,8 +773,6 @@ bool UpdateSingleFile(const TCHAR* file)
         return true;
     }
 
-    releaseKeys();
-
     std::shared_ptr<CmdData>
             cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,
                     currentFile.C_str()));
@@ -868,7 +819,7 @@ void DeleteDatabase()
  */
 void SettingsCfg()
 {
-    ConfigWin::Show(INpp::Get().GetHandle(), &Config);
+    ConfigWin::Show(&Config);
 }
 
 
@@ -877,8 +828,6 @@ void SettingsCfg()
  */
 void About()
 {
-    releaseKeys();
-
     std::shared_ptr<CmdData> cmd(new CmdData(VERSION, cVersion));
     bool success = Cmd::Run(cmd);
 
@@ -888,7 +837,7 @@ void About()
     else
         msg = cmd->GetResult();
 
-    AboutWin::Show(INpp::Get().GetHandle(), msg.C_str());
+    AboutWin::Show(msg.C_str());
 }
 
 } // namespace GTags

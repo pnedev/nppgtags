@@ -80,8 +80,11 @@ void AutoCompleteWin::Unregister()
  */
 void AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
 {
+    if (ACW)
+        return;
+
     ACW = new AutoCompleteWin(cmd);
-    if (ACW->composeWindow() == NULL)
+    if (ACW->composeWindow(cmd->GetName()) == NULL)
     {
         delete ACW;
         ACW = NULL;
@@ -93,11 +96,12 @@ void AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
  *  \brief
  */
 AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdData>& cmd) :
-    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmd(cmd)
+    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdID(cmd->GetID()),
+    _cmdTagLen((_cmdID == AUTOCOMPLETE_FILE ?
+            cmd->GetTagLen() - 1 : cmd->GetTagLen())),
+    _result(cmd->GetResultLen() + 1)
 {
-    unsigned len = cmd->GetResultLen();
-    _result = new TCHAR[len + 1];
-    Tools::AtoW(_result, len + 1, cmd->GetResult());
+    Tools::AtoW(&_result, _result.Size(), cmd->GetResult());
 }
 
 
@@ -106,8 +110,6 @@ AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdData>& cmd) :
  */
 AutoCompleteWin::~AutoCompleteWin()
 {
-    if (_result)
-        delete [] _result;
     if (_hFont)
         DeleteObject(_hFont);
 }
@@ -116,7 +118,7 @@ AutoCompleteWin::~AutoCompleteWin()
 /**
  *  \brief
  */
-HWND AutoCompleteWin::composeWindow()
+HWND AutoCompleteWin::composeWindow(const TCHAR* header)
 {
     HWND hOwner = INpp::Get().GetSciHandle();
     RECT win;
@@ -151,7 +153,7 @@ HWND AutoCompleteWin::composeWindow()
             LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     TCHAR buf[32];
-    _tcscpy_s(buf, _countof(buf), _cmd->GetName());
+    _tcscpy_s(buf, _countof(buf), header);
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
@@ -186,11 +188,10 @@ int AutoCompleteWin::fillLV()
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_result, _T("\n\r"), &pTmp);
+    for (TCHAR* pToken = _tcstok_s(&_result, _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
-        lvItem.pszText =
-                (_cmd->GetID() == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
+        lvItem.pszText = (_cmdID == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);
         lvItem.iItem++;
     }
@@ -216,10 +217,13 @@ int AutoCompleteWin::filterLV(const TCHAR* filter)
 
     int len = _tcslen(filter);
 
-    TCHAR* pRes = _result;
-    TCHAR* pEnd = pRes + _cmd->GetResultLen();
+    TCHAR* pRes = &_result;
+    TCHAR* pEnd = pRes + _result.Size() - 1;
 
     ListView_DeleteAllItems(_hLVWnd);
+
+    if (_cmdID == AUTOCOMPLETE_FILE)
+        pRes++;
 
     while (pRes < pEnd)
     {
@@ -234,6 +238,9 @@ int AutoCompleteWin::filterLV(const TCHAR* filter)
 
         while (pRes < pEnd &&
                 (*pRes == _T('\n') || *pRes == _T('\r') || *pRes == 0))
+            pRes++;
+
+        if (_cmdID == AUTOCOMPLETE_FILE)
             pRes++;
     }
 
@@ -376,7 +383,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
             INpp& npp = INpp::Get();
             npp.ClearSelection();
             npp.Backspace();
-            if (npp.GetWordSize() < (int)_cmd->GetTagLen())
+            if (npp.GetWordSize() < _cmdTagLen)
             {
                 SendMessage(_hWnd, WM_CLOSE, 0, 0);
                 return true;
@@ -408,7 +415,9 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     Tools::AtoW(word, _countof(word), wordA);
     int lvItemsCnt = filterLV(word);
     if (lvItemsCnt == 0)
+    {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    }
     else if (lvItemsCnt == 1)
     {
         TCHAR itemTxt[MAX_PATH];

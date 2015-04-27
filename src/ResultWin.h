@@ -74,9 +74,9 @@ private:
                     !strcmp(_search, tab._search));
         }
 
-        int _cmdID;
-        bool _regExp;
-        bool _matchCase;
+        const CmdID_t _cmdID;
+        const bool _regExp;
+        const bool _matchCase;
         char _projectPath[MAX_PATH];
         char _search[cMaxTagLen];
         CTextA _uiBuf;

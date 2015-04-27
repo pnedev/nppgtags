@@ -57,7 +57,7 @@ private:
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();
 
-    HWND composeWindow();
+    HWND composeWindow(const TCHAR* header);
     int fillLV();
     int filterLV(const TCHAR* filter);
     void resizeLV();
@@ -70,8 +70,9 @@ private:
     HWND _hWnd;
     HWND _hLVWnd;
     HFONT _hFont;
-    const std::shared_ptr<CmdData> _cmd;
-    TCHAR* _result;
+    const CmdID_t _cmdID;
+    const int _cmdTagLen;
+    CTcharArray _result;
 };
 
 } // namespace GTags

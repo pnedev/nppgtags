@@ -62,12 +62,9 @@ const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
  *  \brief
  */
 ResultWin::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
-    _currentLine(1), _firstVisibleLine(0)
+    _cmdID(cmd->GetID()), _regExp(cmd->IsRegExp()),
+    _matchCase(cmd->IsMatchCase()), _currentLine(1), _firstVisibleLine(0)
 {
-    _cmdID = cmd->GetID();
-    _regExp = cmd->IsRegExp();
-    _matchCase = cmd->IsMatchCase();
-
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->GetDBPath());
     Tools::WtoA(_search, _countof(_search), cmd->GetTag());
 

@@ -31,6 +31,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <stdlib.h>
+#include "INpp.h"
 #include "GTags.h"
 #include "Common.h"
 
@@ -50,7 +51,7 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-void ConfigWin::Show(HWND hOwner, Settings* settings)
+void ConfigWin::Show(Settings* settings)
 {
     if (CW)
     {
@@ -74,6 +75,8 @@ void ConfigWin::Show(HWND hOwner, Settings* settings)
 
     InitCommonControlsEx(&icex);
     LoadLibrary(_T("Riched20.dll"));
+
+    HWND hOwner = INpp::Get().GetHandle();
 
     CW = new ConfigWin(settings);
     if (CW->composeWindow(hOwner) == NULL)

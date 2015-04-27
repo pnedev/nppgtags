@@ -43,7 +43,7 @@ struct Settings;
 class ConfigWin
 {
 public:
-    static void Show(HWND hOwner, Settings* _settings);
+    static void Show(Settings* _settings);
 
 private:
     static const TCHAR cClassName[];

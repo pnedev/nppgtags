@@ -30,6 +30,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include "INpp.h"
 #include "Cmd.h"
 
 
@@ -39,6 +40,7 @@ namespace GTags
 const TCHAR SearchWin::cClassName[]     = _T("SearchWin");
 const int SearchWin::cBackgroundColor   = COLOR_WINDOW;
 const TCHAR SearchWin::cBtnFont[]       = _T("Tahoma");
+const int SearchWin::cWidth             = 400;
 
 
 /**
@@ -80,14 +82,16 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-void SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
-        SearchData* searchData, bool enMatchCase, bool enRegExp)
+void SearchWin::Show(const TCHAR* header, SearchData* searchData,
+        bool enMatchCase, bool enRegExp)
 {
     if (!searchData)
         return;
 
+    HWND hOwner = INpp::Get().GetHandle();
+
     SearchWin sw(searchData);
-    if (sw.composeWindow(hOwner, width, header, searchData,
+    if (sw.composeWindow(hOwner, cWidth, header, searchData,
             enMatchCase, enRegExp) == NULL)
     {
         searchData->_str[0] = 0;
@@ -120,8 +124,6 @@ void SearchWin::Show(HWND hOwner, int width, const TCHAR* header,
 RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
         int width, int height)
 {
-    if (width <= 0) width = 200;
-
     RECT maxWin;
     GetWindowRect(GetDesktopWindow(), &maxWin);
 
@@ -385,7 +387,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             DestroyCaret();
-            // PostQuitMessage(0);
+            PostQuitMessage(0);
         return 0;
     }
 
