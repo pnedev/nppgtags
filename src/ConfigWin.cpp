@@ -373,11 +373,13 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                     CW->onOK();
                     return 0;
                 }
+
                 if ((HWND)lparam == CW->_hCancel)
                 {
                     SendMessage(hwnd, WM_CLOSE, 0, 0);
                     return 0;
                 }
+
                 if ((HWND)lparam == CW->_hEnLibDB)
                 {
                     BOOL en;
@@ -398,20 +400,49 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                             (LPARAM)GetSysColor(color));
                     return 0;
                 }
+
                 if ((HWND)lparam == CW->_hCreateDB)
                 {
                     CPath libraryPath = CreateLibraryDatabase(hwnd);
-                    if (libraryPath.Len())
+                    int libLen = libraryPath.Len();
+
+                    if (libLen)
                     {
-                        int len = Edit_GetTextLength(CW->_hLibDB) +
-                                libraryPath.Len() + 2;
-                        CTcharArray buf(len);
-                        Edit_GetText(CW->_hLibDB, &buf, len);
-                        if (buf[0])
-                            buf += _T(";");
-                        buf += libraryPath.C_str();
-                        Edit_SetText(CW->_hLibDB, &buf);
+                        CTcharArray
+                            buf(Edit_GetTextLength(CW->_hLibDB) + libLen + 2);
+                        Edit_GetText(CW->_hLibDB, &buf, buf.Size());
+                        bool found = false;
+
+                        if (buf.Len())
+                        {
+                            for (TCHAR* ptr =
+                                    _tcsstr(&buf, libraryPath.C_str()); ptr;
+                                    ptr = _tcsstr(ptr, libraryPath.C_str()))
+                            {
+                                if (ptr[libLen] == 0 ||
+                                        ptr[libLen] == _T(';'))
+                                {
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!found)
+                                buf += _T(";");
+                        }
+
+                        if (!found)
+                        {
+                            buf += libraryPath.C_str();
+                            Edit_SetText(CW->_hLibDB, &buf);
+                        }
+
+                        SetFocus(CW->_hLibDB);
+                        int len = buf.Len();
+                        Edit_SetSel(CW->_hLibDB, len, len);
+                        Edit_ScrollCaret(CW->_hLibDB);
                     }
+
                     return 0;
                 }
             }

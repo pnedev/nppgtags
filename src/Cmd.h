@@ -63,7 +63,7 @@ public:
     CmdData(CmdID_t id, const TCHAR* name, DBhandle db = NULL,
             const TCHAR* tag = NULL,
             bool regExp = false, bool matchCase = true);
-    ~CmdData();
+    ~CmdData() {};
 
     inline void SetID(CmdID_t id) { _id = id; }
     inline CmdID_t GetID() const { return _id; }
@@ -82,18 +82,18 @@ public:
     }
     inline const TCHAR* GetDBPath() const { return _dbPath.C_str(); }
 
-    inline const TCHAR* GetTag() const { return _tag; }
-    inline unsigned GetTagLen() const { return _tcslen(_tag); }
+    inline const TCHAR* GetTag() const { return &_tag; }
+    inline unsigned GetTagLen() const { return _tag.Len(); }
 
     inline bool IsRegExp() const { return _regExp; }
     inline bool IsMatchCase() const { return _matchCase; }
 
     inline bool Error() const { return _error; }
-    inline bool NoResult() const { return (_result == NULL); }
+    inline bool NoResult() const { return (&_result == NULL); }
 
-    inline char* GetResult() { return _result; }
-    inline const char* GetResult() const { return _result; }
-    inline unsigned GetResultLen() const { return _len; }
+    inline char* GetResult() { return &_result; }
+    inline const char* GetResult() const { return &_result; }
+    inline unsigned GetResultLen() const { return _result.Len(); }
 
 protected:
     void SetResult(const char* result);
@@ -106,12 +106,11 @@ private:
     friend class Cmd;
 
     TCHAR _name[32];
-    TCHAR* _tag;
+    CTcharArray _tag;
     bool _regExp;
     bool _matchCase;
     CPath _dbPath;
-    char* _result;
-    unsigned _len;
+    CCharArray _result;
 };
 
 

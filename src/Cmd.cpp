@@ -25,31 +25,9 @@
 #include "Cmd.h"
 #include "GTags.h"
 #include "INpp.h"
-#include "Common.h"
 #include "ActivityWin.h"
 #include "ReadPipe.h"
 #include <process.h>
-
-
-#define LINUX_WINE_WORKAROUNDS
-
-
-namespace
-{
-
-/**
-*  \brief
-*/
-inline void releaseKeys()
-{
-#ifdef LINUX_WINE_WORKAROUNDS
-    Tools::ReleaseKey(VK_SHIFT);
-    Tools::ReleaseKey(VK_CONTROL);
-    Tools::ReleaseKey(VK_MENU);
-#endif // LINUX_WINE_WORKAROUNDS
-}
-
-} // anonymous namespace
 
 
 namespace GTags
@@ -60,7 +38,7 @@ const TCHAR Cmd::cCreateDatabaseCmd[] =
 const TCHAR Cmd::cUpdateSingleCmd[] =
         _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
 const TCHAR Cmd::cAutoComplCmd[]       =
-        _T("\"%s\\global.exe\" -c \"%s\"");
+        _T("\"%s\\global.exe\" -cT \"%s\"");
 const TCHAR Cmd::cAutoComplSymCmd[] =
         _T("\"%s\\global.exe\" -cs \"%s\"");
 const TCHAR Cmd::cAutoComplFileCmd[] =
@@ -68,7 +46,7 @@ const TCHAR Cmd::cAutoComplFileCmd[] =
 const TCHAR Cmd::cFindFileCmd[] =
         _T("\"%s\\global.exe\" -P \"%s\"");
 const TCHAR Cmd::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -d --result=grep \"%s\"");
+        _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
 const TCHAR Cmd::cFindReferenceCmd[] =
         _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
 const TCHAR Cmd::cFindSymbolCmd[] =
@@ -84,8 +62,7 @@ const TCHAR Cmd::cVersionCmd[] =
  */
 CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
         bool regExp, bool matchCase) :
-    _id(id), _error(false), _tag(NULL), _regExp(regExp), _matchCase(matchCase),
-    _result(NULL), _len(0)
+    _id(id), _error(false), _regExp(regExp), _matchCase(matchCase)
 {
     if (db)
         _dbPath = *db;
@@ -96,22 +73,9 @@ CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
 
     if (tag)
     {
-        int tagLen = _tcslen(tag) + 1;
-        _tag = new TCHAR[tagLen];
-        _tcscpy_s(_tag, tagLen, tag);
+        _tag(_tcslen(tag) + 1);
+        _tag = tag;
     }
-}
-
-
-/**
- *  \brief
- */
-CmdData::~CmdData()
-{
-    if (_tag)
-        delete [] _tag;
-    if (_result)
-        delete [] _result;
 }
 
 
@@ -123,12 +87,8 @@ void CmdData::SetResult(const char* result)
     if (result == NULL)
         return;
 
-    if (_result)
-        delete [] _result;
-
-    _len = strlen(result);
-    _result = new char[_len + 1];
-    strcpy_s(_result, _len + 1, result);
+    _result(strlen(result) + 1);
+    _result = result;
 }
 
 
@@ -140,19 +100,18 @@ void CmdData::AppendResult(const char* result)
     if (result == NULL)
         return;
 
-    char* oldResult = _result;
-    unsigned oldLen = _len;
-
-    _len += strlen(result);
-    _result = new char[_len + 1];
-
-    if (oldResult)
+    if (!NoResult())
     {
-        strcpy_s(_result, oldLen + 1, oldResult);
-        delete [] oldResult;
+        CCharArray oldResult(_result.Size());
+        oldResult = &_result;
+        _result(oldResult.Size() + strlen(result));
+        _result = &oldResult;
+        _result += result;
     }
-
-    strcpy_s(_result + oldLen, _len + 1 - oldLen, result);
+    else
+    {
+        SetResult(result);
+    }
 }
 
 
@@ -372,8 +331,6 @@ bool Cmd::runProcess()
     bool ret = errorPipe.Open() && dataPipe.Open();
     if (ret)
     {
-        releaseKeys();
-
         ret = !ActivityWin::Show(INpp::Get().GetSciHandle(), pi.hProcess,
                 600, header,
                 (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?

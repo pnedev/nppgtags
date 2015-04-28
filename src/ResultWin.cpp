@@ -239,7 +239,6 @@ int ResultWin::Register()
     data.dlgID          = 0;
 
     INpp& npp = INpp::Get();
-    npp.RegisterWin(_hWnd);
     npp.RegisterDockingWin(data);
     npp.HideDockingWin(_hWnd);
 
@@ -265,7 +264,6 @@ void ResultWin::Unregister()
         _hSci = NULL;
     }
 
-    npp.UnregisterWin(_hWnd);
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
     _hWnd = NULL;
 
@@ -359,7 +357,7 @@ void ResultWin::Show(const std::shared_ptr<CmdData>& cmd)
 
     npp.UpdateDockingWin(_hWnd);
     npp.ShowDockingWin(_hWnd);
-    SetFocus(_hSci);
+    SetFocus(_hWnd);
 }
 
 
@@ -644,7 +642,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     DocLocation::Get().Push();
     npp.OpenFile(file.C_str());
-    SetFocus(npp.ReadSciHandle());
+    SetFocus(npp.GetSciHandle());
 
     if (_activeTab->_cmdID == FIND_FILE)
         return true;
@@ -1032,7 +1030,7 @@ void ResultWin::onCloseTab()
         INpp& npp = INpp::Get();
         npp.UpdateDockingWin(_hWnd);
         npp.HideDockingWin(_hWnd);
-        SetFocus(npp.ReadSciHandle());
+        SetFocus(npp.GetSciHandle());
     }
 
     _lock.Unlock();
@@ -1089,13 +1087,13 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hwnd, UINT umsg,
         case WM_CREATE:
             ui = (ResultWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(ui));
-            return 0;
+        return 0;
 
         case WM_SETFOCUS:
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(ui->_hSci);
-            return 0;
+        return 0;
 
         case WM_NOTIFY:
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
@@ -1105,27 +1103,27 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hwnd, UINT umsg,
             {
                 case SCN_STYLENEEDED:
                     ui->onStyleNeeded((SCNotification*)lparam);
-                    return 0;
+                return 0;
 
                 case SCN_HOTSPOTCLICK:
                     ui->onHotspotClick((SCNotification*)lparam);
-                    return 0;
+                return 0;
 
                 case SCN_DOUBLECLICK:
                     ui->onDoubleClick((SCNotification*)lparam);
-                    return 0;
+                return 0;
 
                 case SCN_MARGINCLICK:
                     ui->onMarginClick((SCNotification*)lparam);
-                    return 0;
+                return 0;
 
                 case SCN_CHARADDED:
                     ui->onCharAddTry((SCNotification*)lparam);
-                    return 0;
+                return 0;
 
                 case TCN_SELCHANGE:
                     ui->onTabChange();
-                    return 0;
+                return 0;
             }
         break;
 
@@ -1139,10 +1137,10 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hwnd, UINT umsg,
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             ui->onResize(LOWORD(lparam), HIWORD(lparam));
-            return 0;
+        return 0;
 
         case WM_DESTROY:
-            return 0;
+        return 0;
     }
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);

@@ -46,14 +46,16 @@
 class CCharArray
 {
 public:
-    CCharArray(unsigned size) : _size(size)
+    CCharArray(unsigned size = 0) : _ptr(NULL), _size(size)
     {
-        _ptr = new char[size];
+        if (size)
+            _ptr = new char[size];
     }
 
     ~CCharArray()
     {
-        delete [] _ptr;
+        if (_ptr)
+            delete [] _ptr;
     }
 
     char* operator&() { return _ptr; }
@@ -61,36 +63,45 @@ public:
 
     CCharArray& operator()(unsigned size)
     {
-        delete [] _ptr;
-        _ptr = new char[size];
+        if (_ptr)
+            delete [] _ptr;
+
+        if (size)
+            _ptr = new char[size];
+        else
+            _ptr = NULL;
+
         _size = size;
+
         return *this;
     }
 
     char& operator[](unsigned pos)
     {
-        return (pos < _size ? _ptr[pos] : _ptr[_size - 1]);
+        return (pos < _size ? _ptr[pos] : _ptr[0]);
     }
 
     const char* operator=(const char* array)
     {
-        strcpy_s(_ptr, _size, array);
+        if (_ptr)
+            strcpy_s(_ptr, _size, array);
         return _ptr;
     }
 
     const char* operator+=(const char* array)
     {
-        strcat_s(_ptr, _size, array);
+        if (_ptr)
+            strcat_s(_ptr, _size, array);
         return _ptr;
     }
 
     bool operator==(const char* array) const
     {
-        return (!strcmp(_ptr, array));
+        return (_ptr ? (!strcmp(_ptr, array)) : false);
     }
 
     unsigned Size() const { return _size; }
-    unsigned Len() const { return strlen(_ptr); }
+    unsigned Len() const { return (_ptr ? strlen(_ptr) : 0); }
 
 private:
     char*       _ptr;
@@ -105,14 +116,16 @@ private:
 class CWcharArray
 {
 public:
-    CWcharArray(unsigned size) : _size(size)
+    CWcharArray(unsigned size = 0) : _ptr(NULL), _size(size)
     {
-        _ptr = new wchar_t[size];
+        if (size)
+            _ptr = new wchar_t[size];
     }
 
     ~CWcharArray()
     {
-        delete [] _ptr;
+        if (_ptr)
+            delete [] _ptr;
     }
 
     wchar_t* operator&() { return _ptr; }
@@ -120,36 +133,45 @@ public:
 
     CWcharArray& operator()(unsigned size)
     {
-        delete [] _ptr;
-        _ptr = new wchar_t[size];
+        if (_ptr)
+            delete [] _ptr;
+
+        if (size)
+            _ptr = new wchar_t[size];
+        else
+            _ptr = NULL;
+
         _size = size;
+
         return *this;
     }
 
     wchar_t& operator[](unsigned pos)
     {
-        return (pos < _size ? _ptr[pos] : _ptr[_size - 1]);
+        return (pos < _size ? _ptr[pos] : _ptr[0]);
     }
 
     const wchar_t* operator=(const wchar_t* array)
     {
-        wcscpy_s(_ptr, _size, array);
+        if (_ptr)
+            wcscpy_s(_ptr, _size, array);
         return _ptr;
     }
 
     const wchar_t* operator+=(const wchar_t* array)
     {
-        wcscat_s(_ptr, _size, array);
+        if (_ptr)
+            wcscat_s(_ptr, _size, array);
         return _ptr;
     }
 
     bool operator==(const wchar_t* array) const
     {
-        return (!wcscmp(_ptr, array));
+        return (_ptr ? (!wcscmp(_ptr, array)) : false);
     }
 
     unsigned Size() const { return _size; }
-    unsigned Len() const { return wcslen(_ptr); }
+    unsigned Len() const { return (_ptr ? wcslen(_ptr) : 0); }
 
 private:
     wchar_t*    _ptr;

@@ -39,6 +39,9 @@
 #include "AboutWin.h"
 
 
+#define LINUX_WINE_WORKAROUNDS
+
+
 namespace
 {
 
@@ -51,6 +54,19 @@ using namespace GTags;
 
 std::list<CPath> UpdateList;
 Mutex UpdateLock;
+
+
+/**
+*  \brief
+*/
+inline void releaseKeys()
+{
+#ifdef LINUX_WINE_WORKAROUNDS
+    Tools::ReleaseKey(VK_SHIFT);
+    Tools::ReleaseKey(VK_CONTROL);
+    Tools::ReleaseKey(VK_MENU);
+#endif // LINUX_WINE_WORKAROUNDS
+}
 
 
 /**
@@ -725,7 +741,7 @@ const CPath CreateLibraryDatabase(HWND hwnd)
                 _T("Database at\n\"%s\" exists.\nRe-create?"),
                 libraryPath.C_str());
         int choice = MessageBox(hwnd, buf, cPluginName,
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return libraryPath;
     }
@@ -772,6 +788,8 @@ bool UpdateSingleFile(const TCHAR* file)
         sheduleForUpdate(currentFile);
         return true;
     }
+
+    releaseKeys();
 
     std::shared_ptr<CmdData>
             cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,

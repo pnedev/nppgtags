@@ -34,6 +34,13 @@
 #include "Cmd.h"
 
 
+enum HotKeys_t
+{
+    HK_ACCEPT = 1,
+    HK_DECLINE
+};
+
+
 namespace GTags
 {
 
@@ -108,13 +115,15 @@ void SearchWin::Show(const TCHAR* header, SearchData* searchData,
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+        if (WaitForSingleObject(sw._hExit, 0) == WAIT_OBJECT_0)
+            break;
     }
-
-    // Pump buffered user input
-    while (PeekMessage(&msg, hOwner, 0, 0, PM_QS_INPUT | PM_REMOVE));
 
     EnableWindow(hOwner, TRUE);
     UpdateWindow(hOwner);
+
+    // Pump buffered user input
+    while (PeekMessage(&msg, hOwner, 0, 0, PM_QS_INPUT | PM_REMOVE));
 }
 
 
@@ -184,9 +193,11 @@ RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
 SearchWin::~SearchWin()
 {
     if (_hWnd)
-        UnregisterHotKey(_hWnd, 1);
-        UnregisterHotKey(_hWnd, 2);
+        UnregisterHotKey(_hWnd, HK_ACCEPT);
+        UnregisterHotKey(_hWnd, HK_DECLINE);
 
+    if (_hExit)
+        CloseHandle(_hExit);
     if (_hBtnFont)
         DeleteObject(_hBtnFont);
     if (_hTxtFont)
@@ -200,6 +211,10 @@ SearchWin::~SearchWin()
 HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
         SearchData* searchData, bool enMatchCase, bool enRegExp)
 {
+    _hExit = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (_hExit == NULL)
+        return NULL;
+
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
     GetTextMetrics(hdc, &tm);
@@ -298,8 +313,8 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     if (!enRegExp)
         EnableWindow(_hRegExp, FALSE);
 
-    RegisterHotKey(_hWnd, 1, 0, VK_ESCAPE);
-    RegisterHotKey(_hWnd, 2, 0, VK_RETURN);
+    RegisterHotKey(_hWnd, HK_ACCEPT, 0, VK_ESCAPE);
+    RegisterHotKey(_hWnd, HK_DECLINE, 0, VK_RETURN);
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -345,7 +360,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         case WM_SETFOCUS:
         {
             SearchWin* sw = reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
-                            (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(sw->_hEditWnd);
         }
         return 0;
@@ -386,8 +401,12 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         break;
 
         case WM_DESTROY:
+        {
+            SearchWin* sw = reinterpret_cast<SearchWin*>(static_cast<LONG_PTR>
+                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             DestroyCaret();
-            PostQuitMessage(0);
+            SetEvent(sw->_hExit);
+        }
         return 0;
     }
 

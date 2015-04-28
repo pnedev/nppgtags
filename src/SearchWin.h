@@ -88,6 +88,7 @@ private:
             SearchData* searchData, bool enMatchCase, bool enRegExp);
     void onOK();
 
+    HANDLE _hExit;
     HWND _hWnd;
     HWND _hEditWnd;
     HWND _hRegExp;
