@@ -28,7 +28,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
-#include "Cmd.h"
+#include "CmdEngine.h"
 
 
 namespace GTags
@@ -44,7 +44,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const std::shared_ptr<CmdData>& cmd);
+    static void Show(const std::shared_ptr<Cmd>& cmd);
 
 private:
     static const TCHAR cClassName[];
@@ -53,7 +53,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
 
-    AutoCompleteWin(const std::shared_ptr<CmdData>& cmd);
+    AutoCompleteWin(const std::shared_ptr<Cmd>& cmd);
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();
 

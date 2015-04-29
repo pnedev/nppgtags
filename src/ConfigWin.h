@@ -33,7 +33,7 @@
 namespace GTags
 {
 
-struct Settings;
+struct CConfig;
 
 
 /**
@@ -43,7 +43,7 @@ struct Settings;
 class ConfigWin
 {
 public:
-    static void Show(Settings* _settings);
+    static void Show(CConfig* _cfg);
 
 private:
     static const TCHAR cClassName[];
@@ -57,7 +57,7 @@ private:
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
-    ConfigWin(Settings* settings) : _settings(settings) {}
+    ConfigWin(CConfig* cfg) : _cfg(cfg) {}
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 
@@ -67,7 +67,7 @@ private:
 
     static ConfigWin* CW;
 
-    Settings* _settings;
+    CConfig* _cfg;
     HWND _hWnd;
     HWND _hParser;
     HWND _hAutoUpdate;

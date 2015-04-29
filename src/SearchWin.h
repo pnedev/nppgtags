@@ -40,9 +40,8 @@ namespace GTags
  */
 struct SearchData
 {
-    SearchData(const TCHAR* str = NULL,
-            bool regExp = false, bool matchCase = false) :
-            _regExp(regExp), _matchCase(matchCase)
+    SearchData(bool regExp = false, bool matchCase = true,
+            const TCHAR* str = NULL) : _regExp(regExp), _matchCase(matchCase)
     {
         if (str)
             _tcscpy_s(_str, cMaxTagLen, str);
@@ -66,8 +65,8 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const TCHAR *header, SearchData* searchData,
-            bool enMatchCase, bool enRegExp);
+    static void Show(const TCHAR *header, SearchData& sd,
+            bool enRE = true, bool enMC = true);
 
 private:
     static const TCHAR cClassName[];
@@ -80,23 +79,23 @@ private:
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
-    SearchWin(SearchData* searchData) : _searchData(searchData) {}
+    SearchWin() {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, int width, const TCHAR* header,
-            SearchData* searchData, bool enMatchCase, bool enRegExp);
+            SearchData& sd, bool enRE, bool enMC);
     void onOK();
 
-    HANDLE _hExit;
+    static SearchWin* SW;
+
     HWND _hWnd;
-    HWND _hEditWnd;
-    HWND _hRegExp;
-    HWND _hMatchCase;
+    HWND _hEdit;
+    HWND _hRE;
+    HWND _hMC;
     HWND _hOK;
     HFONT _hTxtFont;
     HFONT _hBtnFont;
-    SearchData* _searchData;
 };
 
 } // namespace GTags

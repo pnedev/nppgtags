@@ -33,7 +33,7 @@
 #include "Common.h"
 #include "AutoLock.h"
 #include "GTags.h"
-#include "Cmd.h"
+#include "CmdEngine.h"
 
 
 namespace GTags
@@ -54,7 +54,7 @@ public:
 
     int Register();
     void Unregister();
-    void Show(const std::shared_ptr<CmdData>& cmd);
+    void Show(const std::shared_ptr<Cmd>& cmd);
     void ApplyStyle();
 
 private:
@@ -64,7 +64,7 @@ private:
      */
     struct Tab
     {
-        Tab(const std::shared_ptr<CmdData>& cmd);
+        Tab(const std::shared_ptr<Cmd>& cmd);
         ~Tab() {}
 
         inline bool operator==(const Tab& tab) const

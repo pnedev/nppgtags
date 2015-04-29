@@ -22,7 +22,7 @@
  */
 
 
-#include "Cmd.h"
+#include "CmdEngine.h"
 #include "GTags.h"
 #include "INpp.h"
 #include "ActivityWin.h"
@@ -33,36 +33,36 @@
 namespace GTags
 {
 
-const TCHAR Cmd::cCreateDatabaseCmd[] =
+const TCHAR CmdEngine::cCreateDatabaseCmd[] =
         _T("\"%s\\gtags.exe\" -c");
-const TCHAR Cmd::cUpdateSingleCmd[] =
+const TCHAR CmdEngine::cUpdateSingleCmd[] =
         _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
-const TCHAR Cmd::cAutoComplCmd[]       =
+const TCHAR CmdEngine::cAutoComplCmd[]       =
         _T("\"%s\\global.exe\" -cT \"%s\"");
-const TCHAR Cmd::cAutoComplSymCmd[] =
+const TCHAR CmdEngine::cAutoComplSymCmd[] =
         _T("\"%s\\global.exe\" -cs \"%s\"");
-const TCHAR Cmd::cAutoComplFileCmd[] =
+const TCHAR CmdEngine::cAutoComplFileCmd[] =
         _T("\"%s\\global.exe\" -cP --match-part=all \"%s\"");
-const TCHAR Cmd::cFindFileCmd[] =
+const TCHAR CmdEngine::cFindFileCmd[] =
         _T("\"%s\\global.exe\" -P \"%s\"");
-const TCHAR Cmd::cFindDefinitionCmd[] =
+const TCHAR CmdEngine::cFindDefinitionCmd[] =
         _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
-const TCHAR Cmd::cFindReferenceCmd[] =
+const TCHAR CmdEngine::cFindReferenceCmd[] =
         _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
-const TCHAR Cmd::cFindSymbolCmd[] =
+const TCHAR CmdEngine::cFindSymbolCmd[] =
         _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
-const TCHAR Cmd::cGrepCmd[] =
+const TCHAR CmdEngine::cGrepCmd[] =
         _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
-const TCHAR Cmd::cVersionCmd[] =
+const TCHAR CmdEngine::cVersionCmd[] =
         _T("\"%s\\global.exe\" --version");
 
 
 /**
  *  \brief
  */
-CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
+Cmd::Cmd(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
         bool regExp, bool matchCase) :
-    _id(id), _error(false), _regExp(regExp), _matchCase(matchCase)
+    _id(id), _fail(true), _regExp(regExp), _matchCase(matchCase), _db(db)
 {
     if (db)
         _dbPath = *db;
@@ -82,7 +82,7 @@ CmdData::CmdData(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
 /**
  *  \brief
  */
-void CmdData::SetResult(const char* result)
+void Cmd::SetResult(const char* result)
 {
     if (result == NULL)
         return;
@@ -95,7 +95,7 @@ void CmdData::SetResult(const char* result)
 /**
  *  \brief
  */
-void CmdData::AppendResult(const char* result)
+void Cmd::AppendResult(const char* result)
 {
     if (result == NULL)
         return;
@@ -118,18 +118,17 @@ void CmdData::AppendResult(const char* result)
 /**
  *  \brief
  */
-bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, DBhandle db,
-        CompletionCB complCB)
+bool CmdEngine::Run(std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
 {
-    Cmd* cmd = new Cmd(cmdData, complCB, db);
+    CmdEngine* engine = new CmdEngine(cmd, complCB);
 
-    cmd->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
-            (void*)cmd, 0, NULL);
-    if (!cmd->_hThread)
+    engine->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
+            (void*)engine, 0, NULL);
+    if (!engine->_hThread)
     {
-        if (db)
-            DBManager::Get().PutDB(db);
-        delete cmd;
+        if (complCB)
+            complCB(cmd);
+        delete engine;
         return false;
     }
 
@@ -138,12 +137,12 @@ bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, DBhandle db,
 
     // If no callback is given then block until command is ready and return
     // the exit code. On false, command has failed or has been terminated
-    WaitForSingleObject(cmd->_hThread, INFINITE);
+    WaitForSingleObject(engine->_hThread, INFINITE);
 
     DWORD exitCode;
-    GetExitCodeThread(cmd->_hThread, &exitCode);
+    GetExitCodeThread(engine->_hThread, &exitCode);
 
-    delete cmd;
+    delete engine;
 
     return !exitCode;
 }
@@ -152,7 +151,7 @@ bool Cmd::Run(std::shared_ptr<CmdData>& cmdData, DBhandle db,
 /**
  *  \brief
  */
-Cmd::~Cmd()
+CmdEngine::~CmdEngine()
 {
     if (_hThread)
         CloseHandle(_hThread);
@@ -162,16 +161,15 @@ Cmd::~Cmd()
 /**
  *  \brief
  */
-unsigned __stdcall Cmd::threadFunc(void* data)
+unsigned __stdcall CmdEngine::threadFunc(void* data)
 {
-    Cmd* cmd = static_cast<Cmd*>(data);
-    unsigned r = cmd->thread();
+    CmdEngine* engine = static_cast<CmdEngine*>(data);
+    unsigned r = engine->runProcess();
 
-    if (cmd->_complCB)
+    if (engine->_complCB)
     {
-        if (!r)
-            cmd->_complCB(cmd->_cmd);
-        delete cmd;
+        engine->_complCB(engine->_cmd);
+        delete engine;
     }
 
     return r;
@@ -181,31 +179,7 @@ unsigned __stdcall Cmd::threadFunc(void* data)
 /**
  *  \brief
  */
-unsigned Cmd::thread()
-{
-    if (!runProcess())
-    {
-        if (_db)
-        {
-            if (_cmd->_id == CREATE_DATABASE)
-                DBManager::Get().UnregisterDB(_db);
-            else
-                DBManager::Get().PutDB(_db);
-        }
-        return 1;
-    }
-
-    if (_db)
-        DBManager::Get().PutDB(_db);
-
-    return 0;
-}
-
-
-/**
- *  \brief
- */
-const TCHAR* Cmd::getCmdLine()
+const TCHAR* CmdEngine::getCmdLine()
 {
     switch (_cmd->_id)
     {
@@ -240,16 +214,16 @@ const TCHAR* Cmd::getCmdLine()
 /**
  *  \brief
  */
-void Cmd::composeCmd(TCHAR* cmd, unsigned len)
+void CmdEngine::composeCmd(TCHAR* buf, unsigned len)
 {
     CPath path(DllPath);
     path.StripFilename();
     path += cBinsDir;
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
-        _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str());
+        _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str());
     else
-        _sntprintf_s(cmd, len, _TRUNCATE, getCmdLine(), path.C_str(),
+        _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str(),
                 _cmd->GetTag());
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
@@ -257,22 +231,22 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
         path += _T("\\gtags.conf");
         if (path.FileExists())
         {
-            _tcscat_s(cmd, len, _T(" --gtagsconf \""));
-            _tcscat_s(cmd, len, path.C_str());
-            _tcscat_s(cmd, len, _T("\""));
-            _tcscat_s(cmd, len, _T(" --gtagslabel="));
-            _tcscat_s(cmd, len, cParsers[Config._parserIdx]);
+            _tcscat_s(buf, len, _T(" --gtagsconf \""));
+            _tcscat_s(buf, len, path.C_str());
+            _tcscat_s(buf, len, _T("\""));
+            _tcscat_s(buf, len, _T(" --gtagslabel="));
+            _tcscat_s(buf, len, cParsers[Config._parserIdx]);
         }
     }
     else if (_cmd->_id != VERSION)
     {
         if (_cmd->_matchCase)
-            _tcscat_s(cmd, len, _T(" -M"));
+            _tcscat_s(buf, len, _T(" -M"));
         else
-            _tcscat_s(cmd, len, _T(" -i"));
+            _tcscat_s(buf, len, _T(" -i"));
 
         if (!_cmd->_regExp)
-            _tcscat_s(cmd, len, _T(" --literal"));
+            _tcscat_s(buf, len, _T(" --literal"));
     }
 }
 
@@ -280,10 +254,10 @@ void Cmd::composeCmd(TCHAR* cmd, unsigned len)
 /**
  *  \brief
  */
-bool Cmd::runProcess()
+unsigned CmdEngine::runProcess()
 {
-    TCHAR cmd[2048];
-    composeCmd(cmd, _countof(cmd));
+    TCHAR buf[2048];
+    composeCmd(buf, _countof(buf));
 
     TCHAR header[512];
     if (_cmd->_id == CREATE_DATABASE)
@@ -297,18 +271,20 @@ bool Cmd::runProcess()
                 _T("%s - \"%s\""), _cmd->GetName(), _cmd->GetTag());
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
-    const TCHAR* environment = NULL;
+    const TCHAR* env = NULL;
     const TCHAR* currentDir = _cmd->GetDBPath();
 
-    CText env(_T("GTAGSLIBPATH="));
-    if (Config._useLibraryDB)
-        env += Config._libraryDBpath;
+    CText envVars(_T("GTAGSLIBPATH="));
+    if (Config._useLibDB)
+        envVars += Config._libDBpath;
 
     if (_cmd->_id == VERSION)
+    {
         currentDir = NULL;
+    }
     else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
     {
-        environment = env.C_str();
+        env = envVars.C_str();
         createFlags |= CREATE_UNICODE_ENVIRONMENT;
     }
 
@@ -322,48 +298,50 @@ bool Cmd::runProcess()
     si.hStdOutput   = dataPipe.GetInputHandle();
 
     PROCESS_INFORMATION pi;
-    if (!CreateProcess(NULL, cmd, NULL, NULL, TRUE, createFlags,
-        (LPVOID)environment, currentDir, &si, &pi))
-        return false;
+    if (!CreateProcess(NULL, buf, NULL, NULL, TRUE, createFlags,
+            (LPVOID)env, currentDir, &si, &pi))
+        return 1;
 
     SetThreadPriority(pi.hThread, THREAD_PRIORITY_NORMAL);
 
-    bool ret = errorPipe.Open() && dataPipe.Open();
-    if (ret)
-    {
-        ret = !ActivityWin::Show(INpp::Get().GetSciHandle(), pi.hProcess,
-                600, header,
-                (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
-                0 : 300);
-    }
-    if (ret)
-    {
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-
-        if (dataPipe.GetOutput())
-        {
-            _cmd->AppendResult(dataPipe.GetOutput());
-        }
-        else if (errorPipe.GetOutput())
-        {
-            _cmd->_error = true;
-            _cmd->SetResult(errorPipe.GetOutput());
-        }
-    }
-    else
+    if (!errorPipe.Open() || !dataPipe.Open())
     {
         terminate(pi);
+        return 1;
     }
 
-    return ret;
+    if (ActivityWin::Show(INpp::Get().GetSciHandle(), pi.hProcess, 600, header,
+            (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
+            0 : 300))
+    {
+        terminate(pi);
+        return 1;
+    }
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    if (dataPipe.GetOutput())
+    {
+        _cmd->_fail = false;
+        _cmd->AppendResult(dataPipe.GetOutput());
+
+        return 0;
+    }
+
+    if (errorPipe.GetOutput())
+    {
+        _cmd->SetResult(errorPipe.GetOutput());
+    }
+
+    return 1;
 }
 
 
 /**
  *  \brief
  */
-bool Cmd::isActive(PROCESS_INFORMATION& pi)
+bool CmdEngine::isActive(PROCESS_INFORMATION& pi)
 {
     bool active = false;
 
@@ -389,7 +367,7 @@ bool Cmd::isActive(PROCESS_INFORMATION& pi)
 /**
  *  \brief
  */
-void Cmd::terminate(PROCESS_INFORMATION& pi)
+void CmdEngine::terminate(PROCESS_INFORMATION& pi)
 {
     if (isActive(pi))
     {

@@ -38,20 +38,20 @@ struct FuncItem;
 namespace GTags
 {
 
-const TCHAR cPluginName[]           = VER_PLUGIN_NAME;
-const TCHAR cBinsDir[]              = VER_PLUGIN_NAME;
-const unsigned cMaxTagLen           = 128;
+const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
+const TCHAR cBinsDir[]          = VER_PLUGIN_NAME;
+const unsigned cMaxTagLen       = 128;
 
-const TCHAR cCreateDatabase[]       = _T("Create Database");
-const TCHAR cUpdateSingle[]         = _T("Database Single File Update");
-const TCHAR cAutoCompl[]            = _T("AutoComplete");
-const TCHAR cAutoComplFile[]        = _T("AutoComplete File");
-const TCHAR cFindFile[]             = _T("Find File");
-const TCHAR cFindDefinition[]       = _T("Find Definition");
-const TCHAR cFindReference[]        = _T("Find Reference");
-const TCHAR cFindSymbol[]           = _T("Find Symbol");
-const TCHAR cGrep[]                 = _T("Grep");
-const TCHAR cVersion[]              = _T("About");
+const TCHAR cCreateDatabase[]   = _T("Create Database");
+const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
+const TCHAR cAutoCompl[]        = _T("AutoComplete");
+const TCHAR cAutoComplFile[]    = _T("AutoComplete File");
+const TCHAR cFindFile[]         = _T("Find File");
+const TCHAR cFindDefinition[]   = _T("Find Definition");
+const TCHAR cFindReference[]    = _T("Find Reference");
+const TCHAR cFindSymbol[]       = _T("Find Symbol");
+const TCHAR cSearch[]           = _T("Search");
+const TCHAR cVersion[]          = _T("About");
 
 enum
 {
@@ -65,16 +65,16 @@ enum
  *  \struct
  *  \brief
  */
-struct Settings
+struct CConfig
 {
-    Settings(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
+    CConfig(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
             bool useLibraryDB = false) : _parserIdx(parserIdx),
-        _autoUpdate(autoUpdate), _useLibraryDB(useLibraryDB) {}
+        _autoUpdate(autoUpdate), _useLibDB(useLibraryDB) {}
 
     int     _parserIdx;
     bool    _autoUpdate;
-    bool    _useLibraryDB;
-    CText   _libraryDBpath;
+    bool    _useLibDB;
+    CText   _libDBpath;
 };
 
 
@@ -87,7 +87,7 @@ extern TCHAR UIFontName[32];
 extern unsigned UIFontSize;
 
 extern const TCHAR* cParsers[3];
-extern Settings Config;
+extern CConfig Config;
 
 
 BOOL PluginInit(HINSTANCE hMod);
@@ -99,7 +99,7 @@ void AutoCompleteFile();
 void FindFile();
 void FindDefinition();
 void FindReference();
-void Grep();
+void Search();
 void GoBack();
 void GoForward();
 void CreateDatabase();

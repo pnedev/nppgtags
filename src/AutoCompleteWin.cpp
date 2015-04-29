@@ -78,7 +78,7 @@ void AutoCompleteWin::Unregister()
 /**
  *  \brief
  */
-void AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
+void AutoCompleteWin::Show(const std::shared_ptr<CmdEngineData>& cmd)
 {
     if (ACW)
         return;
@@ -95,7 +95,7 @@ void AutoCompleteWin::Show(const std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdData>& cmd) :
+AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdEngineData>& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdID(cmd->GetID()),
     _cmdTagLen((_cmdID == AUTOCOMPLETE_FILE ?
             cmd->GetTagLen() - 1 : cmd->GetTagLen())),

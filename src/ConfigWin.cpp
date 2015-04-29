@@ -51,7 +51,7 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-void ConfigWin::Show(Settings* settings)
+void ConfigWin::Show(CConfig* cfg)
 {
     if (CW)
     {
@@ -78,7 +78,7 @@ void ConfigWin::Show(Settings* settings)
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    CW = new ConfigWin(settings);
+    CW = new ConfigWin(cfg);
     if (CW->composeWindow(hOwner) == NULL)
     {
         delete CW;
@@ -188,7 +188,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int height = win.bottom - win.top;
 
     TCHAR header[32] = {VER_PLUGIN_NAME};
-    _tcscat_s(header, _countof(header), _T(" Settings"));
+    _tcscat_s(header, _countof(header), _T(" CConfig"));
 
     _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,
@@ -274,9 +274,9 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDB, EM_SETEVENTMASK, 0, 0);
 
-    if (_settings->_libraryDBpath.Len())
-        Edit_SetText(_hLibDB, _settings->_libraryDBpath.C_str());
-    if (!_settings->_useLibraryDB)
+    if (_cfg->_libDBpath.Len())
+        Edit_SetText(_hLibDB, _cfg->_libDBpath.C_str());
+    if (!_cfg->_useLibDB)
     {
         EnableWindow(_hCreateDB, FALSE);
         Edit_Enable(_hLibDB, FALSE);
@@ -296,15 +296,15 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hEnLibDB, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
     }
 
-    Button_SetCheck(_hAutoUpdate, _settings->_autoUpdate ?
+    Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ?
             BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hEnLibDB, _settings->_useLibraryDB ?
+    Button_SetCheck(_hEnLibDB, _cfg->_useLibDB ?
             BST_CHECKED : BST_UNCHECKED);
 
     for (unsigned i = 0; i < _countof(cParsers); i++)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)cParsers[i]);
 
-    SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_settings->_parserIdx, 0);
+    SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_cfg->_parserIdx, 0);
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -323,19 +323,19 @@ void ConfigWin::onOK()
     {
         CTcharArray buf(len + 1);
         Edit_GetText(_hLibDB, &buf, len + 1);
-        _settings->_libraryDBpath = &buf;
+        _cfg->_libDBpath = &buf;
     }
     else
     {
-        _settings->_libraryDBpath = _T("");
+        _cfg->_libDBpath = _T("");
     }
 
-    _settings->_autoUpdate =
+    _cfg->_autoUpdate =
             (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
-    _settings->_useLibraryDB =
+    _cfg->_useLibDB =
             (Button_GetCheck(_hEnLibDB) == BST_CHECKED) ? true : false;
 
-    _settings->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
+    _cfg->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }

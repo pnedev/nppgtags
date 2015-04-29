@@ -54,16 +54,16 @@ enum CmdID_t
 
 
 /**
- *  \class  CmdData
+ *  \class  Cmd
  *  \brief
  */
-class CmdData
+class Cmd
 {
 public:
-    CmdData(CmdID_t id, const TCHAR* name, DBhandle db = NULL,
+    Cmd(CmdID_t id, const TCHAR* name, DBhandle db = NULL,
             const TCHAR* tag = NULL,
             bool regExp = false, bool matchCase = true);
-    ~CmdData() {};
+    ~Cmd() {};
 
     inline void SetID(CmdID_t id) { _id = id; }
     inline CmdID_t GetID() const { return _id; }
@@ -75,11 +75,7 @@ public:
     }
     inline const TCHAR* GetName() const { return _name; }
 
-    inline void SetDB(DBhandle db)
-    {
-        if (db)
-            _dbPath = *db;
-    }
+    inline DBhandle GetDBhandle() const { return _db; }
     inline const TCHAR* GetDBPath() const { return _dbPath.C_str(); }
 
     inline const TCHAR* GetTag() const { return &_tag; }
@@ -88,7 +84,7 @@ public:
     inline bool IsRegExp() const { return _regExp; }
     inline bool IsMatchCase() const { return _matchCase; }
 
-    inline bool Error() const { return _error; }
+    inline bool HasFailed() const { return _fail; }
     inline bool NoResult() const { return (&_result == NULL); }
 
     inline char* GetResult() { return &_result; }
@@ -100,32 +96,32 @@ protected:
     void AppendResult(const char* result);
 
     CmdID_t _id;
-    bool _error;
+    bool    _fail;
 
 private:
-    friend class Cmd;
+    friend class CmdEngine;
 
-    TCHAR _name[32];
+    TCHAR       _name[32];
     CTcharArray _tag;
-    bool _regExp;
-    bool _matchCase;
-    CPath _dbPath;
-    CCharArray _result;
+    const bool  _regExp;
+    const bool  _matchCase;
+    DBhandle    _db;
+    const CPath _dbPath;
+    CCharArray  _result;
 };
 
 
-typedef void (*CompletionCB)(std::shared_ptr<CmdData>&);
+typedef void (*CompletionCB)(std::shared_ptr<Cmd>&);
 
 
 /**
- *  \class  Cmd
+ *  \class  CmdEngine
  *  \brief
  */
-class Cmd
+class CmdEngine
 {
 public:
-    static bool Run(std::shared_ptr<CmdData>& cmdData,
-            DBhandle db = NULL, CompletionCB complCB = NULL);
+    static bool Run(std::shared_ptr<Cmd>& cmd, CompletionCB complCB = NULL);
 
 private:
     static const TCHAR cCreateDatabaseCmd[];
@@ -142,20 +138,17 @@ private:
 
     static unsigned __stdcall threadFunc(void* data);
 
-    std::shared_ptr<CmdData> _cmd;
-    CompletionCB const _complCB;
-    DBhandle _db;
-    HANDLE _hThread;
+    std::shared_ptr<Cmd>    _cmd;
+    CompletionCB const      _complCB;
+    HANDLE                  _hThread;
 
-    Cmd(std::shared_ptr<CmdData>& cmdData, CompletionCB complCB,
-            DBhandle db = NULL) :
-        _cmd(cmdData), _complCB(complCB), _db(db), _hThread(NULL) {}
-    ~Cmd();
+    CmdEngine(std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
+        _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
+    ~CmdEngine();
 
-    unsigned thread();
     const TCHAR* getCmdLine();
-    void composeCmd(TCHAR* cmd, unsigned len);
-    bool runProcess();
+    void composeCmd(TCHAR* buf, unsigned len);
+    unsigned runProcess();
     bool isActive(PROCESS_INFORMATION& pi);
     void terminate(PROCESS_INFORMATION& pi);
 };

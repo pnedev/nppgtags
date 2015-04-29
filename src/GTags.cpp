@@ -29,7 +29,7 @@
 #include "AutoLock.h"
 #include "INpp.h"
 #include "DBManager.h"
-#include "Cmd.h"
+#include "CmdEngine.h"
 #include "DocLocation.h"
 #include "SearchWin.h"
 #include "ActivityWin.h"
@@ -181,18 +181,6 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-unsigned enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
-        bool enMatchCase = true, bool enRegExp = false)
-{
-    SearchWin::Show(uiName, searchData, enMatchCase, enRegExp);
-
-    return _tcslen(searchData->_str);
-}
-
-
-/**
- *  \brief
- */
 void sheduleForUpdate(const CPath& file)
 {
     AUTOLOCK(UpdateLock);
@@ -242,11 +230,11 @@ bool runSheduledUpdate(const TCHAR* dbPath)
 /**
  *  \brief
  */
-void checkError(std::shared_ptr<CmdData>& cmd)
+void checkError(std::shared_ptr<Cmd>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
 
-    if (cmd->Error())
+    if (cmd->HasFailed())
     {
         CText msg(cmd->GetResult());
         MessageBox(INpp::Get().GetHandle(), msg.C_str(),
@@ -258,11 +246,11 @@ void checkError(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void autoComplReady(std::shared_ptr<CmdData>& cmd)
+void autoComplReady(std::shared_ptr<Cmd>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
 
-    if (cmd->Error())
+    if (cmd->HasFailed())
     {
         CText msg(cmd->GetResult());
         msg += _T("\nTry re-creating database.");
@@ -281,9 +269,9 @@ void autoComplReady(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void autoComplSymbol(std::shared_ptr<CmdData>& cmd)
+void autoComplSymbol(std::shared_ptr<Cmd>& cmd)
 {
-    if (cmd->Error())
+    if (cmd->HasFailed())
     {
         CText msg(cmd->GetResult());
         msg += _T("\nTry re-creating database.");
@@ -292,25 +280,20 @@ void autoComplSymbol(std::shared_ptr<CmdData>& cmd)
         return;
     }
 
-    DBhandle db = getDatabase();
-    if (db)
-    {
-        cmd->SetID(AUTOCOMPLETE_SYMBOL);
-        cmd->SetDB(db);
-        if (Cmd::Run(cmd, db))
-            autoComplReady(cmd);
-    }
+    cmd->SetID(AUTOCOMPLETE_SYMBOL);
+    if (CmdEngine::Run(cmd))
+        autoComplReady(cmd);
 }
 
 
 /**
  *  \brief
  */
-void showResult(std::shared_ptr<CmdData>& cmd)
+void showResult(std::shared_ptr<Cmd>& cmd)
 {
     runSheduledUpdate(cmd->GetDBPath());
 
-    if (cmd->Error())
+    if (cmd->HasFailed())
     {
         CText msg(cmd->GetResult());
         msg += _T("\nTry re-creating database.");
@@ -336,18 +319,13 @@ void showResult(std::shared_ptr<CmdData>& cmd)
 /**
  *  \brief
  */
-void findReady(std::shared_ptr<CmdData>& cmd)
+void findReady(std::shared_ptr<Cmd>& cmd)
 {
     if (cmd->NoResult())
     {
-        DBhandle db = getDatabase();
-        if (db)
-        {
-            cmd->SetID(FIND_SYMBOL);
-            cmd->SetName(cFindSymbol);
-            cmd->SetDB(db);
-            Cmd::Run(cmd, db, showResult);
-        }
+        cmd->SetID(FIND_SYMBOL);
+        cmd->SetName(cFindSymbol);
+        CmdEngine::Run(cmd, showResult);
         return;
     }
 
@@ -366,7 +344,7 @@ FuncItem Menu[16] = {
     /* 2 */  FuncItem(cFindFile, FindFile),
     /* 3 */  FuncItem(cFindDefinition, FindDefinition),
     /* 4 */  FuncItem(cFindReference, FindReference),
-    /* 5 */  FuncItem(cGrep, Grep),
+    /* 5 */  FuncItem(cSearch, Search),
     /* 6 */  FuncItem(),
     /* 7 */  FuncItem(_T("Go Back"), GoBack),
     /* 8 */  FuncItem(_T("Go Forward"), GoForward),
@@ -387,7 +365,7 @@ unsigned UIFontSize;
 
 const TCHAR* cParsers[3];
 
-Settings Config;
+CConfig Config;
 
 
 
@@ -487,9 +465,8 @@ void AutoComplete()
     if (!db)
         return;
 
-    std::shared_ptr<CmdData>
-        cmd(new CmdData(AUTOCOMPLETE, cAutoCompl, db, tag));
-    if (Cmd::Run(cmd, db))
+    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag));
+    if (CmdEngine::Run(cmd))
         autoComplSymbol(cmd);
 }
 
@@ -508,9 +485,9 @@ void AutoCompleteFile()
         return;
 
     tag[0] = '/';
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
-    if (Cmd::Run(cmd, db))
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
+    if (CmdEngine::Run(cmd))
         autoComplReady(cmd);
 }
 
@@ -520,27 +497,27 @@ void AutoCompleteFile()
  */
 void FindFile()
 {
-    SearchData searchData(NULL, false, true);
-    if (!getSelection(searchData._str))
+    DBhandle db = getDatabase();
+    if (!db)
+        return;
+
+    SearchData sd;
+    if (!getSelection(sd._str))
     {
         TCHAR fileName[MAX_PATH];
         INpp::Get().GetFileNamePart(fileName);
         if (_tcslen(fileName) >= cMaxTagLen)
             fileName[cMaxTagLen - 1] = 0;
-        _tcscpy_s(searchData._str, cMaxTagLen, fileName);
+        _tcscpy_s(sd._str, cMaxTagLen, fileName);
 
-        if (!enterTag(&searchData, cFindFile, true, true))
-            return;
+        SearchWin::Show(cFindFile, &sd);
+        return;
     }
 
-    DBhandle db = getDatabase();
-    if (!db)
-        return;
-
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(FIND_FILE, cFindFile, db,
-            searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, db, showResult);
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(FIND_FILE, cFindFile, db,
+            sd._str, sd._regExp, sd._matchCase));
+    CmdEngine::Run(cmd, showResult);
 }
 
 
@@ -549,21 +526,21 @@ void FindFile()
  */
 void FindDefinition()
 {
-    SearchData searchData(NULL, false, true);
-    if (!getSelection(searchData._str, true))
-    {
-        if (!enterTag(&searchData, cFindDefinition))
-            return;
-    }
-
     DBhandle db = getDatabase();
     if (!db)
         return;
 
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(FIND_DEFINITION, cFindDefinition, db,
-            searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, db, findReady);
+    SearchData sd;
+    if (!getSelection(sd._str, true))
+    {
+        SearchWin::Show(cFindDefinition, &sd, false);
+        return;
+    }
+
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db,
+            sd._str, sd._regExp, sd._matchCase));
+    CmdEngine::Run(cmd, findReady);
 }
 
 
@@ -580,44 +557,44 @@ void FindReference()
         return;
     }
 
-    SearchData searchData(NULL, false, true);
-    if (!getSelection(searchData._str, true))
-    {
-        if (!enterTag(&searchData, cFindReference))
-            return;
-    }
-
     DBhandle db = getDatabase();
     if (!db)
         return;
 
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(FIND_REFERENCE, cFindReference, db,
-            searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, db, findReady);
+    SearchData sd;
+    if (!getSelection(sd._str, true))
+    {
+        SearchWin::Show(cFindReference, &sd, false);
+        return;
+    }
+
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(FIND_REFERENCE, cFindReference, db,
+            sd._str, sd._regExp, sd._matchCase));
+    CmdEngine::Run(cmd, findReady);
 }
 
 
 /**
  *  \brief
  */
-void Grep()
+void Search()
 {
-    SearchData searchData(NULL, true, true);
-    if (!getSelection(searchData._str, true))
-    {
-        if (!enterTag(&searchData, cGrep, true, true))
-            return;
-    }
-
     DBhandle db = getDatabase();
     if (!db)
         return;
 
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(GREP, cGrep, db,
-            searchData._str, searchData._regExp, searchData._matchCase));
-    Cmd::Run(cmd, db, showResult);
+    SearchData sd;
+    if (!getSelection(sd._str, true))
+    {
+        SearchWin::Show(cSearch, &sd);
+        return;
+    }
+
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(GREP, cSearch, db,
+            sd._str, sd._regExp, sd._matchCase));
+    CmdEngine::Run(cmd, showResult);
 }
 
 
@@ -694,9 +671,9 @@ void CreateDatabase()
         db = DBManager::Get().RegisterDB(currentFile, true);
     }
 
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
-    Cmd::Run(cmd, db, checkError);
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    CmdEngine::Run(cmd, checkError);
 }
 
 
@@ -745,12 +722,12 @@ const CPath CreateLibraryDatabase(HWND hwnd)
 
     DBhandle db = DBManager::Get().RegisterDB(libraryPath, true);
 
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(CREATE_DATABASE, cCreateDatabase, db));
-    if (Cmd::Run(cmd, db))
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    if (CmdEngine::Run(cmd))
     {
         checkError(cmd);
-        if (cmd->Error())
+        if (cmd->HasFailed())
             libraryPath = _T("");
     }
     else
@@ -788,10 +765,10 @@ bool UpdateSingleFile(const TCHAR* file)
 
     releaseKeys();
 
-    std::shared_ptr<CmdData>
-            cmd(new CmdData(UPDATE_SINGLE, cUpdateSingle, db,
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db,
                     currentFile.C_str()));
-    if (!Cmd::Run(cmd, db, checkError))
+    if (!CmdEngine::Run(cmd, checkError))
         return false;
 
     return true;
@@ -843,11 +820,11 @@ void SettingsCfg()
  */
 void About()
 {
-    std::shared_ptr<CmdData> cmd(new CmdData(VERSION, cVersion));
-    bool success = Cmd::Run(cmd);
+    std::shared_ptr<Cmd> cmd(new Cmd(VERSION, cVersion));
+    bool success = CmdEngine::Run(cmd);
 
     CText msg;
-    if (!success || cmd->Error() || cmd->NoResult())
+    if (!success || cmd->HasFailed() || cmd->NoResult())
         msg = _T("VERSION READ FAILED\n");
     else
         msg = cmd->GetResult();

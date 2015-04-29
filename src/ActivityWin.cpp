@@ -286,26 +286,27 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hwnd, UINT umsg,
         case WM_CREATE:
             aw = (ActivityWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(aw));
-            return 0;
+        return 0;
 
         case WM_SETFOCUS:
             aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             SetFocus(aw->_hBtn);
-            return 0;
+        return 0;
 
         case WM_CTLCOLORSTATIC:
             SetBkColor((HDC) wparam, GetSysColor(cBackgroundColor));
-            return (INT_PTR) GetSysColorBrush(cBackgroundColor);
+        return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
         case WM_TIMER:
             aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                     (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
             aw->onTimerRefresh(hwnd);
-            return 0;
+        return 0;
 
         case WM_COMMAND:
-            if (HIWORD(wparam) == BN_CLICKED) {
+            if (HIWORD(wparam) == BN_CLICKED)
+            {
                 aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                         (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
                 KillTimer(hwnd, aw->_timerID);
@@ -316,7 +317,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_DESTROY:
             PostQuitMessage(0);
-            return 0;
+        return 0;
     }
 
     return DefWindowProc(hwnd, umsg, wparam, lparam);

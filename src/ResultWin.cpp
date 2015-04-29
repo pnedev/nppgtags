@@ -61,7 +61,7 @@ const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
 /**
  *  \brief
  */
-ResultWin::Tab::Tab(const std::shared_ptr<CmdData>& cmd) :
+ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
     _cmdID(cmd->GetID()), _regExp(cmd->IsRegExp()),
     _matchCase(cmd->IsMatchCase()), _currentLine(1), _firstVisibleLine(0)
 {
@@ -280,7 +280,7 @@ void ResultWin::Unregister()
 /**
  *  \brief
  */
-void ResultWin::Show(const std::shared_ptr<CmdData>& cmd)
+void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
 {
     if (_hWnd == NULL)
         return;
