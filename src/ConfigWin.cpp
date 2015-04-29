@@ -318,11 +318,11 @@ HWND ConfigWin::composeWindow(HWND hOwner)
  */
 void ConfigWin::onOK()
 {
-    int len = Edit_GetTextLength(_hLibDB) + 1;
-    if (len > 1)
+    int len = Edit_GetTextLength(_hLibDB);
+    if (len)
     {
-        CTcharArray buf(len);
-        Edit_GetText(_hLibDB, &buf, len);
+        CTcharArray buf(len + 1);
+        Edit_GetText(_hLibDB, &buf, len + 1);
         _settings->_libraryDBpath = &buf;
     }
     else

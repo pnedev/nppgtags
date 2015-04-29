@@ -40,7 +40,7 @@ namespace GTags
  */
 struct SearchData
 {
-    SearchData(TCHAR* str = NULL,
+    SearchData(const TCHAR* str = NULL,
             bool regExp = false, bool matchCase = false) :
             _regExp(regExp), _matchCase(matchCase)
     {

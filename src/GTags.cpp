@@ -182,12 +182,8 @@ int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
  *  \brief
  */
 unsigned enterTag(GTags::SearchData* searchData, const TCHAR* uiName,
-        const TCHAR* defaultTag = NULL,
         bool enMatchCase = true, bool enRegExp = false)
 {
-    if (defaultTag)
-        _tcscpy_s(searchData->_str, cMaxTagLen, defaultTag);
-
     SearchWin::Show(uiName, searchData, enMatchCase, enRegExp);
 
     return _tcslen(searchData->_str);
@@ -531,8 +527,9 @@ void FindFile()
         INpp::Get().GetFileNamePart(fileName);
         if (_tcslen(fileName) >= cMaxTagLen)
             fileName[cMaxTagLen - 1] = 0;
+        _tcscpy_s(searchData._str, cMaxTagLen, fileName);
 
-        if (!enterTag(&searchData, cFindFile, fileName, true, true))
+        if (!enterTag(&searchData, cFindFile, true, true))
             return;
     }
 
@@ -609,7 +606,7 @@ void Grep()
     SearchData searchData(NULL, true, true);
     if (!getSelection(searchData._str, true))
     {
-        if (!enterTag(&searchData, cGrep, NULL, true, true))
+        if (!enterTag(&searchData, cGrep, true, true))
             return;
     }
 
