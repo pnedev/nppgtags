@@ -115,11 +115,17 @@ void SearchWin::Show(const TCHAR* header, SearchData* searchData,
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+
+        // Pump buffered user input
+        if (GetInputState())
+            while (PeekMessage(&msg, hOwner, 0, 0, PM_QS_INPUT | PM_REMOVE));
+
         if (WaitForSingleObject(sw._hExit, 0) == WAIT_OBJECT_0)
             break;
     }
 
     EnableWindow(hOwner, TRUE);
+    ShowWindow(hOwner, SW_SHOW);
     UpdateWindow(hOwner);
 
     // Pump buffered user input
