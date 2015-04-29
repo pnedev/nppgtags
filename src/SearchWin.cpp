@@ -242,7 +242,7 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     ReleaseDC(hOwner, hdc);
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style, width,
             txtHeight + btnHeight + 6);
@@ -296,10 +296,11 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     SendMessage(_hEditWnd, EM_EXLIMITTEXT, 0, (LPARAM)(cMaxTagLen - 1));
     SendMessage(_hEditWnd, EM_SETEVENTMASK, 0, 0);
 
-    if (_tcslen(searchData->_str))
+    int len = _tcslen(searchData->_str);
+    if (len)
     {
         Edit_SetText(_hEditWnd, searchData->_str);
-        Edit_SetSel(_hEditWnd, 0, -1);
+        Edit_SetSel(_hEditWnd, 0, len);
         searchData->_str[0] = 0;
     }
 
@@ -334,10 +335,10 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
  */
 void SearchWin::onOK()
 {
-    int len = Edit_GetTextLength(_hEditWnd) + 1;
-    if (len > 1)
+    int len = Edit_GetTextLength(_hEditWnd);
+    if (len)
     {
-        Edit_GetText(_hEditWnd, _searchData->_str, len);
+        Edit_GetText(_hEditWnd, _searchData->_str, len + 1);
         _searchData->_regExp =
                 (Button_GetCheck(_hRegExp) == BST_CHECKED) ? true : false;
         _searchData->_matchCase =

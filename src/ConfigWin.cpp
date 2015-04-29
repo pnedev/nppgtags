@@ -180,7 +180,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     ReleaseDC(hOwner, hdc);
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
             500, 5 * txtHeight + 120);
@@ -205,7 +205,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
     SetWindowText(hStatic,
-            _T("Parser (requires database re-creation on change)"));
+            _T("Parser (requires database re-creation on change!)"));
 
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,

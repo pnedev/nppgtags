@@ -184,7 +184,7 @@ AboutWin::~AboutWin()
 HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 {
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     TCHAR header[32] = {_T("About ")};
     _tcscat_s(header, _countof(header), VER_PLUGIN_NAME);
