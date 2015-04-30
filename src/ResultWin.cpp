@@ -27,7 +27,7 @@
 
 #include "ResultWin.h"
 #include "INpp.h"
-#include "DBManager.h"
+#include "DbManager.h"
 #include "DocLocation.h"
 #include <commctrl.h>
 
@@ -62,14 +62,14 @@ const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
  *  \brief
  */
 ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
-    _cmdID(cmd->GetID()), _regExp(cmd->IsRegExp()),
-    _matchCase(cmd->IsMatchCase()), _currentLine(1), _firstVisibleLine(0)
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()),
+    _matchCase(cmd->MatchCase()), _currentLine(1), _firstVisibleLine(0)
 {
-    Tools::WtoA(_projectPath, _countof(_projectPath), cmd->GetDBPath());
-    Tools::WtoA(_search, _countof(_search), cmd->GetTag());
+    Tools::WtoA(_projectPath, _countof(_projectPath), cmd->DbPath());
+    Tools::WtoA(_search, _countof(_search), cmd->Tag());
 
     // Add the search header - cmd name + search word + project path
-    _uiBuf = cmd->GetName();
+    _uiBuf = cmd->Name();
     _uiBuf += " \"";
     _uiBuf += _search;
     _uiBuf += "\" (";
@@ -80,10 +80,10 @@ ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
     _uiBuf += "\"";
 
     // parsing result buffer and composing UI buffer
-    if (_cmdID == FIND_FILE)
-        parseFindFile(_uiBuf, cmd->GetResult());
+    if (_cmdId == FIND_FILE)
+        parseFindFile(_uiBuf, cmd->Result());
     else
-        parseCmd(_uiBuf, cmd->GetResult());
+        parseCmd(_uiBuf, cmd->Result());
 }
 
 
@@ -287,14 +287,14 @@ void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
 
     INpp& npp = INpp::Get();
 
-    if (cmd->GetResultLen() > 262144) // 256k
+    if (cmd->ResultLen() > 262144) // 256k
     {
         TCHAR buf[512];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE,
                 _T("%s \"%s\": A lot of matches were found, ")
                 _T("parsing those will be rather slow.\n")
                 _T("Are you sure you want to proceed?"),
-                cmd->GetName(), cmd->GetTag());
+                cmd->Name(), cmd->Tag());
         int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
@@ -323,7 +323,7 @@ void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
     {
         TCHAR buf[256];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""),
-                cmd->GetName(), cmd->GetTag());
+                cmd->Name(), cmd->Tag());
 
         TCITEM tci  = {0};
         tci.mask    = TCIF_TEXT | TCIF_PARAM;
@@ -603,7 +603,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     int line = 0;
     int i;
 
-    if (_activeTab->_cmdID != FIND_FILE)
+    if (_activeTab->_cmdId != FIND_FILE)
     {
         for (i = 7; i <= lineLen && lineTxt[i] != ':'; i++);
         lineTxt[i] = 0;
@@ -644,7 +644,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     npp.OpenFile(file.C_str());
     SetFocus(npp.GetSciHandle());
 
-    if (_activeTab->_cmdID == FIND_FILE)
+    if (_activeTab->_cmdId == FIND_FILE)
         return true;
 
     const long endPos = npp.LineEndPosition(line);
@@ -751,7 +751,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
         {
             if ((char)sendSci(SCI_GETCHARAT, startPos + 1) != '\t')
             {
-                if (_activeTab->_cmdID == FIND_FILE)
+                if (_activeTab->_cmdId == FIND_FILE)
                 {
                     int findBegin = startPos;
                     int findEnd = endPos;
@@ -801,7 +801,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                 int findBegin = previewPos;
                 int findEnd = endPos;
 
-                bool wholeWord = (_activeTab->_cmdID != GREP);
+                bool wholeWord = (_activeTab->_cmdId != GREP);
 
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
@@ -851,7 +851,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
     unsigned matchNum = 1;
 
-    if (_activeTab->_cmdID != FIND_FILE)
+    if (_activeTab->_cmdId != FIND_FILE)
     {
         const int endLine = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
@@ -859,7 +859,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
         int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
 
-        bool wholeWord = (_activeTab->_cmdID != GREP);
+        bool wholeWord = (_activeTab->_cmdId != GREP);
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line

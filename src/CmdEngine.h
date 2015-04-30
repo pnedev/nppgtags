@@ -30,14 +30,13 @@
 #include <tchar.h>
 #include <memory>
 #include "Common.h"
-#include "DBManager.h"
-#include "GTags.h"
+#include "DbManager.h"
 
 
 namespace GTags
 {
 
-enum CmdID_t
+enum CmdId_t
 {
     CREATE_DATABASE = 0,
     UPDATE_SINGLE,
@@ -60,58 +59,64 @@ enum CmdID_t
 class Cmd
 {
 public:
-    Cmd(CmdID_t id, const TCHAR* name, DBhandle db = NULL,
+    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL,
             const TCHAR* tag = NULL,
             bool regExp = false, bool matchCase = true);
     ~Cmd() {};
 
-    inline void SetID(CmdID_t id) { _id = id; }
-    inline CmdID_t GetID() const { return _id; }
+    inline void Id(CmdId_t id) { _id = id; }
+    inline CmdId_t Id() const { return _id; }
 
-    inline void SetName(const TCHAR* name)
+    inline void Name(const TCHAR* name)
     {
         if (name)
             _tcscpy_s(_name, _countof(_name), name);
+        else
+            _name[0] = 0;
     }
-    inline const TCHAR* GetName() const { return _name; }
+    inline const TCHAR* Name() const { return _name; }
 
-    inline DBhandle GetDBhandle() const { return _db; }
-    inline const TCHAR* GetDBPath() const { return _dbPath.C_str(); }
+    inline DbHandle Db() const { return _db; }
+    inline const TCHAR* DbPath() const { return _dbPath.C_str(); }
 
-    inline const TCHAR* GetTag() const { return &_tag; }
-    inline unsigned GetTagLen() const { return _tag.Len(); }
+    inline void Tag(const TCHAR* tag) { _tag(tag); }
+    inline const TCHAR* Tag() const { return &_tag; }
+    inline unsigned TagLen() const { return _tag.Len(); }
 
-    inline bool IsRegExp() const { return _regExp; }
-    inline bool IsMatchCase() const { return _matchCase; }
+    inline void RegExp(bool re) { _regExp = re; }
+    inline bool RegExp() const { return _regExp; }
+
+    inline void MatchCase(bool mc) { _matchCase = mc; }
+    inline bool MatchCase() const { return _matchCase; }
 
     inline bool HasFailed() const { return _fail; }
     inline bool NoResult() const { return (&_result == NULL); }
 
-    inline char* GetResult() { return &_result; }
-    inline const char* GetResult() const { return &_result; }
-    inline unsigned GetResultLen() const { return _result.Len(); }
-
-protected:
-    void SetResult(const char* result);
-    void AppendResult(const char* result);
-
-    CmdID_t _id;
-    bool    _fail;
+    inline char* Result() { return &_result; }
+    inline const char* Result() const { return &_result; }
+    inline unsigned ResultLen() const { return _result.Len(); }
 
 private:
     friend class CmdEngine;
 
-    TCHAR       _name[32];
-    CTcharArray _tag;
-    const bool  _regExp;
-    const bool  _matchCase;
-    DBhandle    _db;
-    const CPath _dbPath;
-    CCharArray  _result;
+    void setResult(const char* result) { _result(result); }
+    void appendResult(const char* result);
+
+    CmdId_t         _id;
+    TCHAR           _name[32];
+    DbHandle const  _db;
+    CPath           _dbPath;
+
+    CTcharArray     _tag;
+    bool            _regExp;
+    bool            _matchCase;
+
+    bool            _fail;
+    CCharArray      _result;
 };
 
 
-typedef void (*CompletionCB)(std::shared_ptr<Cmd>&);
+typedef void (*CompletionCB)(const std::shared_ptr<Cmd>&);
 
 
 /**
@@ -121,7 +126,8 @@ typedef void (*CompletionCB)(std::shared_ptr<Cmd>&);
 class CmdEngine
 {
 public:
-    static bool Run(std::shared_ptr<Cmd>& cmd, CompletionCB complCB = NULL);
+    static bool Run(const std::shared_ptr<Cmd>& cmd,
+            CompletionCB complCB = NULL);
 
 private:
     static const TCHAR cCreateDatabaseCmd[];
@@ -138,19 +144,19 @@ private:
 
     static unsigned __stdcall threadFunc(void* data);
 
-    std::shared_ptr<Cmd>    _cmd;
-    CompletionCB const      _complCB;
-    HANDLE                  _hThread;
-
-    CmdEngine(std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
+    CmdEngine(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
         _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
     ~CmdEngine();
 
-    const TCHAR* getCmdLine();
-    void composeCmd(TCHAR* buf, unsigned len);
+    const TCHAR* getCmdLine() const;
+    void composeCmd(TCHAR* buf, unsigned len) const;
     unsigned runProcess();
-    bool isActive(PROCESS_INFORMATION& pi);
-    void terminate(PROCESS_INFORMATION& pi);
+    bool isActive(PROCESS_INFORMATION& pi) const;
+    void terminate(PROCESS_INFORMATION& pi) const;
+
+    std::shared_ptr<Cmd>    _cmd;
+    CompletionCB const      _complCB;
+    HANDLE                  _hThread;
 };
 
 } // namespace GTags

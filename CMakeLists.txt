@@ -42,7 +42,7 @@ set (project_sources
     src/ReadPipe.cpp
     src/GTags.cpp
     src/CmdEngine.cpp
-    src/DBManager.cpp
+    src/DbManager.cpp
     src/DocLocation.cpp
     src/ActivityWin.cpp
     src/SearchWin.cpp

@@ -220,13 +220,13 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 35);
-    _hEnLibDB = CreateWindowEx(0, _T("BUTTON"),
+    _hEnLibDb = CreateWindowEx(0, _T("BUTTON"),
             _T("Enable library databases"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             10, yPos, (width / 2) - 20, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
-    _hCreateDB = CreateWindowEx(0, _T("BUTTON"), _T("Add Library DB"),
+    _hCreateDb = CreateWindowEx(0, _T("BUTTON"), _T("Add Library DB"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
             (width / 2) + 10, yPos, (width / 2) - 20, 25,
             _hWnd, NULL, HMod, NULL);
@@ -245,7 +245,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     win.left = 10;
     win.right = width - 10;
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
-    _hLibDB = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+    _hLibDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -267,25 +267,25 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
-    SendMessage(_hLibDB, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
+    SendMessage(_hLibDb, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
 
     if (_hFont)
-        SendMessage(_hLibDB, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
 
-    SendMessage(_hLibDB, EM_SETEVENTMASK, 0, 0);
+    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
-    if (_cfg->_libDBpath.Len())
-        Edit_SetText(_hLibDB, _cfg->_libDBpath.C_str());
-    if (!_cfg->_useLibDB)
+    if (_cfg->_libDbPath.Len())
+        Edit_SetText(_hLibDb, _cfg->_libDbPath.C_str());
+    if (!_cfg->_useLibDb)
     {
-        EnableWindow(_hCreateDB, FALSE);
-        Edit_Enable(_hLibDB, FALSE);
-        SendMessage(_hLibDB, EM_SETBKGNDCOLOR, 0,
+        EnableWindow(_hCreateDb, FALSE);
+        Edit_Enable(_hLibDb, FALSE);
+        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0,
                 (LPARAM)GetSysColor(COLOR_BTNFACE));
     }
     else
     {
-        SendMessage(_hLibDB, EM_SETBKGNDCOLOR, 0,
+        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0,
                 (LPARAM)GetSysColor(COLOR_WINDOW));
     }
 
@@ -293,12 +293,12 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     {
         SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
-        SendMessage(_hEnLibDB, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
     }
 
     Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ?
             BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hEnLibDB, _cfg->_useLibDB ?
+    Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ?
             BST_CHECKED : BST_UNCHECKED);
 
     for (unsigned i = 0; i < _countof(cParsers); i++)
@@ -318,22 +318,22 @@ HWND ConfigWin::composeWindow(HWND hOwner)
  */
 void ConfigWin::onOK()
 {
-    int len = Edit_GetTextLength(_hLibDB);
+    int len = Edit_GetTextLength(_hLibDb);
     if (len)
     {
         CTcharArray buf(len + 1);
-        Edit_GetText(_hLibDB, &buf, len + 1);
-        _cfg->_libDBpath = &buf;
+        Edit_GetText(_hLibDb, &buf, len + 1);
+        _cfg->_libDbPath = &buf;
     }
     else
     {
-        _cfg->_libDBpath = _T("");
+        _cfg->_libDbPath = _T("");
     }
 
     _cfg->_autoUpdate =
             (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
-    _cfg->_useLibDB =
-            (Button_GetCheck(_hEnLibDB) == BST_CHECKED) ? true : false;
+    _cfg->_useLibDb =
+            (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
 
     _cfg->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
@@ -380,11 +380,11 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                     return 0;
                 }
 
-                if ((HWND)lparam == CW->_hEnLibDB)
+                if ((HWND)lparam == CW->_hEnLibDb)
                 {
                     BOOL en;
                     int color;
-                    if (Button_GetCheck(CW->_hEnLibDB) == BST_CHECKED)
+                    if (Button_GetCheck(CW->_hEnLibDb) == BST_CHECKED)
                     {
                         en = TRUE;
                         color = COLOR_WINDOW;
@@ -394,14 +394,14 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                         en = FALSE;
                         color = COLOR_BTNFACE;
                     }
-                    EnableWindow(CW->_hCreateDB, en);
-                    Edit_Enable(CW->_hLibDB, en);
-                    SendMessage(CW->_hLibDB, EM_SETBKGNDCOLOR, 0,
+                    EnableWindow(CW->_hCreateDb, en);
+                    Edit_Enable(CW->_hLibDb, en);
+                    SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0,
                             (LPARAM)GetSysColor(color));
                     return 0;
                 }
 
-                if ((HWND)lparam == CW->_hCreateDB)
+                if ((HWND)lparam == CW->_hCreateDb)
                 {
                     CPath libraryPath = CreateLibraryDatabase(hwnd);
                     int libLen = libraryPath.Len();
@@ -409,8 +409,8 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                     if (libLen)
                     {
                         CTcharArray
-                            buf(Edit_GetTextLength(CW->_hLibDB) + libLen + 2);
-                        Edit_GetText(CW->_hLibDB, &buf, buf.Size());
+                            buf(Edit_GetTextLength(CW->_hLibDb) + libLen + 2);
+                        Edit_GetText(CW->_hLibDb, &buf, buf.Size());
                         bool found = false;
 
                         if (buf.Len())
@@ -434,13 +434,13 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                         if (!found)
                         {
                             buf += libraryPath.C_str();
-                            Edit_SetText(CW->_hLibDB, &buf);
+                            Edit_SetText(CW->_hLibDb, &buf);
                         }
 
-                        SetFocus(CW->_hLibDB);
+                        SetFocus(CW->_hLibDb);
                         int len = buf.Len();
-                        Edit_SetSel(CW->_hLibDB, len, len);
-                        Edit_ScrollCaret(CW->_hLibDB);
+                        Edit_SetSel(CW->_hLibDb, len, len);
+                        Edit_ScrollCaret(CW->_hLibDb);
                     }
 
                     return 0;

@@ -23,24 +23,24 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "DBManager.h"
+#include "DbManager.h"
 #include <windows.h>
 
 
 namespace GTags
 {
 
-DBManager DBManager::Instance;
+DbManager DbManager::Instance;
 
 
 /**
  *  \brief
  */
-DBhandle DBManager::RegisterDB(const CPath& dbPath, bool writeEn)
+DbHandle DbManager::RegisterDb(const CPath& dbPath, bool writeEn)
 {
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDB>::iterator dbi = _dbList.begin();
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
         dbi != _dbList.end(); dbi++)
     {
         if (dbi->_path == dbPath)
@@ -57,14 +57,14 @@ DBhandle DBManager::RegisterDB(const CPath& dbPath, bool writeEn)
         }
     }
 
-    return addDB(dbPath, writeEn);
+    return addDb(dbPath, writeEn);
 }
 
 
 /**
  *  \brief
  */
-bool DBManager::UnregisterDB(DBhandle db)
+bool DbManager::UnregisterDb(DbHandle db)
 {
     if (!db)
         return false;
@@ -73,7 +73,7 @@ bool DBManager::UnregisterDB(DBhandle db)
 
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDB>::iterator dbi = _dbList.begin();
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
         dbi != _dbList.end(); dbi++)
     {
         if (db == &(dbi->_path))
@@ -81,7 +81,7 @@ bool DBManager::UnregisterDB(DBhandle db)
             dbi->Unlock();
             if (!dbi->IsLocked())
             {
-                ret = deleteDB(dbi->_path);
+                ret = deleteDb(dbi->_path);
                 _dbList.erase(dbi);
             }
             break;
@@ -95,14 +95,14 @@ bool DBManager::UnregisterDB(DBhandle db)
 /**
  *  \brief
  */
-DBhandle DBManager::GetDB(const CPath& filePath, bool writeEn, bool* success)
+DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
 {
     if (!success)
         return NULL;
 
     AUTOLOCK(_lock);
 
-    DBhandle db = lockDB(filePath, writeEn, success);
+    DbHandle db = lockDb(filePath, writeEn, success);
     if (db)
         return db;
 
@@ -110,7 +110,7 @@ DBhandle DBManager::GetDB(const CPath& filePath, bool writeEn, bool* success)
 
     int len;
     while ((len = dbPath.Up()))
-        if (DB_ExistsInFolder(dbPath))
+        if (DbExistsInFolder(dbPath))
             break;
 
     if (len == 0)
@@ -118,21 +118,21 @@ DBhandle DBManager::GetDB(const CPath& filePath, bool writeEn, bool* success)
 
     *success = true;
 
-    return addDB(dbPath, writeEn);
+    return addDb(dbPath, writeEn);
 }
 
 
 /**
  *  \brief
  */
-bool DBManager::PutDB(DBhandle db)
+bool DbManager::PutDb(DbHandle db)
 {
     if (!db)
         return false;
 
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDB>::iterator dbi = _dbList.begin();
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
         dbi != _dbList.end(); dbi++)
     {
         if (db == &(dbi->_path))
@@ -149,7 +149,7 @@ bool DBManager::PutDB(DBhandle db)
 /**
  *  \brief
  */
-bool DBManager::DB_ExistsInFolder(const CPath& folder)
+bool DbManager::DbExistsInFolder(const CPath& folder)
 {
     CPath db(folder);
     db += _T("GTAGS");
@@ -160,7 +160,7 @@ bool DBManager::DB_ExistsInFolder(const CPath& folder)
 /**
  *  \brief
  */
-bool DBManager::deleteDB(CPath& dbPath)
+bool DbManager::deleteDb(CPath& dbPath)
 {
     dbPath += _T("GTAGS");
     BOOL ret = DeleteFile(dbPath.C_str());
@@ -184,10 +184,10 @@ bool DBManager::deleteDB(CPath& dbPath)
 /**
  *  \brief
  */
-DBhandle DBManager::addDB(const CPath& dbPath, bool writeEn)
+DbHandle DbManager::addDb(const CPath& dbPath, bool writeEn)
 {
-    GTagsDB newDB(dbPath, writeEn);
-    _dbList.push_back(newDB);
+    GTagsDb newDb(dbPath, writeEn);
+    _dbList.push_back(newDb);
 
     return &(_dbList.rbegin()->_path);
 }
@@ -196,14 +196,14 @@ DBhandle DBManager::addDB(const CPath& dbPath, bool writeEn)
 /**
  *  \brief
  */
-DBhandle DBManager::lockDB(const CPath& filePath, bool writeEn, bool* success)
+DbHandle DbManager::lockDb(const CPath& filePath, bool writeEn, bool* success)
 {
-    for (std::list<GTagsDB>::iterator dbi = _dbList.begin();
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
         dbi != _dbList.end(); dbi++)
     {
         if (dbi->_path.Contains(filePath))
         {
-            if (!DB_ExistsInFolder(dbi->_path))
+            if (!DbExistsInFolder(dbi->_path))
             {
                 _dbList.erase(dbi);
                 return NULL;

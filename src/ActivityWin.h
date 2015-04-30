@@ -70,7 +70,7 @@ private:
     HANDLE _hProc;
     HFONT _hFont;
     HWND _hBtn;
-    UINT_PTR _timerID;
+    UINT_PTR _timerId;
     int _initRefCount;
     int _isCancelled;
 };

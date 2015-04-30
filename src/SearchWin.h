@@ -28,32 +28,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
+#include <memory>
 #include "GTags.h"
+#include "CmdEngine.h"
 
 
 namespace GTags
 {
-
-/**
- *  \struct
- *  \brief
- */
-struct SearchData
-{
-    SearchData(bool regExp = false, bool matchCase = true,
-            const TCHAR* str = NULL) : _regExp(regExp), _matchCase(matchCase)
-    {
-        if (str)
-            _tcscpy_s(_str, cMaxTagLen, str);
-        else
-            _str[0] = 0;
-    }
-
-    TCHAR   _str[cMaxTagLen];
-    bool    _regExp;
-    bool    _matchCase;
-};
-
 
 /**
  *  \class  SearchWin
@@ -65,37 +46,40 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const TCHAR *header, SearchData& sd,
+    static void Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
             bool enRE = true, bool enMC = true);
 
 private:
-    static const TCHAR cClassName[];
-    static const int cBackgroundColor;
-    static const TCHAR cBtnFont[];
-    static const int cWidth;
+    static const TCHAR  cClassName[];
+    static const int    cBackgroundColor;
+    static const TCHAR  cBtnFont[];
+    static const int    cWidth;
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
-    SearchWin() {}
+    SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
+        _cmd(cmd), _complCB(complCB) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
-    HWND composeWindow(HWND hOwner, int width, const TCHAR* header,
-            SearchData& sd, bool enRE, bool enMC);
+    HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void onOK();
 
     static SearchWin* SW;
 
-    HWND _hWnd;
-    HWND _hEdit;
-    HWND _hRE;
-    HWND _hMC;
-    HWND _hOK;
-    HFONT _hTxtFont;
-    HFONT _hBtnFont;
+    std::shared_ptr<Cmd>    _cmd;
+    CompletionCB const      _complCB;
+
+    HWND                    _hWnd;
+    HWND                    _hEdit;
+    HWND                    _hRE;
+    HWND                    _hMC;
+    HWND                    _hOK;
+    HFONT                   _hTxtFont;
+    HFONT                   _hBtnFont;
 };
 
 } // namespace GTags

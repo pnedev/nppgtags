@@ -92,7 +92,8 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-void SearchWin::Show(const TCHAR* header, SearchData& sd, bool enRE, bool enMC)
+void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
+        bool enRE, bool enMC)
 {
     if (SW)
     {
@@ -102,8 +103,8 @@ void SearchWin::Show(const TCHAR* header, SearchData& sd, bool enRE, bool enMC)
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    SW = new SearchWin;
-    if (SW->composeWindow(hOwner, cWidth, header, sd, enRE, enMC) == NULL)
+    SW = new SearchWin(cmd, complCB);
+    if (SW->composeWindow(hOwner, enRE, enMC) == NULL)
     {
         delete SW;
         SW = NULL;
@@ -190,8 +191,7 @@ SearchWin::~SearchWin()
 /**
  *  \brief
  */
-HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
-        SearchData& sd, bool enMC, bool enRE)
+HWND SearchWin::composeWindow(HWND hOwner, bool enMC, bool enRE)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
@@ -216,11 +216,11 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, width,
-            txtHeight + btnHeight + 6);
-    width = win.right - win.left;
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style,
+            cWidth, txtHeight + btnHeight + 6);
+    int width = win.right - win.left;
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, header,
+    _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(),
             style, win.left, win.top, width, win.bottom - win.top,
             hOwner, NULL, HMod, (LPVOID) this);
     if (_hWnd == NULL)
@@ -265,14 +265,12 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
     if (_hTxtFont)
         SendMessage(_hEdit, WM_SETFONT, (WPARAM)_hTxtFont, (LPARAM)TRUE);
 
-    SendMessage(_hEdit, EM_EXLIMITTEXT, 0, (LPARAM)(cMaxTagLen - 1));
     SendMessage(_hEdit, EM_SETEVENTMASK, 0, 0);
 
-    int len = _tcslen(sd._str);
-    if (len)
+    if (_cmd->Tag())
     {
-        Edit_SetText(_hEdit, sd._str);
-        Edit_SetSel(_hEdit, 0, len);
+        Edit_SetText(_hEdit, _cmd->Tag());
+        Edit_SetSel(_hEdit, 0, _cmd->TagLen());
     }
 
     if (_hBtnFont)
@@ -281,8 +279,8 @@ HWND SearchWin::composeWindow(HWND hOwner, int width, const TCHAR* header,
         SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, (LPARAM)TRUE);
     }
 
-    Button_SetCheck(_hRE, sd._regExp ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hMC, sd._matchCase ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hRE, _cmd->RegExp() ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hMC, _cmd->MatchCase() ? BST_CHECKED : BST_UNCHECKED);
 
     if (!enMC)
         EnableWindow(_hMC, FALSE);
@@ -308,13 +306,16 @@ void SearchWin::onOK()
     if (len)
     {
         TCHAR tag[cMaxTagLen];
-        Edit_GetText(_hEdit, tag, len + 1);
+        Edit_GetText(_hEdit, tag, _countof(tag));
+
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED) ? true : false;
         bool mc = (Button_GetCheck(_hMC) == BST_CHECKED) ? true : false;
 
-        std::shared_ptr<Cmd>
-                cmd(new Cmd(FIND_FILE, cFindFile, db, tag, re, mc));
-        CmdEngine::Run(cmd, showResult);
+        _cmd->Tag(tag);
+        _cmd->RegExp(re);
+        _cmd->MatchCase(mc);
+
+        CmdEngine::Run(_cmd, _complCB);
     }
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);

@@ -68,13 +68,13 @@ enum
 struct CConfig
 {
     CConfig(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
-            bool useLibraryDB = false) : _parserIdx(parserIdx),
-        _autoUpdate(autoUpdate), _useLibDB(useLibraryDB) {}
+            bool useLibDb = false) : _parserIdx(parserIdx),
+        _autoUpdate(autoUpdate), _useLibDb(useLibDb) {}
 
     int     _parserIdx;
     bool    _autoUpdate;
-    bool    _useLibDB;
-    CText   _libDBpath;
+    bool    _useLibDb;
+    CText   _libDbPath;
 };
 
 

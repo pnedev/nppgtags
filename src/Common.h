@@ -76,6 +76,26 @@ public:
         return *this;
     }
 
+    CCharArray& operator()(const char* str)
+    {
+        if (_ptr)
+            delete [] _ptr;
+
+        if (str)
+        {
+            _size = strlen(str) + 1;
+            _ptr = new char[_size];
+            strcpy_s(_ptr, _size, str);
+        }
+        else
+        {
+            _ptr = NULL;
+            _size = 0;
+        }
+
+        return *this;
+    }
+
     char& operator[](unsigned pos)
     {
         return (pos < _size ? _ptr[pos] : _ptr[0]);
@@ -142,6 +162,26 @@ public:
             _ptr = NULL;
 
         _size = size;
+
+        return *this;
+    }
+
+    CWcharArray& operator()(const wchar_t* str)
+    {
+        if (_ptr)
+            delete [] _ptr;
+
+        if (str)
+        {
+            _size = wcslen(str) + 1;
+            _ptr = new wchar_t[_size];
+            wcscpy_s(_ptr, _size, str);
+        }
+        else
+        {
+            _ptr = NULL;
+            _size = 0;
+        }
 
         return *this;
     }

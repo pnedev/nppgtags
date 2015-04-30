@@ -64,10 +64,10 @@ public:
     inline HWND GetHandle() { return _nppData._nppHandle; }
     inline HWND GetSciHandle() { return _hSC; }
 
-    inline void SetPluginMenuFlag(int cmdID, bool enable) const
+    inline void SetPluginMenuFlag(int cmdId, bool enable) const
     {
         SendMessage(_nppData._nppHandle, NPPM_SETMENUITEMCHECK,
-                (WPARAM)cmdID, (LPARAM)enable);
+                (WPARAM)cmdId, (LPARAM)enable);
     }
 
     inline HMENU GetPluginMenu() const
@@ -140,10 +140,10 @@ public:
                 0, (LPARAM)filePath);
     }
 
-    inline void GetFilePathFromBufID(int bufID, TCHAR* filePath) const
+    inline void GetFilePathFromBufID(int bufId, TCHAR* filePath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID,
-                bufID, (LPARAM)filePath);
+                bufId, (LPARAM)filePath);
     }
 
     inline void GetFileNamePart(TCHAR* fileName) const

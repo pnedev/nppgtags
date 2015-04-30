@@ -60,9 +60,9 @@ const TCHAR CmdEngine::cVersionCmd[] =
 /**
  *  \brief
  */
-Cmd::Cmd(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
+Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag,
         bool regExp, bool matchCase) :
-    _id(id), _fail(true), _regExp(regExp), _matchCase(matchCase), _db(db)
+    _id(id), _db(db), _regExp(regExp), _matchCase(matchCase), _fail(true)
 {
     if (db)
         _dbPath = *db;
@@ -72,45 +72,29 @@ Cmd::Cmd(CmdID_t id, const TCHAR* name, DBhandle db, const TCHAR* tag,
         _tcscpy_s(_name, _countof(_name), name);
 
     if (tag)
-    {
-        _tag(_tcslen(tag) + 1);
-        _tag = tag;
-    }
+        _tag(tag);
 }
 
 
 /**
  *  \brief
  */
-void Cmd::SetResult(const char* result)
-{
-    if (result == NULL)
-        return;
-
-    _result(strlen(result) + 1);
-    _result = result;
-}
-
-
-/**
- *  \brief
- */
-void Cmd::AppendResult(const char* result)
+void Cmd::appendResult(const char* result)
 {
     if (result == NULL)
         return;
 
     if (!NoResult())
     {
-        CCharArray oldResult(_result.Size());
-        oldResult = &_result;
+        CCharArray oldResult;
+        oldResult(&_result);
         _result(oldResult.Size() + strlen(result));
         _result = &oldResult;
         _result += result;
     }
     else
     {
-        SetResult(result);
+        setResult(result);
     }
 }
 
@@ -118,13 +102,13 @@ void Cmd::AppendResult(const char* result)
 /**
  *  \brief
  */
-bool CmdEngine::Run(std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
+bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
 {
     CmdEngine* engine = new CmdEngine(cmd, complCB);
 
     engine->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
             (void*)engine, 0, NULL);
-    if (!engine->_hThread)
+    if (engine->_hThread == NULL)
     {
         if (complCB)
             complCB(cmd);
@@ -179,7 +163,7 @@ unsigned __stdcall CmdEngine::threadFunc(void* data)
 /**
  *  \brief
  */
-const TCHAR* CmdEngine::getCmdLine()
+const TCHAR* CmdEngine::getCmdLine() const
 {
     switch (_cmd->_id)
     {
@@ -214,7 +198,7 @@ const TCHAR* CmdEngine::getCmdLine()
 /**
  *  \brief
  */
-void CmdEngine::composeCmd(TCHAR* buf, unsigned len)
+void CmdEngine::composeCmd(TCHAR* buf, unsigned len) const
 {
     CPath path(DllPath);
     path.StripFilename();
@@ -224,7 +208,7 @@ void CmdEngine::composeCmd(TCHAR* buf, unsigned len)
         _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str());
     else
         _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str(),
-                _cmd->GetTag());
+                _cmd->Tag());
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
     {
@@ -262,21 +246,21 @@ unsigned CmdEngine::runProcess()
     TCHAR header[512];
     if (_cmd->_id == CREATE_DATABASE)
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _cmd->GetName(), _cmd->GetDBPath());
+                _T("%s - \"%s\""), _cmd->Name(), _cmd->DbPath());
     else if (_cmd->_id == VERSION)
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s"), _cmd->GetName());
+                _T("%s"), _cmd->Name());
     else
         _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _cmd->GetName(), _cmd->GetTag());
+                _T("%s - \"%s\""), _cmd->Name(), _cmd->Tag());
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* env = NULL;
-    const TCHAR* currentDir = _cmd->GetDBPath();
+    const TCHAR* currentDir = _cmd->DbPath();
 
     CText envVars(_T("GTAGSLIBPATH="));
-    if (Config._useLibDB)
-        envVars += Config._libDBpath;
+    if (Config._useLibDb)
+        envVars += Config._libDbPath;
 
     if (_cmd->_id == VERSION)
     {
@@ -324,14 +308,14 @@ unsigned CmdEngine::runProcess()
     if (dataPipe.GetOutput())
     {
         _cmd->_fail = false;
-        _cmd->AppendResult(dataPipe.GetOutput());
+        _cmd->appendResult(dataPipe.GetOutput());
 
         return 0;
     }
 
     if (errorPipe.GetOutput())
     {
-        _cmd->SetResult(errorPipe.GetOutput());
+        _cmd->setResult(errorPipe.GetOutput());
     }
 
     return 1;
@@ -341,7 +325,7 @@ unsigned CmdEngine::runProcess()
 /**
  *  \brief
  */
-bool CmdEngine::isActive(PROCESS_INFORMATION& pi)
+bool CmdEngine::isActive(PROCESS_INFORMATION& pi) const
 {
     bool active = false;
 
@@ -367,7 +351,7 @@ bool CmdEngine::isActive(PROCESS_INFORMATION& pi)
 /**
  *  \brief
  */
-void CmdEngine::terminate(PROCESS_INFORMATION& pi)
+void CmdEngine::terminate(PROCESS_INFORMATION& pi) const
 {
     if (isActive(pi))
     {

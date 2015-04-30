@@ -35,35 +35,33 @@
 namespace GTags
 {
 
-typedef const CPath* DBhandle;
+typedef const CPath* DbHandle;
 
 
 /**
- *  \class  DBManager
+ *  \class  DbManager
  *  \brief
  */
-class DBManager
+class DbManager
 {
 public:
-    static DBManager& Get() { return Instance; }
+    static DbManager& Get() { return Instance; }
 
-    DBhandle RegisterDB(const CPath& dbPath, bool writeEn);
-    bool UnregisterDB(DBhandle db);
-    DBhandle GetDB(const CPath& filePath, bool writeEn, bool* success);
-    bool PutDB(DBhandle db);
-    bool DB_ExistsInFolder(const CPath& folder);
+    DbHandle RegisterDb(const CPath& dbPath, bool writeEn);
+    bool UnregisterDb(DbHandle db);
+    DbHandle GetDb(const CPath& filePath, bool writeEn, bool* success);
+    bool PutDb(DbHandle db);
+    bool DbExistsInFolder(const CPath& folder);
 
 private:
     /**
-     *  \class  GTagsDB
+     *  \class  GTagsDb
      *  \brief
      */
-    class GTagsDB
+    class GTagsDb
     {
     public:
-        CPath _path;
-
-        ~GTagsDB() {}
+        ~GTagsDb() {}
 
         bool IsLocked()
         {
@@ -95,32 +93,34 @@ private:
                 _readLocks--;
         }
 
+        CPath _path;
+
     protected:
-        GTagsDB(const CPath& dbPath, bool writeEn) :
+        GTagsDb(const CPath& dbPath, bool writeEn) :
             _path(dbPath), _writeLock(writeEn)
         {
             _readLocks = writeEn ? 0 : 1;
         }
 
     private:
-        friend class DBManager;
+        friend class DbManager;
 
-        int _readLocks;
-        bool _writeLock;
+        int     _readLocks;
+        bool    _writeLock;
     };
 
-    static DBManager Instance;
+    static DbManager Instance;
 
-    DBManager() {}
-    DBManager(const DBManager&);
-    ~DBManager() {}
+    DbManager() {}
+    DbManager(const DbManager&);
+    ~DbManager() {}
 
-    bool deleteDB(CPath& dbPath);
-    DBhandle addDB(const CPath& dbPath, bool writeEn);
-    DBhandle lockDB(const CPath& filePath, bool writeEn, bool* success);
+    bool deleteDb(CPath& dbPath);
+    DbHandle addDb(const CPath& dbPath, bool writeEn);
+    DbHandle lockDb(const CPath& filePath, bool writeEn, bool* success);
 
-    Mutex _lock;
-    std::list<GTagsDB> _dbList;
+    Mutex               _lock;
+    std::list<GTagsDb>  _dbList;
 };
 
 } // namespace GTags

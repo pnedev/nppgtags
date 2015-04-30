@@ -78,13 +78,13 @@ void AutoCompleteWin::Unregister()
 /**
  *  \brief
  */
-void AutoCompleteWin::Show(const std::shared_ptr<CmdEngineData>& cmd)
+void AutoCompleteWin::Show(const std::shared_ptr<Cmd>& cmd)
 {
     if (ACW)
         return;
 
     ACW = new AutoCompleteWin(cmd);
-    if (ACW->composeWindow(cmd->GetName()) == NULL)
+    if (ACW->composeWindow(cmd->Name()) == NULL)
     {
         delete ACW;
         ACW = NULL;
@@ -95,13 +95,13 @@ void AutoCompleteWin::Show(const std::shared_ptr<CmdEngineData>& cmd)
 /**
  *  \brief
  */
-AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<CmdEngineData>& cmd) :
-    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdID(cmd->GetID()),
-    _cmdTagLen((_cmdID == AUTOCOMPLETE_FILE ?
-            cmd->GetTagLen() - 1 : cmd->GetTagLen())),
-    _result(cmd->GetResultLen() + 1)
+AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<Cmd>& cmd) :
+    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()),
+    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ?
+            cmd->TagLen() - 1 : cmd->TagLen())),
+    _result(cmd->ResultLen() + 1)
 {
-    Tools::AtoW(&_result, _result.Size(), cmd->GetResult());
+    Tools::AtoW(&_result, _result.Size(), cmd->Result());
 }
 
 
@@ -191,7 +191,7 @@ int AutoCompleteWin::fillLV()
     for (TCHAR* pToken = _tcstok_s(&_result, _T("\n\r"), &pTmp);
         pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
-        lvItem.pszText = (_cmdID == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
+        lvItem.pszText = (_cmdId == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);
         lvItem.iItem++;
     }
@@ -222,7 +222,7 @@ int AutoCompleteWin::filterLV(const TCHAR* filter)
 
     ListView_DeleteAllItems(_hLVWnd);
 
-    if (_cmdID == AUTOCOMPLETE_FILE)
+    if (_cmdId == AUTOCOMPLETE_FILE)
         pRes++;
 
     while (pRes < pEnd)
@@ -240,7 +240,7 @@ int AutoCompleteWin::filterLV(const TCHAR* filter)
                 (*pRes == _T('\n') || *pRes == _T('\r') || *pRes == 0))
             pRes++;
 
-        if (_cmdID == AUTOCOMPLETE_FILE)
+        if (_cmdId == AUTOCOMPLETE_FILE)
             pRes++;
     }
 

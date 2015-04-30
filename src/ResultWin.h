@@ -69,12 +69,12 @@ private:
 
         inline bool operator==(const Tab& tab) const
         {
-            return (_cmdID == tab._cmdID &&
+            return (_cmdId == tab._cmdId &&
                     !strcmp(_projectPath, tab._projectPath) &&
                     !strcmp(_search, tab._search));
         }
 
-        const CmdID_t _cmdID;
+        const CmdId_t _cmdId;
         const bool _regExp;
         const bool _matchCase;
         char _projectPath[MAX_PATH];

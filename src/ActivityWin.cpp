@@ -235,7 +235,7 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
             width - 85, (height - 25) / 2, 80, 25, hWnd,
             NULL, HMod, NULL);
 
-    _timerID = SetTimer(hWnd, 0, cUpdate_ms, NULL);
+    _timerId = SetTimer(hWnd, 0, cUpdate_ms, NULL);
 
     ShowWindow(hWnd, SW_SHOWNORMAL);
     UpdateWindow(hWnd);
@@ -255,7 +255,7 @@ void ActivityWin::onTimerRefresh(HWND hwnd)
     if (dwRet != STILL_ACTIVE)
     {
         _isCancelled = 0;
-        KillTimer(hwnd, _timerID);
+        KillTimer(hwnd, _timerId);
         SendMessage(hwnd, WM_CLOSE, 0, 0);
     }
     else
@@ -309,7 +309,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hwnd, UINT umsg,
             {
                 aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                         (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                KillTimer(hwnd, aw->_timerID);
+                KillTimer(hwnd, aw->_timerId);
                 SendMessage(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }

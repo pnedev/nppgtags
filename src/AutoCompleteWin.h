@@ -70,7 +70,7 @@ private:
     HWND _hWnd;
     HWND _hLVWnd;
     HFONT _hFont;
-    const CmdID_t _cmdID;
+    const CmdId_t _cmdId;
     const int _cmdTagLen;
     CTcharArray _result;
 };
