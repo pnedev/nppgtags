@@ -52,6 +52,15 @@ enum CmdId_t
 };
 
 
+enum CmdStatus_t
+{
+    CANCELLED = 0,
+    RUN_ERROR,
+    FAILED,
+    OK
+};
+
+
 /**
  *  \class  Cmd
  *  \brief
@@ -89,8 +98,8 @@ public:
     inline void MatchCase(bool mc) { _matchCase = mc; }
     inline bool MatchCase() const { return _matchCase; }
 
-    inline bool HasFailed() const { return _fail; }
-    inline bool NoResult() const { return (&_result == NULL); }
+    inline void Status(CmdStatus_t stat) { _status = stat; }
+    inline CmdStatus_t Status() const { return _status; }
 
     inline char* Result() { return &_result; }
     inline const char* Result() const { return &_result; }
@@ -111,7 +120,7 @@ private:
     bool            _regExp;
     bool            _matchCase;
 
-    bool            _fail;
+    CmdStatus_t     _status;
     CCharArray      _result;
 };
 

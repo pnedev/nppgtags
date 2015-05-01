@@ -97,6 +97,8 @@ void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
 {
     if (SW)
     {
+        cmd->Status(CANCELLED);
+        complCB(cmd);
         SetFocus(SW->_hWnd);
         return;
     }
@@ -106,6 +108,8 @@ void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
     SW = new SearchWin(cmd, complCB);
     if (SW->composeWindow(hOwner, enRE, enMC) == NULL)
     {
+        cmd->Status(CANCELLED);
+        complCB(cmd);
         delete SW;
         SW = NULL;
     }
@@ -191,7 +195,7 @@ SearchWin::~SearchWin()
 /**
  *  \brief
  */
-HWND SearchWin::composeWindow(HWND hOwner, bool enMC, bool enRE)
+HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
@@ -317,7 +321,23 @@ void SearchWin::onOK()
 
         CmdEngine::Run(_cmd, _complCB);
     }
+    else
+    {
+        _cmd->Status(CANCELLED);
+        _complCB(_cmd);
+    }
 
+    SendMessage(_hWnd, WM_CLOSE, 0, 0);
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::onCancel()
+{
+    _cmd->Status(CANCELLED);
+    _complCB(_cmd);
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
@@ -340,7 +360,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         case WM_HOTKEY:
             if (HIWORD(lparam) == VK_ESCAPE)
             {
-                SendMessage(hwnd, WM_CLOSE, 0, 0);
+                SW->onCancel();
                 return 0;
             }
             if (HIWORD(lparam) == VK_RETURN)

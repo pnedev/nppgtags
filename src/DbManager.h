@@ -95,15 +95,14 @@ private:
 
         CPath _path;
 
-    protected:
+    private:
+        friend class DbManager;
+
         GTagsDb(const CPath& dbPath, bool writeEn) :
             _path(dbPath), _writeLock(writeEn)
         {
             _readLocks = writeEn ? 0 : 1;
         }
-
-    private:
-        friend class DbManager;
 
         int     _readLocks;
         bool    _writeLock;

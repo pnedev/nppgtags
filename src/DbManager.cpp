@@ -102,6 +102,8 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
 
     AUTOLOCK(_lock);
 
+    *success = false;
+
     DbHandle db = lockDb(filePath, writeEn, success);
     if (db)
         return db;

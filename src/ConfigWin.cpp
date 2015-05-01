@@ -188,7 +188,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int height = win.bottom - win.top;
 
     TCHAR header[32] = {VER_PLUGIN_NAME};
-    _tcscat_s(header, _countof(header), _T(" CConfig"));
+    _tcscat_s(header, _countof(header), _T(" Settings"));
 
     _hWnd = CreateWindowEx(styleEx, cClassName, header,
             style, win.left, win.top, width, height,

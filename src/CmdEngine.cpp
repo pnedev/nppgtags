@@ -61,8 +61,8 @@ const TCHAR CmdEngine::cVersionCmd[] =
  *  \brief
  */
 Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag,
-        bool regExp, bool matchCase) :
-    _id(id), _db(db), _regExp(regExp), _matchCase(matchCase), _fail(true)
+        bool regExp, bool matchCase) : _id(id), _db(db),
+        _regExp(regExp), _matchCase(matchCase), _status(CANCELLED)
 {
     if (db)
         _dbPath = *db;
@@ -84,7 +84,7 @@ void Cmd::appendResult(const char* result)
     if (result == NULL)
         return;
 
-    if (!NoResult())
+    if (&_result != NULL)
     {
         CCharArray oldResult;
         oldResult(&_result);
@@ -105,6 +105,7 @@ void Cmd::appendResult(const char* result)
 bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
 {
     CmdEngine* engine = new CmdEngine(cmd, complCB);
+    cmd->Status(RUN_ERROR);
 
     engine->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
             (void*)engine, 0, NULL);
@@ -123,7 +124,7 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
     // the exit code. On false, command has failed or has been terminated
     WaitForSingleObject(engine->_hThread, INFINITE);
 
-    DWORD exitCode;
+    DWORD exitCode = 0;
     GetExitCodeThread(engine->_hThread, &exitCode);
 
     delete engine;
@@ -284,13 +285,17 @@ unsigned CmdEngine::runProcess()
     PROCESS_INFORMATION pi;
     if (!CreateProcess(NULL, buf, NULL, NULL, TRUE, createFlags,
             (LPVOID)env, currentDir, &si, &pi))
+    {
+        _cmd->_status = RUN_ERROR;
         return 1;
+    }
 
     SetThreadPriority(pi.hThread, THREAD_PRIORITY_NORMAL);
 
     if (!errorPipe.Open() || !dataPipe.Open())
     {
         terminate(pi);
+        _cmd->_status = RUN_ERROR;
         return 1;
     }
 
@@ -299,6 +304,7 @@ unsigned CmdEngine::runProcess()
             0 : 300))
     {
         terminate(pi);
+        _cmd->_status = CANCELLED;
         return 1;
     }
 
@@ -307,18 +313,18 @@ unsigned CmdEngine::runProcess()
 
     if (dataPipe.GetOutput())
     {
-        _cmd->_fail = false;
         _cmd->appendResult(dataPipe.GetOutput());
-
-        return 0;
     }
-
-    if (errorPipe.GetOutput())
+    else if (errorPipe.GetOutput())
     {
         _cmd->setResult(errorPipe.GetOutput());
+        _cmd->_status = FAILED;
+        return 1;
     }
 
-    return 1;
+    _cmd->_status = OK;
+
+    return 0;
 }
 
 

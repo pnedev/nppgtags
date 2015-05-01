@@ -67,6 +67,7 @@ private:
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void onOK();
+    void onCancel();
 
     static SearchWin* SW;
 

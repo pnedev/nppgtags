@@ -230,17 +230,22 @@ bool runSheduledUpdate(const TCHAR* dbPath)
  */
 void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
 {
-    if (cmd->HasFailed() && cmd->Id() == CREATE_DATABASE)
+    if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
         DbManager::Get().UnregisterDb(cmd->Db());
     else
         DbManager::Get().PutDb(cmd->Db());
 
     runSheduledUpdate(cmd->DbPath());
 
-    if (cmd->HasFailed() && !cmd->NoResult())
+    if (cmd->Status() == FAILED)
     {
         CText msg(cmd->Result());
         MessageBox(INpp::Get().GetHandle(), msg.C_str(),
+                cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
                 cmd->Name(), MB_OK | MB_ICONERROR);
     }
 }
@@ -255,22 +260,30 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
 
     runSheduledUpdate(cmd->DbPath());
 
-    if (cmd->HasFailed())
+    if (cmd->Status() == OK)
+    {
+        AutoCompleteWin::Show(cmd);
+    }
+    else if (cmd->Status() == FAILED)
     {
         INpp::Get().ClearSelection();
 
-        if (!cmd->NoResult())
-        {
-            CText msg(cmd->Result());
-            msg += _T("\nTry re-creating database.");
-            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(),
-                    MB_OK | MB_ICONERROR);
-        }
-
-        return;
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(),
+                MB_OK | MB_ICONERROR);
     }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        INpp::Get().ClearSelection();
 
-    AutoCompleteWin::Show(cmd);
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
+                cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else
+    {
+        INpp::Get().ClearSelection();
+    }
 }
 
 
@@ -283,31 +296,33 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
 
     runSheduledUpdate(cmd->DbPath());
 
-    if (cmd->HasFailed())
+    if (cmd->Status() == OK)
     {
-        if (!cmd->NoResult())
+        if (cmd->Result())
         {
-            CText msg(cmd->Result());
-            msg += _T("\nTry re-creating database.");
-            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(),
-                    MB_OK | MB_ICONERROR);
+            ResultWin::Get().Show(cmd);
         }
-
-        return;
+        else
+        {
+            TCHAR msg[cMaxTagLen + 32];
+            _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"),
+                    cmd->Tag());
+            MessageBox(INpp::Get().GetHandle(), msg, cmd->Name(),
+                    MB_OK | MB_ICONEXCLAMATION);
+        }
     }
-
-    if (cmd->NoResult())
+    else if (cmd->Status() == FAILED)
     {
-        TCHAR msg[cMaxTagLen + 32];
-        _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"),
-                cmd->Tag());
-        MessageBox(INpp::Get().GetHandle(), msg, cmd->Name(),
-                MB_OK | MB_ICONEXCLAMATION);
-
-        return;
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(),
+                MB_OK | MB_ICONERROR);
     }
-
-    ResultWin::Get().Show(cmd);
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
+                cmd->Name(), MB_OK | MB_ICONERROR);
+    }
 }
 
 
@@ -316,17 +331,17 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
  */
 void findReady(const std::shared_ptr<Cmd>& cmd)
 {
-    if (!cmd->HasFailed() && cmd->NoResult())
+    if (cmd->Status() == OK && cmd->Result() == NULL)
     {
         cmd->Id(FIND_SYMBOL);
         cmd->Name(cFindSymbol);
 
         CmdEngine::Run(cmd, showResult);
-
-        return;
     }
-
-    showResult(cmd);
+    else
+    {
+        showResult(cmd);
+    }
 }
 
 } // anonymous namespace
@@ -538,9 +553,15 @@ void FindDefinition()
     TCHAR tag[cMaxTagLen];
 
     if (getSelection(tag, true))
+    {
+        cmd->Tag(tag);
+
         CmdEngine::Run(cmd, findReady);
+    }
     else
+    {
         SearchWin::Show(cmd, findReady, false);
+    }
 }
 
 
@@ -565,9 +586,15 @@ void FindReference()
     TCHAR tag[cMaxTagLen];
 
     if (getSelection(tag, true))
+    {
+        cmd->Tag(tag);
+
         CmdEngine::Run(cmd, findReady);
+    }
     else
+    {
         SearchWin::Show(cmd, findReady, false);
+    }
 }
 
 
@@ -584,9 +611,15 @@ void Search()
     TCHAR tag[cMaxTagLen];
 
     if (getSelection(tag, true))
+    {
+        cmd->Tag(tag);
+
         CmdEngine::Run(cmd, showResult);
+    }
     else
+    {
         SearchWin::Show(cmd, showResult);
+    }
 }
 
 
@@ -622,6 +655,14 @@ void CreateDatabase()
     DbHandle db = DbManager::Get().GetDb(currentFile, true, &success);
     if (db)
     {
+        if (!success)
+        {
+            MessageBox(npp.GetHandle(),
+                    _T("GTags database exists but is in use"),
+                    cPluginName, MB_OK | MB_ICONINFORMATION);
+            return;
+        }
+
         TCHAR buf[512];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE,
                 _T("Database at\n\"%s\" exists.\nRe-create?"), db->C_str());
@@ -699,6 +740,8 @@ const CPath CreateLibraryDatabase(HWND hwnd)
     libraryPath = path;
     libraryPath += _T("\\");
 
+    DbHandle db;
+
     if (DbManager::Get().DbExistsInFolder(libraryPath))
     {
         TCHAR buf[512];
@@ -709,15 +752,29 @@ const CPath CreateLibraryDatabase(HWND hwnd)
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return libraryPath;
-    }
 
-    DbHandle db = DbManager::Get().RegisterDb(libraryPath, true);
+        bool success;
+        db = DbManager::Get().GetDb(libraryPath, true, &success);
+
+        if (!success)
+        {
+            MessageBox(hwnd, _T("GTags database is in use"),
+                    cPluginName, MB_OK | MB_ICONEXCLAMATION);
+            libraryPath = _T("");
+
+            return libraryPath;
+        }
+    }
+    else
+    {
+        db = DbManager::Get().RegisterDb(libraryPath, true);
+    }
 
     std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
     CmdEngine::Run(cmd);
 
     dbWriteReady(cmd);
-    if (cmd->HasFailed())
+    if (cmd->Status() != OK)
         libraryPath = _T("");
 
     return libraryPath;
@@ -809,10 +866,10 @@ void About()
     CmdEngine::Run(cmd);
 
     CText msg;
-    if (cmd->HasFailed())
-        msg = _T("VERSION READ FAILED\n");
-    else
+    if (cmd->Status() == OK)
         msg = cmd->Result();
+    else
+        msg = _T("VERSION READ FAILED\n");
 
     AboutWin::Show(msg.C_str());
 }
