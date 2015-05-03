@@ -96,20 +96,13 @@ void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
         bool enRE, bool enMC)
 {
     if (SW)
-    {
-        cmd->Status(CANCELLED);
-        complCB(cmd);
-        SetFocus(SW->_hWnd);
-        return;
-    }
+        SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
 
     HWND hOwner = INpp::Get().GetHandle();
 
     SW = new SearchWin(cmd, complCB);
     if (SW->composeWindow(hOwner, enRE, enMC) == NULL)
     {
-        cmd->Status(CANCELLED);
-        complCB(cmd);
         delete SW;
         SW = NULL;
     }
@@ -189,6 +182,12 @@ SearchWin::~SearchWin()
         DeleteObject(_hBtnFont);
     if (_hTxtFont)
         DeleteObject(_hTxtFont);
+
+    if (_cancelled)
+    {
+        _cmd->Status(CANCELLED);
+        _complCB(_cmd);
+    }
 }
 
 
@@ -319,25 +318,10 @@ void SearchWin::onOK()
         _cmd->RegExp(re);
         _cmd->MatchCase(mc);
 
+        _cancelled = false;
         CmdEngine::Run(_cmd, _complCB);
     }
-    else
-    {
-        _cmd->Status(CANCELLED);
-        _complCB(_cmd);
-    }
 
-    SendMessage(_hWnd, WM_CLOSE, 0, 0);
-}
-
-
-/**
- *  \brief
- */
-void SearchWin::onCancel()
-{
-    _cmd->Status(CANCELLED);
-    _complCB(_cmd);
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
@@ -360,7 +344,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         case WM_HOTKEY:
             if (HIWORD(lparam) == VK_ESCAPE)
             {
-                SW->onCancel();
+                SendMessage(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }
             if (HIWORD(lparam) == VK_RETURN)

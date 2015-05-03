@@ -61,13 +61,12 @@ private:
             int width, int height);
 
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB) {}
+        _cmd(cmd), _complCB(complCB), _cancelled(true) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void onOK();
-    void onCancel();
 
     static SearchWin* SW;
 
@@ -81,6 +80,7 @@ private:
     HWND                    _hOK;
     HFONT                   _hTxtFont;
     HFONT                   _hBtnFont;
+    bool                    _cancelled;
 };
 
 } // namespace GTags
