@@ -475,7 +475,10 @@ void AutoComplete()
 
     DbHandle db = getDatabase();
     if (!db)
+    {
+        INpp::Get().ClearSelection();
         return;
+    }
 
     std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag));
 
@@ -501,7 +504,10 @@ void AutoCompleteFile()
 
     DbHandle db = getDatabase();
     if (!db)
+    {
+        INpp::Get().ClearSelection();
         return;
+    }
 
     std::shared_ptr<Cmd>
             cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
