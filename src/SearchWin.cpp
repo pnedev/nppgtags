@@ -34,13 +34,6 @@
 #include "CmdEngine.h"
 
 
-enum HotKeys_t
-{
-    HK_ACCEPT = 1,
-    HK_DECLINE
-};
-
-
 namespace GTags
 {
 
@@ -174,9 +167,8 @@ RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 SearchWin::~SearchWin()
 {
-    if (_hWnd)
-        UnregisterHotKey(_hWnd, HK_ACCEPT);
-        UnregisterHotKey(_hWnd, HK_DECLINE);
+    if (_hKeyHook)
+        UnhookWindowsHookEx(_hKeyHook);
 
     if (_hBtnFont)
         DeleteObject(_hBtnFont);
@@ -290,8 +282,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     if (!enRE)
         EnableWindow(_hRE, FALSE);
 
-    RegisterHotKey(_hWnd, HK_ACCEPT, 0, VK_ESCAPE);
-    RegisterHotKey(_hWnd, HK_DECLINE, 0, VK_RETURN);
+    _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
+            GetCurrentThreadId());
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -329,6 +321,37 @@ void SearchWin::onOK()
 /**
  *  \brief
  */
+LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wparam, LPARAM lparam)
+{
+    if (code >= 0)
+    {
+        HWND hWnd = GetActiveWindow();
+        if (SW->_hWnd == hWnd || IsChild(SW->_hWnd, hWnd))
+        {
+            // Key is pressed
+            if (!(lparam & (1 << 31)))
+            {
+                if (wparam == VK_ESCAPE)
+                {
+                    SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
+                    return 1;
+                }
+                if (wparam == VK_RETURN)
+                {
+                    SW->onOK();
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+
+/**
+ *  \brief
+ */
 LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         WPARAM wparam, LPARAM lparam)
 {
@@ -340,19 +363,6 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         case WM_SETFOCUS:
             SetFocus(SW->_hEdit);
         return 0;
-
-        case WM_HOTKEY:
-            if (HIWORD(lparam) == VK_ESCAPE)
-            {
-                SendMessage(hwnd, WM_CLOSE, 0, 0);
-                return 0;
-            }
-            if (HIWORD(lparam) == VK_RETURN)
-            {
-                SW->onOK();
-                return 0;
-            }
-        break;
 
         case WM_COMMAND:
             if (HIWORD(wparam) == EN_KILLFOCUS)

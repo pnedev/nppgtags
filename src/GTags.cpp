@@ -658,7 +658,7 @@ void CreateDatabase()
         if (!success)
         {
             MessageBox(npp.GetHandle(),
-                    _T("GTags database exists but is in use"),
+                    _T("GTags database exists and is currently in use"),
                     cPluginName, MB_OK | MB_ICONINFORMATION);
             return;
         }

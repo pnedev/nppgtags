@@ -57,11 +57,13 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
             WPARAM wparam, LPARAM lparam);
+    static LRESULT CALLBACK keyHookProc(int code,
+            WPARAM wparam, LPARAM lparam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB), _cancelled(true) {}
+        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL), _cancelled(true) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
@@ -80,6 +82,7 @@ private:
     HWND                    _hOK;
     HFONT                   _hTxtFont;
     HFONT                   _hBtnFont;
+    HHOOK                   _hKeyHook;
     bool                    _cancelled;
 };
 
