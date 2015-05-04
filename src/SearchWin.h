@@ -48,6 +48,7 @@ public:
 
     static void Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
             bool enRE = true, bool enMC = true);
+    static void Close();
 
 private:
     static const TCHAR  cClassName[];

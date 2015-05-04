@@ -522,6 +522,8 @@ void AutoCompleteFile()
  */
 void FindFile()
 {
+    SearchWin::Close();
+
     DbHandle db = getDatabase();
     if (!db)
         return;
@@ -551,6 +553,8 @@ void FindFile()
  */
 void FindDefinition()
 {
+    SearchWin::Close();
+
     DbHandle db = getDatabase();
     if (!db)
         return;
@@ -576,6 +580,8 @@ void FindDefinition()
  */
 void FindReference()
 {
+    SearchWin::Close();
+
     if (Config._parserIdx == CTAGS_PARSER)
     {
         MessageBox(INpp::Get().GetHandle(),
@@ -609,6 +615,8 @@ void FindReference()
  */
 void Search()
 {
+    SearchWin::Close();
+
     DbHandle db = getDatabase();
     if (!db)
         return;
@@ -652,6 +660,8 @@ void GoForward()
  */
 void CreateDatabase()
 {
+    SearchWin::Close();
+
     INpp& npp = INpp::Get();
     bool success;
     TCHAR path[MAX_PATH];
@@ -828,6 +838,8 @@ bool UpdateSingleFile(const TCHAR* file)
  */
 void DeleteDatabase()
 {
+    SearchWin::Close();
+
     DbHandle db = getDatabase(true);
     if (!db)
         return;

@@ -111,7 +111,7 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
     CPath dbPath(filePath);
 
     int len;
-    while ((len = dbPath.Up()))
+    for (len = dbPath.StripFilename(); len; len = dbPath.Up())
         if (DbExistsInFolder(dbPath))
             break;
 

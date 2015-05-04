@@ -105,6 +105,16 @@ void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
 /**
  *  \brief
  */
+void SearchWin::Close()
+{
+    if (SW)
+        SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
+}
+
+
+/**
+ *  \brief
+ */
 RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
         int width, int height)
 {
