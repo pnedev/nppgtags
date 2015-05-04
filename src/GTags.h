@@ -103,7 +103,7 @@ void Search();
 void GoBack();
 void GoForward();
 void CreateDatabase();
-const CPath CreateLibraryDatabase(HWND hwnd);
+const CPath CreateLibraryDatabase(HWND hWnd);
 bool UpdateSingleFile(const TCHAR* file = NULL);
 void DeleteDatabase();
 void SettingsCfg();

@@ -56,10 +56,10 @@ private:
     static const TCHAR  cBtnFont[];
     static const int    cWidth;
 
-    static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
-            WPARAM wparam, LPARAM lparam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
+            WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK keyHookProc(int code,
-            WPARAM wparam, LPARAM lparam);
+            WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 

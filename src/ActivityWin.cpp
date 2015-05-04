@@ -139,7 +139,7 @@ ActivityWin::~ActivityWin()
 /**
  *  \brief
  */
-void ActivityWin::adjustSizeAndPos(HWND hwnd, int width, int height)
+void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
 {
     RECT win, maxWin;
     bool noAdjust = false;
@@ -158,7 +158,7 @@ void ActivityWin::adjustSizeAndPos(HWND hwnd, int width, int height)
 
     if (!noAdjust)
     {
-        AdjustWindowRect(&win, GetWindowLongPtr(hwnd, GWL_STYLE), FALSE);
+        AdjustWindowRect(&win, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE);
 
         width = win.right - win.left;
         height = win.bottom - win.top;
@@ -178,7 +178,7 @@ void ActivityWin::adjustSizeAndPos(HWND hwnd, int width, int height)
         win.bottom = win.top + height;
     }
 
-    MoveWindow(hwnd, win.left, win.top,
+    MoveWindow(hWnd, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);
 }
 
@@ -248,15 +248,15 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 /**
  *  \brief
  */
-void ActivityWin::onTimerRefresh(HWND hwnd)
+void ActivityWin::onTimerRefresh(HWND hWnd)
 {
     DWORD dwRet;
     GetExitCodeProcess(_hProc, &dwRet);
     if (dwRet != STILL_ACTIVE)
     {
         _isCancelled = 0;
-        KillTimer(hwnd, _timerId);
-        SendMessage(hwnd, WM_CLOSE, 0, 0);
+        KillTimer(hWnd, _timerId);
+        SendMessage(hWnd, WM_CLOSE, 0, 0);
     }
     else
     {
@@ -265,8 +265,8 @@ void ActivityWin::onTimerRefresh(HWND hwnd)
         {
             _initRefCount = refCount;
             RECT win;
-            GetClientRect(hwnd, &win);
-            adjustSizeAndPos(hwnd,
+            GetClientRect(hWnd, &win);
+            adjustSizeAndPos(hWnd,
                     win.right - win.left, win.bottom - win.top);
         }
     }
@@ -276,41 +276,41 @@ void ActivityWin::onTimerRefresh(HWND hwnd)
 /**
  *  \brief
  */
-LRESULT APIENTRY ActivityWin::wndProc(HWND hwnd, UINT umsg,
-        WPARAM wparam, LPARAM lparam)
+LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam)
 {
     ActivityWin* aw;
 
-    switch (umsg)
+    switch (uMsg)
     {
         case WM_CREATE:
-            aw = (ActivityWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(aw));
+            aw = (ActivityWin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+            SetWindowLongPtr(hWnd, GWLP_USERDATA, PtrToUlong(aw));
         return 0;
 
         case WM_SETFOCUS:
             aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             SetFocus(aw->_hBtn);
         return 0;
 
         case WM_CTLCOLORSTATIC:
-            SetBkColor((HDC) wparam, GetSysColor(cBackgroundColor));
+            SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
         return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
         case WM_TIMER:
             aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            aw->onTimerRefresh(hwnd);
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            aw->onTimerRefresh(hWnd);
         return 0;
 
         case WM_COMMAND:
-            if (HIWORD(wparam) == BN_CLICKED)
+            if (HIWORD(wParam) == BN_CLICKED)
             {
                 aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                        (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-                KillTimer(hwnd, aw->_timerId);
-                SendMessage(hwnd, WM_CLOSE, 0, 0);
+                        (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+                KillTimer(hWnd, aw->_timerId);
+                SendMessage(hWnd, WM_CLOSE, 0, 0);
                 return 0;
             }
         break;
@@ -320,7 +320,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
     }
 
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 } // namespace GTags

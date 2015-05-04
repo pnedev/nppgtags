@@ -331,7 +331,7 @@ void SearchWin::onOK()
 /**
  *  \brief
  */
-LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
     if (code >= 0)
     {
@@ -339,14 +339,14 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wparam, LPARAM lparam)
         if (SW->_hWnd == hWnd || IsChild(SW->_hWnd, hWnd))
         {
             // Key is pressed
-            if (!(lparam & (1 << 31)))
+            if (!(lParam & (1 << 31)))
             {
-                if (wparam == VK_ESCAPE)
+                if (wParam == VK_ESCAPE)
                 {
                     SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
                     return 1;
                 }
-                if (wparam == VK_RETURN)
+                if (wParam == VK_RETURN)
                 {
                     SW->onOK();
                     return 1;
@@ -355,17 +355,17 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wparam, LPARAM lparam)
         }
     }
 
-    return CallNextHookEx(NULL, code, wparam, lparam);
+    return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
 
 /**
  *  \brief
  */
-LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
-        WPARAM wparam, LPARAM lparam)
+LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam)
 {
-    switch (umsg)
+    switch (uMsg)
     {
         case WM_CREATE:
         return 0;
@@ -375,14 +375,14 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
 
         case WM_COMMAND:
-            if (HIWORD(wparam) == EN_KILLFOCUS)
+            if (HIWORD(wParam) == EN_KILLFOCUS)
             {
                 DestroyCaret();
                 return 0;
             }
-            if (HIWORD(wparam) == BN_CLICKED)
+            if (HIWORD(wParam) == BN_CLICKED)
             {
-                if ((HWND)lparam == SW->_hOK)
+                if ((HWND)lParam == SW->_hOK)
                 {
                     SW->onOK();
                     return 0;
@@ -399,7 +399,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
     }
 
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 } // namespace GTags

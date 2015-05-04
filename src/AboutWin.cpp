@@ -246,38 +246,38 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 /**
  *  \brief
  */
-LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
-        WPARAM wparam, LPARAM lparam)
+LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam)
 {
-    switch (umsg)
+    switch (uMsg)
     {
         case WM_CREATE:
         return 0;
 
         case WM_COMMAND:
-            if (HIWORD(wparam) == EN_SETFOCUS)
+            if (HIWORD(wParam) == EN_SETFOCUS)
             {
                 DestroyCaret();
-                SetFocus(hwnd);
+                SetFocus(hWnd);
                 return 0;
             }
         break;
 
         case WM_KEYDOWN:
-            if (wparam == VK_ESCAPE)
+            if (wParam == VK_ESCAPE)
             {
-                SendMessage(hwnd, WM_CLOSE, 0, 0);
+                SendMessage(hWnd, WM_CLOSE, 0, 0);
                 return 0;
             }
         break;
 
         case WM_NOTIFY:
-            switch (((LPNMHDR)lparam)->code)
+            switch (((LPNMHDR)lParam)->code)
             {
                 case EN_MSGFILTER:
                 {
                     DestroyCaret();
-                    MSGFILTER* pMsgFilter = (MSGFILTER*)lparam;
+                    MSGFILTER* pMsgFilter = (MSGFILTER*)lParam;
                     if (pMsgFilter->msg != WM_LBUTTONDOWN &&
                             pMsgFilter->msg != WM_LBUTTONUP)
                         return 1;
@@ -286,17 +286,17 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
 
                 case EN_REQUESTRESIZE:
                 {
-                    REQRESIZE* pReqResize = (REQRESIZE*)lparam;
+                    REQRESIZE* pReqResize = (REQRESIZE*)lParam;
                     HWND hEdit = pReqResize->nmhdr.hwndFrom;
                     int width =
                         pReqResize->rc.right - pReqResize->rc.left + 30;
                     int height =
                         pReqResize->rc.bottom - pReqResize->rc.top;
 
-                    RECT win = adjustSizeAndPos(hwnd, width, height);
-                    MoveWindow(hwnd, win.left, win.top,
+                    RECT win = adjustSizeAndPos(hWnd, width, height);
+                    MoveWindow(hWnd, win.left, win.top,
                             win.right - win.left, win.bottom - win.top, TRUE);
-                    GetClientRect(hwnd, &win);
+                    GetClientRect(hWnd, &win);
                     MoveWindow(hEdit, 0, 0,
                             win.right - win.left, win.bottom - win.top, TRUE);
                 }
@@ -304,7 +304,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
 
                 case EN_LINK:
                 {
-                    ENLINK* pEnLink = (ENLINK*)lparam;
+                    ENLINK* pEnLink = (ENLINK*)lParam;
                     if (pEnLink->msg == WM_LBUTTONUP)
                     {
                         CTcharArray link(pEnLink->chrg.cpMax -
@@ -329,7 +329,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
     }
 
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 } // namespace GTags

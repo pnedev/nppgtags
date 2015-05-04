@@ -1079,48 +1079,48 @@ void ResultWin::onResize(int width, int height)
 /**
  *  \brief
  */
-LRESULT APIENTRY ResultWin::wndProc(HWND hwnd, UINT umsg,
-        WPARAM wparam, LPARAM lparam)
+LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam)
 {
     ResultWin* ui;
 
-    switch (umsg)
+    switch (uMsg)
     {
         case WM_CREATE:
-            ui = (ResultWin*)((LPCREATESTRUCT)lparam)->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, PtrToUlong(ui));
+            ui = (ResultWin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+            SetWindowLongPtr(hWnd, GWLP_USERDATA, PtrToUlong(ui));
         return 0;
 
         case WM_SETFOCUS:
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             SetFocus(ui->_hSci);
         return 0;
 
         case WM_NOTIFY:
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
 
-            switch (((LPNMHDR)lparam)->code)
+            switch (((LPNMHDR)lParam)->code)
             {
                 case SCN_STYLENEEDED:
-                    ui->onStyleNeeded((SCNotification*)lparam);
+                    ui->onStyleNeeded((SCNotification*)lParam);
                 return 0;
 
                 case SCN_HOTSPOTCLICK:
-                    ui->onHotspotClick((SCNotification*)lparam);
+                    ui->onHotspotClick((SCNotification*)lParam);
                 return 0;
 
                 case SCN_DOUBLECLICK:
-                    ui->onDoubleClick((SCNotification*)lparam);
+                    ui->onDoubleClick((SCNotification*)lParam);
                 return 0;
 
                 case SCN_MARGINCLICK:
-                    ui->onMarginClick((SCNotification*)lparam);
+                    ui->onMarginClick((SCNotification*)lParam);
                 return 0;
 
                 case SCN_CHARADDED:
-                    ui->onCharAddTry((SCNotification*)lparam);
+                    ui->onCharAddTry((SCNotification*)lParam);
                 return 0;
 
                 case TCN_SELCHANGE:
@@ -1131,21 +1131,21 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hwnd, UINT umsg,
 
         case WM_CONTEXTMENU:
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             ui->onCloseTab();
         break;
 
         case WM_SIZE:
             ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hwnd, GWLP_USERDATA)));
-            ui->onResize(LOWORD(lparam), HIWORD(lparam));
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            ui->onResize(LOWORD(lParam), HIWORD(lParam));
         return 0;
 
         case WM_DESTROY:
         return 0;
     }
 
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 } // namespace GTags

@@ -76,16 +76,16 @@ public:
                 (WPARAM)NPPPLUGINMENU, 0);
     }
 
-    inline void RegisterWin(HWND hwnd) const
+    inline void RegisterWin(HWND hWnd) const
     {
         SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG,
-                MODELESSDIALOGADD, (LPARAM)hwnd);
+                MODELESSDIALOGADD, (LPARAM)hWnd);
     }
 
-    inline void UnregisterWin(HWND hwnd) const
+    inline void UnregisterWin(HWND hWnd) const
     {
         SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG,
-                MODELESSDIALOGREMOVE, (LPARAM)hwnd);
+                MODELESSDIALOGREMOVE, (LPARAM)hWnd);
     }
 
     inline void RegisterDockingWin(tTbData& data) const
@@ -94,20 +94,20 @@ public:
                 0, (LPARAM)&data);
     }
 
-    inline void ShowDockingWin(HWND hwnd) const
+    inline void ShowDockingWin(HWND hWnd) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_DMMSHOW, 0, (LPARAM)hwnd);
+        SendMessage(_nppData._nppHandle, NPPM_DMMSHOW, 0, (LPARAM)hWnd);
     }
 
-    inline void HideDockingWin(HWND hwnd) const
+    inline void HideDockingWin(HWND hWnd) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_DMMHIDE, 0, (LPARAM)hwnd);
+        SendMessage(_nppData._nppHandle, NPPM_DMMHIDE, 0, (LPARAM)hWnd);
     }
 
-    inline void UpdateDockingWin(HWND hwnd) const
+    inline void UpdateDockingWin(HWND hWnd) const
     {
         SendMessage(_nppData._nppHandle, NPPM_DMMUPDATEDISPINFO,
-                0, (LPARAM)hwnd);
+                0, (LPARAM)hWnd);
     }
 
     inline HWND CreateSciHandle(const HWND hParentWnd) const

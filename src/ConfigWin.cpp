@@ -344,43 +344,43 @@ void ConfigWin::onOK()
 /**
  *  \brief
  */
-LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
-        WPARAM wparam, LPARAM lparam)
+LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam)
 {
-    switch (umsg)
+    switch (uMsg)
     {
         case WM_CREATE:
         return 0;
 
         case WM_KEYDOWN:
-            if (wparam == VK_ESCAPE)
+            if (wParam == VK_ESCAPE)
             {
-                SendMessage(hwnd, WM_CLOSE, 0, 0);
+                SendMessage(hWnd, WM_CLOSE, 0, 0);
                 return 0;
             }
         break;
 
         case WM_COMMAND:
-            if (HIWORD(wparam) == EN_KILLFOCUS)
+            if (HIWORD(wParam) == EN_KILLFOCUS)
             {
                 DestroyCaret();
                 return 0;
             }
-            if (HIWORD(wparam) == BN_CLICKED)
+            if (HIWORD(wParam) == BN_CLICKED)
             {
-                if ((HWND)lparam == CW->_hOK)
+                if ((HWND)lParam == CW->_hOK)
                 {
                     CW->onOK();
                     return 0;
                 }
 
-                if ((HWND)lparam == CW->_hCancel)
+                if ((HWND)lParam == CW->_hCancel)
                 {
-                    SendMessage(hwnd, WM_CLOSE, 0, 0);
+                    SendMessage(hWnd, WM_CLOSE, 0, 0);
                     return 0;
                 }
 
-                if ((HWND)lparam == CW->_hEnLibDb)
+                if ((HWND)lParam == CW->_hEnLibDb)
                 {
                     BOOL en;
                     int color;
@@ -401,9 +401,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
                     return 0;
                 }
 
-                if ((HWND)lparam == CW->_hCreateDb)
+                if ((HWND)lParam == CW->_hCreateDb)
                 {
-                    CPath libraryPath = CreateLibraryDatabase(hwnd);
+                    CPath libraryPath = CreateLibraryDatabase(hWnd);
                     int libLen = libraryPath.Len();
 
                     if (libLen)
@@ -455,7 +455,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
     }
 
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 } // namespace GTags

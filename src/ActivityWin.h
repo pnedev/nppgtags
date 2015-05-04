@@ -55,16 +55,16 @@ private:
 
     static volatile LONG RefCount;
 
-    static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
-            WPARAM wparam, LPARAM lparam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
+            WPARAM wParam, LPARAM lParam);
 
     ActivityWin(HWND hOwner, HANDLE procHndl);
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 
-    void adjustSizeAndPos(HWND hwnd, int width, int height);
+    void adjustSizeAndPos(HWND hWnd, int width, int height);
     HWND composeWindow(int width, const TCHAR* text);
-    void onTimerRefresh(HWND hwnd);
+    void onTimerRefresh(HWND hWnd);
 
     HWND _hOwner;
     HANDLE _hProc;

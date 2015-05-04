@@ -170,10 +170,10 @@ DbHandle getDatabase(bool writeEn = false)
 /**
  *  \brief
  */
-int CALLBACK browseFolderCB(HWND hwnd, UINT umsg, LPARAM, LPARAM lpData)
+int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
 {
-    if (umsg == BFFM_INITIALIZED)
-        SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+    if (uMsg == BFFM_INITIALIZED)
+        SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
     return 0;
 }
 
@@ -728,13 +728,13 @@ void CreateDatabase()
 /**
  *  \brief
  */
-const CPath CreateLibraryDatabase(HWND hwnd)
+const CPath CreateLibraryDatabase(HWND hWnd)
 {
     TCHAR path[MAX_PATH];
     CPath libraryPath;
 
     BROWSEINFO bi       = {0};
-    bi.hwndOwner        = hwnd;
+    bi.hwndOwner        = hWnd;
     bi.pszDisplayName   = path;
     bi.lpszTitle        = _T("Select the library root");
     bi.ulFlags          = BIF_RETURNONLYFSDIRS;
@@ -764,7 +764,7 @@ const CPath CreateLibraryDatabase(HWND hwnd)
         _sntprintf_s(buf, _countof(buf), _TRUNCATE,
                 _T("Database at\n\"%s\" exists.\nRe-create?"),
                 libraryPath.C_str());
-        int choice = MessageBox(hwnd, buf, cPluginName,
+        int choice = MessageBox(hWnd, buf, cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return libraryPath;
@@ -774,7 +774,7 @@ const CPath CreateLibraryDatabase(HWND hwnd)
 
         if (!success)
         {
-            MessageBox(hwnd, _T("GTags database is in use"),
+            MessageBox(hWnd, _T("GTags database is in use"),
                     cPluginName, MB_OK | MB_ICONEXCLAMATION);
             libraryPath = _T("");
 

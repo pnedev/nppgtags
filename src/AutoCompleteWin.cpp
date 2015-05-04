@@ -441,10 +441,10 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
 /**
  *  \brief
  */
-LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hwnd, UINT umsg,
-        WPARAM wparam, LPARAM lparam)
+LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hWnd, UINT uMsg,
+        WPARAM wParam, LPARAM lParam)
 {
-    switch (umsg)
+    switch (uMsg)
     {
         case WM_CREATE:
         return 0;
@@ -454,14 +454,14 @@ LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
 
         case WM_NOTIFY:
-            switch (((LPNMHDR)lparam)->code)
+            switch (((LPNMHDR)lParam)->code)
             {
                 case NM_KILLFOCUS:
-                    SendMessage(hwnd, WM_CLOSE, 0, 0);
+                    SendMessage(hWnd, WM_CLOSE, 0, 0);
                 return 0;
 
                 case LVN_KEYDOWN:
-                    if (ACW->onKeyDown(((LPNMLVKEYDOWN)lparam)->wVKey))
+                    if (ACW->onKeyDown(((LPNMLVKEYDOWN)lParam)->wVKey))
                         return 0;
                 break;
 
@@ -478,7 +478,7 @@ LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hwnd, UINT umsg,
         return 0;
     }
 
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 } // namespace GTags

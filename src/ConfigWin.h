@@ -52,8 +52,8 @@ private:
     static const TCHAR cFont[];
     static const int cFontSize;
 
-    static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
-            WPARAM wparam, LPARAM lparam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
+            WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 

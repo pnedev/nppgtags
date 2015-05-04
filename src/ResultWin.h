@@ -100,8 +100,8 @@ private:
     static const TCHAR cClassName[];
     static const TCHAR cTabFont[];
 
-    static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
-            WPARAM wparam, LPARAM lparam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
+            WPARAM wParam, LPARAM lParam);
 
     ResultWin() :
         _hWnd(NULL), _hSci(NULL), _hFont(NULL), _sciFunc(NULL),

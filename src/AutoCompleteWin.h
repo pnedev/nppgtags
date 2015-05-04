@@ -50,8 +50,8 @@ private:
     static const TCHAR cClassName[];
     static const int cBackgroundColor;
 
-    static LRESULT APIENTRY wndProc(HWND hwnd, UINT umsg,
-            WPARAM wparam, LPARAM lparam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
+            WPARAM wParam, LPARAM lParam);
 
     AutoCompleteWin(const std::shared_ptr<Cmd>& cmd);
     AutoCompleteWin(const AutoCompleteWin&);
