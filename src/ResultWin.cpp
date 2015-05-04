@@ -649,13 +649,15 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     const long endPos = npp.LineEndPosition(line);
 
+    bool wholeWord = (_activeTab->_cmdId != GREP);
+
     // Highlight the corresponding match number if there are more than one
     // matches on single result line
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        if (!npp.SearchText(_activeTab->_search, true, !_activeTab->_regExp,
-                _activeTab->_regExp, &findBegin, &findEnd))
+        if (!npp.SearchText(_activeTab->_search, _activeTab->_matchCase,
+                wholeWord, _activeTab->_regExp, &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, present results are outdated.")
