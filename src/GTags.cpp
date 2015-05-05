@@ -262,7 +262,10 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
 
     if (cmd->Status() == OK)
     {
-        AutoCompleteWin::Show(cmd);
+        if (cmd->Result())
+            AutoCompleteWin::Show(cmd);
+        else
+            INpp::Get().ClearSelection();
     }
     else if (cmd->Status() == FAILED)
     {
