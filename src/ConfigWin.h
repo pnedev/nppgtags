@@ -46,11 +46,11 @@ public:
     static void Show(CConfig* _cfg);
 
 private:
-    static const TCHAR cClassName[];
-    static const TCHAR cHeader[];
-    static const int cBackgroundColor;
-    static const TCHAR cFont[];
-    static const int cFontSize;
+    static const TCHAR  cClassName[];
+    static const TCHAR  cHeader[];
+    static const int    cBackgroundColor;
+    static const TCHAR  cFont[];
+    static const int    cFontSize;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
@@ -67,16 +67,16 @@ private:
 
     static ConfigWin* CW;
 
-    CConfig* _cfg;
-    HWND _hWnd;
-    HWND _hParser;
-    HWND _hAutoUpdate;
-    HWND _hEnLibDb;
-    HWND _hCreateDb;
-    HWND _hLibDb;
-    HWND _hOK;
-    HWND _hCancel;
-    HFONT _hFont;
+    CConfig*    _cfg;
+    HWND        _hWnd;
+    HWND        _hParser;
+    HWND        _hAutoUpdate;
+    HWND        _hEnLibDb;
+    HWND        _hCreateDb;
+    HWND        _hLibDb;
+    HWND        _hOK;
+    HWND        _hCancel;
+    HFONT       _hFont;
 };
 
 } // namespace GTags

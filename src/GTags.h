@@ -78,16 +78,16 @@ struct CConfig
 };
 
 
-extern FuncItem Menu[16];
+extern FuncItem     Menu[16];
 
-extern HINSTANCE HMod;
-extern CPath DllPath;
+extern HINSTANCE    HMod;
+extern CPath        DllPath;
 
-extern TCHAR UIFontName[32];
-extern unsigned UIFontSize;
+extern TCHAR        UIFontName[32];
+extern unsigned     UIFontSize;
 
 extern const TCHAR* cParsers[3];
-extern CConfig Config;
+extern CConfig      Config;
 
 
 BOOL PluginInit(HINSTANCE hMod);

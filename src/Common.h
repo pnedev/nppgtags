@@ -346,10 +346,10 @@ private:
     void resize(unsigned newLen);
     unsigned expand(unsigned newLen);
 
-    unsigned _size;
-    unsigned _len;
-    wchar_t *_str;
-    wchar_t _buf[ALLOC_CHUNK_SIZE];
+    unsigned    _size;
+    unsigned    _len;
+    wchar_t*    _str;
+    wchar_t     _buf[ALLOC_CHUNK_SIZE];
 
 public:
     CTextW() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
@@ -403,10 +403,10 @@ private:
     void resize(unsigned newLen);
     unsigned expand(unsigned newLen);
 
-    unsigned _size;
-    unsigned _len;
-    char *_str;
-    char _buf[ALLOC_CHUNK_SIZE];
+    unsigned    _size;
+    unsigned    _len;
+    char*       _str;
+    char        _buf[ALLOC_CHUNK_SIZE];
 
 public:
     CTextA() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }

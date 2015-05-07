@@ -93,8 +93,6 @@ private:
                 _readLocks--;
         }
 
-        CPath _path;
-
     private:
         friend class DbManager;
 
@@ -103,6 +101,8 @@ private:
         {
             _readLocks = writeEn ? 0 : 1;
         }
+
+        CPath   _path;
 
         int     _readLocks;
         bool    _writeLock;

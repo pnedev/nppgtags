@@ -62,8 +62,8 @@ const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
  *  \brief
  */
 ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()),
-    _matchCase(cmd->MatchCase()), _currentLine(1), _firstVisibleLine(0)
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()),
+    _outdated(false), _currentLine(1), _firstVisibleLine(0)
 {
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->DbPath());
     Tools::WtoA(_search, _countof(_search), cmd->Tag());
@@ -133,6 +133,12 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
         src = pLine + 1;
         while (*src != '\n' && *src != '\r')
             src++;
+
+        if (src == pLine + 1)
+        {
+            _outdated = true;
+            break;
+        }
 
         dst.append(pLine, src - pLine);
     }
@@ -319,37 +325,67 @@ void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
         }
     }
 
-    if (i == 0) // search is completely new - add new tab
+    if (tab->_outdated)
     {
-        TCHAR buf[256];
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""),
-                cmd->Name(), cmd->Tag());
-
-        TCITEM tci  = {0};
-        tci.mask    = TCIF_TEXT | TCIF_PARAM;
-        tci.pszText = buf;
-        tci.lParam  = (LPARAM)tab;
-
-        i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
-        if (i == -1)
+        MessageBox(npp.GetHandle(),
+                _T("Database is outdated.")
+                _T("\nPlease re-create it and redo the search"),
+                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        if (i)
+            TabCtrl_DeleteItem(_hTab, --i);
+        delete tab;
+        tab = NULL;
+    }
+    else
+    {
+        if (i == 0) // search is completely new - add new tab
         {
-            delete tab;
-            return;
+            TCHAR buf[256];
+            _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""),
+                    cmd->Name(), cmd->Tag());
+
+            TCITEM tci  = {0};
+            tci.mask    = TCIF_TEXT | TCIF_PARAM;
+            tci.pszText = buf;
+            tci.lParam  = (LPARAM)tab;
+
+            i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+            if (i == -1)
+            {
+                delete tab;
+                return;
+            }
+        }
+        else // same search tab exists - reuse it, just update results
+        {
+            TCITEM tci  = {0};
+            tci.mask    = TCIF_PARAM;
+            tci.lParam  = (LPARAM)tab;
+
+            if (!TabCtrl_SetItem(_hTab, --i, &tci))
+            {
+                TabCtrl_DeleteItem(_hTab, i);
+                delete tab;
+                tab = NULL;
+            }
         }
     }
-    else // same search tab exists - reuse it, just update results
-    {
-        TCITEM tci  = {0};
-        tci.mask    = TCIF_PARAM;
-        tci.lParam  = (LPARAM)tab;
 
-        if (!TabCtrl_SetItem(_hTab, --i, &tci))
+    if (tab == NULL)
+    {
+        if (_activeTab)
+            return;
+
+        int cnt = TabCtrl_GetItemCount(_hTab);
+        if (cnt == 0)
         {
-            TabCtrl_DeleteItem(_hTab, i);
-            delete tab;
             closeAllTabs();
             return;
         }
+
+        if (i > cnt - 1)
+            i = cnt - 1;
+        tab = getTab(i);
     }
 
     TabCtrl_SetCurSel(_hTab, i);
@@ -661,7 +697,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, present results are outdated.")
-                    _T("\nPlease redo the search"),
+                    _T("\nSave all modified files and redo the search"),
                     cPluginName, MB_OK | MB_ICONEXCLAMATION);
             return false;
         }

@@ -47,11 +47,11 @@ public:
             const TCHAR *text, int showDelay_ms);
 
 private:
-    static const TCHAR cClassName[];
-    static const unsigned cUpdate_ms;
-    static const TCHAR cFont[];
-    static const unsigned cFontSize;
-    static const int cBackgroundColor;
+    static const TCHAR      cClassName[];
+    static const unsigned   cUpdate_ms;
+    static const TCHAR      cFont[];
+    static const unsigned   cFontSize;
+    static const int        cBackgroundColor;
 
     static volatile LONG RefCount;
 
@@ -66,13 +66,13 @@ private:
     HWND composeWindow(int width, const TCHAR* text);
     void onTimerRefresh(HWND hWnd);
 
-    HWND _hOwner;
-    HANDLE _hProc;
-    HFONT _hFont;
-    HWND _hBtn;
-    UINT_PTR _timerId;
-    int _initRefCount;
-    int _isCancelled;
+    HWND        _hOwner;
+    HANDLE      _hProc;
+    HFONT       _hFont;
+    HWND        _hBtn;
+    UINT_PTR    _timerId;
+    int         _initRefCount;
+    int         _isCancelled;
 };
 
 } // namespace GTags

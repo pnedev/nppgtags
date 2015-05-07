@@ -71,8 +71,8 @@ void DocLocation::Push()
 
     Location loc;
     INpp& npp = INpp::Get();
-    npp.GetFilePath(loc.filePath);
-    npp.GetView(&loc.firstVisibleLine, &loc.posInFile);
+    npp.GetFilePath(loc._filePath);
+    npp.GetView(&loc._firstVisibleLine, &loc._posInFile);
 
     if (_locList.empty() || !(loc == _locList.back()))
         _locList.push_back(loc);
@@ -92,7 +92,7 @@ void DocLocation::Back()
     {
         Location& loc = _locList.at(_backLocIdx--);
 
-        if (Tools::FileExists(loc.filePath))
+        if (Tools::FileExists(loc._filePath))
         {
             swapView(loc);
             break;
@@ -112,7 +112,7 @@ void DocLocation::Forward()
     {
         Location& loc = _locList.at(++_backLocIdx);
 
-        if (Tools::FileExists(loc.filePath))
+        if (Tools::FileExists(loc._filePath))
         {
             swapView(loc);
             break;
@@ -129,11 +129,11 @@ void DocLocation::swapView(Location& loc)
     Location newLoc;
     INpp& npp = INpp::Get();
 
-    npp.GetFilePath(newLoc.filePath);
-    npp.GetView(&newLoc.firstVisibleLine, &newLoc.posInFile);
+    npp.GetFilePath(newLoc._filePath);
+    npp.GetView(&newLoc._firstVisibleLine, &newLoc._posInFile);
 
-    npp.OpenFile(loc.filePath);
-    npp.SetView(loc.firstVisibleLine, loc.posInFile);
+    npp.OpenFile(loc._filePath);
+    npp.SetView(loc._firstVisibleLine, loc._posInFile);
 
     loc = newLoc;
 }

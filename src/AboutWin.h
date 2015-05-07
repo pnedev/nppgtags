@@ -42,11 +42,11 @@ public:
     static void Show(const TCHAR *info);
 
 private:
-    static const TCHAR cClassName[];
-    static const int cBackgroundColor;
-    static const TCHAR cFont[];
-    static const int cFontSize;
-    static const TCHAR cAbout[];
+    static const TCHAR  cClassName[];
+    static const int    cBackgroundColor;
+    static const TCHAR  cFont[];
+    static const int    cFontSize;
+    static const TCHAR  cAbout[];
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
@@ -60,8 +60,8 @@ private:
 
     static AboutWin* AW;
 
-    HWND _hWnd;
-    HFONT _hFont;
+    HWND    _hWnd;
+    HFONT   _hFont;
 };
 
 } // namespace GTags

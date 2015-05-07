@@ -139,17 +139,17 @@ public:
             CompletionCB complCB = NULL);
 
 private:
-    static const TCHAR cCreateDatabaseCmd[];
-    static const TCHAR cUpdateSingleCmd[];
-    static const TCHAR cAutoComplCmd[];
-    static const TCHAR cAutoComplSymCmd[];
-    static const TCHAR cAutoComplFileCmd[];
-    static const TCHAR cFindFileCmd[];
-    static const TCHAR cFindDefinitionCmd[];
-    static const TCHAR cFindReferenceCmd[];
-    static const TCHAR cFindSymbolCmd[];
-    static const TCHAR cGrepCmd[];
-    static const TCHAR cVersionCmd[];
+    static const TCHAR  cCreateDatabaseCmd[];
+    static const TCHAR  cUpdateSingleCmd[];
+    static const TCHAR  cAutoComplCmd[];
+    static const TCHAR  cAutoComplSymCmd[];
+    static const TCHAR  cAutoComplFileCmd[];
+    static const TCHAR  cFindFileCmd[];
+    static const TCHAR  cFindDefinitionCmd[];
+    static const TCHAR  cFindReferenceCmd[];
+    static const TCHAR  cFindSymbolCmd[];
+    static const TCHAR  cGrepCmd[];
+    static const TCHAR  cVersionCmd[];
 
     static unsigned __stdcall threadFunc(void* data);
 

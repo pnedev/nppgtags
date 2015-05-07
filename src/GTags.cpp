@@ -123,8 +123,8 @@ unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
     {
         if (len >= cMaxTagLen)
         {
-            MessageBox(npp.GetHandle(), _T("Tag string too long"),
-                    cPluginName, MB_OK | MB_ICONEXCLAMATION);
+            MessageBox(npp.GetHandle(), _T("Search string too long"),
+                    cPluginName, MB_OK | MB_ICONINFORMATION);
             return 0;
         }
 
@@ -154,12 +154,12 @@ DbHandle getDatabase(bool writeEn = false)
     if (!db)
     {
         MessageBox(npp.GetHandle(), _T("GTags database not found"),
-                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+                cPluginName, MB_OK | MB_ICONINFORMATION);
     }
     else if (!success)
     {
-        MessageBox(npp.GetHandle(), _T("GTags database is in use"),
-                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(npp.GetHandle(), _T("GTags database is currently in use"),
+                cPluginName, MB_OK | MB_ICONINFORMATION);
         db = NULL;
     }
 
@@ -311,7 +311,7 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
             _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"),
                     cmd->Tag());
             MessageBox(INpp::Get().GetHandle(), msg, cmd->Name(),
-                    MB_OK | MB_ICONEXCLAMATION);
+                    MB_OK | MB_ICONINFORMATION);
         }
     }
     else if (cmd->Status() == FAILED)
@@ -777,8 +777,8 @@ const CPath CreateLibraryDatabase(HWND hWnd)
 
         if (!success)
         {
-            MessageBox(hWnd, _T("GTags database is in use"),
-                    cPluginName, MB_OK | MB_ICONEXCLAMATION);
+            MessageBox(hWnd, _T("GTags database is currently in use"),
+                    cPluginName, MB_OK | MB_ICONINFORMATION);
             libraryPath = _T("");
 
             return libraryPath;

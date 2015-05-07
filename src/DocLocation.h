@@ -53,26 +53,27 @@ private:
      */
     struct Location
     {
-        TCHAR filePath[MAX_PATH];
-        long firstVisibleLine;
-        long posInFile;
+        TCHAR   _filePath[MAX_PATH];
+        long    _firstVisibleLine;
+        long    _posInFile;
 
         inline const Location& operator=(const Location& loc)
         {
-            posInFile = loc.posInFile;
-            firstVisibleLine = loc.firstVisibleLine;
-            _tcscpy_s(filePath, MAX_PATH, loc.filePath);
+            _posInFile = loc._posInFile;
+            _firstVisibleLine = loc._firstVisibleLine;
+            _tcscpy_s(_filePath, MAX_PATH, loc._filePath);
             return loc;
         }
 
         inline bool operator==(const Location& loc) const
         {
-            return (posInFile == loc.posInFile &&
-                    !_tcscmp(filePath, loc.filePath));
+            return (_posInFile == loc._posInFile &&
+                    !_tcscmp(_filePath, loc._filePath));
         }
     };
 
     static const unsigned cInitialDepth;
+
     static DocLocation Instance;
 
     DocLocation() : _maxDepth(cInitialDepth), _backLocIdx(-1) {}
@@ -81,8 +82,8 @@ private:
 
     void swapView(Location& loc);
 
-    unsigned _maxDepth;
-    int _backLocIdx;
-    Mutex _lock;
-    std::vector<Location> _locList;
+    unsigned                _maxDepth;
+    int                     _backLocIdx;
+    Mutex                   _lock;
+    std::vector<Location>   _locList;
 };

@@ -74,14 +74,15 @@ private:
                     !strcmp(_search, tab._search));
         }
 
-        const CmdId_t _cmdId;
-        const bool _regExp;
-        const bool _matchCase;
-        char _projectPath[MAX_PATH];
-        char _search[cMaxTagLen];
-        CTextA _uiBuf;
-        int _currentLine;
-        int _firstVisibleLine;
+        const CmdId_t   _cmdId;
+        const bool      _regExp;
+        const bool      _matchCase;
+        char            _projectPath[MAX_PATH];
+        char            _search[cMaxTagLen];
+        bool            _outdated;
+        CTextA          _uiBuf;
+        int             _currentLine;
+        int             _firstVisibleLine;
 
         void SetFolded(int lineNum);
         void ClearFolded(int lineNum);
@@ -94,11 +95,11 @@ private:
         std::vector<int> _expandedLines;
     };
 
-    static const COLORREF cBlack = RGB(0,0,0);
-    static const COLORREF cWhite = RGB(255,255,255);
+    static const COLORREF   cBlack = RGB(0,0,0);
+    static const COLORREF   cWhite = RGB(255,255,255);
 
-    static const TCHAR cClassName[];
-    static const TCHAR cTabFont[];
+    static const TCHAR      cClassName[];
+    static const TCHAR      cTabFont[];
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
@@ -142,14 +143,14 @@ private:
     void closeAllTabs();
     void onResize(int width, int height);
 
-    Mutex _lock;
-    HWND _hWnd;
-    HWND _hSci;
-    HWND _hTab;
-    HFONT _hFont;
+    Mutex       _lock;
+    HWND        _hWnd;
+    HWND        _hSci;
+    HWND        _hTab;
+    HFONT       _hFont;
     SciFnDirect _sciFunc;
-    sptr_t _sciPtr;
-    Tab* _activeTab;
+    sptr_t      _sciPtr;
+    Tab*        _activeTab;
 };
 
 } // namespace GTags

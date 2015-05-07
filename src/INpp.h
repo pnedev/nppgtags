@@ -307,5 +307,5 @@ private:
     ~INpp() {}
 
     NppData _nppData;
-    HWND _hSC;
+    HWND    _hSC;
 };

@@ -52,11 +52,11 @@ private:
     ReadPipe(const ReadPipe&);
     const ReadPipe& operator=(const ReadPipe&);
 
-    BOOL _ready;
-    HANDLE _hIn;
-    HANDLE _hOut;
-    HANDLE _hThread;
-    char* _output;
-
     unsigned thread();
+
+    BOOL    _ready;
+    HANDLE  _hIn;
+    HANDLE  _hOut;
+    HANDLE  _hThread;
+    char*   _output;
 };

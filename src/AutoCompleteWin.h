@@ -47,8 +47,8 @@ public:
     static void Show(const std::shared_ptr<Cmd>& cmd);
 
 private:
-    static const TCHAR cClassName[];
-    static const int cBackgroundColor;
+    static const TCHAR  cClassName[];
+    static const int    cBackgroundColor;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
@@ -67,12 +67,12 @@ private:
 
     static AutoCompleteWin* ACW;
 
-    HWND _hWnd;
-    HWND _hLVWnd;
-    HFONT _hFont;
-    const CmdId_t _cmdId;
-    const int _cmdTagLen;
-    CTcharArray _result;
+    HWND            _hWnd;
+    HWND            _hLVWnd;
+    HFONT           _hFont;
+    const CmdId_t   _cmdId;
+    const int       _cmdTagLen;
+    CTcharArray     _result;
 };
 
 } // namespace GTags
