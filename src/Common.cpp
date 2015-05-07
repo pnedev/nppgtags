@@ -25,6 +25,10 @@
 #include "Common.h"
 
 
+char    CCharArray::_end;
+wchar_t CWcharArray::_end;
+
+
 /**
  *  \brief
  */

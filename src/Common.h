@@ -98,7 +98,7 @@ public:
 
     char& operator[](unsigned pos)
     {
-        return (pos < _size ? _ptr[pos] : _ptr[0]);
+        return (pos < _size ? _ptr[pos] : _end);
     }
 
     const char* operator=(const char* array)
@@ -123,7 +123,11 @@ public:
     unsigned Size() const { return _size; }
     unsigned Len() const { return (_ptr ? strlen(_ptr) : 0); }
 
+    char& End() { return _end; }
+
 private:
+    static char _end;
+
     char*       _ptr;
     unsigned    _size;
 };
@@ -188,7 +192,7 @@ public:
 
     wchar_t& operator[](unsigned pos)
     {
-        return (pos < _size ? _ptr[pos] : _ptr[0]);
+        return (pos < _size ? _ptr[pos] : _end);
     }
 
     const wchar_t* operator=(const wchar_t* array)
@@ -213,9 +217,13 @@ public:
     unsigned Size() const { return _size; }
     unsigned Len() const { return (_ptr ? wcslen(_ptr) : 0); }
 
+    wchar_t& End() { return _end; }
+
 private:
-    wchar_t*    _ptr;
-    unsigned    _size;
+    static wchar_t  _end;
+
+    wchar_t*        _ptr;
+    unsigned        _size;
 };
 
 
