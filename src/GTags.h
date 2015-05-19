@@ -78,7 +78,7 @@ struct CConfig
 };
 
 
-extern FuncItem     Menu[16];
+extern FuncItem     Menu[18];
 
 extern HINSTANCE    HMod;
 extern CPath        DllPath;
@@ -106,6 +106,7 @@ void CreateDatabase();
 const CPath CreateLibraryDatabase(HWND hWnd);
 bool UpdateSingleFile(const TCHAR* file = NULL);
 void DeleteDatabase();
+void ToggleResultWinFocus();
 void SettingsCfg();
 void About();
 

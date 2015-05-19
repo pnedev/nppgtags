@@ -353,7 +353,7 @@ void findReady(const std::shared_ptr<Cmd>& cmd)
 namespace GTags
 {
 
-FuncItem Menu[16] = {
+FuncItem Menu[18] = {
     /* 0 */  FuncItem(cAutoCompl, AutoComplete),
     /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
     /* 2 */  FuncItem(cFindFile, FindFile),
@@ -367,9 +367,11 @@ FuncItem Menu[16] = {
     /* 10 */ FuncItem(cCreateDatabase, CreateDatabase),
     /* 11 */ FuncItem(_T("Delete Database"), DeleteDatabase),
     /* 12 */ FuncItem(),
-    /* 13 */ FuncItem(_T("Settings"), SettingsCfg),
+    /* 13 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
     /* 14 */ FuncItem(),
-    /* 15 */ FuncItem(cVersion, About)
+    /* 15 */ FuncItem(_T("Settings"), SettingsCfg),
+    /* 16 */ FuncItem(),
+    /* 17 */ FuncItem(cVersion, About)
 };
 
 HINSTANCE HMod = NULL;
@@ -381,7 +383,6 @@ unsigned UIFontSize;
 const TCHAR* cParsers[3];
 
 CConfig Config;
-
 
 
 /**
@@ -866,6 +867,17 @@ void DeleteDatabase()
         MessageBox(npp.GetHandle(),
                 _T("Deleting database failed, is it read-only?"),
                 cPluginName, MB_OK | MB_ICONERROR);
+}
+
+
+/**
+ *  \brief
+ */
+void ToggleResultWinFocus()
+{
+    releaseKeys();
+
+    GTags::ResultWin::Get().Show();
 }
 
 

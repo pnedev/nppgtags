@@ -286,6 +286,30 @@ void ResultWin::Unregister()
 /**
  *  \brief
  */
+void ResultWin::Show()
+{
+    if (_hWnd == NULL)
+        return;
+
+    INpp& npp = INpp::Get();
+
+    if (GetFocus() != npp.ReadSciHandle())
+    {
+        if (!TabCtrl_GetItemCount(_hTab))
+            npp.HideDockingWin(_hWnd);
+        SetFocus(npp.GetSciHandle());
+    }
+    else if (TabCtrl_GetItemCount(_hTab))
+    {
+        npp.ShowDockingWin(_hWnd);
+        SetFocus(_hWnd);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
 {
     if (_hWnd == NULL)

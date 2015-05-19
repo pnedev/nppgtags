@@ -335,7 +335,7 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
     if (code >= 0)
     {
-        HWND hWnd = GetActiveWindow();
+        HWND hWnd = GetFocus();
         if (SW->_hWnd == hWnd || IsChild(SW->_hWnd, hWnd))
         {
             // Key is pressed

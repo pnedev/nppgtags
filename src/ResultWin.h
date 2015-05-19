@@ -54,6 +54,7 @@ public:
 
     int Register();
     void Unregister();
+    void Show();
     void Show(const std::shared_ptr<Cmd>& cmd);
     void ApplyStyle();
 
