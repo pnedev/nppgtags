@@ -152,6 +152,9 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
  */
 ConfigWin::~ConfigWin()
 {
+    if (_hKeyHook)
+        UnhookWindowsHookEx(_hKeyHook);
+
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -306,6 +309,9 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_cfg->_parserIdx, 0);
 
+    _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
+            GetCurrentThreadId());
+
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
 
@@ -344,6 +350,37 @@ void ConfigWin::onOK()
 /**
  *  \brief
  */
+LRESULT CALLBACK ConfigWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    if (code >= 0)
+    {
+        HWND hWnd = GetFocus();
+        if (CW->_hWnd == hWnd || IsChild(CW->_hWnd, hWnd))
+        {
+            // Key is pressed
+            if (!(lParam & (1 << 31)))
+            {
+                if (wParam == VK_ESCAPE)
+                {
+                    SendMessage(CW->_hWnd, WM_CLOSE, 0, 0);
+                    return 1;
+                }
+                if (wParam == VK_RETURN)
+                {
+                    CW->onOK();
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+
+/**
+ *  \brief
+ */
 LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
         WPARAM wParam, LPARAM lParam)
 {
@@ -351,14 +388,6 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
     {
         case WM_CREATE:
         return 0;
-
-        case WM_KEYDOWN:
-            if (wParam == VK_ESCAPE)
-            {
-                SendMessage(hWnd, WM_CLOSE, 0, 0);
-                return 0;
-            }
-        break;
 
         case WM_COMMAND:
             if (HIWORD(wParam) == EN_KILLFOCUS)
