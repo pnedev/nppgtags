@@ -62,9 +62,9 @@ Mutex UpdateLock;
 inline void releaseKeys()
 {
 #ifdef LINUX_WINE_WORKAROUNDS
-    Tools::ReleaseKey(VK_SHIFT);
-    Tools::ReleaseKey(VK_CONTROL);
-    Tools::ReleaseKey(VK_MENU);
+    Tools::ReleaseKey(VK_SHIFT, false);
+    Tools::ReleaseKey(VK_CONTROL, false);
+    Tools::ReleaseKey(VK_MENU, false);
 #endif // LINUX_WINE_WORKAROUNDS
 }
 
@@ -303,7 +303,7 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
     {
         if (cmd->Result())
         {
-            ResultWin::Get().Show(cmd);
+            ResultWin::Show(cmd);
         }
         else
         {
@@ -419,8 +419,7 @@ void PluginDeInit()
     ActivityWin::Unregister();
     SearchWin::Unregister();
     AutoCompleteWin::Unregister();
-
-    ResultWin::Get().Unregister();
+    ResultWin::Unregister();
 
     HMod = NULL;
 }
@@ -876,8 +875,7 @@ void DeleteDatabase()
 void ToggleResultWinFocus()
 {
     releaseKeys();
-
-    GTags::ResultWin::Get().Show();
+    GTags::ResultWin::Show();
 }
 
 

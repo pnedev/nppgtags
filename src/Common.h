@@ -448,7 +448,7 @@ public:
 namespace Tools
 {
 
-void ReleaseKey(WORD virtKey);
+void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
 
 
 inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)

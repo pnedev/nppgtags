@@ -46,17 +46,26 @@ namespace GTags
 class ResultWin
 {
 public:
-    static ResultWin& Get()
+    static int Register();
+    static void Unregister();
+
+    static void Show()
     {
-        static ResultWin Instance;
-        return Instance;
+        if (RW)
+            RW->show();
     }
 
-    int Register();
-    void Unregister();
-    void Show();
-    void Show(const std::shared_ptr<Cmd>& cmd);
-    void ApplyStyle();
+    static void Show(const std::shared_ptr<Cmd>& cmd)
+    {
+        if (RW)
+            RW->show(cmd);
+    }
+
+    static void ApplyStyle()
+    {
+        if (RW)
+            RW->applyStyle();
+    }
 
 private:
     /**
@@ -102,17 +111,20 @@ private:
     static const TCHAR      cClassName[];
     static const TCHAR      cTabFont[];
 
+    static LRESULT CALLBACK keyHookProc(int code,
+            WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
 
-    ResultWin() :
-        _hWnd(NULL), _hSci(NULL), _hFont(NULL), _sciFunc(NULL),
-        _sciPtr(0), _activeTab(NULL) {}
+    ResultWin() : _nppThreadId(GetCurrentThreadId()),
+        _hWnd(NULL), _hSci(NULL), _hFont(NULL), _hKeyHook(NULL),
+        _sciFunc(NULL), _sciPtr(0), _activeTab(NULL) {}
     ResultWin(const ResultWin&);
-    ~ResultWin()
-    {
-        Unregister();
-    }
+    ~ResultWin();
+
+    void show();
+    void show(const std::shared_ptr<Cmd>& cmd);
+    void applyStyle();
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
@@ -126,6 +138,8 @@ private:
 
     void configScintilla();
     HWND composeWindow();
+    void showWindow();
+    void hideWindow();
 
     Tab* getTab(int i = -1);
     void loadTab(Tab* tab);
@@ -136,19 +150,23 @@ private:
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
     void onHotspotClick(SCNotification* notify);
-    void onDoubleClick(SCNotification* notify);
+    void onDoubleClick(int pos);
     void onMarginClick(SCNotification* notify);
-    void onCharAddTry(SCNotification* notify);
+    bool onKeyPress(WORD keyCode);
     void onTabChange();
     void onCloseTab();
     void closeAllTabs();
     void onResize(int width, int height);
 
+    static ResultWin* RW;
+
+    const DWORD _nppThreadId;
     Mutex       _lock;
     HWND        _hWnd;
     HWND        _hSci;
     HWND        _hTab;
     HFONT       _hFont;
+    HHOOK       _hKeyHook;
     SciFnDirect _sciFunc;
     sptr_t      _sciPtr;
     Tab*        _activeTab;

@@ -67,9 +67,9 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
     Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
     GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
 
-    if (GTags::ResultWin::Get().Register())
+    if (GTags::ResultWin::Register())
         MessageBox(npp.GetHandle(),
-            _T("ResultWin init failed, plugin will not be operational"),
+            _T("Results Window init failed, plugin will not be operational"),
             GTags::cPluginName, MB_OK | MB_ICONERROR);
 }
 
@@ -158,7 +158,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
             Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
             GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
-            GTags::ResultWin::Get().ApplyStyle();
+            GTags::ResultWin::ApplyStyle();
         }
         break;
 

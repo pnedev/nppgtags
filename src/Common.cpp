@@ -600,9 +600,9 @@ namespace Tools
 /**
  *  \brief
  */
-void ReleaseKey(WORD virtKey)
+void ReleaseKey(WORD virtKey, bool onlyIfPressed)
 {
-    if (GetKeyState(virtKey))
+    if (!onlyIfPressed || GetKeyState(virtKey))
     {
         INPUT input          = {0};
         input.type           = INPUT_KEYBOARD;

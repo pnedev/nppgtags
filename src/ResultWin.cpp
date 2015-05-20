@@ -58,6 +58,9 @@ const TCHAR ResultWin::cClassName[]   = _T("ResultWin");
 const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
 
 
+ResultWin* ResultWin::RW = NULL;
+
+
 /**
  *  \brief
  */
@@ -213,7 +216,7 @@ bool ResultWin::Tab::IsFolded(int lineNum)
  */
 int ResultWin::Register()
 {
-    if (_hWnd)
+    if (RW)
         return 0;
 
     WNDCLASS wc         = {0};
@@ -232,11 +235,15 @@ int ResultWin::Register()
 
     InitCommonControlsEx(&icex);
 
-    if (composeWindow() == NULL)
+    RW = new ResultWin();
+    if (RW->composeWindow() == NULL)
+    {
+        Unregister();
         return -1;
+    }
 
     tTbData data        = {0};
-    data.hClient        = _hWnd;
+    data.hClient        = RW->_hWnd;
     data.pszName        = const_cast<TCHAR*>(cPluginName);
     data.uMask          = 0;
     data.pszAddInfo     = NULL;
@@ -246,7 +253,7 @@ int ResultWin::Register()
 
     INpp& npp = INpp::Get();
     npp.RegisterDockingWin(data);
-    npp.HideDockingWin(_hWnd);
+    npp.HideDockingWin(RW->_hWnd);
 
     return 0;
 }
@@ -257,26 +264,10 @@ int ResultWin::Register()
  */
 void ResultWin::Unregister()
 {
-    if (_hWnd == NULL)
-        return;
-
-    closeAllTabs();
-
-    INpp& npp = INpp::Get();
-
-    if (_hSci)
+    if (RW)
     {
-        npp.DestroySciHandle(_hSci);
-        _hSci = NULL;
-    }
-
-    SendMessage(_hWnd, WM_CLOSE, 0, 0);
-    _hWnd = NULL;
-
-    if (_hFont)
-    {
-        DeleteObject(_hFont);
-        _hFont = NULL;
+        delete RW;
+        RW = NULL;
     }
 
     UnregisterClass(cClassName, HMod);
@@ -286,35 +277,22 @@ void ResultWin::Unregister()
 /**
  *  \brief
  */
-void ResultWin::Show()
+void ResultWin::show()
 {
-    if (_hWnd == NULL)
-        return;
-
     INpp& npp = INpp::Get();
 
     if (GetFocus() != npp.ReadSciHandle())
-    {
-        if (!TabCtrl_GetItemCount(_hTab))
-            npp.HideDockingWin(_hWnd);
         SetFocus(npp.GetSciHandle());
-    }
     else if (TabCtrl_GetItemCount(_hTab))
-    {
-        npp.ShowDockingWin(_hWnd);
-        SetFocus(_hWnd);
-    }
+        showWindow();
 }
 
 
 /**
  *  \brief
  */
-void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
+void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
 {
-    if (_hWnd == NULL)
-        return;
-
     INpp& npp = INpp::Get();
 
     if (cmd->ResultLen() > 262144) // 256k
@@ -416,19 +394,15 @@ void ResultWin::Show(const std::shared_ptr<Cmd>& cmd)
     loadTab(tab);
 
     npp.UpdateDockingWin(_hWnd);
-    npp.ShowDockingWin(_hWnd);
-    SetFocus(_hWnd);
+    showWindow();
 }
 
 
 /**
  *  \brief
  */
-void ResultWin::ApplyStyle()
+void ResultWin::applyStyle()
 {
-    if (_hWnd == NULL)
-        return;
-
     INpp& npp = INpp::Get();
 
     char font[32];
@@ -468,6 +442,34 @@ void ResultWin::ApplyStyle()
     sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
     sendSci(SCI_STYLESETUNDERLINE, SCE_GTAGS_HEADER, true);
     sendSci(SCI_STYLESETUNDERLINE, SCE_GTAGS_PROJECT_PATH, true);
+}
+
+
+/**
+ *  \brief
+ */
+ResultWin::~ResultWin()
+{
+    if (_hWnd)
+    {
+        closeAllTabs();
+
+        INpp& npp = INpp::Get();
+
+        if (_hSci)
+        {
+            npp.DestroySciHandle(_hSci);
+            _hSci = NULL;
+        }
+
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
+
+        if (_hFont)
+        {
+            DeleteObject(_hFont);
+            _hFont = NULL;
+        }
+    }
 }
 
 
@@ -588,6 +590,37 @@ HWND ResultWin::composeWindow()
     ShowWindow(_hSci, SW_SHOWNORMAL);
 
     return _hWnd;
+}
+
+
+/**
+ *  \brief
+ */
+void ResultWin::showWindow()
+{
+    if (_hKeyHook == NULL)
+        _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
+                _nppThreadId);
+
+    INpp::Get().ShowDockingWin(_hWnd);
+    SetFocus(_hWnd);
+}
+
+
+/**
+ *  \brief
+ */
+void ResultWin::hideWindow()
+{
+    if (_hKeyHook)
+    {
+        UnhookWindowsHookEx(_hKeyHook);
+        _hKeyHook = NULL;
+    }
+
+    INpp& npp = INpp::Get();
+    npp.HideDockingWin(_hWnd);
+    SetFocus(npp.GetSciHandle());
 }
 
 
@@ -942,12 +975,11 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 /**
  *  \brief
  */
-void ResultWin::onDoubleClick(SCNotification* notify)
+void ResultWin::onDoubleClick(int pos)
 {
     if (!_lock.TryLock())
         return;
 
-    int pos = notify->position;
     int lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
 
     if (lineNum == 0)
@@ -1010,39 +1042,69 @@ void ResultWin::onMarginClick(SCNotification* notify)
 /**
  *  \brief
  */
-void ResultWin::onCharAddTry(SCNotification* notify)
+bool ResultWin::onKeyPress(WORD keyCode)
 {
     if (!_lock.TryLock())
-        return;
+        return false;
 
+    bool handled = true;
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
 
-    if (notify->ch == ' ')
+    switch (keyCode)
     {
-        if (lineNum > 0)
-        {
-            if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+        case VK_ADD:
+            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+            if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
                 toggleFolding(lineNum);
-            else
-                openItem(lineNum);
+        break;
+
+        case VK_SUBTRACT:
+            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+            if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
+                toggleFolding(lineNum);
+        break;
+
+        case VK_LEFT:
+        {
+            int i = TabCtrl_GetCurSel(_hTab);
+
+            if (i > 0)
+            {
+                Tab* tab = getTab(--i);
+                if (tab)
+                {
+                    TabCtrl_SetCurSel(_hTab, i);
+                    loadTab(tab);
+                }
+            }
         }
-    }
-    else if (notify->ch == '+')
-    {
-        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-        if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
-            toggleFolding(lineNum);
-    }
-    else if (notify->ch == '-')
-    {
-        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-        if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
-            toggleFolding(lineNum);
+        break;
+
+        case VK_RIGHT:
+        {
+            int i = TabCtrl_GetCurSel(_hTab);
+
+            if (i < TabCtrl_GetItemCount(_hTab) - 1)
+            {
+                Tab* tab = getTab(++i);
+                if (tab)
+                {
+                    TabCtrl_SetCurSel(_hTab, i);
+                    loadTab(tab);
+                }
+            }
+        }
+        break;
+
+        default:
+            handled = false;
     }
 
     _lock.Unlock();
+
+    return handled;
 }
 
 
@@ -1089,10 +1151,8 @@ void ResultWin::onCloseTab()
         sendSci(SCI_CLEARALL);
         sendSci(SCI_SETREADONLY, 1);
 
-        INpp& npp = INpp::Get();
-        npp.UpdateDockingWin(_hWnd);
-        npp.HideDockingWin(_hWnd);
-        SetFocus(npp.GetSciHandle());
+        INpp::Get().UpdateDockingWin(_hWnd);
+        hideWindow();
     }
 
     _lock.Unlock();
@@ -1118,7 +1178,7 @@ void ResultWin::closeAllTabs()
     sendSci(SCI_CLEARALL);
     sendSci(SCI_SETREADONLY, 1);
 
-    INpp::Get().HideDockingWin(_hWnd);
+    hideWindow();
 }
 
 
@@ -1139,66 +1199,84 @@ void ResultWin::onResize(int width, int height)
 /**
  *  \brief
  */
+LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    if (code >= 0)
+    {
+        HWND hWnd = GetFocus();
+        if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
+        {
+            // Key is pressed
+            if (!(lParam & (1 << 31)))
+            {
+                if (wParam == VK_ESCAPE)
+                {
+                    RW->onCloseTab();
+                    return 1;
+                }
+                if (wParam == VK_RETURN || wParam == VK_SPACE)
+                {
+                    RW->onDoubleClick(0);
+                    return 1;
+                }
+                if (RW->onKeyPress(wParam))
+                {
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+
+/**
+ *  \brief
+ */
 LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
         WPARAM wParam, LPARAM lParam)
 {
-    ResultWin* ui;
-
     switch (uMsg)
     {
         case WM_CREATE:
-            ui = (ResultWin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-            SetWindowLongPtr(hWnd, GWLP_USERDATA, PtrToUlong(ui));
         return 0;
 
         case WM_SETFOCUS:
-            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-            SetFocus(ui->_hSci);
+            SetFocus(RW->_hSci);
         return 0;
 
         case WM_NOTIFY:
-            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-
             switch (((LPNMHDR)lParam)->code)
             {
                 case SCN_STYLENEEDED:
-                    ui->onStyleNeeded((SCNotification*)lParam);
+                    RW->onStyleNeeded((SCNotification*)lParam);
                 return 0;
 
                 case SCN_HOTSPOTCLICK:
-                    ui->onHotspotClick((SCNotification*)lParam);
+                    RW->onHotspotClick((SCNotification*)lParam);
                 return 0;
 
                 case SCN_DOUBLECLICK:
-                    ui->onDoubleClick((SCNotification*)lParam);
+                    RW->onDoubleClick(((SCNotification*)lParam)->position);
                 return 0;
 
                 case SCN_MARGINCLICK:
-                    ui->onMarginClick((SCNotification*)lParam);
-                return 0;
-
-                case SCN_CHARADDED:
-                    ui->onCharAddTry((SCNotification*)lParam);
+                    RW->onMarginClick((SCNotification*)lParam);
                 return 0;
 
                 case TCN_SELCHANGE:
-                    ui->onTabChange();
+                    RW->onTabChange();
                 return 0;
             }
         break;
 
         case WM_CONTEXTMENU:
-            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-            ui->onCloseTab();
+            RW->onCloseTab();
         break;
 
         case WM_SIZE:
-            ui = reinterpret_cast<ResultWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-            ui->onResize(LOWORD(lParam), HIWORD(lParam));
+            RW->onResize(LOWORD(lParam), HIWORD(lParam));
         return 0;
 
         case WM_DESTROY:
