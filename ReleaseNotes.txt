@@ -1,3 +1,30 @@
+What's new in v3.0.0
+=======================
+
+- Add settings menu
+- The user can now select the code parser to be used - the default GTags, Ctags or Pygments
+    (needs external Pygments Python package to be installed that is not provided with the plugin).
+    Changing the parser will require database re-creation (to re-parse the code with the new parser).
+    GTags parser supports C, C++, Java and several other languages. Ctags parser supports considerably more
+    languages but doesn't support reference search. Pygments supports a lot of languages + reference search
+    but requires external Python package. Database creation is also slower.
+- The user can now create and set library databases to be used together with the project DB -
+    this is possible only for definition searches and auto-completion
+- Major UI rework
+- The user can now set the search options (case sensitivity and regexp) through the search window together with
+    the string to search. Not all search commands support regexp. If the search window is not used the search
+    is case sensitive and literal (no regexp) by default
+- Results window is fully controllable through the keyboard now - left and right arrow keys switch between tabs,
+    ESC key closes the active tab, ENTER key now also visits result location
+- Add plugin command to toggle focus between results window and Notepad++ document. The user can assign
+    shortcut key to this command through Notepad++ Shortcut Mapper to be able to switch focus easily
+- Add Go Forward plugin command to be able to 'undo' recent Go Back action
+- Unite Find Literal and Grep in a single Search command. The search is literal by default - the user can issue
+    regexp search through the search window options settings
+- Fix several bugs regarding database locking/unlocking
+- Numerous optimizations
+
+
 What's new in v2.3.0
 =======================
 
