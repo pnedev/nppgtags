@@ -715,8 +715,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     }
 
     lineTxt[lineLen] = 0;
-    for (i = 1; i <= lineLen &&
-            lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
+    for (i = 1; i <= lineLen && lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
     lineTxt[i] = 0;
 
     CPath file(_activeTab->_projectPath);
@@ -742,7 +741,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     const long endPos = npp.LineEndPosition(line);
 
-    bool wholeWord = (_activeTab->_cmdId != GREP);
+    const bool wholeWord = (_activeTab->_cmdId != GREP);
 
     // Highlight the corresponding match number if there are more than one
     // matches on single result line
@@ -967,6 +966,9 @@ void ResultWin::onHotspotClick(SCNotification* notify)
     }
 
     openItem(lineNum, matchNum);
+
+    // Clear false selection in results win when visiting result location
+    sendSci(SCI_GOTOPOS, notify->position);
 
     _lock.Unlock();
 }
@@ -1253,7 +1255,7 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
                     RW->onStyleNeeded((SCNotification*)lParam);
                 return 0;
 
-                case SCN_HOTSPOTCLICK:
+                case SCN_HOTSPOTRELEASECLICK:
                     RW->onHotspotClick((SCNotification*)lParam);
                 return 0;
 
