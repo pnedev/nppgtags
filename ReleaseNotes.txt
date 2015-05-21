@@ -10,19 +10,26 @@ What's new in v3.0.0
     but requires external Python package. Database creation is also slower.
 - The user can now create and set library databases to be used together with the project DB -
     this is possible only for definition searches and auto-completion
-- Major UI rework
+- Major UI and code rework
 - The user can now set the search options (case sensitivity and regexp) through the search window together with
     the string to search. Not all search commands support regexp. If the search window is not used the search
     is case sensitive and literal (no regexp) by default
-- Results window is fully controllable through the keyboard now - left and right arrow keys switch between tabs,
-    ESC key closes the active tab, ENTER key now also visits result location
+- Results window is now fully controllable through the keyboard - left and right arrow keys switch between tabs,
+    ESC key closes the active tab, ENTER key also visits result location
+- Results window style now more closely resembles Notepad++ theme. Use more neutral colors that look better on
+    both light and dark themes
 - Add plugin command to toggle focus between results window and Notepad++ document. The user can assign
     shortcut key to this command through Notepad++ Shortcut Mapper to be able to switch focus easily
 - Add Go Forward plugin command to be able to 'undo' recent Go Back action
 - Unite Find Literal and Grep in a single Search command. The search is literal by default - the user can issue
-    regexp search through the search window options settings
+    regexp search through the search window options
+- AutoComplete File now shows only valid filenames and paths, not partial ones
+- Auto Update database is now triggered on file rename and file delete also. This feature uses new Notepad++
+    notifications available since v6.7.5
 - Fix several bugs regarding database locking/unlocking
+- Error messages made more informative where possible
 - Numerous optimizations
+- Update GTags binaries to v6.4.1. Previous versions will not fully support all new features
 
 
 What's new in v2.3.0
