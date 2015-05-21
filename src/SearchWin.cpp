@@ -29,7 +29,6 @@
 #include "SearchWin.h"
 #include <windowsx.h>
 #include <commctrl.h>
-#include <richedit.h>
 #include "INpp.h"
 #include "CmdEngine.h"
 

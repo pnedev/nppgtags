@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include "INpp.h"
 #include "GTags.h"
+#include "Config.h"
 #include "Common.h"
 
 

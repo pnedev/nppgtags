@@ -31,6 +31,7 @@
 #include "DbManager.h"
 #include "CmdEngine.h"
 #include "DocLocation.h"
+#include "Config.h"
 #include "SearchWin.h"
 #include "ActivityWin.h"
 #include "AutoCompleteWin.h"

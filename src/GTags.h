@@ -30,6 +30,7 @@
 #include <tchar.h>
 #include "resource.h"
 #include "Common.h"
+#include "Config.h"
 
 
 struct FuncItem;
@@ -52,31 +53,6 @@ const TCHAR cFindReference[]    = _T("Find Reference");
 const TCHAR cFindSymbol[]       = _T("Find Symbol");
 const TCHAR cSearch[]           = _T("Search");
 const TCHAR cVersion[]          = _T("About");
-
-enum
-{
-    DEFAULT_PARSER = 0,
-    CTAGS_PARSER,
-    PYGMENTS_PARSER
-};
-
-
-/**
- *  \struct
- *  \brief
- */
-struct CConfig
-{
-    CConfig(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
-            bool useLibDb = false) : _parserIdx(parserIdx),
-        _autoUpdate(autoUpdate), _useLibDb(useLibDb) {}
-
-    int     _parserIdx;
-    bool    _autoUpdate;
-    bool    _useLibDb;
-    CText   _libDbPath;
-};
-
 
 extern FuncItem     Menu[18];
 

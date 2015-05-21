@@ -33,7 +33,7 @@
 namespace GTags
 {
 
-struct CConfig;
+class CConfig;
 
 
 /**
