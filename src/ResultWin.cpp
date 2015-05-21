@@ -234,6 +234,7 @@ int ResultWin::Register()
     icex.dwICC                  = ICC_STANDARD_CLASSES;
 
     InitCommonControlsEx(&icex);
+    LoadLibrary(_T("Riched20.dll"));
 
     RW = new ResultWin();
     if (RW->composeWindow() == NULL)

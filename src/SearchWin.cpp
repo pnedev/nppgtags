@@ -37,10 +37,9 @@
 namespace GTags
 {
 
-const TCHAR SearchWin::cClassName[]     = _T("SearchWin");
-const int SearchWin::cBackgroundColor   = COLOR_WINDOW;
-const TCHAR SearchWin::cBtnFont[]       = _T("Tahoma");
-const int SearchWin::cWidth             = 400;
+const TCHAR SearchWin::cClassName[] = _T("SearchWin");
+const TCHAR SearchWin::cBtnFont[]   = _T("Tahoma");
+const int SearchWin::cWidth         = 400;
 
 
 SearchWin* SearchWin::SW = NULL;
@@ -66,7 +65,6 @@ void SearchWin::Register()
     icex.dwICC                  = ICC_STANDARD_CLASSES;
 
     InitCommonControlsEx(&icex);
-    LoadLibrary(_T("Riched20.dll"));
 }
 
 
@@ -76,9 +74,6 @@ void SearchWin::Register()
 void SearchWin::Unregister()
 {
     UnregisterClass(cClassName, HMod);
-    HMODULE hLib = GetModuleHandle(_T("Riched20.dll"));
-    if (hLib)
-        FreeLibrary(hLib);
 }
 
 
@@ -203,7 +198,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     GetTextMetrics(hdc, &tm);
     int txtHeight =
             MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
-                tm.tmInternalLeading;
+                tm.tmInternalLeading + 1;
     int btnHeight = MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
             tm.tmInternalLeading;
     _hTxtFont = CreateFont(
@@ -222,7 +217,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            cWidth, txtHeight + btnHeight + 6);
+            cWidth, txtHeight + btnHeight + 12);
     int width = win.right - win.left;
 
     _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(),
@@ -232,51 +227,34 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
         return NULL;
 
     GetClientRect(_hWnd, &win);
-    width = win.right - win.left;
-
-    _hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
-            WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOOLEDRAGDROP,
-            0, 0, width, txtHeight,
-            _hWnd, NULL, HMod, NULL);
-
-    width = (width - 12) / 3;
+    width = (win.right - win.left - 20) / 3;
 
     _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            3, txtHeight + 3, width, btnHeight,
+            5, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hMC = CreateWindowEx(0, _T("BUTTON"), _T("MatchCase"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            width + 6, txtHeight + 3, width, btnHeight,
+            width + 10, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
-            2 * width + 9, txtHeight + 3, width, btnHeight,
+            2 * width + 15, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
-    SendMessage(_hEdit, EM_SETBKGNDCOLOR, 0,
-            (LPARAM)GetSysColor(cBackgroundColor));
-
-    CHARFORMAT fmt  = {0};
-    fmt.cbSize      = sizeof(fmt);
-    fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
-    fmt.dwEffects   = CFE_AUTOCOLOR;
-    fmt.yHeight     = UIFontSize * 20;
-    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), UIFontName);
-    SendMessage(_hEdit, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
+    _hSearch = CreateWindowEx(0, WC_COMBOBOX, NULL,
+            WS_CHILD | WS_VISIBLE |
+            CBS_SIMPLE | CBS_HASSTRINGS | CBS_AUTOHSCROLL,
+            2, btnHeight + 10, win.right - win.left - 4, txtHeight,
+            _hWnd, NULL, HMod, NULL);
 
     if (_hTxtFont)
-        SendMessage(_hEdit, WM_SETFONT, (WPARAM)_hTxtFont, (LPARAM)TRUE);
-
-    SendMessage(_hEdit, EM_SETEVENTMASK, 0, 0);
+        SendMessage(_hSearch, WM_SETFONT, (WPARAM)_hTxtFont, (LPARAM)TRUE);
 
     if (_cmd->Tag())
-    {
-        Edit_SetText(_hEdit, _cmd->Tag());
-        Edit_SetSel(_hEdit, 0, _cmd->TagLen());
-    }
+        ComboBox_SetText(_hSearch, _cmd->Tag());
 
     if (_hBtnFont)
     {
@@ -307,11 +285,11 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
  */
 void SearchWin::onOK()
 {
-    int len = Edit_GetTextLength(_hEdit);
+    int len = ComboBox_GetTextLength(_hSearch);
     if (len)
     {
         TCHAR tag[cMaxTagLen];
-        Edit_GetText(_hEdit, tag, _countof(tag));
+        ComboBox_GetText(_hSearch, tag, _countof(tag));
 
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED) ? true : false;
         bool mc = (Button_GetCheck(_hMC) == BST_CHECKED) ? true : false;
@@ -371,7 +349,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
         return 0;
 
         case WM_SETFOCUS:
-            SetFocus(SW->_hEdit);
+            SetFocus(SW->_hSearch);
         return 0;
 
         case WM_COMMAND:

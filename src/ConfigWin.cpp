@@ -74,7 +74,6 @@ void ConfigWin::Show(CConfig* cfg)
     icex.dwICC                  = ICC_STANDARD_CLASSES;
 
     InitCommonControlsEx(&icex);
-    LoadLibrary(_T("Riched20.dll"));
 
     HWND hOwner = INpp::Get().GetHandle();
 
@@ -159,9 +158,6 @@ ConfigWin::~ConfigWin()
         DeleteObject(_hFont);
 
     UnregisterClass(cClassName, HMod);
-    HMODULE hLib = GetModuleHandle(_T("Riched20.dll"));
-    if (hLib)
-        FreeLibrary(hLib);
 }
 
 

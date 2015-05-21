@@ -52,7 +52,6 @@ public:
 
 private:
     static const TCHAR  cClassName[];
-    static const int    cBackgroundColor;
     static const TCHAR  cBtnFont[];
     static const int    cWidth;
 
@@ -77,7 +76,7 @@ private:
     CompletionCB const      _complCB;
 
     HWND                    _hWnd;
-    HWND                    _hEdit;
+    HWND                    _hSearch;
     HWND                    _hRE;
     HWND                    _hMC;
     HWND                    _hOK;
