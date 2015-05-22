@@ -116,7 +116,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
 
-    ResultWin() : _nppThreadId(GetCurrentThreadId()),
+    ResultWin() :
         _hWnd(NULL), _hSci(NULL), _hFont(NULL), _hKeyHook(NULL),
         _sciFunc(NULL), _sciPtr(0), _activeTab(NULL) {}
     ResultWin(const ResultWin&);
@@ -160,7 +160,6 @@ private:
 
     static ResultWin* RW;
 
-    const DWORD _nppThreadId;
     Mutex       _lock;
     HWND        _hWnd;
     HWND        _hSci;

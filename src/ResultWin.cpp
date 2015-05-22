@@ -601,7 +601,7 @@ void ResultWin::showWindow()
 {
     if (_hKeyHook == NULL)
         _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
-                _nppThreadId);
+                GetWindowThreadProcessId(_hWnd, NULL));
 
     INpp::Get().ShowDockingWin(_hWnd);
     SetFocus(_hWnd);
