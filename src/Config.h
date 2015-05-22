@@ -59,7 +59,12 @@ public:
         return (idx < PARSER_LIST_END) ? cParsers[idx] : NULL;
     }
 
-    const TCHAR* Parser() { return cParsers[_parserIdx]; }
+    static void GetDefaultCfgFile(CPath& cfgFile);
+
+    const TCHAR* Parser() const { return cParsers[_parserIdx]; }
+
+    bool LoadFromFile(const TCHAR* file = NULL);
+    bool SaveToFile(const TCHAR* file = NULL) const;
 
     int     _parserIdx;
     bool    _autoUpdate;
@@ -72,6 +77,11 @@ private:
     static const TCHAR cPygmentsParser[];
 
     static const TCHAR* cParsers[PARSER_LIST_END];
+
+    static const TCHAR cParserKey[];
+    static const TCHAR cAutoUpdateKey[];
+    static const TCHAR cUseLibraryKey[];
+    static const TCHAR cLibraryPathKey[];
 };
 
 } // namespace GTags

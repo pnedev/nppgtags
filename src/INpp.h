@@ -122,16 +122,16 @@ public:
                 0, (LPARAM)hSciWnd);
     }
 
-    inline void GetMainDir(TCHAR* mainPath) const
+    inline void GetMainDir(unsigned size, TCHAR* buf) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY,
-                0, (LPARAM)mainPath);
+                (WPARAM)size, (LPARAM)buf);
     }
 
-    inline void GetPluginsConfDir(TCHAR* confPath) const
+    inline void GetPluginsConfDir(unsigned size, TCHAR* buf) const
     {
         SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR,
-                0, (LPARAM)confPath);
+                (WPARAM)size, (LPARAM)buf);
     }
 
     inline void GetFilePath(TCHAR* filePath) const

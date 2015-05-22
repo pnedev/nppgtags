@@ -281,6 +281,7 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
     }
     else if (cmd->Status() == FAILED)
     {
+        releaseKeys();
         INpp::Get().ClearSelection();
 
         CText msg(cmd->Result());
@@ -290,6 +291,7 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
     }
     else if (cmd->Status() == RUN_ERROR)
     {
+        releaseKeys();
         INpp::Get().ClearSelection();
 
         MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
@@ -311,11 +313,12 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
 
     runSheduledUpdate(cmd->DbPath());
 
+    releaseKeys();
+
     if (cmd->Status() == OK)
     {
         if (cmd->Result())
         {
-            releaseKeys();
             ResultWin::Show(cmd);
         }
         else

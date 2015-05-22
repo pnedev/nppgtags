@@ -22,7 +22,9 @@
  */
 
 
+#include "INpp.h"
 #include "Config.h"
+#include "GTags.h"
 
 
 namespace GTags
@@ -37,5 +39,51 @@ const TCHAR* CConfig::cParsers[CConfig::PARSER_LIST_END] = {
     CConfig::cCtagsParser,
     CConfig::cPygmentsParser
 };
+
+const TCHAR CConfig::cParserKey[]       = _T("Parser = ");
+const TCHAR CConfig::cAutoUpdateKey[]   = _T("AutoUpdate = ");
+const TCHAR CConfig::cUseLibraryKey[]   = _T("UseLibrary = ");
+const TCHAR CConfig::cLibraryPathKey[]  = _T("LibraryPath = ");
+
+
+/**
+ *  \brief
+ */
+void CConfig::GetDefaultCfgFile(CPath& cfgFile)
+{
+    TCHAR cfgDir[MAX_PATH];
+    INpp::Get().GetPluginsConfDir(_countof(cfgDir), cfgDir);
+
+    cfgFile = cfgDir;
+    cfgFile += _T("\\");
+    cfgFile += cPluginName;
+    cfgFile += _T(".cfg");
+}
+
+
+/**
+ *  \brief
+ */
+bool CConfig::LoadFromFile(const TCHAR* file)
+{
+    CPath cfgFile(file);
+    if (file == NULL)
+        GetDefaultCfgFile(cfgFile);
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+bool CConfig::SaveToFile(const TCHAR* file) const
+{
+    CPath cfgFile(file);
+    if (file == NULL)
+        GetDefaultCfgFile(cfgFile);
+
+    return true;
+}
 
 } // namespace GTags

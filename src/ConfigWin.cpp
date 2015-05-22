@@ -341,7 +341,21 @@ void ConfigWin::onOK()
 
     _cfg->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
-    SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    if (!_cfg->SaveToFile())
+    {
+        CPath cfgFile;
+        CConfig::GetDefaultCfgFile(cfgFile);
+
+        CText msg(_T("Failed saving config to\n\""));
+        msg += cfgFile.C_str();
+        msg += _T("\"\nIs the file read only?");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
+                MB_OK | MB_ICONEXCLAMATION);
+    }
+    else
+    {
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    }
 }
 
 
@@ -361,11 +375,6 @@ LRESULT CALLBACK ConfigWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                 if (wParam == VK_ESCAPE)
                 {
                     SendMessage(CW->_hWnd, WM_CLOSE, 0, 0);
-                    return 1;
-                }
-                if (wParam == VK_RETURN)
-                {
-                    CW->onOK();
                     return 1;
                 }
             }
