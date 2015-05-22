@@ -30,8 +30,8 @@
 #include <tchar.h>
 #include <vector>
 #include "Scintilla.h"
-#include "Common.h"
 #include "AutoLock.h"
+#include "Common.h"
 #include "GTags.h"
 #include "CmdEngine.h"
 

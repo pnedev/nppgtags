@@ -26,11 +26,12 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "AutoCompleteWin.h"
+#include <windows.h>
 #include <commctrl.h>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
+#include "AutoCompleteWin.h"
 
 
 namespace GTags

@@ -16,14 +16,18 @@
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <tchar.h>
+#include <memory>
 #include "PluginInterface.h"
 #include "Notepad_plus_msgs.h"
 #include "menuCmdID.h"
 #include "Common.h"
 #include "INpp.h"
-#include "GTags.h"
+#include "Config.h"
 #include "ResultWin.h"
-#include <memory>
+#include "GTags.h"
 
 
 namespace

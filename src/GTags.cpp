@@ -23,21 +23,24 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "GTags.h"
+#include <windows.h>
+#include <tchar.h>
 #include <shlobj.h>
 #include <list>
 #include "AutoLock.h"
+#include "Common.h"
 #include "INpp.h"
+#include "Config.h"
 #include "DbManager.h"
 #include "CmdEngine.h"
 #include "DocLocation.h"
-#include "Config.h"
 #include "SearchWin.h"
 #include "ActivityWin.h"
 #include "AutoCompleteWin.h"
 #include "ResultWin.h"
 #include "ConfigWin.h"
 #include "AboutWin.h"
+#include "GTags.h"
 
 
 #define LINUX_WINE_WORKAROUNDS
@@ -46,12 +49,20 @@
 namespace
 {
 
-const TCHAR cDefaultParser[]    = _T("default");
-const TCHAR cCtagsParser[]      = _T("ctags");
-const TCHAR cPygmentsParser[]   = _T("pygments");
-
-
 using namespace GTags;
+
+
+const TCHAR cCreateDatabase[]   = _T("Create Database");
+const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
+const TCHAR cAutoCompl[]        = _T("AutoComplete");
+const TCHAR cAutoComplFile[]    = _T("AutoComplete File");
+const TCHAR cFindFile[]         = _T("Find File");
+const TCHAR cFindDefinition[]   = _T("Find Definition");
+const TCHAR cFindReference[]    = _T("Find Reference");
+const TCHAR cFindSymbol[]       = _T("Find Symbol");
+const TCHAR cSearch[]           = _T("Search");
+const TCHAR cVersion[]          = _T("About");
+
 
 std::list<CPath> UpdateList;
 Mutex UpdateLock;
@@ -304,6 +315,7 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
     {
         if (cmd->Result())
         {
+            releaseKeys();
             ResultWin::Show(cmd);
         }
         else
@@ -348,87 +360,11 @@ void findReady(const std::shared_ptr<Cmd>& cmd)
     }
 }
 
-} // anonymous namespace
-
-
-namespace GTags
-{
-
-FuncItem Menu[18] = {
-    /* 0 */  FuncItem(cAutoCompl, AutoComplete),
-    /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
-    /* 2 */  FuncItem(cFindFile, FindFile),
-    /* 3 */  FuncItem(cFindDefinition, FindDefinition),
-    /* 4 */  FuncItem(cFindReference, FindReference),
-    /* 5 */  FuncItem(cSearch, Search),
-    /* 6 */  FuncItem(),
-    /* 7 */  FuncItem(_T("Go Back"), GoBack),
-    /* 8 */  FuncItem(_T("Go Forward"), GoForward),
-    /* 9 */  FuncItem(),
-    /* 10 */ FuncItem(cCreateDatabase, CreateDatabase),
-    /* 11 */ FuncItem(_T("Delete Database"), DeleteDatabase),
-    /* 12 */ FuncItem(),
-    /* 13 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
-    /* 14 */ FuncItem(),
-    /* 15 */ FuncItem(_T("Settings"), SettingsCfg),
-    /* 16 */ FuncItem(),
-    /* 17 */ FuncItem(cVersion, About)
-};
-
-HINSTANCE HMod = NULL;
-CPath DllPath;
-
-TCHAR UIFontName[32];
-unsigned UIFontSize;
-
-const TCHAR* cParsers[3];
-
-CConfig Config;
-
 
 /**
  *  \brief
  */
-BOOL PluginInit(HINSTANCE hMod)
-{
-    TCHAR moduleFileName[MAX_PATH];
-    GetModuleFileName((HMODULE)hMod, moduleFileName, MAX_PATH);
-    DllPath = moduleFileName;
-
-    if (!checkForGTagsBinaries(moduleFileName))
-        return FALSE;
-
-    HMod = hMod;
-
-    cParsers[DEFAULT_PARSER]    = cDefaultParser;
-    cParsers[CTAGS_PARSER]      = cCtagsParser;
-    cParsers[PYGMENTS_PARSER]   = cPygmentsParser;
-
-    ActivityWin::Register();
-    SearchWin::Register();
-    AutoCompleteWin::Register();
-
-    return TRUE;
-}
-
-
-/**
- *  \brief
- */
-void PluginDeInit()
-{
-    ActivityWin::Unregister();
-    SearchWin::Unregister();
-    AutoCompleteWin::Unregister();
-    ResultWin::Unregister();
-
-    HMod = NULL;
-}
-
-
-/**
- *  \brief
- */
+/*
 void EnablePluginMenuItem(int itemIdx, bool enable)
 {
     static HMENU HMenu = NULL;
@@ -466,6 +402,7 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
 
     EnableMenuItem(HMenu, itemIdx, flags);
 }
+*/
 
 
 /**
@@ -586,7 +523,7 @@ void FindReference()
 {
     SearchWin::Close();
 
-    if (Config._parserIdx == CTAGS_PARSER)
+    if (Config._parserIdx == CConfig::CTAGS_PARSER)
     {
         MessageBox(INpp::Get().GetHandle(),
                 _T("Ctags parser doesn't support reference search"),
@@ -725,7 +662,184 @@ void CreateDatabase()
     }
 
     std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    releaseKeys();
     CmdEngine::Run(cmd, dbWriteReady);
+}
+
+
+/**
+ *  \brief
+ */
+void DeleteDatabase()
+{
+    SearchWin::Close();
+
+    DbHandle db = getDatabase(true);
+    if (!db)
+        return;
+
+    INpp& npp = INpp::Get();
+    TCHAR buf[512];
+    _sntprintf_s(buf, _countof(buf), _TRUNCATE,
+            _T("Delete database from\n\"%s\"?"), db->C_str());
+    int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
+            MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+    if (choice != IDYES)
+    {
+        DbManager::Get().PutDb(db);
+        return;
+    }
+
+    if (DbManager::Get().UnregisterDb(db))
+        MessageBox(npp.GetHandle(), _T("GTags database deleted"),
+                cPluginName, MB_OK | MB_ICONINFORMATION);
+    else
+        MessageBox(npp.GetHandle(),
+                _T("Deleting database failed, is it read-only?"),
+                cPluginName, MB_OK | MB_ICONERROR);
+}
+
+
+/**
+ *  \brief
+ */
+void ToggleResultWinFocus()
+{
+    releaseKeys();
+    ResultWin::Show();
+}
+
+
+/**
+ *  \brief
+ */
+void SettingsCfg()
+{
+    ConfigWin::Show(&Config);
+}
+
+
+/**
+ *  \brief
+ */
+void About()
+{
+    std::shared_ptr<Cmd> cmd(new Cmd(VERSION, cVersion));
+    CmdEngine::Run(cmd);
+
+    CText msg;
+    if (cmd->Status() == OK)
+        msg = cmd->Result();
+    else
+        msg = _T("VERSION READ FAILED\n");
+
+    AboutWin::Show(msg.C_str());
+}
+
+} // anonymous namespace
+
+
+namespace GTags
+{
+
+FuncItem Menu[18] = {
+    /* 0 */  FuncItem(cAutoCompl, AutoComplete),
+    /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
+    /* 2 */  FuncItem(cFindFile, FindFile),
+    /* 3 */  FuncItem(cFindDefinition, FindDefinition),
+    /* 4 */  FuncItem(cFindReference, FindReference),
+    /* 5 */  FuncItem(cSearch, Search),
+    /* 6 */  FuncItem(),
+    /* 7 */  FuncItem(_T("Go Back"), GoBack),
+    /* 8 */  FuncItem(_T("Go Forward"), GoForward),
+    /* 9 */  FuncItem(),
+    /* 10 */ FuncItem(cCreateDatabase, CreateDatabase),
+    /* 11 */ FuncItem(_T("Delete Database"), DeleteDatabase),
+    /* 12 */ FuncItem(),
+    /* 13 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
+    /* 14 */ FuncItem(),
+    /* 15 */ FuncItem(_T("Settings"), SettingsCfg),
+    /* 16 */ FuncItem(),
+    /* 17 */ FuncItem(cVersion, About)
+};
+
+HINSTANCE HMod = NULL;
+CPath DllPath;
+
+TCHAR UIFontName[32];
+unsigned UIFontSize;
+
+CConfig Config;
+
+
+/**
+ *  \brief
+ */
+BOOL PluginInit(HINSTANCE hMod)
+{
+    TCHAR moduleFileName[MAX_PATH];
+    GetModuleFileName((HMODULE)hMod, moduleFileName, MAX_PATH);
+    DllPath = moduleFileName;
+
+    if (!checkForGTagsBinaries(moduleFileName))
+        return FALSE;
+
+    HMod = hMod;
+
+    ActivityWin::Register();
+    SearchWin::Register();
+    AutoCompleteWin::Register();
+
+    return TRUE;
+}
+
+
+/**
+ *  \brief
+ */
+void PluginDeInit()
+{
+    ActivityWin::Unregister();
+    SearchWin::Unregister();
+    AutoCompleteWin::Unregister();
+    ResultWin::Unregister();
+
+    HMod = NULL;
+}
+
+
+/**
+ *  \brief
+ */
+bool UpdateSingleFile(const TCHAR* file)
+{
+    CPath upFile(file);
+    if (!file)
+    {
+        TCHAR filePath[MAX_PATH];
+        INpp::Get().GetFilePath(filePath);
+        upFile = filePath;
+    }
+
+    bool success;
+    DbHandle db = DbManager::Get().GetDb(upFile, true, &success);
+    if (!db)
+        return false;
+
+    if (!success)
+    {
+        sheduleForUpdate(upFile);
+        return true;
+    }
+
+    std::shared_ptr<Cmd>
+            cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, upFile.C_str()));
+
+    releaseKeys();
+    if (!CmdEngine::Run(cmd, dbWriteReady))
+        return false;
+
+    return true;
 }
 
 
@@ -791,6 +905,7 @@ const CPath CreateLibraryDatabase(HWND hWnd)
     }
 
     std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    releaseKeys();
     CmdEngine::Run(cmd);
 
     dbWriteReady(cmd);
@@ -798,112 +913,6 @@ const CPath CreateLibraryDatabase(HWND hWnd)
         libraryPath = _T("");
 
     return libraryPath;
-}
-
-
-/**
- *  \brief
- */
-bool UpdateSingleFile(const TCHAR* file)
-{
-    CPath upFile(file);
-    if (!file)
-    {
-        TCHAR filePath[MAX_PATH];
-        INpp::Get().GetFilePath(filePath);
-        upFile = filePath;
-    }
-
-    bool success;
-    DbHandle db = DbManager::Get().GetDb(upFile, true, &success);
-    if (!db)
-        return false;
-
-    if (!success)
-    {
-        sheduleForUpdate(upFile);
-        return true;
-    }
-
-    releaseKeys();
-
-    std::shared_ptr<Cmd>
-            cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, upFile.C_str()));
-
-    if (!CmdEngine::Run(cmd, dbWriteReady))
-        return false;
-
-    return true;
-}
-
-
-/**
- *  \brief
- */
-void DeleteDatabase()
-{
-    SearchWin::Close();
-
-    DbHandle db = getDatabase(true);
-    if (!db)
-        return;
-
-    INpp& npp = INpp::Get();
-    TCHAR buf[512];
-    _sntprintf_s(buf, _countof(buf), _TRUNCATE,
-            _T("Delete database from\n\"%s\"?"), db->C_str());
-    int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
-            MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
-    if (choice != IDYES)
-    {
-        DbManager::Get().PutDb(db);
-        return;
-    }
-
-    if (DbManager::Get().UnregisterDb(db))
-        MessageBox(npp.GetHandle(), _T("GTags database deleted"),
-                cPluginName, MB_OK | MB_ICONINFORMATION);
-    else
-        MessageBox(npp.GetHandle(),
-                _T("Deleting database failed, is it read-only?"),
-                cPluginName, MB_OK | MB_ICONERROR);
-}
-
-
-/**
- *  \brief
- */
-void ToggleResultWinFocus()
-{
-    releaseKeys();
-    GTags::ResultWin::Show();
-}
-
-
-/**
- *  \brief
- */
-void SettingsCfg()
-{
-    ConfigWin::Show(&Config);
-}
-
-
-/**
- *  \brief
- */
-void About()
-{
-    std::shared_ptr<Cmd> cmd(new Cmd(VERSION, cVersion));
-    CmdEngine::Run(cmd);
-
-    CText msg;
-    if (cmd->Status() == OK)
-        msg = cmd->Result();
-    else
-        msg = _T("VERSION READ FAILED\n");
-
-    AboutWin::Show(msg.C_str());
 }
 
 } // namespace GTags

@@ -34,14 +34,6 @@
 namespace GTags
 {
 
-enum
-{
-    DEFAULT_PARSER = 0,
-    CTAGS_PARSER,
-    PYGMENTS_PARSER
-};
-
-
 /**
  *  \class  CConfig
  *  \brief
@@ -49,14 +41,37 @@ enum
 class CConfig
 {
 public:
-    CConfig(int parserIdx = DEFAULT_PARSER, bool autoUpdate = true,
-            bool useLibDb = false) : _parserIdx(parserIdx),
-        _autoUpdate(autoUpdate), _useLibDb(useLibDb) {}
+    enum
+    {
+        DEFAULT_PARSER = 0,
+        CTAGS_PARSER,
+        PYGMENTS_PARSER,
+        PARSER_LIST_END
+    };
+
+    CConfig(int parserIdx   = DEFAULT_PARSER,
+            bool autoUpdate = true,
+            bool useLibDb   = false) :
+        _parserIdx(parserIdx), _autoUpdate(autoUpdate), _useLibDb(useLibDb) {}
+
+    static const TCHAR* Parser(unsigned idx)
+    {
+        return (idx < PARSER_LIST_END) ? cParsers[idx] : NULL;
+    }
+
+    const TCHAR* Parser() { return cParsers[_parserIdx]; }
 
     int     _parserIdx;
     bool    _autoUpdate;
     bool    _useLibDb;
     CText   _libDbPath;
+
+private:
+    static const TCHAR cDefaultParser[];
+    static const TCHAR cCtagsParser[];
+    static const TCHAR cPygmentsParser[];
+
+    static const TCHAR* cParsers[PARSER_LIST_END];
 };
 
 } // namespace GTags

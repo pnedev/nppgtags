@@ -25,34 +25,20 @@
 #pragma once
 
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <tchar.h>
 #include "resource.h"
-#include "Common.h"
-#include "Config.h"
 
 
 struct FuncItem;
+class CPath;
 
 
 namespace GTags
 {
 
-const TCHAR cPluginName[]       = VER_PLUGIN_NAME;
-const TCHAR cBinsDir[]          = VER_PLUGIN_NAME;
-const unsigned cMaxTagLen       = 128;
-
-const TCHAR cCreateDatabase[]   = _T("Create Database");
-const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
-const TCHAR cAutoCompl[]        = _T("AutoComplete");
-const TCHAR cAutoComplFile[]    = _T("AutoComplete File");
-const TCHAR cFindFile[]         = _T("Find File");
-const TCHAR cFindDefinition[]   = _T("Find Definition");
-const TCHAR cFindReference[]    = _T("Find Reference");
-const TCHAR cFindSymbol[]       = _T("Find Symbol");
-const TCHAR cSearch[]           = _T("Search");
-const TCHAR cVersion[]          = _T("About");
+const TCHAR cPluginName[]   = VER_PLUGIN_NAME;
+const TCHAR cBinsDir[]      = VER_PLUGIN_NAME;
+const unsigned cMaxTagLen   = 128;
 
 extern FuncItem     Menu[18];
 
@@ -62,28 +48,14 @@ extern CPath        DllPath;
 extern TCHAR        UIFontName[32];
 extern unsigned     UIFontSize;
 
-extern const TCHAR* cParsers[3];
+class CConfig;
 extern CConfig      Config;
 
 
 BOOL PluginInit(HINSTANCE hMod);
 void PluginDeInit();
-void EnablePluginMenuItem(int itemIdx, bool enable = true);
 
-void AutoComplete();
-void AutoCompleteFile();
-void FindFile();
-void FindDefinition();
-void FindReference();
-void Search();
-void GoBack();
-void GoForward();
-void CreateDatabase();
-const CPath CreateLibraryDatabase(HWND hWnd);
 bool UpdateSingleFile(const TCHAR* file = NULL);
-void DeleteDatabase();
-void ToggleResultWinFocus();
-void SettingsCfg();
-void About();
+const CPath CreateLibraryDatabase(HWND hWnd);
 
 } // namespace GTags

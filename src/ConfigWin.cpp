@@ -26,15 +26,16 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "ConfigWin.h"
+#include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
 #include <stdlib.h>
-#include "INpp.h"
-#include "GTags.h"
-#include "Config.h"
 #include "Common.h"
+#include "INpp.h"
+#include "Config.h"
+#include "GTags.h"
+#include "ConfigWin.h"
 
 
 namespace GTags
@@ -301,8 +302,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ?
             BST_CHECKED : BST_UNCHECKED);
 
-    for (unsigned i = 0; i < _countof(cParsers); i++)
-        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)cParsers[i]);
+    for (unsigned i = 0; CConfig::Parser(i); i++)
+        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)CConfig::Parser(i));
 
     SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_cfg->_parserIdx, 0);
 

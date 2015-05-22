@@ -22,12 +22,15 @@
  */
 
 
-#include "CmdEngine.h"
-#include "GTags.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <process.h>
 #include "INpp.h"
+#include "Config.h"
+#include "GTags.h"
 #include "ActivityWin.h"
 #include "ReadPipe.h"
-#include <process.h>
+#include "CmdEngine.h"
 
 
 namespace GTags
@@ -220,7 +223,7 @@ void CmdEngine::composeCmd(TCHAR* buf, unsigned len) const
             _tcscat_s(buf, len, path.C_str());
             _tcscat_s(buf, len, _T("\""));
             _tcscat_s(buf, len, _T(" --gtagslabel="));
-            _tcscat_s(buf, len, cParsers[Config._parserIdx]);
+            _tcscat_s(buf, len, Config.Parser());
         }
     }
     else if (_cmd->_id != VERSION)

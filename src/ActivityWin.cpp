@@ -26,10 +26,11 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "ActivityWin.h"
+#include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include "GTags.h"
+#include "ActivityWin.h"
 
 
 namespace GTags

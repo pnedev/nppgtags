@@ -234,6 +234,8 @@ int ResultWin::Register()
     icex.dwICC                  = ICC_STANDARD_CLASSES;
 
     InitCommonControlsEx(&icex);
+
+    // Scintilla uses that, make sure it is not accidentally unloaded
     LoadLibrary(_T("Riched20.dll"));
 
     RW = new ResultWin();

@@ -22,11 +22,20 @@
  */
 
 
-#define WIN32_LEAN_AND_MEAN
 #include "Config.h"
 
 
 namespace GTags
 {
+
+const TCHAR CConfig::cDefaultParser[]   = _T("default");
+const TCHAR CConfig::cCtagsParser[]     = _T("ctags");
+const TCHAR CConfig::cPygmentsParser[]  = _T("pygments");
+
+const TCHAR* CConfig::cParsers[CConfig::PARSER_LIST_END] = {
+    CConfig::cDefaultParser,
+    CConfig::cCtagsParser,
+    CConfig::cPygmentsParser
+};
 
 } // namespace GTags
