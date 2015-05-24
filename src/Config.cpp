@@ -22,6 +22,10 @@
  */
 
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "Common.h"
 #include "INpp.h"
 #include "Config.h"
 #include "GTags.h"
@@ -70,6 +74,14 @@ bool CConfig::LoadFromFile(const TCHAR* file)
     if (file == NULL)
         GetDefaultCfgFile(cfgFile);
 
+    if (!cfgFile.Exists())
+        return false;
+
+    std::tifstream ifs(cfgFile.C_str());
+    std::tstring line;
+    while (std::getline(ifs, line))
+        ;
+
     return true;
 }
 
@@ -82,6 +94,12 @@ bool CConfig::SaveToFile(const TCHAR* file) const
     CPath cfgFile(file);
     if (file == NULL)
         GetDefaultCfgFile(cfgFile);
+
+    std::tofstream ofs(cfgFile.C_str());
+    ofs << cParserKey << Parser() << std::endl;
+    ofs << cAutoUpdateKey << (_autoUpdate ? _T("yes") : _T("no")) << std::endl;
+    ofs << cUseLibraryKey << (_useLibDb ? _T("yes") : _T("no")) << std::endl;
+    ofs << cLibraryPathKey << _libDbPath.C_str() << std::endl;
 
     return true;
 }

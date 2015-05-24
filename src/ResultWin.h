@@ -141,6 +141,12 @@ private:
     void showWindow();
     void hideWindow();
 
+    void hookKeyboard()
+    {
+        _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
+                GetCurrentThreadId());
+    }
+
     Tab* getTab(int i = -1);
     void loadTab(Tab* tab);
     bool openItem(int lineNum, unsigned matchNum = 1);

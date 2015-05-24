@@ -34,8 +34,14 @@
 
 #ifdef UNICODE
 #define CTcharArray CWcharArray
+#define tstring     wstring
+#define tifstream   wifstream
+#define tofstream   wofstream
 #else
 #define CTcharArray CCharArray
+#define tstring     string
+#define tifstream   ifstream
+#define tofstream   ofstream
 #endif
 
 

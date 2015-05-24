@@ -457,11 +457,9 @@ ResultWin::~ResultWin()
     {
         closeAllTabs();
 
-        INpp& npp = INpp::Get();
-
         if (_hSci)
         {
-            npp.DestroySciHandle(_hSci);
+            INpp::Get().DestroySciHandle(_hSci);
             _hSci = NULL;
         }
 
@@ -601,10 +599,6 @@ HWND ResultWin::composeWindow()
  */
 void ResultWin::showWindow()
 {
-    if (_hKeyHook == NULL)
-        _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
-                GetWindowThreadProcessId(_hWnd, NULL));
-
     INpp::Get().ShowDockingWin(_hWnd);
     SetFocus(_hWnd);
 }
@@ -1248,6 +1242,7 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
         return 0;
 
         case WM_SETFOCUS:
+            RW->hookKeyboard();
             SetFocus(RW->_hSci);
         return 0;
 
