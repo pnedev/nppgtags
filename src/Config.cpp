@@ -22,7 +22,6 @@
  */
 
 
-#include <iostream>
 #include <fstream>
 #include <string>
 #include "Common.h"
@@ -74,13 +73,15 @@ bool CConfig::LoadFromFile(const TCHAR* file)
     if (file == NULL)
         GetDefaultCfgFile(cfgFile);
 
-    if (!cfgFile.Exists())
+    std::tifstream ifs(cfgFile.C_str());
+    if (!ifs.good())
         return false;
 
-    std::tifstream ifs(cfgFile.C_str());
     std::tstring line;
     while (std::getline(ifs, line))
-        ;
+    {
+
+    }
 
     return true;
 }
@@ -96,12 +97,15 @@ bool CConfig::SaveToFile(const TCHAR* file) const
         GetDefaultCfgFile(cfgFile);
 
     std::tofstream ofs(cfgFile.C_str());
+    if (!ofs.good())
+        return false;
+
     ofs << cParserKey << Parser() << std::endl;
     ofs << cAutoUpdateKey << (_autoUpdate ? _T("yes") : _T("no")) << std::endl;
     ofs << cUseLibraryKey << (_useLibDb ? _T("yes") : _T("no")) << std::endl;
     ofs << cLibraryPathKey << _libDbPath.C_str() << std::endl;
 
-    return true;
+    return ofs.good();
 }
 
 } // namespace GTags

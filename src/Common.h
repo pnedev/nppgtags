@@ -33,15 +33,17 @@
 
 
 #ifdef UNICODE
-#define CTcharArray CWcharArray
-#define tstring     wstring
-#define tifstream   wifstream
-#define tofstream   wofstream
+    #define CTcharArray CWcharArray
+    #define CText       CTextW
+    #define tstring     wstring
+    #define tifstream   wifstream
+    #define tofstream   wofstream
 #else
-#define CTcharArray CCharArray
-#define tstring     string
-#define tifstream   ifstream
-#define tofstream   ofstream
+    #define CTcharArray CCharArray
+    #define CText       CTextA
+    #define tstring     string
+    #define tifstream   ifstream
+    #define tofstream   ofstream
 #endif
 
 
@@ -330,13 +332,6 @@ private:
 };
 
 
-#ifdef UNICODE
-#define CText     CTextW
-#else
-#define CText     CTextA
-#endif
-
-
 /**
  *  \class  CTextW
  *  \brief
@@ -488,9 +483,9 @@ inline bool FileExists(TCHAR* file)
 #ifdef DEVELOPMENT
 
 #ifdef UNICODE
-#define Msg(x)     MsgW(x)
+#define Msg(x)  MsgW(x)
 #else
-#define Msg(x)     MsgA(x)
+#define Msg(x)  MsgA(x)
 #endif
 
 inline void MsgW(const wchar_t* msg)
