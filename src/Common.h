@@ -35,15 +35,9 @@
 #ifdef UNICODE
     #define CTcharArray CWcharArray
     #define CText       CTextW
-    #define tstring     wstring
-    #define tifstream   wifstream
-    #define tofstream   wofstream
 #else
     #define CTcharArray CCharArray
     #define CText       CTextA
-    #define tstring     string
-    #define tifstream   ifstream
-    #define tofstream   ofstream
 #endif
 
 
@@ -386,6 +380,7 @@ public:
     inline const wchar_t* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }
+    inline void Clear() { _str[0] = 0; }
 };
 
 
@@ -443,6 +438,7 @@ public:
     inline const char* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }
+    inline void Clear() { _str[0] = 0; }
 };
 
 

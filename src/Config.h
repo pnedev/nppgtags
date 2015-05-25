@@ -49,10 +49,10 @@ public:
         PARSER_LIST_END
     };
 
-    CConfig(int parserIdx   = DEFAULT_PARSER,
-            bool autoUpdate = true,
-            bool useLibDb   = false) :
-        _parserIdx(parserIdx), _autoUpdate(autoUpdate), _useLibDb(useLibDb) {}
+    CConfig()
+    {
+        SetDefaults();
+    }
 
     static const TCHAR* Parser(unsigned idx)
     {
@@ -63,6 +63,7 @@ public:
 
     const TCHAR* Parser() const { return cParsers[_parserIdx]; }
 
+    void SetDefaults();
     bool LoadFromFile(const TCHAR* file = NULL);
     bool SaveToFile(const TCHAR* file = NULL) const;
 

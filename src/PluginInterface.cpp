@@ -75,8 +75,10 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
         MessageBox(npp.GetHandle(),
             _T("Results Window init failed, plugin will not be operational"),
             GTags::cPluginName, MB_OK | MB_ICONERROR);
-    else
-        GTags::Config.LoadFromFile();
+    else if(!GTags::Config.LoadFromFile())
+        MessageBox(npp.GetHandle(),
+            _T("Bad config file, default settings will be used"),
+            GTags::cPluginName, MB_OK | MB_ICONEXCLAMATION);
 }
 
 
