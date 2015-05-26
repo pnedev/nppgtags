@@ -154,18 +154,20 @@ private:
     static unsigned __stdcall threadFunc(void* data);
 
     CmdEngine(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
+        _cmd(cmd), _complCB(complCB), _hThread(NULL), _hTerminate(NULL),
+        _hAW(NULL) {}
     ~CmdEngine();
 
     const TCHAR* getCmdLine() const;
     void composeCmd(TCHAR* buf, unsigned len) const;
     unsigned runProcess();
-    bool isActive(PROCESS_INFORMATION& pi) const;
-    void terminate(PROCESS_INFORMATION& pi) const;
+    void endProcess(PROCESS_INFORMATION& pi);
 
     std::shared_ptr<Cmd>    _cmd;
     CompletionCB const      _complCB;
     HANDLE                  _hThread;
+    HANDLE                  _hTerminate;
+    HWND                    _hAW;
 };
 
 } // namespace GTags

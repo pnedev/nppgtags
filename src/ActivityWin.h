@@ -43,12 +43,11 @@ public:
     static void Register();
     static void Unregister();
 
-    static int Show(HWND hOwner, HANDLE procHndl, int width,
-            const TCHAR *text, int showDelay_ms);
+    static HWND Create(HWND hOwner, HANDLE hTerminate, int width,
+            const TCHAR *text, int showDelay_ms = 0);
 
 private:
     static const TCHAR      cClassName[];
-    static const unsigned   cUpdate_ms;
     static const TCHAR      cFont[];
     static const unsigned   cFontSize;
     static const int        cBackgroundColor;
@@ -58,21 +57,22 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
 
-    ActivityWin(HWND hOwner, HANDLE procHndl);
+    ActivityWin(HANDLE hTerminate, int showDelay_ms);
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 
-    void adjustSizeAndPos(HWND hWnd, int width, int height);
-    HWND composeWindow(int width, const TCHAR* text);
-    void onTimerRefresh(HWND hWnd);
+    void adjustSizeAndPos(int width, int height);
+    HWND composeWindow(HWND hOwner, int width, const TCHAR* text);
+    void showWindow();
+    void onTimer();
 
-    HWND        _hOwner;
-    HANDLE      _hProc;
+    HANDLE      _hTerm;
     HFONT       _hFont;
+    HWND        _hWnd;
     HWND        _hBtn;
     UINT_PTR    _timerId;
     int         _initRefCount;
-    int         _isCancelled;
+    int         _showDelay_ms;
 };
 
 } // namespace GTags

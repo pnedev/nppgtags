@@ -102,7 +102,7 @@ DWORD ReadPipe::Wait(DWORD time_ms)
         return WAIT_OBJECT_0;
 
     DWORD r = WaitForSingleObject(_hThread, time_ms);
-    if (r == WAIT_OBJECT_0)
+    if (r != WAIT_TIMEOUT)
     {
         CloseHandle(_hOut);
         _hOut = NULL;
