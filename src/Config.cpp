@@ -97,7 +97,7 @@ bool CConfig::LoadFromFile(const TCHAR* file)
     if (fp == NULL)
         return false;
 
-    TCHAR line[4096];
+    TCHAR line[8192];
     while (fgetws(line, _countof(line), fp))
     {
         // Comment line
