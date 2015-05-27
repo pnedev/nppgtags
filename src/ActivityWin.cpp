@@ -86,8 +86,8 @@ HWND ActivityWin::Create(HWND hOwner, HANDLE hTerminate,
     if (!hTerminate)
         return NULL;
 
-    ActivityWin* aw = new ActivityWin(hTerminate, showDelay_ms);
-    HWND hWnd = aw->composeWindow(hOwner, width, text);
+    ActivityWin* aw = new ActivityWin(hOwner, hTerminate, showDelay_ms);
+    HWND hWnd = aw->composeWindow(width, text);
     if (hWnd == NULL)
     {
         delete aw;
@@ -101,9 +101,9 @@ HWND ActivityWin::Create(HWND hOwner, HANDLE hTerminate,
 /**
  *  \brief
  */
-ActivityWin::ActivityWin(HANDLE hTerminate, int showDelay_ms) :
-        _hTerm(hTerminate), _hFont(NULL), _hWnd(NULL), _timerId(0),
-        _showDelay_ms(showDelay_ms)
+ActivityWin::ActivityWin(HWND hOwner, HANDLE hTerminate, int showDelay_ms) :
+        _hTerm(hTerminate), _hFont(NULL), _hOwner(hOwner), _hWnd(NULL),
+        _timerId(0), _showDelay_ms(showDelay_ms)
 {
     _initRefCount = InterlockedIncrement(&RefCount);
 }
@@ -129,12 +129,10 @@ ActivityWin::~ActivityWin()
  */
 void ActivityWin::adjustSizeAndPos(int width, int height)
 {
-    HWND hOwner = GetParent(_hWnd);
-    if (hOwner == NULL)
-        hOwner = GetDesktopWindow();
+    HWND hBias = _hOwner ? _hOwner : GetDesktopWindow();
 
     RECT maxWin;
-    GetWindowRect(hOwner, &maxWin);
+    GetWindowRect(hBias, &maxWin);
 
     RECT win = {0};
     win.right = width;
@@ -161,12 +159,12 @@ void ActivityWin::adjustSizeAndPos(int width, int height)
 /**
  *  \brief
  */
-HWND ActivityWin::composeWindow(HWND hOwner, int width, const TCHAR* text)
+HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 {
     _hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            hOwner, NULL, HMod, (LPVOID)this);
+            _hOwner, NULL, HMod, (LPVOID)this);
     if (_hWnd == NULL)
         return NULL;
 
@@ -226,9 +224,8 @@ void ActivityWin::showWindow()
 {
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
-    HWND hOwner = GetParent(_hWnd);
-    if (hOwner)
-        SetFocus(hOwner);
+    if (_hOwner)
+        SetFocus(_hOwner);
 }
 
 

@@ -57,17 +57,18 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
 
-    ActivityWin(HANDLE hTerminate, int showDelay_ms);
+    ActivityWin(HWND hOwner, HANDLE hTerminate, int showDelay_ms);
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 
     void adjustSizeAndPos(int width, int height);
-    HWND composeWindow(HWND hOwner, int width, const TCHAR* text);
+    HWND composeWindow(int width, const TCHAR* text);
     void showWindow();
     void onTimer();
 
     HANDLE      _hTerm;
     HFONT       _hFont;
+    HWND        _hOwner;
     HWND        _hWnd;
     HWND        _hBtn;
     UINT_PTR    _timerId;

@@ -92,7 +92,8 @@ bool CConfig::LoadFromFile(const TCHAR* file)
             return true;
     }
 
-    FILE* fp = _tfopen(cfgFile.C_str(), _T("rt"));
+    FILE* fp;
+    _tfopen_s(&fp, cfgFile.C_str(), _T("rt"));
     if (fp == NULL)
         return false;
 
@@ -159,7 +160,8 @@ bool CConfig::SaveToFile(const TCHAR* file) const
     if (file == NULL)
         GetDefaultCfgFile(cfgFile);
 
-    FILE* fp = _tfopen(cfgFile.C_str(), _T("wt"));
+    FILE* fp;
+    _tfopen_s(&fp, cfgFile.C_str(), _T("wt"));
     if (fp == NULL)
         return false;
 
