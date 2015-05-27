@@ -455,8 +455,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
                                     _tcsstr(&buf, libraryPath.C_str()); ptr;
                                     ptr = _tcsstr(ptr, libraryPath.C_str()))
                             {
-                                if (ptr[libLen] == 0 ||
-                                        ptr[libLen] == _T(';'))
+                                if (ptr[libLen] == 0 || ptr[libLen] == _T(';'))
                                 {
                                     found = true;
                                     break;

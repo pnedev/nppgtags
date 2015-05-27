@@ -24,6 +24,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <tchar.h>
 #include <process.h>
 #include "INpp.h"
 #include "Config.h"
@@ -110,37 +111,6 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
     CmdEngine* engine = new CmdEngine(cmd, complCB);
     cmd->Status(RUN_ERROR);
 
-    engine->_hTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (engine->_hTerminate == NULL)
-    {
-        delete engine;
-        return false;
-    }
-
-    {
-        TCHAR header[512];
-        if (cmd->_id == CREATE_DATABASE)
-            _sntprintf_s(header, _countof(header), _TRUNCATE,
-                    _T("%s - \"%s\""), cmd->Name(), cmd->DbPath());
-        else if (cmd->_id == VERSION)
-            _sntprintf_s(header, _countof(header), _TRUNCATE,
-                    _T("%s"), cmd->Name());
-        else
-            _sntprintf_s(header, _countof(header), _TRUNCATE,
-                    _T("%s - \"%s\""), cmd->Name(), cmd->Tag());
-
-        engine->_hAW = ActivityWin::Create(INpp::Get().GetSciHandle(),
-                engine->_hTerminate, 600, header,
-                (cmd->_id == CREATE_DATABASE || cmd->_id == UPDATE_SINGLE) ?
-                0 : 300);
-    }
-
-    if (engine->_hAW == NULL)
-    {
-        delete engine;
-        return false;
-    }
-
     engine->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
             (void*)engine, 0, NULL);
     if (engine->_hThread == NULL)
@@ -152,31 +122,32 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
     if (complCB)
         return true;
 
-    // No callback - wait for command to complete
+    // If no callback is given then wait until command is ready
     // Since this blocks the UI thread we need a message pump to
-    // handle user input
+    // handle N++ window messages
     while (MsgWaitForMultipleObjects(1, &engine->_hThread, FALSE, INFINITE,
             QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
     {
         MSG msg;
 
-        // Handle all command activity window messages
-        while (PeekMessage(&msg, engine->_hAW, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        // Flush all other windows user input - behave like modal window
+        // Flush all N++ user input
         while (PeekMessage(&msg, NULL, 0, 0, PM_QS_INPUT | PM_REMOVE));
 
-        // Handle all posted messages
+        // Handle all other messages
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
+            if (msg.message == WM_QUIT)
+                break;
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+
+        // N++ thread quit?!?
+        if (msg.message == WM_QUIT)
+            break;
     }
+
+    delete engine;
 
     return (cmd->Status() == OK ? true : false);
 }
@@ -187,12 +158,6 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
  */
 CmdEngine::~CmdEngine()
 {
-    if (_hAW)
-        SendMessage(_hAW, WM_CLOSE, 0, 0);
-
-    if (_hTerminate)
-        CloseHandle(_hTerminate);
-
     if (_complCB)
         _complCB(_cmd);
 
@@ -209,7 +174,8 @@ unsigned __stdcall CmdEngine::threadFunc(void* data)
     CmdEngine* engine = static_cast<CmdEngine*>(data);
     unsigned r = engine->runProcess();
 
-    delete engine;
+    if (engine->_complCB)
+        delete engine;
 
     return r;
 }
@@ -298,6 +264,17 @@ unsigned CmdEngine::runProcess()
     TCHAR buf[2048];
     composeCmd(buf, _countof(buf));
 
+    TCHAR header[512];
+    if (_cmd->_id == CREATE_DATABASE)
+        _sntprintf_s(header, _countof(header), _TRUNCATE,
+                _T("%s - \"%s\""), _cmd->Name(), _cmd->DbPath());
+    else if (_cmd->_id == VERSION)
+        _sntprintf_s(header, _countof(header), _TRUNCATE,
+                _T("%s"), _cmd->Name());
+    else
+        _sntprintf_s(header, _countof(header), _TRUNCATE,
+                _T("%s - \"%s\""), _cmd->Name(), _cmd->Tag());
+
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* env = NULL;
     const TCHAR* currentDir = _cmd->DbPath();
@@ -342,19 +319,16 @@ unsigned CmdEngine::runProcess()
         return 1;
     }
 
-    const HANDLE hArray[] = { pi.hProcess, _hTerminate };
-    DWORD r = WaitForMultipleObjects(2, hArray, FALSE, INFINITE);
+    // Display activity window and block until process is ready or
+    // user has issued cancel command
+    bool cancelled = ActivityWin::Show(pi.hProcess, 600, header,
+            (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
+            0 : 300);
     endProcess(pi);
 
-    if (hArray[r - WAIT_OBJECT_0] == _hTerminate)
+    if (cancelled)
     {
         _cmd->_status = CANCELLED;
-        return 1;
-    }
-
-    if (hArray[r - WAIT_OBJECT_0] != pi.hProcess)
-    {
-        _cmd->_status = RUN_ERROR;
         return 1;
     }
 
@@ -384,9 +358,6 @@ void CmdEngine::endProcess(PROCESS_INFORMATION& pi)
     GetExitCodeProcess(pi.hProcess, &r);
     if (r == STILL_ACTIVE)
         TerminateProcess(pi.hProcess, 0);
-
-    SendMessage(_hAW, WM_CLOSE, 0, 0);
-    _hAW = NULL;
 
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);

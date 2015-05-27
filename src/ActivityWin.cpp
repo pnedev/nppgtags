@@ -27,8 +27,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <windowsx.h>
+#include <tchar.h>
 #include <commctrl.h>
+#include "INpp.h"
 #include "GTags.h"
 #include "ActivityWin.h"
 
@@ -80,30 +81,53 @@ void ActivityWin::Unregister()
 /**
  *  \brief
  */
-HWND ActivityWin::Create(HWND hOwner, HANDLE hTerminate,
-        int width, const TCHAR* text, int showDelay_ms)
+bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text,
+        int showAfter_ms)
 {
-    if (!hTerminate)
-        return NULL;
+    if (!hActivity)
+        return false;
 
-    ActivityWin* aw = new ActivityWin(hOwner, hTerminate, showDelay_ms);
-    HWND hWnd = aw->composeWindow(width, text);
+    if (WaitForSingleObject(hActivity, showAfter_ms) == WAIT_OBJECT_0)
+        return false;
+
+    ActivityWin aw;
+    HWND hWnd = aw.composeWindow(width, text);
     if (hWnd == NULL)
+        return true;
+
+    while (1)
     {
-        delete aw;
-        return NULL;
+        // Wait for window event or activity signal
+        DWORD r = MsgWaitForMultipleObjects(1, &hActivity, FALSE, INFINITE,
+                QS_ALLINPUT);
+
+        // Post close message if event is not related to the window
+        if (r != WAIT_OBJECT_0 + 1)
+            PostMessage(hWnd, WM_CLOSE, 0, 0);
+
+        // Handle all window messages
+        MSG msg;
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT)
+                break;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        // Window closed - exit
+        if (msg.message == WM_QUIT)
+            break;
     }
 
-    return hWnd;
+    return aw._isCancelled;
 }
 
 
 /**
  *  \brief
  */
-ActivityWin::ActivityWin(HWND hOwner, HANDLE hTerminate, int showDelay_ms) :
-        _hTerm(hTerminate), _hFont(NULL), _hOwner(hOwner), _hWnd(NULL),
-        _timerId(0), _showDelay_ms(showDelay_ms)
+ActivityWin::ActivityWin() : _hFont(NULL), _isCancelled(false)
 {
     _initRefCount = InterlockedIncrement(&RefCount);
 }
@@ -114,9 +138,6 @@ ActivityWin::ActivityWin(HWND hOwner, HANDLE hTerminate, int showDelay_ms) :
  */
 ActivityWin::~ActivityWin()
 {
-    if (_timerId)
-        KillTimer(_hWnd, _timerId);
-
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -127,9 +148,9 @@ ActivityWin::~ActivityWin()
 /**
  *  \brief
  */
-void ActivityWin::adjustSizeAndPos(int width, int height)
+void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
 {
-    HWND hBias = _hOwner ? _hOwner : GetDesktopWindow();
+    HWND hBias = INpp::Get().GetSciHandle();
 
     RECT maxWin;
     GetWindowRect(hBias, &maxWin);
@@ -138,7 +159,7 @@ void ActivityWin::adjustSizeAndPos(int width, int height)
     win.right = width;
     win.bottom = height;
 
-    AdjustWindowRect(&win, GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
+    AdjustWindowRect(&win, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE);
 
     width = win.right - win.left;
     height = win.bottom - win.top;
@@ -151,7 +172,7 @@ void ActivityWin::adjustSizeAndPos(int width, int height)
     win.top = maxWin.bottom - (_initRefCount * height);
     win.bottom = win.top + height;
 
-    MoveWindow(_hWnd, win.left, win.top,
+    MoveWindow(hWnd, win.left, win.top,
             win.right - win.left, win.bottom - win.top, TRUE);
 }
 
@@ -161,16 +182,17 @@ void ActivityWin::adjustSizeAndPos(int width, int height)
  */
 HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 {
-    _hWnd = CreateWindow(cClassName, NULL,
+    HWND hOwner = INpp::Get().GetHandle();
+    HWND hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            _hOwner, NULL, HMod, (LPVOID)this);
-    if (_hWnd == NULL)
+            hOwner, NULL, HMod, (LPVOID)this);
+    if (hWnd == NULL)
         return NULL;
 
     HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
-            0, 0, 0, 0, _hWnd, NULL, HMod, NULL);
+            0, 0, 0, 0, hWnd, NULL, HMod, NULL);
 
     HDC hdc = GetWindowDC(hWndTxt);
     _hFont = CreateFont(
@@ -186,10 +208,10 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     ReleaseDC(hWndTxt, hdc);
 
     int textHeight = tm.tmHeight;
-    adjustSizeAndPos(width, textHeight + 25);
+    adjustSizeAndPos(hWnd, width, textHeight + 25);
 
     RECT win;
-    GetClientRect(_hWnd, &win);
+    GetClientRect(hWnd, &win);
     width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -200,52 +222,35 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, NULL,
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
-            _hWnd, NULL, HMod, NULL);
+            hWnd, NULL, HMod, NULL);
     SendMessage(hPBar, PBM_SETMARQUEE, (WPARAM)TRUE, (LPARAM)50);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
-            width - 85, (height - 25) / 2, 80, 25, _hWnd,
+            width - 85, (height - 25) / 2, 80, 25, hWnd,
             NULL, HMod, NULL);
 
-    if (_showDelay_ms)
-        _timerId = SetTimer(_hWnd, 0, _showDelay_ms, NULL);
-    else
-        showWindow();
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    UpdateWindow(hWnd);
+    SetFocus(INpp::Get().GetSciHandle());
 
-    return _hWnd;
+    return hWnd;
 }
 
 
 /**
  *  \brief
  */
-void ActivityWin::showWindow()
-{
-    ShowWindow(_hWnd, SW_SHOWNORMAL);
-    UpdateWindow(_hWnd);
-    if (_hOwner)
-        SetFocus(_hOwner);
-}
-
-
-/**
- *  \brief
- */
-void ActivityWin::onTimer()
+void ActivityWin::onResize(HWND hWnd)
 {
     int refCount = (int)RefCount;
     if (_initRefCount > refCount)
     {
         _initRefCount = refCount;
         RECT win;
-        GetClientRect(_hWnd, &win);
-        adjustSizeAndPos(win.right - win.left, win.bottom - win.top);
+        GetClientRect(hWnd, &win);
+        adjustSizeAndPos(hWnd, win.right - win.left, win.bottom - win.top);
     }
-
-    KillTimer(_hWnd, _timerId);
-    _timerId = 0;
-    showWindow();
 }
 
 
@@ -274,27 +279,20 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg,
             SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
         return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
-        case WM_TIMER:
-            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-            aw->onTimer();
-        return 0;
-
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
                         (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
                 EnableWindow(aw->_hBtn, FALSE);
-                SetEvent(aw->_hTerm);
+                aw->_isCancelled = true;
+                SendMessage(hWnd, WM_CLOSE, 0, 0);
                 return 0;
             }
         break;
 
         case WM_DESTROY:
-            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-            delete aw;
+            PostQuitMessage(0);
         return 0;
     }
 

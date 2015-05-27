@@ -43,8 +43,8 @@ public:
     static void Register();
     static void Unregister();
 
-    static HWND Create(HWND hOwner, HANDLE hTerminate, int width,
-            const TCHAR *text, int showDelay_ms = 0);
+    static bool Show(HANDLE hActivity, int width, const TCHAR *text,
+            int showAfter_ms);
 
 private:
     static const TCHAR      cClassName[];
@@ -57,23 +57,18 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
             WPARAM wParam, LPARAM lParam);
 
-    ActivityWin(HWND hOwner, HANDLE hTerminate, int showDelay_ms);
+    ActivityWin();
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 
-    void adjustSizeAndPos(int width, int height);
+    void adjustSizeAndPos(HWND hWnd, int width, int height);
     HWND composeWindow(int width, const TCHAR* text);
-    void showWindow();
-    void onTimer();
+    void onResize(HWND hWnd);
 
-    HANDLE      _hTerm;
-    HFONT       _hFont;
-    HWND        _hOwner;
-    HWND        _hWnd;
-    HWND        _hBtn;
-    UINT_PTR    _timerId;
-    int         _initRefCount;
-    int         _showDelay_ms;
+    HFONT   _hFont;
+    HWND    _hBtn;
+    int     _initRefCount;
+    bool    _isCancelled;
 };
 
 } // namespace GTags
