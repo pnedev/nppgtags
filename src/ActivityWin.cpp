@@ -182,11 +182,10 @@ void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
  */
 HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 {
-    HWND hOwner = INpp::Get().GetHandle();
     HWND hWnd = CreateWindow(cClassName, NULL,
             WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            hOwner, NULL, HMod, (LPVOID)this);
+            INpp::Get().GetHandle(), NULL, HMod, (LPVOID)this);
     if (hWnd == NULL)
         return NULL;
 
@@ -274,6 +273,12 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg,
                     (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             SetFocus(aw->_hBtn);
         return 0;
+
+        case WM_PAINT:
+            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
+                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            aw->onResize(hWnd);
+        break;
 
         case WM_CTLCOLORSTATIC:
             SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
