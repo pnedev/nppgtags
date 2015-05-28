@@ -507,7 +507,12 @@ void ResultWin::configScintilla()
     sendSci(SCI_SETCARETLINEVISIBLEALWAYS, true);
     sendSci(SCI_SETHOTSPOTACTIVEUNDERLINE, false);
 
-    sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_DOCUMENT);
+    sendSci(SCI_SETWRAPMODE, SC_WRAP_WORD);
+    sendSci(SCI_SETWRAPVISUALFLAGS, SC_WRAPVISUALFLAG_START);
+    sendSci(SCI_SETWRAPVISUALFLAGSLOCATION, SC_WRAPVISUALFLAGLOC_DEFAULT);
+    sendSci(SCI_SETWRAPINDENTMODE, SC_WRAPINDENT_FIXED);
+    sendSci(SCI_SETWRAPSTARTINDENT, 24);
+    sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_CARET);
 
     // Implement lexer in the container
     sendSci(SCI_SETLEXER, 0);
@@ -1051,18 +1056,39 @@ bool ResultWin::onKeyPress(WORD keyCode)
 
     switch (keyCode)
     {
-        case VK_ADD:
-            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-            if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
-                toggleFolding(lineNum);
+        case VK_UP:
+            if (--lineNum >= 0)
+            {
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) &
+                        SC_FOLDLEVELHEADERFLAG))
+                {
+                    int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
+                        lineNum = foldLine;
+                }
+
+                sendSci(SCI_GOTOLINE, lineNum);
+            }
         break;
 
-        case VK_SUBTRACT:
-            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-            if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
-                toggleFolding(lineNum);
+        case VK_DOWN:
+            if (++lineNum < sendSci(SCI_GETLINECOUNT))
+            {
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) &
+                        SC_FOLDLEVELHEADERFLAG))
+                {
+                    int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
+                    {
+                        int nextFold = sendSci(SCI_GETLASTCHILD, foldLine,
+                                sendSci(SCI_GETFOLDLEVEL, foldLine)) + 1;
+                        lineNum = (nextFold < sendSci(SCI_GETLINECOUNT)) ?
+                                nextFold : foldLine;
+                    }
+                }
+
+                sendSci(SCI_GOTOLINE, lineNum);
+            }
         break;
 
         case VK_LEFT:
@@ -1095,6 +1121,32 @@ bool ResultWin::onKeyPress(WORD keyCode)
                 }
             }
         }
+        break;
+
+        case VK_PRIOR:
+            sendSci(SCI_LINESCROLL, 0, -sendSci(SCI_LINESONSCREEN));
+            sendSci(SCI_GOTOLINE, sendSci(SCI_DOCLINEFROMVISIBLE,
+                    sendSci(SCI_GETFIRSTVISIBLELINE)));
+        break;
+
+        case VK_NEXT:
+            sendSci(SCI_LINESCROLL, 0, sendSci(SCI_LINESONSCREEN));
+            sendSci(SCI_GOTOLINE, sendSci(SCI_DOCLINEFROMVISIBLE,
+                    sendSci(SCI_GETFIRSTVISIBLELINE)));
+        break;
+
+        case VK_ADD:
+            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+            if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
+                toggleFolding(lineNum);
+        break;
+
+        case VK_SUBTRACT:
+            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+            if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
+                toggleFolding(lineNum);
         break;
 
         default:
