@@ -1124,15 +1124,32 @@ bool ResultWin::onKeyPress(WORD keyCode)
         break;
 
         case VK_PRIOR:
+        {
+            int firstVisibleLine = sendSci(SCI_DOCLINEFROMVISIBLE,
+                    sendSci(SCI_GETFIRSTVISIBLELINE));
             sendSci(SCI_LINESCROLL, 0, -sendSci(SCI_LINESONSCREEN));
-            sendSci(SCI_GOTOLINE, sendSci(SCI_DOCLINEFROMVISIBLE,
-                    sendSci(SCI_GETFIRSTVISIBLELINE)));
+            int newFirstVisible = sendSci(SCI_DOCLINEFROMVISIBLE,
+                        sendSci(SCI_GETFIRSTVISIBLELINE));
+            if (newFirstVisible != firstVisibleLine)
+                sendSci(SCI_GOTOLINE, newFirstVisible);
+            else
+                sendSci(SCI_GOTOLINE, firstVisibleLine);
+        }
         break;
 
         case VK_NEXT:
+        {
+            int firstVisibleLine = sendSci(SCI_DOCLINEFROMVISIBLE,
+                    sendSci(SCI_GETFIRSTVISIBLELINE));
             sendSci(SCI_LINESCROLL, 0, sendSci(SCI_LINESONSCREEN));
-            sendSci(SCI_GOTOLINE, sendSci(SCI_DOCLINEFROMVISIBLE,
-                    sendSci(SCI_GETFIRSTVISIBLELINE)));
+            int newFirstVisible = sendSci(SCI_DOCLINEFROMVISIBLE,
+                        sendSci(SCI_GETFIRSTVISIBLELINE));
+            if (newFirstVisible != firstVisibleLine)
+                sendSci(SCI_GOTOLINE, newFirstVisible);
+            else
+                sendSci(SCI_GOTOLINE, firstVisibleLine +
+                        sendSci(SCI_LINESONSCREEN) - 1);
+        }
         break;
 
         case VK_ADD:
