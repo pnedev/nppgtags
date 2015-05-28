@@ -79,6 +79,8 @@ private:
 
     static const TCHAR* cParsers[PARSER_LIST_END];
 
+    static const TCHAR cInfo[];
+
     static const TCHAR cParserKey[];
     static const TCHAR cAutoUpdateKey[];
     static const TCHAR cUseLibraryKey[];
