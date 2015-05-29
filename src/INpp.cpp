@@ -34,18 +34,16 @@ INpp INpp::Instance;
 long INpp::GetWord(char* buf, int bufSize, bool select) const
 {
     long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION,
-            (WPARAM)currPos, (LPARAM)true);
-    long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION,
-            (WPARAM)currPos, (LPARAM)true);
+    long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     long len = wordEnd - wordStart;
     if (len != 0)
     {
         if (select)
-            SendMessage(_hSC, SCI_SETSEL, (WPARAM)wordStart, (LPARAM)wordEnd);
+            SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
         else
-            SendMessage(_hSC, SCI_SETSEL, (WPARAM)wordEnd, (LPARAM)wordEnd);
+            SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
 
         if (bufSize > len)
         {
@@ -64,17 +62,35 @@ long INpp::GetWord(char* buf, int bufSize, bool select) const
 void INpp::ReplaceWord(const char* replText) const
 {
     long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION,
-            (WPARAM)currPos, (LPARAM)true);
-    long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION,
-            (WPARAM)currPos, (LPARAM)true);
+    long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
-    SendMessage(_hSC, SCI_SETTARGETSTART, (WPARAM)wordStart, 0);
-    SendMessage(_hSC, SCI_SETTARGETEND, (WPARAM)wordEnd, 0);
+    SendMessage(_hSC, SCI_SETTARGETSTART, wordStart, 0);
+    SendMessage(_hSC, SCI_SETTARGETEND, wordEnd, 0);
 
     SendMessage(_hSC, SCI_REPLACETARGET, (WPARAM)-1, (LPARAM)replText);
     wordEnd = wordStart + strlen(replText);
-    SendMessage(_hSC, SCI_SETSEL, (WPARAM)wordEnd, (LPARAM)wordEnd);
+    SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::SetView(long startPos, long endPos) const
+{
+    if (endPos == 0)
+        endPos = startPos;
+    long lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION, startPos, 0);
+    SendMessage(_hSC, SCI_ENSUREVISIBLE, lineNum, 0);
+
+    int linesOnScreen = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
+    lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0) -
+            linesOnScreen / 2;
+    if (lineNum < 0)
+        lineNum = 0;
+    SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, lineNum, 0);
+    SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
 }
 
 
@@ -103,27 +119,17 @@ bool INpp::SearchText(const char* text,
         searchFlags |= (SCFIND_REGEXP | SCFIND_POSIX);
 
     SendMessage(_hSC, SCI_SETSEARCHFLAGS, (WPARAM)searchFlags, 0);
-    SendMessage(_hSC, SCI_SETTARGETSTART, (WPARAM)*startPos, 0);
-    SendMessage(_hSC, SCI_SETTARGETEND, (WPARAM)*endPos, 0);
+    SendMessage(_hSC, SCI_SETTARGETSTART, *startPos, 0);
+    SendMessage(_hSC, SCI_SETTARGETEND, *endPos, 0);
 
-    SendMessage(_hSC, SCI_SETSEL, (WPARAM)*startPos, (LPARAM)*endPos);
-    if (SendMessage(_hSC, SCI_SEARCHINTARGET, strlen(text),
-            reinterpret_cast<LPARAM>(text)) < 0)
+    SendMessage(_hSC, SCI_SETSEL, *startPos, *endPos);
+    if (SendMessage(_hSC, SCI_SEARCHINTARGET, strlen(text), (LPARAM)text) < 0)
         return false;
 
     *startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
     *endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
 
-    long lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION,
-            (WPARAM)*startPos, 0);
-    SendMessage(_hSC, SCI_ENSUREVISIBLE, (WPARAM)lineNum, 0);
-
-    lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE,
-            (WPARAM)lineNum, 0) - 5;
-    if (lineNum < 0)
-        lineNum = 0;
-    SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, (WPARAM)lineNum, 0);
-    SendMessage(_hSC, SCI_SETSEL, (WPARAM)*startPos, (LPARAM)*endPos);
+    SetView(*startPos, *endPos);
 
     return true;
 }

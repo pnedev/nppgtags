@@ -54,13 +54,11 @@ private:
     struct Location
     {
         TCHAR   _filePath[MAX_PATH];
-        long    _firstVisibleLine;
         long    _posInFile;
 
         inline const Location& operator=(const Location& loc)
         {
             _posInFile = loc._posInFile;
-            _firstVisibleLine = loc._firstVisibleLine;
             _tcscpy_s(_filePath, MAX_PATH, loc._filePath);
             return loc;
         }

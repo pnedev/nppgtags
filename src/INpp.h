@@ -66,14 +66,13 @@ public:
 
     inline void SetPluginMenuFlag(int cmdId, bool enable) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_SETMENUITEMCHECK,
-                (WPARAM)cmdId, (LPARAM)enable);
+        SendMessage(_nppData._nppHandle, NPPM_SETMENUITEMCHECK, cmdId, enable);
     }
 
     inline HMENU GetPluginMenu() const
     {
         return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE,
-                (WPARAM)NPPPLUGINMENU, 0);
+                NPPPLUGINMENU, 0);
     }
 
     inline void RegisterWin(HWND hWnd) const
@@ -173,57 +172,57 @@ public:
 
     inline void GetFontName(int style, char* fontName, int size) const
     {
-        SendMessage(_hSC, SCI_STYLEGETFONT, (WPARAM)style,
+        SendMessage(_hSC, SCI_STYLEGETFONT, style,
                 (LPARAM)fontName);
     }
 
     inline int GetFontSize(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETSIZE, (WPARAM)style, 0);
+        return SendMessage(_hSC, SCI_STYLEGETSIZE, style, 0);
     }
 
     inline int GetForegroundColor(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETFORE, (WPARAM)style, 0);
+        return SendMessage(_hSC, SCI_STYLEGETFORE, style, 0);
     }
 
     inline int GetBackgroundColor(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETBACK, (WPARAM)style, 0);
+        return SendMessage(_hSC, SCI_STYLEGETBACK, style, 0);
     }
 
     inline int GetTextHeight() const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        currPos = SendMessage(_hSC, SCI_LINEFROMPOSITION, (WPARAM)currPos, 0);
-        return SendMessage(_hSC, SCI_TEXTHEIGHT, (WPARAM)currPos, 0);
+        currPos = SendMessage(_hSC, SCI_LINEFROMPOSITION, currPos, 0);
+        return SendMessage(_hSC, SCI_TEXTHEIGHT, currPos, 0);
     }
 
     inline void GetPointPos(int* x, int* y) const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        *x = SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, (LPARAM)currPos) + 2;
-        *y = SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, (LPARAM)currPos) + 2;
+        *x = SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, currPos) + 2;
+        *y = SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, currPos) + 2;
     }
 
     inline void GoToPos(long pos) const
     {
-        SendMessage(_hSC, SCI_GOTOPOS, (WPARAM)pos, 0);
+        SendMessage(_hSC, SCI_GOTOPOS, pos, 0);
     }
 
     inline void GoToLine(long line) const
     {
-        SendMessage(_hSC, SCI_GOTOLINE, (WPARAM)line, 0);
+        SendMessage(_hSC, SCI_GOTOLINE, line, 0);
     }
 
     inline long PositionFromLine(long line) const
     {
-        return SendMessage(_hSC, SCI_POSITIONFROMLINE, (WPARAM)line, 0);
+        return SendMessage(_hSC, SCI_POSITIONFROMLINE, line, 0);
     }
 
     inline long LineEndPosition(long line) const
     {
-        return SendMessage(_hSC, SCI_GETLINEENDPOSITION, (WPARAM)line, 0);
+        return SendMessage(_hSC, SCI_GETLINEENDPOSITION, line, 0);
     }
 
     inline int IsSelectionVertical() const
@@ -246,34 +245,29 @@ public:
 
     inline void SetSelection(long startPos, long endPos) const
     {
-        SendMessage(_hSC, SCI_SETSEL, (WPARAM)startPos, (LPARAM)endPos);
+        SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
     }
 
     inline void ClearSelection() const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        SendMessage(_hSC, SCI_SETSEL, (WPARAM)currPos, (LPARAM)currPos);
+        SendMessage(_hSC, SCI_SETSEL, currPos, currPos);
     }
 
-    inline void GetView(long* firstVisibleLine, long* pos) const
+    inline long GetPos() const
     {
-        *firstVisibleLine = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
-        *pos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        return SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     }
 
-    inline void SetView(long firstVisibleLine, long pos) const
-    {
-        SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, firstVisibleLine, 0);
-        SendMessage(_hSC, SCI_SETSEL, (WPARAM)pos, (LPARAM)pos);
-    }
+    void SetView(long startPos, long endPos = 0) const;
 
     inline long GetWordSize() const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
         long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION,
-                (WPARAM)currPos, (LPARAM)true);
+                currPos, true);
         long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION,
-                (WPARAM)currPos, (LPARAM)true);
+                currPos, true);
 
         return wordEnd - wordStart;
     }
@@ -291,12 +285,12 @@ public:
 
     inline char GetChar(long pos) const
     {
-        return (char)SendMessage(_hSC, SCI_GETCHARAT, (WPARAM)pos, 0);
+        return (char)SendMessage(_hSC, SCI_GETCHARAT, pos, 0);
     }
 
     inline void AddText(char* txt, int len) const
     {
-        SendMessage(_hSC, SCI_ADDTEXT, (WPARAM)len, (LPARAM)txt);
+        SendMessage(_hSC, SCI_ADDTEXT, len, (LPARAM)txt);
     }
 
 private:

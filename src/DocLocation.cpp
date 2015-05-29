@@ -72,7 +72,7 @@ void DocLocation::Push()
     Location loc;
     INpp& npp = INpp::Get();
     npp.GetFilePath(loc._filePath);
-    npp.GetView(&loc._firstVisibleLine, &loc._posInFile);
+    loc._posInFile = npp.GetPos();
 
     if (_locList.empty() || !(loc == _locList.back()))
         _locList.push_back(loc);
@@ -130,10 +130,10 @@ void DocLocation::swapView(Location& loc)
     INpp& npp = INpp::Get();
 
     npp.GetFilePath(newLoc._filePath);
-    npp.GetView(&newLoc._firstVisibleLine, &newLoc._posInFile);
+    newLoc._posInFile = npp.GetPos();
 
     npp.OpenFile(loc._filePath);
-    npp.SetView(loc._firstVisibleLine, loc._posInFile);
+    npp.SetView(loc._posInFile);
 
     loc = newLoc;
 }
