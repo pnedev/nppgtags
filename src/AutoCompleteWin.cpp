@@ -148,7 +148,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
             FF_DONTCARE | DEFAULT_PITCH, UIFontName);
     ReleaseDC(_hLVWnd, hdc);
     if (_hFont)
-        SendMessage(_hLVWnd, WM_SETFONT, (WPARAM) _hFont, (LPARAM) TRUE);
+        SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     ListView_SetExtendedListViewStyle(_hLVWnd,
             LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);

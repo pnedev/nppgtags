@@ -200,7 +200,7 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cFont);
     if (_hFont)
-        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
@@ -222,7 +222,7 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
             hWnd, NULL, HMod, NULL);
-    SendMessage(hPBar, PBM_SETMARQUEE, (WPARAM)TRUE, (LPARAM)50);
+    SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 50);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
@@ -231,7 +231,6 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 
     ShowWindow(hWnd, SW_SHOWNORMAL);
     UpdateWindow(hWnd);
-    SetFocus(INpp::Get().GetSciHandle());
 
     return hWnd;
 }

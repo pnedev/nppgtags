@@ -268,10 +268,10 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
-    SendMessage(_hLibDb, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
+    SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
 
     if (_hFont)
-        SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
@@ -281,20 +281,18 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     {
         EnableWindow(_hCreateDb, FALSE);
         Edit_Enable(_hLibDb, FALSE);
-        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0,
-                (LPARAM)GetSysColor(COLOR_BTNFACE));
+        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
     }
     else
     {
-        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0,
-                (LPARAM)GetSysColor(COLOR_WINDOW));
+        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
     }
 
     if (_hFont)
     {
-        SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
-        SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
-        SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
     Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ?
@@ -305,7 +303,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     for (unsigned i = 0; CConfig::Parser(i); i++)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)CConfig::Parser(i));
 
-    SendMessage(_hParser, CB_SETCURSEL, (WPARAM)_cfg->_parserIdx, 0);
+    SendMessage(_hParser, CB_SETCURSEL, _cfg->_parserIdx, 0);
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
             GetCurrentThreadId());
@@ -433,7 +431,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
                     EnableWindow(CW->_hCreateDb, en);
                     Edit_Enable(CW->_hLibDb, en);
                     SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0,
-                            (LPARAM)GetSysColor(color));
+                            GetSysColor(color));
                     return 0;
                 }
 

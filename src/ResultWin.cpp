@@ -433,7 +433,7 @@ void ResultWin::applyStyle()
     ReleaseDC(_hTab, hdc);
 
     if (_hFont)
-        SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);

@@ -250,15 +250,15 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             _hWnd, NULL, HMod, NULL);
 
     if (_hTxtFont)
-        SendMessage(_hSearch, WM_SETFONT, (WPARAM)_hTxtFont, (LPARAM)TRUE);
+        SendMessage(_hSearch, WM_SETFONT, (WPARAM)_hTxtFont, TRUE);
 
     if (_cmd->Tag())
         ComboBox_SetText(_hSearch, _cmd->Tag());
 
     if (_hBtnFont)
     {
-        SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, (LPARAM)TRUE);
-        SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, (LPARAM)TRUE);
+        SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
     Button_SetCheck(_hRE, _cmd->RegExp() ? BST_CHECKED : BST_UNCHECKED);

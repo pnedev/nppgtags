@@ -202,8 +202,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
             win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    SendMessage(hEdit, EM_SETBKGNDCOLOR, 0,
-            (LPARAM)GetSysColor(cBackgroundColor));
+    SendMessage(hEdit, EM_SETBKGNDCOLOR, 0, GetSysColor(cBackgroundColor));
 
     CHARFORMAT fmt  = {0};
     fmt.cbSize      = sizeof(fmt);
@@ -211,7 +210,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
-    SendMessage(hEdit, EM_SETCHARFORMAT, (WPARAM)SCF_ALL, (LPARAM)&fmt);
+    SendMessage(hEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
 
     HDC hdc = GetWindowDC(hEdit);
     _hFont = CreateFont(
@@ -221,12 +220,12 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
             FF_DONTCARE | DEFAULT_PITCH, cFont);
     ReleaseDC(hEdit, hdc);
     if (_hFont)
-        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, (LPARAM)TRUE);
+        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     DWORD events =
             ENM_KEYEVENTS | ENM_MOUSEEVENTS | ENM_REQUESTRESIZE | ENM_LINK;
-    SendMessage(hEdit, EM_SETEVENTMASK, 0, (LPARAM)events);
-    SendMessage(hEdit, EM_AUTOURLDETECT, (WPARAM)TRUE, 0);
+    SendMessage(hEdit, EM_SETEVENTMASK, 0, events);
+    SendMessage(hEdit, EM_AUTOURLDETECT, TRUE, 0);
 
     TCHAR text[2048];
     _sntprintf_s(text, _countof(text), _TRUNCATE, cAbout,
