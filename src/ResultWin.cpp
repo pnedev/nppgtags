@@ -416,6 +416,11 @@ void ResultWin::applyStyle()
     int backColor = npp.GetBackgroundColor(STYLE_DEFAULT);
     int lineNumColor = npp.GetForegroundColor(STYLE_LINENUMBER);
 
+    COLORREF fileForeColor = RGB(GetRValue(backColor) ^ 0xFF,
+            GetGValue(backColor) ^ 0x7F, GetBValue(backColor) ^ 0x7F);
+    COLORREF findForeColor = RGB(GetRValue(backColor) ^ 0x1C,
+            GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
+
     if (_hFont)
         DeleteObject(_hFont);
 
@@ -437,9 +442,9 @@ void ResultWin::applyStyle()
     setStyle(SCE_GTAGS_HEADER, foreColor, caretLineBackColor, true);
     setStyle(SCE_GTAGS_PROJECT_PATH,
             foreColor, caretLineBackColor, true, true);
-    setStyle(SCE_GTAGS_FILE, RGB(0,128,128), backColor, true);
+    setStyle(SCE_GTAGS_FILE, fileForeColor, backColor, true);
     setStyle(SCE_GTAGS_LINE_NUM, lineNumColor, backColor, false, true);
-    setStyle(SCE_GTAGS_WORD2SEARCH, RGB(225,0,0), backColor, true);
+    setStyle(SCE_GTAGS_WORD2SEARCH, findForeColor, backColor, true);
 
     sendSci(SCI_SETCARETLINEBACK, caretLineBackColor);
     sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
@@ -1125,30 +1130,48 @@ bool ResultWin::onKeyPress(WORD keyCode)
 
         case VK_PRIOR:
         {
+            int linesOnScreen = sendSci(SCI_LINESONSCREEN);
             int firstVisibleLine = sendSci(SCI_DOCLINEFROMVISIBLE,
                     sendSci(SCI_GETFIRSTVISIBLELINE));
-            sendSci(SCI_LINESCROLL, 0, -sendSci(SCI_LINESONSCREEN));
-            int newFirstVisible = sendSci(SCI_DOCLINEFROMVISIBLE,
-                        sendSci(SCI_GETFIRSTVISIBLELINE));
-            if (newFirstVisible != firstVisibleLine)
-                sendSci(SCI_GOTOLINE, newFirstVisible);
+            if (lineNum - firstVisibleLine > linesOnScreen ||
+                    lineNum < firstVisibleLine)
+            {
+                sendSci(SCI_GOTOLINE, lineNum);
+            }
             else
-                sendSci(SCI_GOTOLINE, firstVisibleLine);
+            {
+                sendSci(SCI_LINESCROLL, 0, -linesOnScreen);
+                int newFirstVisible = sendSci(SCI_DOCLINEFROMVISIBLE,
+                            sendSci(SCI_GETFIRSTVISIBLELINE));
+                if (newFirstVisible < firstVisibleLine)
+                    sendSci(SCI_GOTOLINE, newFirstVisible);
+                else
+                    sendSci(SCI_GOTOLINE, firstVisibleLine);
+            }
         }
         break;
 
         case VK_NEXT:
         {
+            int linesOnScreen = sendSci(SCI_LINESONSCREEN);
             int firstVisibleLine = sendSci(SCI_DOCLINEFROMVISIBLE,
                     sendSci(SCI_GETFIRSTVISIBLELINE));
-            sendSci(SCI_LINESCROLL, 0, sendSci(SCI_LINESONSCREEN));
-            int newFirstVisible = sendSci(SCI_DOCLINEFROMVISIBLE,
-                        sendSci(SCI_GETFIRSTVISIBLELINE));
-            if (newFirstVisible != firstVisibleLine)
-                sendSci(SCI_GOTOLINE, newFirstVisible);
+            if (lineNum - firstVisibleLine > linesOnScreen ||
+                    lineNum < firstVisibleLine)
+            {
+                sendSci(SCI_GOTOLINE, lineNum);
+            }
             else
-                sendSci(SCI_GOTOLINE, firstVisibleLine +
-                        sendSci(SCI_LINESONSCREEN) - 1);
+            {
+                sendSci(SCI_LINESCROLL, 0, linesOnScreen);
+                int newFirstVisible = sendSci(SCI_DOCLINEFROMVISIBLE,
+                            sendSci(SCI_GETFIRSTVISIBLELINE));
+                if (newFirstVisible - firstVisibleLine > linesOnScreen)
+                    sendSci(SCI_GOTOLINE, newFirstVisible);
+                else
+                    sendSci(SCI_GOTOLINE,
+                            newFirstVisible + linesOnScreen - 1);
+            }
         }
         break;
 
