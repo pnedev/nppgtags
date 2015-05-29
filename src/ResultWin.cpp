@@ -1143,17 +1143,20 @@ bool ResultWin::onKeyPress(WORD keyCode)
             int firstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
             sendSci(SCI_LINESCROLL, 0, linesOnScreen);
             int newFirstVisible = sendSci(SCI_GETFIRSTVISIBLELINE);
+
             if (newFirstVisible - firstVisibleLine >= linesOnScreen)
             {
-                sendSci(SCI_GOTOLINE, sendSci(SCI_DOCLINEFROMVISIBLE,
-                        newFirstVisible));
+                lineNum = sendSci(SCI_DOCLINEFROMVISIBLE, newFirstVisible);
             }
             else
             {
-                lineNum = sendSci(SCI_DOCLINEFROMVISIBLE,
-                        newFirstVisible + linesOnScreen - 1);
-                sendSci(SCI_GOTOLINE, lineNum);
+                lineNum = sendSci(SCI_GETLINECOUNT) - 1;
+                int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
+                    lineNum = foldLine;
             }
+
+            sendSci(SCI_GOTOLINE, lineNum);
         }
         break;
 
