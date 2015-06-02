@@ -26,11 +26,15 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#include "SearchWin.h"
+#include <windows.h>
 #include <windowsx.h>
+#include <tchar.h>
 #include <commctrl.h>
+#define DEVELOPMENT
+#include "Common.h"
 #include "INpp.h"
 #include "CmdEngine.h"
+#include "SearchWin.h"
 
 
 namespace GTags
@@ -38,7 +42,7 @@ namespace GTags
 
 const TCHAR SearchWin::cClassName[] = _T("SearchWin");
 const TCHAR SearchWin::cBtnFont[]   = _T("Tahoma");
-const int SearchWin::cWidth         = 400;
+const int SearchWin::cWidth         = 500;
 
 
 SearchWin* SearchWin::SW = NULL;
@@ -244,8 +248,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             _hWnd, NULL, HMod, NULL);
 
     _hSearch = CreateWindowEx(0, WC_COMBOBOX, NULL,
-            WS_CHILD | WS_VISIBLE |
-            CBS_SIMPLE | CBS_HASSTRINGS | CBS_AUTOHSCROLL,
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL |
+            CBS_DROPDOWN | CBS_HASSTRINGS | CBS_AUTOHSCROLL,
             2, btnHeight + 10, win.right - win.left - 4, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
@@ -276,6 +280,81 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     UpdateWindow(_hWnd);
 
     return _hWnd;
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::startCompletion()
+{
+    TCHAR tag[cMaxTagLen];
+    ComboBox_GetText(_hSearch, tag, _countof(tag));
+
+    std::shared_ptr<Cmd>
+        cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag));
+
+    if (_cmd->Id() == FIND_FILE)
+    {
+        cmpl->Id(AUTOCOMPLETE_FILE);
+    }
+    else
+    {
+        CmdEngine::Run(cmpl);
+        cmpl->Id(AUTOCOMPLETE_SYMBOL);
+    }
+
+    CmdEngine::Run(cmpl);
+    endCompletion(cmpl);
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
+{
+    if (cmpl->Status() == OK && cmpl->Result())
+    {
+        SW->_suggestions(cmpl->ResultLen() + 1);
+        Tools::AtoW(&SW->_suggestions, SW->_suggestions.Size(),
+                cmpl->Result());
+        SW->fillSuggestions();
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::fillSuggestions()
+{
+    int len = ComboBox_GetTextLength(_hSearch);
+    TCHAR tag[cMaxTagLen];
+    ComboBox_GetText(_hSearch, tag, _countof(tag));
+
+    TCHAR* pTmp = NULL;
+    for (TCHAR* pToken = _tcstok_s(&_suggestions, _T("\n\r"), &pTmp);
+            pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+        ComboBox_AddString(_hSearch, pToken);
+
+    ComboBox_SetMinVisible(_hSearch, 10);
+    ComboBox_ShowDropdown(_hSearch, TRUE);
+    ComboBox_SetCurSel(_hSearch, -1);
+    ComboBox_SetText(_hSearch, tag);
+    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, len));
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::clearSuggestions()
+{
+    for (int count = ComboBox_GetCount(_hSearch); count >= 0; count--)
+        ComboBox_DeleteString(_hSearch, count);
+
+    ComboBox_ShowDropdown(_hSearch, FALSE);
 }
 
 
@@ -363,6 +442,23 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
                 {
                     SW->onOK();
                     return 0;
+                }
+            }
+            if (HIWORD(wParam) == CBN_EDITCHANGE)
+            {
+                int len = ComboBox_GetTextLength(SW->_hSearch);
+                int pos = HIWORD(SendMessage(SW->_hSearch,
+                        CB_GETEDITSEL, NULL, NULL));
+
+                if (SW->_suggestionOn && (len < 2 || pos < len))
+                {
+                    InterlockedDecrement(&SW->_suggestionOn);
+                    SW->clearSuggestions();
+                }
+                if (!SW->_suggestionOn && len >= 2)
+                {
+                    InterlockedIncrement(&SW->_suggestionOn);
+                    SW->startCompletion();
                 }
             }
         break;

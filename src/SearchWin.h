@@ -29,6 +29,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <memory>
+#include "Common.h"
 #include "GTags.h"
 #include "CmdEngine.h"
 
@@ -62,15 +63,25 @@ private:
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
+    static void endCompletion(const std::shared_ptr<Cmd>&);
+
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL), _cancelled(true) {}
+        _suggestionOn(0), _cmd(cmd), _complCB(complCB), _hKeyHook(NULL),
+        _cancelled(true) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
+    void startCompletion();
+
+    void fillSuggestions();
+    void clearSuggestions();
+
     void onOK();
 
     static SearchWin* SW;
+
+    volatile unsigned int _suggestionOn;
 
     std::shared_ptr<Cmd>    _cmd;
     CompletionCB const      _complCB;
@@ -84,6 +95,8 @@ private:
     HFONT                   _hBtnFont;
     HHOOK                   _hKeyHook;
     bool                    _cancelled;
+
+    CTcharArray             _suggestions;
 };
 
 } // namespace GTags
