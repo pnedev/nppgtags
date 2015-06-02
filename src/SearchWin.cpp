@@ -30,8 +30,6 @@
 #include <windowsx.h>
 #include <tchar.h>
 #include <commctrl.h>
-#define DEVELOPMENT
-#include "Common.h"
 #include "INpp.h"
 #include "CmdEngine.h"
 #include "SearchWin.h"
@@ -42,7 +40,8 @@ namespace GTags
 
 const TCHAR SearchWin::cClassName[] = _T("SearchWin");
 const TCHAR SearchWin::cBtnFont[]   = _T("Tahoma");
-const int SearchWin::cWidth         = 500;
+const int SearchWin::cWidth         = 420;
+const int SearchWin::cComplAfter    = 2;
 
 
 SearchWin* SearchWin::SW = NULL;
@@ -220,7 +219,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            cWidth, txtHeight + btnHeight + 12);
+            cWidth, txtHeight + btnHeight + 17);
     int width = win.right - win.left;
 
     _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(),
@@ -256,6 +255,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     if (_hTxtFont)
         SendMessage(_hSearch, WM_SETFONT, (WPARAM)_hTxtFont, TRUE);
 
+    ComboBox_SetMinVisible(_hSearch, 8);
+
     if (_cmd->Tag())
         ComboBox_SetText(_hSearch, _cmd->Tag());
 
@@ -288,11 +289,15 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
  */
 void SearchWin::startCompletion()
 {
+    if (Button_GetCheck(_hRE) == BST_CHECKED)
+        return;
+
     TCHAR tag[cMaxTagLen];
     ComboBox_GetText(_hSearch, tag, _countof(tag));
 
     std::shared_ptr<Cmd>
-        cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag));
+        cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag,
+                false, (Button_GetCheck(_hMC) == BST_CHECKED)));
 
     if (_cmd->Id() == FIND_FILE)
     {
@@ -316,45 +321,61 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 {
     if (cmpl->Status() == OK && cmpl->Result())
     {
-        SW->_suggestions(cmpl->ResultLen() + 1);
-        Tools::AtoW(&SW->_suggestions, SW->_suggestions.Size(),
+        SW->_complData(cmpl->ResultLen() + 1);
+        Tools::AtoW(&SW->_complData, SW->_complData.Size(),
                 cmpl->Result());
-        SW->fillSuggestions();
+        SW->fillComplList();
     }
+
+    SW->_complListOn = true;
 }
 
 
 /**
  *  \brief
  */
-void SearchWin::fillSuggestions()
+void SearchWin::fillComplList()
 {
-    int len = ComboBox_GetTextLength(_hSearch);
+    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
     TCHAR tag[cMaxTagLen];
     ComboBox_GetText(_hSearch, tag, _countof(tag));
 
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(&_suggestions, _T("\n\r"), &pTmp);
+    for (TCHAR* pToken = _tcstok_s(&_complData, _T("\n\r"), &pTmp);
             pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
         ComboBox_AddString(_hSearch, pToken);
 
-    ComboBox_SetMinVisible(_hSearch, 10);
     ComboBox_ShowDropdown(_hSearch, TRUE);
-    ComboBox_SetCurSel(_hSearch, -1);
     ComboBox_SetText(_hSearch, tag);
-    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, len));
+    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 }
 
 
 /**
  *  \brief
  */
-void SearchWin::clearSuggestions()
+void SearchWin::clearComplList()
 {
     for (int count = ComboBox_GetCount(_hSearch); count >= 0; count--)
         ComboBox_DeleteString(_hSearch, count);
 
     ComboBox_ShowDropdown(_hSearch, FALSE);
+    _complListOn = false;
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::onEditChange()
+{
+    int len = ComboBox_GetTextLength(_hSearch);
+    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+
+    if (_complListOn && (len < cComplAfter || pos < len))
+        clearComplList();
+    if (!_complListOn && len >= cComplAfter)
+        startCompletion();
 }
 
 
@@ -369,8 +390,8 @@ void SearchWin::onOK()
         TCHAR tag[cMaxTagLen];
         ComboBox_GetText(_hSearch, tag, _countof(tag));
 
-        bool re = (Button_GetCheck(_hRE) == BST_CHECKED) ? true : false;
-        bool mc = (Button_GetCheck(_hMC) == BST_CHECKED) ? true : false;
+        bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
+        bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
 
         _cmd->Tag(tag);
         _cmd->RegExp(re);
@@ -431,11 +452,6 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
         return 0;
 
         case WM_COMMAND:
-            if (HIWORD(wParam) == EN_KILLFOCUS)
-            {
-                DestroyCaret();
-                return 0;
-            }
             if (HIWORD(wParam) == BN_CLICKED)
             {
                 if ((HWND)lParam == SW->_hOK)
@@ -443,29 +459,20 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
                     SW->onOK();
                     return 0;
                 }
+                else if (SW->_complListOn)
+                {
+                    SW->clearComplList();
+                    SW->onEditChange();
+                }
             }
             if (HIWORD(wParam) == CBN_EDITCHANGE)
             {
-                int len = ComboBox_GetTextLength(SW->_hSearch);
-                int pos = HIWORD(SendMessage(SW->_hSearch,
-                        CB_GETEDITSEL, NULL, NULL));
-
-                if (SW->_suggestionOn && (len < 2 || pos < len))
-                {
-                    InterlockedDecrement(&SW->_suggestionOn);
-                    SW->clearSuggestions();
-                }
-                if (!SW->_suggestionOn && len >= 2)
-                {
-                    InterlockedIncrement(&SW->_suggestionOn);
-                    SW->startCompletion();
-                }
+                SW->onEditChange();
             }
         break;
 
         case WM_DESTROY:
         {
-            DestroyCaret();
             delete SW;
             SW = NULL;
         }

@@ -55,6 +55,7 @@ private:
     static const TCHAR  cClassName[];
     static const TCHAR  cBtnFont[];
     static const int    cWidth;
+    static const int    cComplAfter;
 
     static LRESULT CALLBACK keyHookProc(int code,
             WPARAM wParam, LPARAM lParam);
@@ -66,37 +67,36 @@ private:
     static void endCompletion(const std::shared_ptr<Cmd>&);
 
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _suggestionOn(0), _cmd(cmd), _complCB(complCB), _hKeyHook(NULL),
-        _cancelled(true) {}
+        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL),
+        _cancelled(true), _complListOn(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void startCompletion();
 
-    void fillSuggestions();
-    void clearSuggestions();
+    void fillComplList();
+    void clearComplList();
 
+    void onEditChange();
     void onOK();
 
     static SearchWin* SW;
 
-    volatile unsigned int _suggestionOn;
-
     std::shared_ptr<Cmd>    _cmd;
     CompletionCB const      _complCB;
 
-    HWND                    _hWnd;
-    HWND                    _hSearch;
-    HWND                    _hRE;
-    HWND                    _hMC;
-    HWND                    _hOK;
-    HFONT                   _hTxtFont;
-    HFONT                   _hBtnFont;
-    HHOOK                   _hKeyHook;
-    bool                    _cancelled;
-
-    CTcharArray             _suggestions;
+    HWND        _hWnd;
+    HWND        _hSearch;
+    HWND        _hRE;
+    HWND        _hMC;
+    HWND        _hOK;
+    HFONT       _hTxtFont;
+    HFONT       _hBtnFont;
+    HHOOK       _hKeyHook;
+    bool        _cancelled;
+    bool        _complListOn;
+    CTcharArray _complData;
 };
 
 } // namespace GTags
