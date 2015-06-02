@@ -248,7 +248,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     _hSearch = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | WS_VSCROLL |
-            CBS_DROPDOWN | CBS_HASSTRINGS | CBS_AUTOHSCROLL,
+            CBS_DROPDOWN | CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_SORT,
             2, btnHeight + 10, win.right - win.left - 4, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
