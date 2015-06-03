@@ -34,8 +34,8 @@ If you run one of the plugin's **Find** commands (including **Search**) from any
 
 1. what you have selected if there is selection;
 2. the word that is under the caret if there is no selection;
-3. what you have entered in the search box that will appear if there is no word under the caret
-.
+3. what you have entered in the search box that will appear if there is no word under the caret.
+
 
 The search box allows choosing case sensitivity and regexp for the **Find** command where applicable.
 It also provides search completion list where possible which appears when you enter several characters in the box.
