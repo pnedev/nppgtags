@@ -68,7 +68,7 @@ private:
 
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
         _cmd(cmd), _complCB(complCB), _hKeyHook(NULL),
-        _cancelled(true), _complListOn(false) {}
+        _cancelled(true), _keyPressed(0), _complListOn(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
@@ -95,6 +95,7 @@ private:
     HFONT       _hBtnFont;
     HHOOK       _hKeyHook;
     bool        _cancelled;
+    int         _keyPressed;
     bool        _complListOn;
     CTcharArray _complData;
 };

@@ -256,6 +256,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
         SendMessage(_hSearch, WM_SETFONT, (WPARAM)_hTxtFont, TRUE);
 
     ComboBox_SetMinVisible(_hSearch, 8);
+    // SendMessage(_hSearch, CB_SETCUEBANNER, 0, _T("Enter search string..."));
 
     if (_cmd->Tag())
         ComboBox_SetText(_hSearch, _cmd->Tag());
@@ -337,8 +338,8 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 void SearchWin::fillComplList()
 {
     int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
-    TCHAR tag[cMaxTagLen];
-    ComboBox_GetText(_hSearch, tag, _countof(tag));
+
+    SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(&_complData, _T("\n\r"), &pTmp);
@@ -346,8 +347,10 @@ void SearchWin::fillComplList()
         ComboBox_AddString(_hSearch, pToken);
 
     ComboBox_ShowDropdown(_hSearch, TRUE);
-    ComboBox_SetText(_hSearch, tag);
-    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
+    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
+
+    SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
+    RedrawWindow(_hSearch, NULL, NULL, RDW_UPDATENOW);
 }
 
 
@@ -356,10 +359,16 @@ void SearchWin::fillComplList()
  */
 void SearchWin::clearComplList()
 {
+    SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
+
     for (int count = ComboBox_GetCount(_hSearch); count >= 0; count--)
         ComboBox_DeleteString(_hSearch, count);
 
     ComboBox_ShowDropdown(_hSearch, FALSE);
+
+    SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
+    RedrawWindow(_hSearch, NULL, NULL, RDW_UPDATENOW);
+
     _complListOn = false;
 }
 
@@ -372,10 +381,36 @@ void SearchWin::onEditChange()
     int len = ComboBox_GetTextLength(_hSearch);
     int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
-    if (_complListOn && (len < cComplAfter || pos < len))
-        clearComplList();
-    if (!_complListOn && len >= cComplAfter)
+    if (_complListOn)
+    {
+        if (len < cComplAfter || pos < len)
+        {
+            clearComplList();
+        }
+        else
+        {
+            if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
+                return;
+
+            TCHAR tag[cMaxTagLen];
+            int curSel = ComboBox_GetCurSel(_hSearch);
+
+            if (curSel == CB_ERR ||
+                ComboBox_GetLBTextLen(_hSearch, curSel) >= (int)cMaxTagLen)
+            {
+                clearComplList();
+                return;
+            }
+
+            ComboBox_GetLBText(_hSearch, curSel, tag);
+            ComboBox_SetText(_hSearch, tag);
+            SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
+        }
+    }
+    else if (len >= cComplAfter)
+    {
         startCompletion();
+    }
 }
 
 
@@ -428,6 +463,8 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                     SW->onOK();
                     return 1;
                 }
+
+                SW->_keyPressed = wParam;
             }
         }
     }
