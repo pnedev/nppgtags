@@ -52,7 +52,8 @@ class CConfig;
 extern CConfig      Config;
 
 
-BOOL PluginInit(HINSTANCE hMod);
+BOOL PluginLoad(HINSTANCE hMod);
+void PluginInit();
 void PluginDeInit();
 
 bool UpdateSingleFile(const TCHAR* file = NULL);

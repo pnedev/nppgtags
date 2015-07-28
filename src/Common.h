@@ -32,6 +32,72 @@
 #include <string.h>
 
 
+namespace Tools
+{
+
+void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
+
+
+inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)
+{
+    size_t cnt;
+
+    wcstombs_s(&cnt, dst, dstSize, src, _TRUNCATE);
+
+    return cnt;
+}
+
+
+inline unsigned AtoW(wchar_t* dst, unsigned dstSize, const char* src)
+{
+    size_t cnt;
+
+    mbstowcs_s(&cnt, dst, dstSize, src, _TRUNCATE);
+
+    return cnt;
+}
+
+
+inline bool FileExists(TCHAR* file)
+{
+    DWORD dwAttrib = GetFileAttributes(file);
+    return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES &&
+        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+
+#ifdef DEVELOPMENT
+
+#ifdef UNICODE
+#define Msg(x)  MsgW(x)
+#else
+#define Msg(x)  MsgA(x)
+#endif
+
+inline void MsgW(const wchar_t* msg)
+{
+    MessageBoxW(NULL, msg, L"", MB_OK);
+}
+
+
+inline void MsgA(const char* msg)
+{
+    MessageBoxA(NULL, msg, "", MB_OK);
+}
+
+
+inline void MsgNum(int num, int radix = 10)
+{
+    char buf[128];
+    _itoa_s(num, buf, _countof(buf), radix);
+    MessageBoxA(NULL, buf, "", MB_OK);
+}
+
+#endif
+
+} // namespace Tools
+
+
 #ifdef UNICODE
     #define CTcharArray CWcharArray
     #define CText       CTextW
@@ -321,6 +387,10 @@ public:
     bool IsContainedIn(const TCHAR* pathStr) const;
     bool IsContainedIn(const CPath& path) const;
 
+#ifdef DEVELOPMENT
+    inline void Print() { Tools::Msg(C_str()); }
+#endif
+
 private:
     TCHAR _str[MAX_PATH];
 };
@@ -381,6 +451,10 @@ public:
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }
     inline void Clear() { _str[0] = 0; }
+
+#ifdef DEVELOPMENT
+    inline void Print() { Tools::MsgW(C_str()); }
+#endif
 };
 
 
@@ -439,70 +513,8 @@ public:
     inline unsigned Size() const { return _size; }
     inline unsigned Len() const { return _len; }
     inline void Clear() { _str[0] = 0; }
-};
-
-
-namespace Tools
-{
-
-void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
-
-
-inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)
-{
-    size_t cnt;
-
-    wcstombs_s(&cnt, dst, dstSize, src, _TRUNCATE);
-
-    return cnt;
-}
-
-
-inline unsigned AtoW(wchar_t* dst, unsigned dstSize, const char* src)
-{
-    size_t cnt;
-
-    mbstowcs_s(&cnt, dst, dstSize, src, _TRUNCATE);
-
-    return cnt;
-}
-
-
-inline bool FileExists(TCHAR* file)
-{
-    DWORD dwAttrib = GetFileAttributes(file);
-    return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES &&
-        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
 
 #ifdef DEVELOPMENT
-
-#ifdef UNICODE
-#define Msg(x)  MsgW(x)
-#else
-#define Msg(x)  MsgA(x)
+    inline void Print() { Tools::MsgA(C_str()); }
 #endif
-
-inline void MsgW(const wchar_t* msg)
-{
-    MessageBoxW(NULL, msg, L"", MB_OK);
-}
-
-
-inline void MsgA(const char* msg)
-{
-    MessageBoxA(NULL, msg, "", MB_OK);
-}
-
-
-inline void MsgNum(int num, int radix = 10)
-{
-    char buf[128];
-    _itoa_s(num, buf, _countof(buf), radix);
-    MessageBoxA(NULL, buf, "", MB_OK);
-}
-
-#endif
-
-} // namespace Tools
+};

@@ -43,7 +43,7 @@ class CConfig;
 class ConfigWin
 {
 public:
-    static void Show(CConfig* _cfg);
+    static void Show(CConfig* cfg);
 
 private:
     static const TCHAR  cClassName[];

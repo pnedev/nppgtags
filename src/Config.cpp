@@ -75,6 +75,15 @@ void CConfig::GetDefaultCfgFile(CPath& cfgFile)
 /**
  *  \brief
  */
+CConfig::CConfig()
+{
+    SetDefaults();
+}
+
+
+/**
+ *  \brief
+ */
 void CConfig::SetDefaults()
 {
     _parserIdx = DEFAULT_PARSER;
@@ -152,6 +161,7 @@ bool CConfig::LoadFromFile(const TCHAR* file)
     }
 
     fclose(fp);
+
     return true;
 }
 

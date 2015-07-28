@@ -324,7 +324,7 @@ void ConfigWin::onOK()
     if (len)
     {
         CTcharArray buf(len + 1);
-        Edit_GetText(_hLibDb, &buf, len + 1);
+        Edit_GetText(_hLibDb, &buf, buf.Size());
         _cfg->_libDbPath = &buf;
     }
     else
@@ -346,7 +346,7 @@ void ConfigWin::onOK()
 
         CText msg(_T("Failed saving config to\n\""));
         msg += cfgFile.C_str();
-        msg += _T("\"\nIs the file read only?");
+        msg += _T("\"\nIs the path read only?");
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
                 MB_OK | MB_ICONEXCLAMATION);
     }

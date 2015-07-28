@@ -778,7 +778,7 @@ CConfig Config;
 /**
  *  \brief
  */
-BOOL PluginInit(HINSTANCE hMod)
+BOOL PluginLoad(HINSTANCE hMod)
 {
     TCHAR moduleFileName[MAX_PATH];
     GetModuleFileName((HMODULE)hMod, moduleFileName, MAX_PATH);
@@ -789,11 +789,33 @@ BOOL PluginInit(HINSTANCE hMod)
 
     HMod = hMod;
 
+    return TRUE;
+}
+
+
+/**
+ *  \brief
+ */
+void PluginInit()
+{
+    INpp& npp = INpp::Get();
+    char font[32];
+    npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
+    Tools::AtoW(UIFontName, _countof(UIFontName), font);
+    UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
+
     ActivityWin::Register();
     SearchWin::Register();
     AutoCompleteWin::Register();
 
-    return TRUE;
+    if (ResultWin::Register())
+        MessageBox(npp.GetHandle(),
+            _T("Results Window init failed, plugin will not be operational"),
+            cPluginName, MB_OK | MB_ICONERROR);
+    else if(!Config.LoadFromFile())
+        MessageBox(npp.GetHandle(),
+            _T("Bad config file, default settings will be used"),
+            cPluginName, MB_OK | MB_ICONEXCLAMATION);
 }
 
 

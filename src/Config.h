@@ -49,10 +49,8 @@ public:
         PARSER_LIST_END
     };
 
-    CConfig()
-    {
-        SetDefaults();
-    }
+    CConfig();
+    ~CConfig() {}
 
     static const TCHAR* Parser(unsigned idx)
     {

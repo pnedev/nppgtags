@@ -44,7 +44,7 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
     switch (reasonForCall)
     {
         case DLL_PROCESS_ATTACH:
-            return GTags::PluginInit(hModule);
+            return GTags::PluginLoad(hModule);
 
         case DLL_PROCESS_DETACH:
             GTags::PluginDeInit();
@@ -65,20 +65,6 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
 {
     INpp& npp = INpp::Get();
     npp.SetData(nppData);
-
-    char font[32];
-    npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
-    Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
-    GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
-
-    if (GTags::ResultWin::Register())
-        MessageBox(npp.GetHandle(),
-            _T("Results Window init failed, plugin will not be operational"),
-            GTags::cPluginName, MB_OK | MB_ICONERROR);
-    else if(!GTags::Config.LoadFromFile())
-        MessageBox(npp.GetHandle(),
-            _T("Bad config file, default settings will be used"),
-            GTags::cPluginName, MB_OK | MB_ICONEXCLAMATION);
 }
 
 
@@ -168,6 +154,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
             GTags::ResultWin::ApplyStyle();
         }
+        break;
+
+        case NPPN_READY:
+            GTags::PluginInit();
         break;
 
         case NPPN_SHUTDOWN:
