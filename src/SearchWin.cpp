@@ -346,10 +346,11 @@ void SearchWin::fillComplList()
         ComboBox_AddString(_hSearch, pToken);
 
     ComboBox_ShowDropdown(_hSearch, TRUE);
-    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
 
     SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
     RedrawWindow(_hSearch, NULL, NULL, RDW_UPDATENOW);
+
+    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
 }
 
 
@@ -382,31 +383,40 @@ void SearchWin::onEditChange()
 
     if (_complListOn)
     {
-        if (len < cComplAfter || pos < len)
+        if (len < cComplAfter || len > pos ||
+            _keyPressed == VK_BACK || _keyPressed == VK_DELETE)
         {
             clearComplList();
+            return;
         }
-        else
+
+        int curSel = ComboBox_GetCurSel(_hSearch);
+        if (curSel == CB_ERR)
         {
-            if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
-                return;
+            clearComplList();
+            return;
+        }
 
-            TCHAR tag[cMaxTagLen];
-            int curSel = ComboBox_GetCurSel(_hSearch);
+        TCHAR tag[cMaxTagLen];
+        ComboBox_GetLBText(_hSearch, curSel, tag);
 
-            if (curSel == CB_ERR ||
-                ComboBox_GetLBTextLen(_hSearch, curSel) >= (int)cMaxTagLen)
+        // Filter case inequality
+        if (Button_GetCheck(_hMC) == BST_CHECKED)
+        {
+            TCHAR edit[cMaxTagLen];
+            ComboBox_GetText(_hSearch, edit, _countof(edit));
+
+            if (edit[pos - 1] != tag[pos - 1])
             {
                 clearComplList();
                 return;
             }
-
-            ComboBox_GetLBText(_hSearch, curSel, tag);
-            ComboBox_SetText(_hSearch, tag);
-            SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
         }
+
+        ComboBox_SetText(_hSearch, tag);
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
     }
-    else if (len >= cComplAfter)
+    else if (len >= cComplAfter && _keyPressed != VK_BACK)
     {
         startCompletion();
     }
@@ -498,10 +508,9 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
                 else if (SW->_complListOn)
                 {
                     SW->clearComplList();
-                    SW->onEditChange();
                 }
             }
-            if (HIWORD(wParam) == CBN_EDITCHANGE)
+            else if (HIWORD(wParam) == CBN_EDITCHANGE)
             {
                 SW->onEditChange();
             }
