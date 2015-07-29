@@ -516,10 +516,8 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
         break;
 
         case WM_DESTROY:
-        {
             delete SW;
             SW = NULL;
-        }
         return 0;
     }
 
