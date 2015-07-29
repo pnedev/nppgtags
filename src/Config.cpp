@@ -112,11 +112,14 @@ bool CConfig::LoadFromFile(const TCHAR* file)
         return false;
 
     TCHAR line[8192];
-    while (fgetws(line, _countof(line), fp))
+    while (_fgetts(line, _countof(line), fp))
     {
         // Comment or empty line
         if (line[0] == _T('#') || line[0] == _T('\n'))
             continue;
+
+        // Strip newline from the end of the line
+        line[_tcslen(line) - 1] = 0;
 
         if (!_tcsncmp(line, cParserKey, _countof(cParserKey) - 1))
         {
