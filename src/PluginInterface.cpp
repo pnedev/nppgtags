@@ -16,7 +16,6 @@
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <tchar.h>
 #include <memory>

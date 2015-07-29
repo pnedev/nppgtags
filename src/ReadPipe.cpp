@@ -22,7 +22,6 @@
  */
 
 
-#define WIN32_LEAN_AND_MEAN
 #include "ReadPipe.h"
 #include <process.h>
 #include <stdlib.h>

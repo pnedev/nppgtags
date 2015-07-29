@@ -1,4 +1,3 @@
-#define WIN32_LEAN_AND_MEAN
 #include <tchar.h>
 
 #define VER_VERSION         3,0,0,0

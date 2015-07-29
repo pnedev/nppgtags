@@ -22,7 +22,6 @@
  */
 
 
-#define WIN32_LEAN_AND_MEAN
 #include "DbManager.h"
 #include <windows.h>
 
