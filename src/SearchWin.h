@@ -76,6 +76,7 @@ private:
 
     void fillComplList();
     void clearComplList();
+    void filterComplList(const TCHAR* filter);
 
     void onEditChange();
     void onOK();
