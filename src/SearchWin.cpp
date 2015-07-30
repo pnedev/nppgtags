@@ -297,10 +297,12 @@ void SearchWin::startCompletion()
     {
         tag[0] = _T('/');
         ComboBox_GetText(_hSearch, tag + 1, _countof(tag) - 1);
+        tag[cComplAfter + 1] = 0;
     }
     else
     {
         ComboBox_GetText(_hSearch, tag, _countof(tag));
+        tag[cComplAfter] = 0;
     }
 
     std::shared_ptr<Cmd>
@@ -438,7 +440,7 @@ void SearchWin::filterComplList(const TCHAR* filter)
         if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
             ComboBox_SetText(_hSearch, filter);
 
-        SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, -1));
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, -1));
     }
 
     SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
@@ -457,7 +459,7 @@ void SearchWin::onEditChange()
     {
         int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
-        if (len < cComplAfter || len > pos)
+        if (pos <= cComplAfter)
         {
             clearComplList();
         }
