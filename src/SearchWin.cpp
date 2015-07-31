@@ -406,7 +406,9 @@ void SearchWin::filterComplList()
 
     while (pRes < pEnd)
     {
-        if (!pCompare(pRes, filter, len))
+        if (len == cComplAfter)
+            ComboBox_AddString(_hSearch, pRes);
+        else if (!pCompare(pRes, filter, len))
             ComboBox_AddString(_hSearch, pRes);
 
         pRes += (_tcslen(pRes) + 1);
