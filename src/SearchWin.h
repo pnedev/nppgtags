@@ -63,20 +63,19 @@ private:
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
             int width, int height);
 
-    static void endCompletion(const std::shared_ptr<Cmd>&);
-
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
         _cmd(cmd), _complCB(complCB), _hKeyHook(NULL),
-        _cancelled(true), _keyPressed(0), _complListOn(false) {}
+        _cancelled(true), _keyPressed(0), _completionDone(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void startCompletion();
+    void endCompletion(const std::shared_ptr<Cmd>&);
 
-    void fillComplList();
-    void clearComplList();
-    void filterComplList(const TCHAR* filter);
+    void parseCompletion();
+    void clearCompletion();
+    void filterComplList();
 
     void onEditChange();
     void onOK();
@@ -96,7 +95,7 @@ private:
     HHOOK       _hKeyHook;
     bool        _cancelled;
     int         _keyPressed;
-    bool        _complListOn;
+    bool        _completionDone;
     CTcharArray _complData;
 };
 

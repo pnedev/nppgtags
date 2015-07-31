@@ -331,48 +331,31 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 {
     if (cmpl->Status() == OK && cmpl->Result())
     {
-        SW->_complData(cmpl->ResultLen() + 1);
-        Tools::AtoW(&SW->_complData, SW->_complData.Size(),
-                cmpl->Result());
-        SW->fillComplList();
+        _complData(cmpl->ResultLen() + 1);
+        Tools::AtoW(&_complData, _complData.Size(), cmpl->Result());
+        parseCompletion();
+        filterComplList();
     }
 
-    SW->_complListOn = true;
+    _completionDone = true;
 }
 
 
 /**
  *  \brief
  */
-void SearchWin::fillComplList()
+void SearchWin::parseCompletion()
 {
-    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
-
-    SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
-
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(&_complData, _T("\n\r"), &pTmp);
-            pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
-    {
-        if (_cmd->Id() == FIND_FILE)
-            ComboBox_AddString(_hSearch, pToken + 1);
-        else
-            ComboBox_AddString(_hSearch, pToken);
-    }
-
-    ComboBox_ShowDropdown(_hSearch, TRUE);
-
-    SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
-    RedrawWindow(_hSearch, NULL, NULL, RDW_UPDATENOW);
-
-    SendMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
+        pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp));
 }
 
 
 /**
  *  \brief
  */
-void SearchWin::clearComplList()
+void SearchWin::clearCompletion()
 {
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
@@ -384,17 +367,20 @@ void SearchWin::clearComplList()
     SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
     RedrawWindow(_hSearch, NULL, NULL, RDW_UPDATENOW);
 
-    _complListOn = false;
+    _completionDone = false;
 }
 
 
 /**
  *  \brief
  */
-void SearchWin::filterComplList(const TCHAR* filter)
+void SearchWin::filterComplList()
 {
     if (&_complData == NULL)
         return;
+
+    TCHAR filter[cMaxTagLen];
+    ComboBox_GetText(_hSearch, filter, _countof(filter));
 
     int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
 
@@ -455,24 +441,17 @@ void SearchWin::onEditChange()
 {
     int len = ComboBox_GetTextLength(_hSearch);
 
-    if (_complListOn)
+    if (_completionDone)
     {
         int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
         if (pos <= cComplAfter)
-        {
-            clearComplList();
-        }
+            clearCompletion();
         else
-        {
-            TCHAR filter[cMaxTagLen];
-            ComboBox_GetText(_hSearch, filter, _countof(filter));
-
-            filterComplList(filter);
-        }
+            filterComplList();
     }
 
-    if (!_complListOn && len >= cComplAfter)
+    if (!_completionDone && len >= cComplAfter)
         startCompletion();
 }
 
@@ -558,9 +537,9 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
                     SW->onOK();
                     return 0;
                 }
-                else if (SW->_complListOn)
+                else if (SW->_completionDone)
                 {
-                    SW->clearComplList();
+                    SW->clearCompletion();
                     return 0;
                 }
             }
