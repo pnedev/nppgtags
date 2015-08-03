@@ -799,13 +799,10 @@ void PluginInit()
 {
     INpp& npp = INpp::Get();
     char font[32];
+
     npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
     Tools::AtoW(UIFontName, _countof(UIFontName), font);
     UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
-
-    ActivityWin::Register();
-    SearchWin::Register();
-    AutoCompleteWin::Register();
 
     if (ResultWin::Register())
         MessageBox(npp.GetHandle(),
@@ -815,6 +812,10 @@ void PluginInit()
         MessageBox(npp.GetHandle(),
             _T("Bad config file, default settings will be used"),
             cPluginName, MB_OK | MB_ICONEXCLAMATION);
+
+    ActivityWin::Register();
+    SearchWin::Register();
+    AutoCompleteWin::Register();
 }
 
 

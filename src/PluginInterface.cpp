@@ -64,6 +64,8 @@ extern "C" __declspec(dllexport) void setInfo(NppData nppData)
 {
     INpp& npp = INpp::Get();
     npp.SetData(nppData);
+
+    GTags::PluginInit();
 }
 
 
@@ -148,15 +150,12 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         {
             INpp& npp = INpp::Get();
             char font[32];
+
             npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
             Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
             GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
             GTags::ResultWin::ApplyStyle();
         }
-        break;
-
-        case NPPN_READY:
-            GTags::PluginInit();
         break;
 
         case NPPN_SHUTDOWN:
