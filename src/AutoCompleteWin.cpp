@@ -194,6 +194,7 @@ int AutoCompleteWin::fillLV()
         lvItem.pszText = (_cmdId == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);
         lvItem.iItem++;
+        _resultIndex.push_back(lvItem.pszText);
     }
 
     if (lvItem.iItem > 0)
@@ -217,31 +218,16 @@ int AutoCompleteWin::filterLV(const TCHAR* filter)
 
     int len = _tcslen(filter);
 
-    TCHAR* pRes = &_result;
-    TCHAR* pEnd = pRes + _result.Size() - 1;
-
     ListView_DeleteAllItems(_hLVWnd);
 
-    if (_cmdId == AUTOCOMPLETE_FILE)
-        pRes++;
-
-    while (pRes < pEnd)
+    for (unsigned i = 0; i < _resultIndex.size(); i++)
     {
-        if (!_tcsncmp(pRes, filter, len))
+        if (!_tcsncmp(_resultIndex[i], filter, len))
         {
-            lvItem.pszText = pRes;
+            lvItem.pszText = _resultIndex[i];
             ListView_InsertItem(_hLVWnd, &lvItem);
             lvItem.iItem++;
         }
-
-        pRes += (_tcslen(pRes) + 1);
-
-        while (pRes < pEnd &&
-                (*pRes == _T('\n') || *pRes == _T('\r') || *pRes == 0))
-            pRes++;
-
-        if (_cmdId == AUTOCOMPLETE_FILE)
-            pRes++;
     }
 
     if (lvItem.iItem > 0)

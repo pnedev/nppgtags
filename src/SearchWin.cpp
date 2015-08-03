@@ -348,7 +348,12 @@ void SearchWin::parseCompletion()
 {
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(&_complData, _T("\n\r"), &pTmp);
-        pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp));
+        pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+    {
+        if (_cmd->Id() == FIND_FILE)
+            pToken++;
+        _complIndex.push_back(pToken);
+    }
 }
 
 
@@ -359,13 +364,14 @@ void SearchWin::clearCompletion()
 {
     TCHAR txt[cMaxTagLen];
     ComboBox_GetText(_hSearch, txt, _countof(txt));
-    int len = _tcslen(txt);
+    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     ComboBox_ResetContent(_hSearch);
     ComboBox_ShowDropdown(_hSearch, FALSE);
     ComboBox_SetText(_hSearch, txt);
-    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, -1));
+    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 
+    _complIndex.clear();
     _completionDone = false;
 }
 
@@ -375,12 +381,13 @@ void SearchWin::clearCompletion()
  */
 void SearchWin::filterComplList()
 {
-    if (&_complData == NULL)
+    if (_complIndex.empty())
         return;
 
     TCHAR filter[cMaxTagLen];
     ComboBox_GetText(_hSearch, filter, _countof(filter));
     int len = _tcslen(filter);
+    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
 
@@ -392,31 +399,20 @@ void SearchWin::filterComplList()
     ComboBox_ResetContent(_hSearch);
     ComboBox_ShowDropdown(_hSearch, FALSE);
     ComboBox_SetText(_hSearch, filter);
-    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, -1));
-
-    TCHAR* pRes = &_complData;
-    TCHAR* pEnd = pRes + _complData.Size() - 1;
-
-    if (_cmd->Id() == FIND_FILE)
-        pRes++;
+    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
-    while (pRes < pEnd)
+    if (len == cComplAfter)
     {
-        if (len == cComplAfter)
-            ComboBox_AddString(_hSearch, pRes);
-        else if (!pCompare(pRes, filter, len))
-            ComboBox_AddString(_hSearch, pRes);
-
-        pRes += (_tcslen(pRes) + 1);
-
-        while (pRes < pEnd &&
-                (*pRes == _T('\n') || *pRes == _T('\r') || *pRes == 0))
-            pRes++;
-
-        if (_cmd->Id() == FIND_FILE)
-            pRes++;
+        for (unsigned i = 0; i < _complIndex.size(); i++)
+            ComboBox_AddString(_hSearch, _complIndex[i]);
+    }
+    else
+    {
+        for (unsigned i = 0; i < _complIndex.size(); i++)
+            if (!pCompare(_complIndex[i], filter, len))
+                ComboBox_AddString(_hSearch, _complIndex[i]);
     }
 
     if (ComboBox_GetCount(_hSearch))
@@ -426,7 +422,7 @@ void SearchWin::filterComplList()
         if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
             ComboBox_SetText(_hSearch, filter);
 
-        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(len, -1));
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
     }
 
     SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);

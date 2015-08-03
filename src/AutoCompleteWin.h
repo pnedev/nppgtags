@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <vector>
 #include "CmdEngine.h"
 
 
@@ -66,12 +67,13 @@ private:
 
     static AutoCompleteWin* ACW;
 
-    HWND            _hWnd;
-    HWND            _hLVWnd;
-    HFONT           _hFont;
-    const CmdId_t   _cmdId;
-    const int       _cmdTagLen;
-    CTcharArray     _result;
+    HWND                _hWnd;
+    HWND                _hLVWnd;
+    HFONT               _hFont;
+    const CmdId_t       _cmdId;
+    const int           _cmdTagLen;
+    CTcharArray         _result;
+    std::vector<TCHAR*> _resultIndex;
 };
 
 } // namespace GTags

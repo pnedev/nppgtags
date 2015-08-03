@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <memory>
+#include <vector>
 #include "Common.h"
 #include "GTags.h"
 #include "CmdEngine.h"
@@ -85,18 +86,19 @@ private:
     std::shared_ptr<Cmd>    _cmd;
     CompletionCB const      _complCB;
 
-    HWND        _hWnd;
-    HWND        _hSearch;
-    HWND        _hRE;
-    HWND        _hMC;
-    HWND        _hOK;
-    HFONT       _hTxtFont;
-    HFONT       _hBtnFont;
-    HHOOK       _hKeyHook;
-    bool        _cancelled;
-    int         _keyPressed;
-    bool        _completionDone;
-    CTcharArray _complData;
+    HWND                _hWnd;
+    HWND                _hSearch;
+    HWND                _hRE;
+    HWND                _hMC;
+    HWND                _hOK;
+    HFONT               _hTxtFont;
+    HFONT               _hBtnFont;
+    HHOOK               _hKeyHook;
+    bool                _cancelled;
+    int                 _keyPressed;
+    bool                _completionDone;
+    CTcharArray         _complData;
+    std::vector<TCHAR*> _complIndex;
 };
 
 } // namespace GTags
