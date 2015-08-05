@@ -59,7 +59,7 @@ While auto complete results window is active you can narrow the results shown by
 *Backspace* will undo the narrowing one step at a time (as the newly typed characters are deleted).
 Double-clicking or pressing *Enter*, *Tab* or *Space* will insert the selected auto complete result.
 
-**AutoComplete File** is useful if you will be including headers for example.
+**AutoComplete Filename** is useful if you will be including headers for example.
 
 **AutoComplete** and **Find Definition** commands will also search library databases if such are used. That is configured through the plugin's **Settings** window.
 

@@ -54,7 +54,7 @@ using namespace GTags;
 const TCHAR cCreateDatabase[]   = _T("Create Database");
 const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
 const TCHAR cAutoCompl[]        = _T("AutoComplete");
-const TCHAR cAutoComplFile[]    = _T("AutoComplete File");
+const TCHAR cAutoComplFile[]    = _T("AutoComplete Filename");
 const TCHAR cFindFile[]         = _T("Find File");
 const TCHAR cFindDefinition[]   = _T("Find Definition");
 const TCHAR cFindReference[]    = _T("Find Reference");
