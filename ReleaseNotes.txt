@@ -1,3 +1,11 @@
+What's new in v3.1.0
+=======================
+
+- Improve search window auto-complete feature
+- Improve auto-complete speed
+- Fix issue with configurations when read from the config file
+
+
 What's new in v3.0.0
 =======================
 
@@ -19,7 +27,7 @@ What's new in v3.0.0
     the string to search. Not all search commands support regexp. If the search window is not used the search
     is case sensitive and literal (no regexp) by default
 
-- The search window provides auto-complete feature on the second char typed. Drop-down competion list will
+- The search window provides auto-complete feature on the second char typed. Drop-down completion list will
     appear based on the text entered. On very large projects the auto-completion might take a while to finish
 
 - Results window automatically wraps long result lines so no horizontal scrolling is necessary
@@ -59,7 +67,7 @@ What's new in v2.3.0
 
 - Set fore, back and line colors from the selected Notepad++ theme
 - If the command reports warning or error but there are results anyway, show them
-- Fix bug when auto-updating DB for files with path lenght > 128
+- Fix bug when auto-updating DB for files with path length > 128
 
 
 What's new in v2.2.2
@@ -80,7 +88,7 @@ What's new in v2.2.0
 - Fix styling bug when switching from FindFile tab to other search tab and vice-versa
 - Fix race condition crash during styling
 - Make folding view more appealing
-- Make search word in the result clickable as a link to ease code navigation
+- Make search word in the result click-able as a link to ease code navigation
 - Change cursor to reflect its position and the tab switch action
 - Highlight all search word occurrences in a single line
 
@@ -90,8 +98,8 @@ What's new in v2.1.0
 
 - Show search type in results window tab name
 - Remember and restore folded state on tab switch
-- Clicking anywhere in expanded fold margin now collapses it (it is no longer necessary to click exactly [-] to collaps)
-- Header info is no longer foldable
+- Clicking anywhere in expanded fold margin now collapses it (it is no longer necessary to click exactly [-] to collapse)
+- Header info is no longer fold-able
 - Tab name font is "Tahoma" and the font size is results font size - 1
 - Colorize search results line numbers for better viewing
 - Colorize and open regexp (GREP) search results correctly

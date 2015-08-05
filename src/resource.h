@@ -1,7 +1,7 @@
 #include <tchar.h>
 
-#define VER_VERSION         3,0,0,0
-#define VER_VERSION_STR     _T("3.0.0\0")
+#define VER_VERSION         3,1,0,0
+#define VER_VERSION_STR     _T("3.1.0\0")
 
 #define VER_AUTHOR          _T("Pavel Nedev\0")
 #define VER_COPYRIGHT       _T("Copyright(C) 2014-2015 Pavel Nedev\0")
