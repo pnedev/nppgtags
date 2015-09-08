@@ -95,8 +95,7 @@ private:
     private:
         friend class DbManager;
 
-        GTagsDb(const CPath& dbPath, bool writeEn) :
-            _path(dbPath), _writeLock(writeEn)
+        GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
         {
             _readLocks = writeEn ? 0 : 1;
         }

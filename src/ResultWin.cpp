@@ -30,6 +30,7 @@
 #include "DbManager.h"
 #include "DocLocation.h"
 #include <commctrl.h>
+#include <vector>
 
 
 // Scintilla user defined styles IDs
@@ -111,9 +112,8 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
 
         // add new file name to the UI buffer only if it is different
         // than the previous one
-        if (pPreviousFile == NULL ||
-            (unsigned)(pLine - src) != pPreviousFileLen ||
-            strncmp(src, pPreviousFile, pPreviousFileLen))
+        if ((pPreviousFile == NULL) || ((unsigned)(pLine - src) != pPreviousFileLen) ||
+                strncmp(src, pPreviousFile, pPreviousFileLen))
         {
             pPreviousFile = src;
             pPreviousFileLen = pLine - src;
@@ -177,13 +177,14 @@ void ResultWin::Tab::parseFindFile(CTextA& dst, const char* src)
  */
 void ResultWin::Tab::SetFolded(int lineNum)
 {
-    for (std::vector<int>::iterator i = _expandedLines.begin();
-            i != _expandedLines.end(); i++)
+    for (std::vector<int>::iterator i = _expandedLines.begin(); i != _expandedLines.end(); i++)
+    {
         if (*i == lineNum)
         {
             _expandedLines.erase(i);
             break;
         }
+    }
 }
 
 
@@ -301,11 +302,13 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
     if (cmd->ResultLen() > 262144) // 256k
     {
         TCHAR buf[512];
+
         _sntprintf_s(buf, _countof(buf), _TRUNCATE,
                 _T("%s \"%s\": A lot of matches were found, ")
                 _T("parsing those will be rather slow.\n")
                 _T("Are you sure you want to proceed?"),
                 cmd->Name(), cmd->Tag());
+
         int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
@@ -321,7 +324,8 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
     for (i = TabCtrl_GetItemCount(_hTab); i; i--)
     {
         Tab* oldTab = getTab(i - 1);
-        if (oldTab && *tab == *oldTab) // same search tab already present?
+
+        if (oldTab && (*tab == *oldTab)) // same search tab already present?
         {
             if (_activeTab == oldTab) // is this the currently active tab?
                 _activeTab = NULL;
@@ -333,11 +337,13 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
     if (tab->_outdated)
     {
         MessageBox(npp.GetHandle(),
-                _T("Database is outdated.")
-                _T("\nPlease re-create it and redo the search"),
+                _T("Database is outdated.\n")
+                _T("Please re-create it and redo the search"),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
+
         if (i)
             TabCtrl_DeleteItem(_hTab, --i);
+
         delete tab;
         tab = NULL;
     }
@@ -346,8 +352,7 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
         if (i == 0) // search is completely new - add new tab
         {
             TCHAR buf[256];
-            _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""),
-                    cmd->Name(), cmd->Tag());
+            _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag());
 
             TCITEM tci  = {0};
             tci.mask    = TCIF_TEXT | TCIF_PARAM;
@@ -416,10 +421,10 @@ void ResultWin::applyStyle()
     COLORREF backColor = npp.GetBackgroundColor(STYLE_DEFAULT);
     COLORREF lineNumColor = npp.GetForegroundColor(STYLE_LINENUMBER);
 
-    COLORREF fileForeColor = RGB(GetRValue(backColor) ^ 0xFF,
-            GetGValue(backColor) ^ 0x7F, GetBValue(backColor) ^ 0x7F);
-    COLORREF findForeColor = RGB(GetRValue(backColor) ^ 0x1C,
-            GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
+    COLORREF fileForeColor =
+            RGB(GetRValue(backColor) ^ 0xFF, GetGValue(backColor) ^ 0x7F, GetBValue(backColor) ^ 0x7F);
+    COLORREF findForeColor =
+            RGB(GetRValue(backColor) ^ 0x1C, GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
 
     if (_hFont)
         DeleteObject(_hFont);
@@ -481,14 +486,14 @@ ResultWin::~ResultWin()
 /**
  *  \brief
  */
-void ResultWin::setStyle(int style, COLORREF fore, COLORREF back,
-        bool bold, bool italic, int size, const char *font)
+void ResultWin::setStyle(int style, COLORREF fore, COLORREF back, bool bold, bool italic, int size, const char *font)
 {
     sendSci(SCI_STYLESETEOLFILLED, style, 1);
     sendSci(SCI_STYLESETFORE, style, fore);
     sendSci(SCI_STYLESETBACK, style, back);
     sendSci(SCI_STYLESETBOLD, style, bold);
     sendSci(SCI_STYLESETITALIC, style, italic);
+
     if (size >= 1)
         sendSci(SCI_STYLESETSIZE, style, size);
     if (font)
@@ -523,8 +528,7 @@ void ResultWin::configScintilla()
 
     ApplyStyle();
 
-    sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"),
-            reinterpret_cast<LPARAM>("1"));
+    sendSci(SCI_SETPROPERTY, reinterpret_cast<WPARAM>("fold"), reinterpret_cast<LPARAM>("1"));
 
     sendSci(SCI_SETMARGINTYPEN, 1, SC_MARGIN_SYMBOL);
     sendSci(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS);
@@ -540,8 +544,7 @@ void ResultWin::configScintilla()
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE);
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER);
     sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER);
-    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID,
-            SC_MARK_BOXMINUSCONNECTED);
+    sendSci(SCI_MARKERDEFINE, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED);
 }
 
 
@@ -567,10 +570,10 @@ HWND ResultWin::composeWindow()
     _hSci = npp.CreateSciHandle(_hWnd);
     if (_hSci)
     {
-        _sciFunc =
-                (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
-        _sciPtr = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
+        _sciFunc    = (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
+        _sciPtr     = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
     }
+
     if (_hSci == NULL || _sciFunc == NULL || _sciPtr == 0)
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
@@ -580,8 +583,7 @@ HWND ResultWin::composeWindow()
     }
 
     AdjustWindowRect(&win, style, FALSE);
-    MoveWindow(_hWnd, win.left, win.top,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    MoveWindow(_hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
     GetClientRect(_hWnd, &win);
 
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
@@ -592,8 +594,7 @@ HWND ResultWin::composeWindow()
     TabCtrl_SetExtendedStyle(_hTab, TCS_EX_FLATSEPARATORS);
 
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
-    MoveWindow(_hSci, win.left, win.top,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    MoveWindow(_hSci, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
 
     configScintilla();
 
@@ -662,8 +663,7 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
     // store current view if there is one
     if (_activeTab)
     {
-        _activeTab->_currentLine =
-                sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
+        _activeTab->_currentLine = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
         _activeTab->_firstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
     }
 
@@ -695,9 +695,10 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     if (lineLen <= 0)
         return false;
 
-    CCharArray lineTxt(lineLen + 1);
+    std::vector<char> lineTxt;
+    lineTxt.resize(lineLen + 1, 0);
 
-    sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(&lineTxt));
+    sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt.data()));
 
     int line = 0;
     int i;
@@ -716,12 +717,11 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
         if (lineLen <= 0)
             return false;
 
-        lineTxt(lineLen + 1);
-        sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(&lineTxt));
+        lineTxt.resize(lineLen + 1, 0);
+        sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt.data()));
     }
 
-    lineTxt[lineLen] = 0;
-    for (i = 1; i <= lineLen && lineTxt[i] != '\r' && lineTxt[i] != '\n'; i++);
+    for (i = 1; (i <= lineLen) && (lineTxt[i] != '\r') && (lineTxt[i] != '\n'); i++);
     lineTxt[i] = 0;
 
     CPath file(_activeTab->_projectPath);
@@ -754,8 +754,8 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        if (!npp.SearchText(_activeTab->_search, _activeTab->_matchCase,
-                wholeWord, _activeTab->_regExp, &findBegin, &findEnd))
+        if (!npp.SearchText(_activeTab->_search, _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
+                &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, present results are outdated.")
@@ -772,8 +772,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 /**
  *  \brief
  */
-bool ResultWin::findString(const char* str, int* startPos, int* endPos,
-        bool matchCase, bool wholeWord, bool regExp)
+bool ResultWin::findString(const char* str, int* startPos, int* endPos, bool matchCase, bool wholeWord, bool regExp)
 {
     int searchFlags = 0;
     if (matchCase)
@@ -787,8 +786,7 @@ bool ResultWin::findString(const char* str, int* startPos, int* endPos,
     sendSci(SCI_SETTARGETSTART, *startPos);
     sendSci(SCI_SETTARGETEND, *endPos);
 
-    if (sendSci(SCI_SEARCHINTARGET, strlen(str),
-            reinterpret_cast<LPARAM>(str)) >= 0)
+    if (sendSci(SCI_SEARCHINTARGET, strlen(str), reinterpret_cast<LPARAM>(str)) >= 0)
     {
         *startPos = sendSci(SCI_GETTARGETSTART);
         *endPos = sendSci(SCI_GETTARGETEND);
@@ -827,9 +825,8 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
     const int endStylingPos = notify->position;
 
-    for (int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum);
-        endStylingPos > startPos;
-        startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
+    for (int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum); endStylingPos > startPos;
+            startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
     {
         const int lineLen = sendSci(SCI_LINELENGTH, lineNum);
         if (lineLen <= 0)
@@ -863,19 +860,18 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                         do
                         {
                             if (findBegin - startPos)
-                                sendSci(SCI_SETSTYLING, findBegin - startPos,
-                                        SCE_GTAGS_FILE);
-                            sendSci(SCI_SETSTYLING, findEnd - findBegin,
-                                    SCE_GTAGS_WORD2SEARCH);
+                                sendSci(SCI_SETSTYLING, findBegin - startPos, SCE_GTAGS_FILE);
+
+                            sendSci(SCI_SETSTYLING, findEnd - findBegin, SCE_GTAGS_WORD2SEARCH);
+
                             findBegin = startPos = findEnd;
                             findEnd = endPos;
-                        } while (findString(_activeTab->_search,
-                                &findBegin, &findEnd, _activeTab->_matchCase,
-                                false, _activeTab->_regExp));
+                        }
+                        while (findString(_activeTab->_search, &findBegin, &findEnd,
+                                _activeTab->_matchCase, false, _activeTab->_regExp));
 
                         if (endPos - startPos)
-                            sendSci(SCI_SETSTYLING, endPos - startPos,
-                                    SCE_GTAGS_FILE);
+                            sendSci(SCI_SETSTYLING, endPos - startPos, SCE_GTAGS_FILE);
                     }
                     else
                     {
@@ -885,8 +881,8 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                 else
                 {
                     sendSci(SCI_SETSTYLING, lineLen, SCE_GTAGS_FILE);
-                    sendSci(SCI_SETFOLDLEVEL, lineNum,
-                            FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+                    sendSci(SCI_SETFOLDLEVEL, lineNum, FILE_HEADER_LVL | SC_FOLDLEVELHEADERFLAG);
+
                     if (_activeTab->IsFolded(lineNum))
                         sendSci(SCI_FOLDLINE, lineNum, SC_FOLDACTION_CONTRACT);
                 }
@@ -895,8 +891,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
             {
                 // "\t\tline: Num" - 'N' is at position 8
                 int previewPos = startPos + 8;
-                for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t';
-                        previewPos++);
+                for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t'; previewPos++);
 
                 int findBegin = previewPos;
                 int findEnd = endPos;
@@ -906,25 +901,24 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                 if (findString(_activeTab->_search, &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
                 {
-                    sendSci(SCI_SETSTYLING, previewPos - startPos,
-                            SCE_GTAGS_LINE_NUM);
+                    sendSci(SCI_SETSTYLING, previewPos - startPos, SCE_GTAGS_LINE_NUM);
+
                     // Highlight all matches in a single result line
                     do
                     {
                         if (findBegin - previewPos)
-                            sendSci(SCI_SETSTYLING, findBegin - previewPos,
-                                    STYLE_DEFAULT);
-                        sendSci(SCI_SETSTYLING, findEnd - findBegin,
-                                SCE_GTAGS_WORD2SEARCH);
+                            sendSci(SCI_SETSTYLING, findBegin - previewPos, STYLE_DEFAULT);
+
+                        sendSci(SCI_SETSTYLING, findEnd - findBegin, SCE_GTAGS_WORD2SEARCH);
+
                         findBegin = previewPos = findEnd;
                         findEnd = endPos;
-                    } while (findString(_activeTab->_search,
-                            &findBegin, &findEnd, _activeTab->_matchCase,
-                            wholeWord, _activeTab->_regExp));
+                    }
+                    while (findString(_activeTab->_search, &findBegin, &findEnd,
+                            _activeTab->_matchCase, wholeWord, _activeTab->_regExp));
 
                     if (endPos - previewPos)
-                        sendSci(SCI_SETSTYLING, endPos - previewPos,
-                                STYLE_DEFAULT);
+                        sendSci(SCI_SETSTYLING, endPos - previewPos, STYLE_DEFAULT);
                 }
                 else
                 {
@@ -963,8 +957,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
-        for (int findEnd = endLine;
-                findString(_activeTab->_search, &findBegin, &findEnd,
+        for (int findEnd = endLine; findString(_activeTab->_search, &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp);
                 findBegin = findEnd, findEnd = endLine, matchNum++)
             if (notify->position >= findBegin && notify->position <= findEnd)
@@ -1033,6 +1026,7 @@ void ResultWin::onMarginClick(SCNotification* notify)
 
     if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
         lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+
     if (lineNum > 0)
     {
         toggleFolding(lineNum);
@@ -1063,8 +1057,7 @@ bool ResultWin::onKeyPress(WORD keyCode)
         case VK_UP:
             if (--lineNum >= 0)
             {
-                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) &
-                        SC_FOLDLEVELHEADERFLAG))
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 {
                     int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
@@ -1078,16 +1071,13 @@ bool ResultWin::onKeyPress(WORD keyCode)
         case VK_DOWN:
             if (++lineNum < sendSci(SCI_GETLINECOUNT))
             {
-                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) &
-                        SC_FOLDLEVELHEADERFLAG))
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 {
                     int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                     {
-                        int nextFold = sendSci(SCI_GETLASTCHILD, foldLine,
-                                sendSci(SCI_GETFOLDLEVEL, foldLine)) + 1;
-                        lineNum = (nextFold < sendSci(SCI_GETLINECOUNT)) ?
-                                nextFold : foldLine;
+                        int nextFold = sendSci(SCI_GETLASTCHILD, foldLine, sendSci(SCI_GETFOLDLEVEL, foldLine)) + 1;
+                        lineNum = (nextFold < sendSci(SCI_GETLINECOUNT)) ? nextFold : foldLine;
                     }
                 }
 
@@ -1131,18 +1121,17 @@ bool ResultWin::onKeyPress(WORD keyCode)
         {
             int linesOnScreen = sendSci(SCI_LINESONSCREEN);
             sendSci(SCI_LINESCROLL, 0, -linesOnScreen);
-            lineNum = sendSci(SCI_DOCLINEFROMVISIBLE,
-                    sendSci(SCI_GETFIRSTVISIBLELINE));
+            lineNum = sendSci(SCI_DOCLINEFROMVISIBLE, sendSci(SCI_GETFIRSTVISIBLELINE));
             sendSci(SCI_GOTOLINE, lineNum);
         }
         break;
 
         case VK_NEXT:
         {
-            int linesOnScreen = sendSci(SCI_LINESONSCREEN);
-            int firstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
+            int linesOnScreen       = sendSci(SCI_LINESONSCREEN);
+            int firstVisibleLine    = sendSci(SCI_GETFIRSTVISIBLELINE);
             sendSci(SCI_LINESCROLL, 0, linesOnScreen);
-            int newFirstVisible = sendSci(SCI_GETFIRSTVISIBLELINE);
+            int newFirstVisible     = sendSci(SCI_GETFIRSTVISIBLELINE);
 
             if (newFirstVisible - firstVisibleLine >= linesOnScreen)
             {
@@ -1267,8 +1256,7 @@ void ResultWin::onResize(int width, int height)
 
     MoveWindow(_hTab, 0, 0, width, height, TRUE);
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
-    MoveWindow(_hSci, win.left, win.top,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    MoveWindow(_hSci, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
 }
 
 

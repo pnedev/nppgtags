@@ -47,8 +47,7 @@ private:
     static const int    cFontSize;
     static const TCHAR  cAbout[];
 
-    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
-            WPARAM wParam, LPARAM lParam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hWnd, int width, int height);
 
     AboutWin() {}

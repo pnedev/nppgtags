@@ -81,8 +81,7 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
-        bool enRE, bool enMC)
+void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB, bool enRE, bool enMC)
 {
     if (SW)
         SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
@@ -111,8 +110,7 @@ void SearchWin::Close()
 /**
  *  \brief
  */
-RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
-        int width, int height)
+RECT SearchWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height)
 {
     RECT maxWin;
     GetWindowRect(GetDesktopWindow(), &maxWin);
@@ -196,30 +194,31 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
+
     GetTextMetrics(hdc, &tm);
-    int txtHeight =
-            MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
-                tm.tmInternalLeading + 1;
-    int btnHeight = MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
-            tm.tmInternalLeading;
+
+    int txtHeight = MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading + 1;
+    int btnHeight = MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading;
+
     _hTxtFont = CreateFont(
             -MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName);
+
     _hBtnFont = CreateFont(
             -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cBtnFont);
+
     ReleaseDC(hOwner, hdc);
 
-    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            cWidth, txtHeight + btnHeight + 17);
-    int width = win.right - win.left;
+    RECT win    = adjustSizeAndPos(hOwner, styleEx, style, cWidth, txtHeight + btnHeight + 17);
+    int width   = win.right - win.left;
 
     _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(),
             style, win.left, win.top, width, win.bottom - win.top,
@@ -273,8 +272,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     if (!enRE)
         EnableWindow(_hRE, FALSE);
 
-    _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
-            GetCurrentThreadId());
+    _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -305,9 +303,8 @@ void SearchWin::startCompletion()
         tag[cComplAfter] = 0;
     }
 
-    std::shared_ptr<Cmd>
-        cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag,
-                false, (Button_GetCheck(_hMC) == BST_CHECKED)));
+    std::shared_ptr<Cmd> cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag, false,
+            (Button_GetCheck(_hMC) == BST_CHECKED)));
 
     if (_cmd->Id() == FIND_FILE)
     {
@@ -331,8 +328,8 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 {
     if (cmpl->Status() == OK && cmpl->Result())
     {
-        _complData(cmpl->ResultLen() + 1);
-        Tools::AtoW(&_complData, _complData.Size(), cmpl->Result());
+        _complData.resize(cmpl->ResultLen() + 1);
+        Tools::AtoW(_complData.data(), _complData.size(), cmpl->Result());
         parseCompletion();
         filterComplList();
     }
@@ -347,8 +344,8 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 void SearchWin::parseCompletion()
 {
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(&_complData, _T("\n\r"), &pTmp);
-        pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+    for (TCHAR* pToken = _tcstok_s(_complData.data(), _T("\n\r"), &pTmp); pToken;
+            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         if (_cmd->Id() == FIND_FILE)
             pToken++;
@@ -513,8 +510,7 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 /**
  *  \brief
  */
-LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {

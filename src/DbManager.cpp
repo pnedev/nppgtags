@@ -39,8 +39,7 @@ DbHandle DbManager::RegisterDb(const CPath& dbPath, bool writeEn)
 {
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
-        dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
     {
         if (dbi->_path == dbPath)
         {
@@ -72,8 +71,7 @@ bool DbManager::UnregisterDb(DbHandle db)
 
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
-        dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
     {
         if (db == &(dbi->_path))
         {
@@ -133,8 +131,7 @@ bool DbManager::PutDb(DbHandle db)
 
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
-        dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
     {
         if (db == &(dbi->_path))
         {
@@ -199,8 +196,7 @@ DbHandle DbManager::addDb(const CPath& dbPath, bool writeEn)
  */
 DbHandle DbManager::lockDb(const CPath& filePath, bool writeEn, bool* success)
 {
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin();
-        dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
     {
         if (dbi->_path.Contains(filePath))
         {

@@ -50,8 +50,7 @@ private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
 
-    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
-            WPARAM wParam, LPARAM lParam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     AutoCompleteWin(const std::shared_ptr<Cmd>& cmd);
     AutoCompleteWin(const AutoCompleteWin&);
@@ -72,7 +71,7 @@ private:
     HFONT               _hFont;
     const CmdId_t       _cmdId;
     const int           _cmdTagLen;
-    CTcharArray         _result;
+    std::vector<TCHAR>  _result;
     std::vector<TCHAR*> _resultIndex;
 };
 

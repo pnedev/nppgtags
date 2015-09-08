@@ -36,36 +36,24 @@
 namespace GTags
 {
 
-const TCHAR CmdEngine::cCreateDatabaseCmd[] =
-        _T("\"%s\\gtags.exe\" -c");
-const TCHAR CmdEngine::cUpdateSingleCmd[] =
-        _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
-const TCHAR CmdEngine::cAutoComplCmd[]       =
-        _T("\"%s\\global.exe\" -cT \"%s\"");
-const TCHAR CmdEngine::cAutoComplSymCmd[] =
-        _T("\"%s\\global.exe\" -cs \"%s\"");
-const TCHAR CmdEngine::cAutoComplFileCmd[] =
-        _T("\"%s\\global.exe\" -cP --match-part=all \"%s\"");
-const TCHAR CmdEngine::cFindFileCmd[] =
-        _T("\"%s\\global.exe\" -P \"%s\"");
-const TCHAR CmdEngine::cFindDefinitionCmd[] =
-        _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
-const TCHAR CmdEngine::cFindReferenceCmd[] =
-        _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
-const TCHAR CmdEngine::cFindSymbolCmd[] =
-        _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
-const TCHAR CmdEngine::cGrepCmd[] =
-        _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
-const TCHAR CmdEngine::cVersionCmd[] =
-        _T("\"%s\\global.exe\" --version");
+const TCHAR CmdEngine::cCreateDatabaseCmd[] = _T("\"%s\\gtags.exe\" -c");
+const TCHAR CmdEngine::cUpdateSingleCmd[]   = _T("\"%s\\gtags.exe\" -c --single-update \"%s\"");
+const TCHAR CmdEngine::cAutoComplCmd[]      = _T("\"%s\\global.exe\" -cT \"%s\"");
+const TCHAR CmdEngine::cAutoComplSymCmd[]   = _T("\"%s\\global.exe\" -cs \"%s\"");
+const TCHAR CmdEngine::cAutoComplFileCmd[]  = _T("\"%s\\global.exe\" -cP --match-part=all \"%s\"");
+const TCHAR CmdEngine::cFindFileCmd[]       = _T("\"%s\\global.exe\" -P \"%s\"");
+const TCHAR CmdEngine::cFindDefinitionCmd[] = _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
+const TCHAR CmdEngine::cFindReferenceCmd[]  = _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
+const TCHAR CmdEngine::cFindSymbolCmd[]     = _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
+const TCHAR CmdEngine::cGrepCmd[]           = _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
+const TCHAR CmdEngine::cVersionCmd[]        = _T("\"%s\\global.exe\" --version");
 
 
 /**
  *  \brief
  */
-Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag,
-        bool regExp, bool matchCase) : _id(id), _db(db),
-        _regExp(regExp), _matchCase(matchCase), _status(CANCELLED)
+Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag, bool regExp, bool matchCase) :
+        _id(id), _db(db), _regExp(regExp), _matchCase(matchCase), _status(CANCELLED)
 {
     if (db)
         _dbPath = *db;
@@ -75,30 +63,7 @@ Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag,
         _tcscpy_s(_name, _countof(_name), name);
 
     if (tag)
-        _tag(tag);
-}
-
-
-/**
- *  \brief
- */
-void Cmd::appendResult(const char* result)
-{
-    if (result == NULL)
-        return;
-
-    if (&_result != NULL)
-    {
-        CCharArray oldResult;
-        oldResult(&_result);
-        _result(oldResult.Size() + strlen(result));
-        _result = &oldResult;
-        _result += result;
-    }
-    else
-    {
-        setResult(result);
-    }
+        _tag.assign(tag, tag + _tcslen(tag) + 1);
 }
 
 
@@ -110,8 +75,7 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
     CmdEngine* engine = new CmdEngine(cmd, complCB);
     cmd->Status(RUN_ERROR);
 
-    engine->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
-            (void*)engine, 0, NULL);
+    engine->_hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc, (void*)engine, 0, NULL);
     if (engine->_hThread == NULL)
     {
         delete engine;
@@ -124,8 +88,7 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
     // If no callback is given then wait until command is ready
     // Since this blocks the UI thread we need a message pump to
     // handle N++ window messages
-    while (MsgWaitForMultipleObjects(1, &engine->_hThread, FALSE, INFINITE,
-            QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
+    while (MsgWaitForMultipleObjects(1, &engine->_hThread, FALSE, INFINITE, QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
     {
         MSG msg;
 
@@ -227,8 +190,7 @@ void CmdEngine::composeCmd(TCHAR* buf, unsigned len) const
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
         _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str());
     else
-        _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str(),
-                _cmd->Tag());
+        _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag());
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
     {
@@ -265,14 +227,11 @@ unsigned CmdEngine::runProcess()
 
     TCHAR header[512];
     if (_cmd->_id == CREATE_DATABASE)
-        _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _cmd->Name(), _cmd->DbPath());
+        _sntprintf_s(header, _countof(header), _TRUNCATE, _T("%s - \"%s\""), _cmd->Name(), _cmd->DbPath());
     else if (_cmd->_id == VERSION)
-        _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s"), _cmd->Name());
+        _sntprintf_s(header, _countof(header), _TRUNCATE, _T("%s"), _cmd->Name());
     else
-        _sntprintf_s(header, _countof(header), _TRUNCATE,
-                _T("%s - \"%s\""), _cmd->Name(), _cmd->Tag());
+        _sntprintf_s(header, _countof(header), _TRUNCATE, _T("%s - \"%s\""), _cmd->Name(), _cmd->Tag());
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* env = NULL;
@@ -302,8 +261,7 @@ unsigned CmdEngine::runProcess()
     si.hStdOutput   = dataPipe.GetInputHandle();
 
     PROCESS_INFORMATION pi;
-    if (!CreateProcess(NULL, buf, NULL, NULL, TRUE, createFlags,
-            (LPVOID)env, currentDir, &si, &pi))
+    if (!CreateProcess(NULL, buf, NULL, NULL, TRUE, createFlags, (LPVOID)env, currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
         return 1;
@@ -321,8 +279,7 @@ unsigned CmdEngine::runProcess()
     // Display activity window and block until process is ready or
     // user has issued cancel command
     bool cancelled = ActivityWin::Show(pi.hProcess, 600, header,
-            (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ?
-            0 : 300);
+            (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ? 0 : 300);
     endProcess(pi);
 
     if (cancelled)
@@ -331,11 +288,11 @@ unsigned CmdEngine::runProcess()
         return 1;
     }
 
-    if (dataPipe.GetOutput())
+    if (!dataPipe.GetOutput().empty())
     {
         _cmd->appendResult(dataPipe.GetOutput());
     }
-    else if (errorPipe.GetOutput())
+    else if (!errorPipe.GetOutput().empty())
     {
         _cmd->setResult(errorPipe.GetOutput());
         _cmd->_status = FAILED;

@@ -33,9 +33,9 @@ INpp INpp::Instance;
  */
 long INpp::GetWord(char* buf, int bufSize, bool select) const
 {
-    long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-    long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     long len = wordEnd - wordStart;
     if (len != 0)
@@ -61,9 +61,9 @@ long INpp::GetWord(char* buf, int bufSize, bool select) const
  */
 void INpp::ReplaceWord(const char* replText) const
 {
-    long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-    long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     SendMessage(_hSC, SCI_SETTARGETSTART, wordStart, 0);
     SendMessage(_hSC, SCI_SETTARGETEND, wordEnd, 0);
@@ -85,8 +85,7 @@ void INpp::SetView(long startPos, long endPos) const
     SendMessage(_hSC, SCI_ENSUREVISIBLE, lineNum, 0);
 
     int linesOnScreen = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
-    lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0) -
-            linesOnScreen / 2;
+    lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0) - linesOnScreen / 2;
     if (lineNum < 0)
         lineNum = 0;
     SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, lineNum, 0);
@@ -97,8 +96,7 @@ void INpp::SetView(long startPos, long endPos) const
 /**
  *  \brief
  */
-bool INpp::SearchText(const char* text,
-        bool matchCase, bool wholeWord, bool regExp,
+bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
         long* startPos, long* endPos) const
 {
     if (startPos == NULL || endPos == NULL)

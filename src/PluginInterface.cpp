@@ -37,8 +37,7 @@ std::unique_ptr<CPath> ChangedFile;
 }
 
 
-BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall,
-        LPVOID lpReserved)
+BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall, LPVOID lpReserved)
 {
     switch (reasonForCall)
     {
@@ -90,8 +89,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             if (GTags::Config._autoUpdate)
             {
                 TCHAR file[MAX_PATH];
-                INpp::Get().GetFilePathFromBufID(
-                        notifyCode->nmhdr.idFrom, file);
+                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                 GTags::UpdateSingleFile(file);
             }
         break;
@@ -101,8 +99,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             if (GTags::Config._autoUpdate)
             {
                 TCHAR file[MAX_PATH];
-                INpp::Get().GetFilePathFromBufID(
-                        notifyCode->nmhdr.idFrom, file);
+                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                 ChangedFile.reset(new CPath(file));
             }
         break;
@@ -116,8 +113,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             if (GTags::Config._autoUpdate)
             {
                 TCHAR file[MAX_PATH];
-                INpp::Get().GetFilePathFromBufID(
-                        notifyCode->nmhdr.idFrom, file);
+                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                 GTags::UpdateSingleFile(file);
 
                 if (ChangedFile)
@@ -139,8 +135,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
                 else
                 {
                     TCHAR file[MAX_PATH];
-                    INpp::Get().GetFilePathFromBufID(
-                            notifyCode->nmhdr.idFrom, file);
+                    INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                     GTags::UpdateSingleFile(file);
                 }
             }
@@ -165,8 +160,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
 }
 
 
-extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message,
-        WPARAM wParam, LPARAM lParam)
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
     return TRUE;
 }

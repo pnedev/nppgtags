@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -123,11 +122,9 @@ bool CConfig::LoadFromFile(const TCHAR* file)
         if (!_tcsncmp(line, cParserKey, _countof(cParserKey) - 1))
         {
             unsigned pos = _countof(cParserKey) - 1;
-            if (!_tcsncmp(&line[pos], cCtagsParser,
-                    _countof(cCtagsParser) - 1))
+            if (!_tcsncmp(&line[pos], cCtagsParser, _countof(cCtagsParser) - 1))
                 _parserIdx = CTAGS_PARSER;
-            else if (!_tcsncmp(&line[pos], cPygmentsParser,
-                    _countof(cPygmentsParser) - 1))
+            else if (!_tcsncmp(&line[pos], cPygmentsParser, _countof(cPygmentsParser) - 1))
                 _parserIdx = PYGMENTS_PARSER;
             else
                 _parserIdx = DEFAULT_PARSER;
@@ -148,8 +145,7 @@ bool CConfig::LoadFromFile(const TCHAR* file)
             else
                 _useLibDb = false;
         }
-        else if (!_tcsncmp(line, cLibraryPathKey,
-                _countof(cLibraryPathKey) - 1))
+        else if (!_tcsncmp(line, cLibraryPathKey, _countof(cLibraryPathKey) - 1))
         {
             unsigned pos = _countof(cLibraryPathKey) - 1;
             _libDbPath = &line[pos];
@@ -185,10 +181,8 @@ bool CConfig::SaveToFile(const TCHAR* file) const
     bool success = false;
     if (_ftprintf_s(fp, _T("%s\n"), cInfo) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cParserKey, Parser()) > 0)
-    if (_ftprintf_s(fp, _T("%s%s\n"), cAutoUpdateKey,
-            (_autoUpdate ? _T("yes") : _T("no"))) > 0)
-    if (_ftprintf_s(fp, _T("%s%s\n"), cUseLibraryKey,
-            (_useLibDb ? _T("yes") : _T("no"))) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n"), cAutoUpdateKey, (_autoUpdate ? _T("yes") : _T("no"))) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n"), cUseLibraryKey, (_useLibDb ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cLibraryPathKey, _libDbPath.C_str()) > 0)
         success = true;
 

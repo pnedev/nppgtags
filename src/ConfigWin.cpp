@@ -29,7 +29,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
-#include <stdlib.h>
+#include <vector>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -90,8 +90,7 @@ void ConfigWin::Show(CConfig* cfg)
 /**
  *  \brief
  */
-RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
-        int width, int height)
+RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height)
 {
     RECT maxWin;
     GetWindowRect(GetDesktopWindow(), &maxWin);
@@ -169,21 +168,22 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 {
     TEXTMETRIC tm;
     HDC hdc = GetWindowDC(hOwner);
+
     GetTextMetrics(hdc, &tm);
-    int txtHeight = MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) +
-            tm.tmInternalLeading;
+
+    int txtHeight = MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading;
     _hFont = CreateFont(
             -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, cFont);
+
     ReleaseDC(hOwner, hdc);
 
-    DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style,
-            500, 5 * txtHeight + 120);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 5 * txtHeight + 120);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -204,8 +204,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     HWND hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
-    SetWindowText(hStatic,
-            _T("Parser (requires database re-creation on change!)"));
+
+    SetWindowText(hStatic, _T("Parser (requires database re-creation on change!)"));
 
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
@@ -235,15 +235,17 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
+
     SetWindowText(hStatic, _T("Paths to library databases (';' separated)"));
 
     yPos += (txtHeight + 5);
-    styleEx = WS_EX_CLIENTEDGE;
-    style = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOOLEDRAGDROP;
-    win.top = yPos;
-    win.bottom = win.top + txtHeight;
-    win.left = 10;
-    win.right = width - 10;
+    styleEx     = WS_EX_CLIENTEDGE;
+    style       = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOOLEDRAGDROP;
+    win.top     = yPos;
+    win.bottom  = win.top + txtHeight;
+    win.left    = 10;
+    win.right   = width - 10;
+
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hLibDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
             win.left, win.top, win.right - win.left, win.bottom - win.top,
@@ -294,18 +296,15 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ?
-            BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ?
-            BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ? BST_CHECKED : BST_UNCHECKED);
 
     for (unsigned i = 0; CConfig::Parser(i); i++)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)CConfig::Parser(i));
 
     SendMessage(_hParser, CB_SETCURSEL, _cfg->_parserIdx, 0);
 
-    _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
-            GetCurrentThreadId());
+    _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -322,19 +321,18 @@ void ConfigWin::onOK()
     int len = Edit_GetTextLength(_hLibDb);
     if (len)
     {
-        CTcharArray buf(len + 1);
-        Edit_GetText(_hLibDb, &buf, buf.Size());
-        _cfg->_libDbPath = &buf;
+        std::vector<TCHAR> buf;
+        buf.resize(len + 1);
+        Edit_GetText(_hLibDb, buf.data(), buf.size());
+        _cfg->_libDbPath = buf.data();
     }
     else
     {
         _cfg->_libDbPath = _T("");
     }
 
-    _cfg->_autoUpdate =
-            (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
-    _cfg->_useLibDb =
-            (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
+    _cfg->_autoUpdate   = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
+    _cfg->_useLibDb     = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
 
     _cfg->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
@@ -346,8 +344,7 @@ void ConfigWin::onOK()
         CText msg(_T("Failed saving config to\n\""));
         msg += cfgFile.C_str();
         msg += _T("\"\nIs the path read only?");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
-                MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
     }
     else
     {
@@ -364,7 +361,7 @@ LRESULT CALLBACK ConfigWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
     if (code >= 0)
     {
         HWND hWnd = GetFocus();
-        if (CW->_hWnd == hWnd || IsChild(CW->_hWnd, hWnd))
+        if ((CW->_hWnd == hWnd) || IsChild(CW->_hWnd, hWnd))
         {
             // Key is pressed
             if (!(lParam & (1 << 31)))
@@ -385,8 +382,7 @@ LRESULT CALLBACK ConfigWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 /**
  *  \brief
  */
-LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -429,8 +425,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
                     }
                     EnableWindow(CW->_hCreateDb, en);
                     Edit_Enable(CW->_hLibDb, en);
-                    SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0,
-                            GetSysColor(color));
+                    SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
                     return 0;
                 }
 
@@ -441,16 +436,17 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
 
                     if (libLen)
                     {
-                        CTcharArray
-                            buf(Edit_GetTextLength(CW->_hLibDb) + libLen + 2);
-                        Edit_GetText(CW->_hLibDb, &buf, buf.Size());
+                        std::vector<TCHAR> buf;
+                        int len = Edit_GetTextLength(CW->_hLibDb);
                         bool found = false;
 
-                        if (buf.Len())
+                        if (len)
                         {
-                            for (TCHAR* ptr =
-                                    _tcsstr(&buf, libraryPath.C_str()); ptr;
-                                    ptr = _tcsstr(ptr, libraryPath.C_str()))
+                            buf.resize(len + 1, 0);
+                            Edit_GetText(CW->_hLibDb, buf.data(), buf.size());
+
+                            for (TCHAR* ptr = _tcsstr(buf.data(), libraryPath.C_str());
+                                    ptr; ptr = _tcsstr(ptr, libraryPath.C_str()))
                             {
                                 if (ptr[libLen] == 0 || ptr[libLen] == _T(';'))
                                 {
@@ -459,19 +455,20 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg,
                                 }
                             }
 
+                            buf.pop_back(); // Remove the terminating '\0'
+
                             if (!found)
-                                buf += _T(";");
+                                buf.push_back(_T(';'));
                         }
 
                         if (!found)
                         {
-                            buf += libraryPath.C_str();
-                            Edit_SetText(CW->_hLibDb, &buf);
+                            buf.insert(buf.cend(), libraryPath.C_str(), libraryPath.C_str() + libLen + 1);
+                            Edit_SetText(CW->_hLibDb, buf.data());
                         }
 
                         SetFocus(CW->_hLibDb);
-                        int len = buf.Len();
-                        Edit_SetSel(CW->_hLibDb, len, len);
+                        Edit_SetSel(CW->_hLibDb, buf.size(), buf.size());
                         Edit_ScrollCaret(CW->_hLibDb);
                     }
 

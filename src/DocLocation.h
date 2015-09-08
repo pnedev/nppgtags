@@ -64,8 +64,7 @@ private:
 
         inline bool operator==(const Location& loc) const
         {
-            return (_posInFile == loc._posInFile &&
-                    !_tcscmp(_filePath, loc._filePath));
+            return ((_posInFile == loc._posInFile) && !_tcscmp(_filePath, loc._filePath));
         }
     };
 

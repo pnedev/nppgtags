@@ -26,6 +26,7 @@
 
 
 #include <windows.h>
+#include <vector>
 
 
 /**
@@ -41,7 +42,7 @@ public:
     HANDLE GetInputHandle() { return _hIn; }
     bool Open();
     DWORD Wait(DWORD time_ms);
-    char* GetOutput();
+    std::vector<char>& GetOutput();
 
 private:
     static const unsigned cChunkSize;
@@ -53,9 +54,9 @@ private:
 
     unsigned thread();
 
-    BOOL    _ready;
-    HANDLE  _hIn;
-    HANDLE  _hOut;
-    HANDLE  _hThread;
-    char*   _output;
+    BOOL                _ready;
+    HANDLE              _hIn;
+    HANDLE              _hOut;
+    HANDLE              _hThread;
+    std::vector<char>   _output;
 };

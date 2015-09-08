@@ -80,8 +80,7 @@ void ActivityWin::Unregister()
 /**
  *  \brief
  */
-bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text,
-        int showAfter_ms)
+bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text, int showAfter_ms)
 {
     if (!hActivity)
         return false;
@@ -97,8 +96,7 @@ bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text,
     while (1)
     {
         // Wait for window event or activity signal
-        DWORD r = MsgWaitForMultipleObjects(1, &hActivity, FALSE, INFINITE,
-                QS_ALLINPUT);
+        DWORD r = MsgWaitForMultipleObjects(1, &hActivity, FALSE, INFINITE, QS_ALLINPUT);
 
         // Post close message if event is not related to the window
         if (r != WAIT_OBJECT_0 + 1)
@@ -171,8 +169,7 @@ void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
     win.top = maxWin.bottom - (_initRefCount * height);
     win.bottom = win.top + height;
 
-    MoveWindow(hWnd, win.left, win.top,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    MoveWindow(hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
 }
 
 
@@ -254,8 +251,7 @@ void ActivityWin::onResize(HWND hWnd)
 /**
  *  \brief
  */
-LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     ActivityWin* aw;
 
@@ -267,14 +263,12 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg,
         return 0;
 
         case WM_SETFOCUS:
-            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             SetFocus(aw->_hBtn);
         return 0;
 
         case WM_PAINT:
-            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                    (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             aw->onResize(hWnd);
         break;
 
@@ -285,8 +279,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg,
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>
-                        (GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+                aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
                 EnableWindow(aw->_hBtn, FALSE);
                 aw->_isCancelled = true;
                 SendMessage(hWnd, WM_CLOSE, 0, 0);

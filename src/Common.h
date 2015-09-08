@@ -60,8 +60,7 @@ inline unsigned AtoW(wchar_t* dst, unsigned dstSize, const char* src)
 inline bool FileExists(TCHAR* file)
 {
     DWORD dwAttrib = GetFileAttributes(file);
-    return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES &&
-        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 
@@ -95,203 +94,6 @@ inline void MsgNum(int num, int radix = 10)
 #endif
 
 } // namespace Tools
-
-
-#ifdef UNICODE
-    #define CTcharArray CWcharArray
-    #define CText       CTextW
-#else
-    #define CTcharArray CCharArray
-    #define CText       CTextA
-#endif
-
-
-/**
- *  \class
- *  \brief
- */
-class CCharArray
-{
-public:
-    CCharArray(unsigned size = 0) : _ptr(NULL), _size(size)
-    {
-        if (size)
-            _ptr = new char[size];
-    }
-
-    ~CCharArray()
-    {
-        if (_ptr)
-            delete [] _ptr;
-    }
-
-    char* operator&() { return _ptr; }
-    const char* operator&() const { return _ptr; }
-
-    CCharArray& operator()(unsigned size)
-    {
-        if (_ptr)
-            delete [] _ptr;
-
-        if (size)
-            _ptr = new char[size];
-        else
-            _ptr = NULL;
-
-        _size = size;
-
-        return *this;
-    }
-
-    CCharArray& operator()(const char* str)
-    {
-        if (_ptr)
-            delete [] _ptr;
-
-        if (str)
-        {
-            _size = strlen(str) + 1;
-            _ptr = new char[_size];
-            strcpy_s(_ptr, _size, str);
-        }
-        else
-        {
-            _ptr = NULL;
-            _size = 0;
-        }
-
-        return *this;
-    }
-
-    char& operator[](unsigned pos)
-    {
-        return (pos < _size ? _ptr[pos] : _end);
-    }
-
-    const char* operator=(const char* array)
-    {
-        if (_ptr)
-            strcpy_s(_ptr, _size, array);
-        return _ptr;
-    }
-
-    const char* operator+=(const char* array)
-    {
-        if (_ptr)
-            strcat_s(_ptr, _size, array);
-        return _ptr;
-    }
-
-    bool operator==(const char* array) const
-    {
-        return (_ptr ? (!strcmp(_ptr, array)) : false);
-    }
-
-    unsigned Size() const { return _size; }
-    unsigned Len() const { return (_ptr ? strlen(_ptr) : 0); }
-
-    char& End() { return _end; }
-
-private:
-    static char _end;
-
-    char*       _ptr;
-    unsigned    _size;
-};
-
-
-/**
- *  \class
- *  \brief
- */
-class CWcharArray
-{
-public:
-    CWcharArray(unsigned size = 0) : _ptr(NULL), _size(size)
-    {
-        if (size)
-            _ptr = new wchar_t[size];
-    }
-
-    ~CWcharArray()
-    {
-        if (_ptr)
-            delete [] _ptr;
-    }
-
-    wchar_t* operator&() { return _ptr; }
-    const wchar_t* operator&() const { return _ptr; }
-
-    CWcharArray& operator()(unsigned size)
-    {
-        if (_ptr)
-            delete [] _ptr;
-
-        if (size)
-            _ptr = new wchar_t[size];
-        else
-            _ptr = NULL;
-
-        _size = size;
-
-        return *this;
-    }
-
-    CWcharArray& operator()(const wchar_t* str)
-    {
-        if (_ptr)
-            delete [] _ptr;
-
-        if (str)
-        {
-            _size = wcslen(str) + 1;
-            _ptr = new wchar_t[_size];
-            wcscpy_s(_ptr, _size, str);
-        }
-        else
-        {
-            _ptr = NULL;
-            _size = 0;
-        }
-
-        return *this;
-    }
-
-    wchar_t& operator[](unsigned pos)
-    {
-        return (pos < _size ? _ptr[pos] : _end);
-    }
-
-    const wchar_t* operator=(const wchar_t* array)
-    {
-        if (_ptr)
-            wcscpy_s(_ptr, _size, array);
-        return _ptr;
-    }
-
-    const wchar_t* operator+=(const wchar_t* array)
-    {
-        if (_ptr)
-            wcscat_s(_ptr, _size, array);
-        return _ptr;
-    }
-
-    bool operator==(const wchar_t* array) const
-    {
-        return (_ptr ? (!wcscmp(_ptr, array)) : false);
-    }
-
-    unsigned Size() const { return _size; }
-    unsigned Len() const { return (_ptr ? wcslen(_ptr) : 0); }
-
-    wchar_t& End() { return _end; }
-
-private:
-    static wchar_t  _end;
-
-    wchar_t*        _ptr;
-    unsigned        _size;
-};
 
 
 /**
@@ -374,8 +176,7 @@ public:
     inline bool FileExists() const
     {
         DWORD dwAttrib = GetFileAttributes(_str);
-        return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES &&
-            !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+        return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
     unsigned StripFilename();
@@ -517,3 +318,9 @@ public:
     inline void Print() { Tools::MsgA(C_str()); }
 #endif
 };
+
+#ifdef UNICODE
+#define CText   CTextW
+#else
+#define CText   CTextA
+#endif

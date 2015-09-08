@@ -47,8 +47,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB,
-            bool enRE = true, bool enMC = true);
+    static void Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB, bool enRE = true, bool enMC = true);
     static void Close();
 
 private:
@@ -57,16 +56,12 @@ private:
     static const int    cWidth;
     static const int    cComplAfter;
 
-    static LRESULT CALLBACK keyHookProc(int code,
-            WPARAM wParam, LPARAM lParam);
-    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
-            WPARAM wParam, LPARAM lParam);
-    static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style,
-            int width, int height);
+    static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
     SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL),
-        _cancelled(true), _keyPressed(0), _completionDone(false) {}
+        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL), _cancelled(true), _keyPressed(0), _completionDone(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
@@ -97,7 +92,7 @@ private:
     bool                _cancelled;
     int                 _keyPressed;
     bool                _completionDone;
-    CTcharArray         _complData;
+    std::vector<TCHAR>  _complData;
     std::vector<TCHAR*> _complIndex;
 };
 

@@ -78,9 +78,7 @@ private:
 
         inline bool operator==(const Tab& tab) const
         {
-            return (_cmdId == tab._cmdId &&
-                    !strcmp(_projectPath, tab._projectPath) &&
-                    !strcmp(_search, tab._search));
+            return (_cmdId == tab._cmdId && !strcmp(_projectPath, tab._projectPath) && !strcmp(_search, tab._search));
         }
 
         const CmdId_t   _cmdId;
@@ -110,13 +108,10 @@ private:
     static const TCHAR      cClassName[];
     static const TCHAR      cTabFont[];
 
-    static LRESULT CALLBACK keyHookProc(int code,
-            WPARAM wParam, LPARAM lParam);
-    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
-            WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ResultWin() :
-        _hWnd(NULL), _hSci(NULL), _hFont(NULL), _hKeyHook(NULL),
+    ResultWin() : _hWnd(NULL), _hSci(NULL), _hFont(NULL), _hKeyHook(NULL),
         _sciFunc(NULL), _sciPtr(0), _activeTab(NULL) {}
     ResultWin(const ResultWin&);
     ~ResultWin();
@@ -131,8 +126,7 @@ private:
                 static_cast<uptr_t>(wParam), static_cast<sptr_t>(lParam));
     }
 
-    void setStyle(int style, COLORREF fore = cBlack, COLORREF back = cWhite,
-            bool bold = false, bool italic = false,
+    void setStyle(int style, COLORREF fore = cBlack, COLORREF back = cWhite, bool bold = false, bool italic = false,
             int size = 0, const char *font = NULL);
 
     void configScintilla();
@@ -142,16 +136,14 @@ private:
 
     void hookKeyboard()
     {
-        _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL,
-                GetCurrentThreadId());
+        _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
     }
 
     Tab* getTab(int i = -1);
     void loadTab(Tab* tab);
     bool openItem(int lineNum, unsigned matchNum = 1);
 
-    bool findString(const char* str, int* startPos, int* endPos,
-        bool matchCase, bool wholeWord, bool regExp);
+    bool findString(const char* str, int* startPos, int* endPos, bool matchCase, bool wholeWord, bool regExp);
     void toggleFolding(int lineNum);
     void onStyleNeeded(SCNotification* notify);
     void onHotspotClick(SCNotification* notify);

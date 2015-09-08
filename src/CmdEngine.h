@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <memory>
+#include <vector>
 #include "Common.h"
 #include "DbManager.h"
 
@@ -67,8 +68,7 @@ enum CmdStatus_t
 class Cmd
 {
 public:
-    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL,
-            const TCHAR* tag = NULL,
+    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL, const TCHAR* tag = NULL,
             bool regExp = false, bool matchCase = true);
     ~Cmd() {};
 
@@ -87,9 +87,13 @@ public:
     inline DbHandle Db() const { return _db; }
     inline const TCHAR* DbPath() const { return _dbPath.C_str(); }
 
-    inline void Tag(const TCHAR* tag) { _tag(tag); }
-    inline const TCHAR* Tag() const { return &_tag; }
-    inline unsigned TagLen() const { return _tag.Len(); }
+    inline void Tag(const TCHAR* tag)
+    {
+        if (tag)
+            _tag.assign(tag, tag + _tcslen(tag) + 1);
+    }
+    inline const TCHAR* Tag() const { return _tag.data(); }
+    inline unsigned TagLen() const { return _tag.size() - 1; }
 
     inline void RegExp(bool re) { _regExp = re; }
     inline bool RegExp() const { return _regExp; }
@@ -100,27 +104,34 @@ public:
     inline void Status(CmdStatus_t stat) { _status = stat; }
     inline CmdStatus_t Status() const { return _status; }
 
-    inline char* Result() { return &_result; }
-    inline const char* Result() const { return &_result; }
-    inline unsigned ResultLen() const { return _result.Len(); }
+    inline char* Result() { return _result.data(); }
+    inline const char* Result() const { return _result.data(); }
+    inline unsigned ResultLen() const { return _result.size() - 1; }
 
 private:
     friend class CmdEngine;
 
-    void setResult(const char* result) { _result(result); }
-    void appendResult(const char* result);
+    void setResult(const std::vector<char>& result)
+    {
+        _result.assign(result.cbegin(), result.cend());
+    }
 
-    CmdId_t         _id;
-    TCHAR           _name[32];
-    DbHandle const  _db;
-    CPath           _dbPath;
+    void appendResult(const std::vector<char>& result)
+    {
+        _result.insert(_result.cend(), result.cbegin(), result.cend());
+    }
 
-    CTcharArray     _tag;
-    bool            _regExp;
-    bool            _matchCase;
+    CmdId_t             _id;
+    TCHAR               _name[32];
+    DbHandle const      _db;
+    CPath               _dbPath;
 
-    CmdStatus_t     _status;
-    CCharArray      _result;
+    std::vector<TCHAR>  _tag;
+    bool                _regExp;
+    bool                _matchCase;
+
+    CmdStatus_t         _status;
+    std::vector<char>   _result;
 };
 
 
@@ -152,8 +163,7 @@ private:
 
     static unsigned __stdcall threadFunc(void* data);
 
-    CmdEngine(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
+    CmdEngine(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) : _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
     ~CmdEngine();
 
     const TCHAR* getCmdLine() const;

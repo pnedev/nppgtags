@@ -97,11 +97,10 @@ void AutoCompleteWin::Show(const std::shared_ptr<Cmd>& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<Cmd>& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()),
-    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ?
-            cmd->TagLen() - 1 : cmd->TagLen())),
-    _result(cmd->ResultLen() + 1)
+    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->TagLen() - 1 : cmd->TagLen()))
 {
-    Tools::AtoW(&_result, _result.Size(), cmd->Result());
+    _result.resize(cmd->ResultLen() + 1, 0);
+    Tools::AtoW(_result.data(), _result.size(), cmd->Result());
 }
 
 
@@ -149,8 +148,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
-    ListView_SetExtendedListViewStyle(_hLVWnd,
-            LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     TCHAR buf[32];
     _tcscpy_s(buf, _countof(buf), header);
@@ -188,8 +186,8 @@ int AutoCompleteWin::fillLV()
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(&_result, _T("\n\r"), &pTmp);
-        pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+    for (TCHAR* pToken = _tcstok_s(_result.data(), _T("\n\r"), &pTmp);
+            pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         lvItem.pszText = (_cmdId == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);
@@ -199,8 +197,7 @@ int AutoCompleteWin::fillLV()
 
     if (lvItem.iItem > 0)
     {
-        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED,
-                LVIS_FOCUSED | LVIS_SELECTED);
+        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
         resizeLV();
     }
 
@@ -232,8 +229,7 @@ int AutoCompleteWin::filterLV(const TCHAR* filter)
 
     if (lvItem.iItem > 0)
     {
-        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED,
-                LVIS_FOCUSED | LVIS_SELECTED);
+        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
         resizeLV();
     }
 
@@ -304,12 +300,10 @@ void AutoCompleteWin::resizeLV()
         win.top     = win.bottom - lvHeight;
     }
 
-    MoveWindow(_hWnd, win.left, win.top,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    MoveWindow(_hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
 
     GetClientRect(_hWnd, &win);
-    MoveWindow(_hLVWnd, 0, 0,
-            win.right - win.left, win.bottom - win.top, TRUE);
+    MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
 }
 
 
@@ -384,8 +378,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
 
             if (!GetKeyboardState(keysState))
                 return false;
-            if (ToAscii(keyCode, MapVirtualKey(keyCode, MAPVK_VK_TO_VSC),
-                    keysState, &character, 1) != 1)
+            if (ToAscii(keyCode, MapVirtualKey(keyCode, MAPVK_VK_TO_VSC), keysState, &character, 1) != 1)
                 return false;
 
             INpp& npp = INpp::Get();
@@ -400,6 +393,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     TCHAR word[MAX_PATH];
     Tools::AtoW(word, _countof(word), wordA);
     int lvItemsCnt = filterLV(word);
+
     if (lvItemsCnt == 0)
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
@@ -427,8 +421,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
 /**
  *  \brief
  */
-LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {

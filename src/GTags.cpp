@@ -117,8 +117,7 @@ bool checkForGTagsBinaries(const TCHAR* dllPath)
 /**
  *  \brief
  */
-unsigned getSelection(TCHAR* sel, bool autoSelectWord = false,
-        bool skipPreSelect = false)
+unsigned getSelection(TCHAR* sel, bool autoSelectWord = false, bool skipPreSelect = false)
 {
     INpp& npp = INpp::Get();
 
@@ -164,13 +163,11 @@ DbHandle getDatabase(bool writeEn = false)
     DbHandle db = DbManager::Get().GetDb(currentFile, writeEn, &success);
     if (!db)
     {
-        MessageBox(npp.GetHandle(), _T("GTags database not found"),
-                cPluginName, MB_OK | MB_ICONINFORMATION);
+        MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
     }
     else if (!success)
     {
-        MessageBox(npp.GetHandle(), _T("GTags database is currently in use"),
-                cPluginName, MB_OK | MB_ICONINFORMATION);
+        MessageBox(npp.GetHandle(), _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
         db = NULL;
     }
 
@@ -251,13 +248,11 @@ void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
     if (cmd->Status() == FAILED)
     {
         CText msg(cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(),
-                cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
-                cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
 }
 
@@ -285,16 +280,14 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
 
         CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(),
-                MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
         releaseKeys();
         INpp::Get().ClearSelection();
 
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
-                cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else
     {
@@ -323,23 +316,19 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
         else
         {
             TCHAR msg[cMaxTagLen + 32];
-            _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"),
-                    cmd->Tag());
-            MessageBox(INpp::Get().GetHandle(), msg, cmd->Name(),
-                    MB_OK | MB_ICONINFORMATION);
+            _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"), cmd->Tag());
+            MessageBox(INpp::Get().GetHandle(), msg, cmd->Name(), MB_OK | MB_ICONINFORMATION);
         }
     }
     else if (cmd->Status() == FAILED)
     {
         CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(),
-                MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"),
-                cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
 }
 
@@ -452,8 +441,7 @@ void AutoCompleteFile()
         return;
     }
 
-    std::shared_ptr<Cmd>
-            cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
+    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
 
     CmdEngine::Run(cmd);
     autoComplReady(cmd);
@@ -527,9 +515,8 @@ void FindReference()
 
     if (Config._parserIdx == CConfig::CTAGS_PARSER)
     {
-        MessageBox(INpp::Get().GetHandle(),
-                _T("Ctags parser doesn't support reference search"),
-                cPluginName, MB_OK | MB_ICONINFORMATION);
+        MessageBox(INpp::Get().GetHandle(), _T("Ctags parser doesn't support reference search"), cPluginName,
+                MB_OK | MB_ICONINFORMATION);
         return;
     }
 
@@ -616,17 +603,14 @@ void CreateDatabase()
     {
         if (!success)
         {
-            MessageBox(npp.GetHandle(),
-                    _T("GTags database exists and is currently in use"),
-                    cPluginName, MB_OK | MB_ICONINFORMATION);
+            MessageBox(npp.GetHandle(), _T("GTags database exists and is currently in use"), cPluginName,
+                    MB_OK | MB_ICONINFORMATION);
             return;
         }
 
         TCHAR buf[512];
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE,
-                _T("Database at\n\"%s\" exists.\nRe-create?"), db->C_str());
-        int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Database at\n\"%s\" exists.\nRe-create?"), db->C_str());
+        int choice = MessageBox(npp.GetHandle(), buf, cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
         {
             DbManager::Get().PutDb(db);
@@ -682,10 +666,8 @@ void DeleteDatabase()
 
     INpp& npp = INpp::Get();
     TCHAR buf[512];
-    _sntprintf_s(buf, _countof(buf), _TRUNCATE,
-            _T("Delete database from\n\"%s\"?"), db->C_str());
-    int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
-            MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+    _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Delete database from\n\"%s\"?"), db->C_str());
+    int choice = MessageBox(npp.GetHandle(), buf, cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
     if (choice != IDYES)
     {
         DbManager::Get().PutDb(db);
@@ -693,12 +675,10 @@ void DeleteDatabase()
     }
 
     if (DbManager::Get().UnregisterDb(db))
-        MessageBox(npp.GetHandle(), _T("GTags database deleted"),
-                cPluginName, MB_OK | MB_ICONINFORMATION);
+        MessageBox(npp.GetHandle(), _T("GTags database deleted"), cPluginName, MB_OK | MB_ICONINFORMATION);
     else
-        MessageBox(npp.GetHandle(),
-                _T("Deleting database failed, is it read-only?"),
-                cPluginName, MB_OK | MB_ICONERROR);
+        MessageBox(npp.GetHandle(), _T("Deleting database failed, is it read-only?"), cPluginName,
+                MB_OK | MB_ICONERROR);
 }
 
 
@@ -809,13 +789,11 @@ void PluginInit()
     AutoCompleteWin::Register();
 
     if (ResultWin::Register())
-        MessageBox(npp.GetHandle(),
-            _T("Results Window init failed, plugin will not be operational"),
-            cPluginName, MB_OK | MB_ICONERROR);
+        MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
+                MB_OK | MB_ICONERROR);
     else if(!Config.LoadFromFile())
-        MessageBox(npp.GetHandle(),
-            _T("Bad config file, default settings will be used"),
-            cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(npp.GetHandle(), _T("Bad config file, default settings will be used"), cPluginName,
+                MB_OK | MB_ICONEXCLAMATION);
 }
 
 
@@ -857,8 +835,7 @@ bool UpdateSingleFile(const TCHAR* file)
         return true;
     }
 
-    std::shared_ptr<Cmd>
-            cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, upFile.C_str()));
+    std::shared_ptr<Cmd> cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, upFile.C_str()));
 
     releaseKeys();
     if (!CmdEngine::Run(cmd, dbWriteReady))
@@ -904,11 +881,9 @@ const CPath CreateLibraryDatabase(HWND hWnd)
     if (DbManager::Get().DbExistsInFolder(libraryPath))
     {
         TCHAR buf[512];
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE,
-                _T("Database at\n\"%s\" exists.\nRe-create?"),
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Database at\n\"%s\" exists.\nRe-create?"),
                 libraryPath.C_str());
-        int choice = MessageBox(hWnd, buf, cPluginName,
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+        int choice = MessageBox(hWnd, buf, cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return libraryPath;
 
@@ -917,8 +892,7 @@ const CPath CreateLibraryDatabase(HWND hWnd)
 
         if (!success)
         {
-            MessageBox(hWnd, _T("GTags database is currently in use"),
-                    cPluginName, MB_OK | MB_ICONINFORMATION);
+            MessageBox(hWnd, _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
             libraryPath = _T("");
 
             return libraryPath;

@@ -42,8 +42,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static bool Show(HANDLE hActivity, int width, const TCHAR *text,
-            int showAfter_ms);
+    static bool Show(HANDLE hActivity, int width, const TCHAR *text, int showAfter_ms);
 
 private:
     static const TCHAR      cClassName[];
@@ -53,8 +52,7 @@ private:
 
     static volatile LONG RefCount;
 
-    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg,
-            WPARAM wParam, LPARAM lParam);
+    static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     ActivityWin();
     ActivityWin(const ActivityWin&);

@@ -30,7 +30,7 @@
 #include <shellapi.h>
 #include <commctrl.h>
 #include <richedit.h>
-#include <stdlib.h>
+#include <vector>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
@@ -129,8 +129,7 @@ RECT AboutWin::adjustSizeAndPos(HWND hWnd, int width, int height)
     win.right = width;
     win.bottom = height;
 
-    AdjustWindowRectEx(&win, GetWindowLongPtr(hWnd, GWL_STYLE),
-            FALSE, GetWindowLongPtr(hWnd, GWL_EXSTYLE));
+    AdjustWindowRectEx(&win, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE, GetWindowLongPtr(hWnd, GWL_EXSTYLE));
 
     width = win.right - win.left;
     height = win.bottom - win.top;
@@ -186,16 +185,14 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     TCHAR header[32] = {_T("About ")};
     _tcscat_s(header, _countof(header), VER_PLUGIN_NAME);
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, header,
-            style, 0, 0, 200, 200, hOwner, NULL, HMod, NULL);
+    _hWnd = CreateWindowEx(styleEx, cClassName, header, style, 0, 0, 200, 200, hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
     RECT win;
     GetClientRect(_hWnd, &win);
 
-    style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |
-            ES_MULTILINE | ES_READONLY | ES_NOOLEDRAGDROP;
+    style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_NOOLEDRAGDROP;
 
     HWND hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style, 0, 0,
             win.right - win.left, win.bottom - win.top,
@@ -208,7 +205,9 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
+
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
+
     SendMessage(hEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
 
     HDC hdc = GetWindowDC(hEdit);
@@ -227,8 +226,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     SendMessage(hEdit, EM_AUTOURLDETECT, TRUE, 0);
 
     TCHAR text[2048];
-    _sntprintf_s(text, _countof(text), _TRUNCATE, cAbout,
-            VER_DESCRIPTION, VER_VERSION_STR,
+    _sntprintf_s(text, _countof(text), _TRUNCATE, cAbout, VER_DESCRIPTION, VER_VERSION_STR,
             _T(__DATE__), _T(__TIME__), VER_COPYRIGHT, info);
     Edit_SetText(hEdit, text);
 
@@ -242,8 +240,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 /**
  *  \brief
  */
-LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -274,8 +271,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg,
                 {
                     DestroyCaret();
                     MSGFILTER* pMsgFilter = (MSGFILTER*)lParam;
-                    if (pMsgFilter->msg != WM_LBUTTONDOWN &&
-                            pMsgFilter->msg != WM_LBUTTONUP)
+                    if ((pMsgFilter->msg != WM_LBUTTONDOWN) && (pMsgFilter->msg != WM_LBUTTONUP))
                         return 1;
                 }
                 break;
@@ -283,18 +279,14 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg,
                 case EN_REQUESTRESIZE:
                 {
                     REQRESIZE* pReqResize = (REQRESIZE*)lParam;
-                    HWND hEdit = pReqResize->nmhdr.hwndFrom;
-                    int width =
-                        pReqResize->rc.right - pReqResize->rc.left + 30;
-                    int height =
-                        pReqResize->rc.bottom - pReqResize->rc.top;
+                    HWND hEdit  = pReqResize->nmhdr.hwndFrom;
+                    int width   = pReqResize->rc.right - pReqResize->rc.left + 30;
+                    int height  = pReqResize->rc.bottom - pReqResize->rc.top;
 
                     RECT win = adjustSizeAndPos(hWnd, width, height);
-                    MoveWindow(hWnd, win.left, win.top,
-                            win.right - win.left, win.bottom - win.top, TRUE);
+                    MoveWindow(hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
                     GetClientRect(hWnd, &win);
-                    MoveWindow(hEdit, 0, 0,
-                            win.right - win.left, win.bottom - win.top, TRUE);
+                    MoveWindow(hEdit, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
                 }
                 return 1;
 
@@ -303,15 +295,13 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg,
                     ENLINK* pEnLink = (ENLINK*)lParam;
                     if (pEnLink->msg == WM_LBUTTONUP)
                     {
-                        CTcharArray link(pEnLink->chrg.cpMax -
-                                pEnLink->chrg.cpMin + 1);
+                        std::vector<TCHAR> link;
+                        link.resize(pEnLink->chrg.cpMax - pEnLink->chrg.cpMin + 1, 0);
                         TEXTRANGE range;
                         range.chrg = pEnLink->chrg;
-                        range.lpstrText = &link;
-                        SendMessage(pEnLink->nmhdr.hwndFrom, EM_GETTEXTRANGE,
-                                0, (LPARAM) &range);
-                        ShellExecute(NULL, _T("open"), &link, NULL, NULL,
-                                SW_SHOWNORMAL);
+                        range.lpstrText = link.data();
+                        SendMessage(pEnLink->nmhdr.hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM) &range);
+                        ShellExecute(NULL, _T("open"), link.data(), NULL, NULL, SW_SHOWNORMAL);
                         return 1;
                     }
                 }

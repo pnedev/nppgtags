@@ -24,7 +24,6 @@
 
 #include "ReadPipe.h"
 #include <process.h>
-#include <stdlib.h>
 
 
 const unsigned ReadPipe::cChunkSize = 4096;
@@ -33,7 +32,7 @@ const unsigned ReadPipe::cChunkSize = 4096;
 /**
  *  \brief
  */
-ReadPipe::ReadPipe() : _hIn(NULL), _hOut(NULL), _hThread(NULL), _output(NULL)
+ReadPipe::ReadPipe() : _hIn(NULL), _hOut(NULL), _hThread(NULL)
 {
     SECURITY_ATTRIBUTES attr    = {0};
     attr.nLength                = sizeof(attr);
@@ -41,8 +40,7 @@ ReadPipe::ReadPipe() : _hIn(NULL), _hOut(NULL), _hThread(NULL), _output(NULL)
 
     _ready = CreatePipe(&_hOut, &_hIn, &attr, 0);
     if (_ready)
-        _ready = SetHandleInformation(_hOut,
-                HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+        _ready = SetHandleInformation(_hOut, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 }
 
 
@@ -62,9 +60,6 @@ ReadPipe::~ReadPipe()
         if (_hOut)
             CloseHandle(_hOut);
     }
-
-    if (_output)
-        free(_output);
 }
 
 
@@ -80,8 +75,7 @@ bool ReadPipe::Open()
 
     CloseHandle(_hIn);
     _hIn = NULL;
-    _hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc,
-            (void*)this, 0, NULL);
+    _hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc, (void*)this, 0, NULL);
     if (_hThread)
         return true;
 
@@ -116,7 +110,7 @@ DWORD ReadPipe::Wait(DWORD time_ms)
 /**
  *  \brief
  */
-char* ReadPipe::GetOutput()
+std::vector<char>& ReadPipe::GetOutput()
 {
     if (_hThread)
         Wait(INFINITE);
@@ -142,38 +136,23 @@ unsigned ReadPipe::thread()
     DWORD bytesRead = 0;
     unsigned totalBytesRead = 0;
     unsigned chunkRemainingSize = 0;
-    unsigned allocChunksCnt = 0;
 
     while (1)
     {
         if (!chunkRemainingSize)
         {
-            char* newBlock =
-                    (char*)realloc(_output, ++allocChunksCnt * cChunkSize);
-            if (!newBlock)
-            {
-                free(_output);
-                _output = NULL;
-                return 1;
-            }
-            _output = newBlock;
+            _output.resize(totalBytesRead + cChunkSize);
             chunkRemainingSize = cChunkSize;
-            ZeroMemory(_output + totalBytesRead, cChunkSize);
         }
 
-        if (!ReadFile(_hOut, _output + totalBytesRead, chunkRemainingSize,
-                &bytesRead, NULL))
+        if (!ReadFile(_hOut, _output.data() + totalBytesRead, chunkRemainingSize, &bytesRead, NULL))
             break;
 
         chunkRemainingSize -= bytesRead;
         totalBytesRead += bytesRead;
     }
 
-    if (_output[0] == 0)
-    {
-        free(_output);
-        _output = NULL;
-    }
+    _output.resize(totalBytesRead);
 
     return 0;
 }

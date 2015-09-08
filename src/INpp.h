@@ -45,11 +45,9 @@ public:
     {
         int currentEdit;
 
-        SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA,
-                0, (LPARAM)&currentEdit);
+        SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
 
-        _hSC = currentEdit ? _nppData._scintillaSecondHandle :
-                _nppData._scintillaMainHandle;
+        _hSC = currentEdit ? _nppData._scintillaSecondHandle : _nppData._scintillaMainHandle;
 
         return _hSC;
     }
@@ -70,26 +68,22 @@ public:
 
     inline HMENU GetPluginMenu() const
     {
-        return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE,
-                NPPPLUGINMENU, 0);
+        return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE, NPPPLUGINMENU, 0);
     }
 
     inline void RegisterWin(HWND hWnd) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG,
-                MODELESSDIALOGADD, (LPARAM)hWnd);
+        SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG, MODELESSDIALOGADD, (LPARAM)hWnd);
     }
 
     inline void UnregisterWin(HWND hWnd) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG,
-                MODELESSDIALOGREMOVE, (LPARAM)hWnd);
+        SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, (LPARAM)hWnd);
     }
 
     inline void RegisterDockingWin(tTbData& data) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_DMMREGASDCKDLG,
-                0, (LPARAM)&data);
+        SendMessage(_nppData._nppHandle, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
     }
 
     inline void ShowDockingWin(HWND hWnd) const
@@ -104,64 +98,54 @@ public:
 
     inline void UpdateDockingWin(HWND hWnd) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_DMMUPDATEDISPINFO,
-                0, (LPARAM)hWnd);
+        SendMessage(_nppData._nppHandle, NPPM_DMMUPDATEDISPINFO, 0, (LPARAM)hWnd);
     }
 
     inline HWND CreateSciHandle(const HWND hParentWnd) const
     {
-        return (HWND)SendMessage(_nppData._nppHandle,
-                NPPM_CREATESCINTILLAHANDLE, 0, (LPARAM)hParentWnd);
+        return (HWND)SendMessage(_nppData._nppHandle, NPPM_CREATESCINTILLAHANDLE, 0, (LPARAM)hParentWnd);
     }
 
     inline void DestroySciHandle(const HWND hSciWnd) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE,
-                0, (LPARAM)hSciWnd);
+        SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE, 0, (LPARAM)hSciWnd);
     }
 
     inline void GetMainDir(unsigned size, TCHAR* buf) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY,
-                (WPARAM)size, (LPARAM)buf);
+        SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY, (WPARAM)size, (LPARAM)buf);
     }
 
     inline void GetPluginsConfDir(unsigned size, TCHAR* buf) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR,
-                (WPARAM)size, (LPARAM)buf);
+        SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, (WPARAM)size, (LPARAM)buf);
     }
 
     inline void GetFilePath(TCHAR* filePath) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETFULLCURRENTPATH,
-                0, (LPARAM)filePath);
+        SendMessage(_nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)filePath);
     }
 
     inline void GetFilePathFromBufID(int bufId, TCHAR* filePath) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID,
-                bufId, (LPARAM)filePath);
+        SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, bufId, (LPARAM)filePath);
     }
 
     inline void GetFileNamePart(TCHAR* fileName) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETNAMEPART,
-                0, (LPARAM)fileName);
+        SendMessage(_nppData._nppHandle, NPPM_GETNAMEPART, 0, (LPARAM)fileName);
     }
 
     inline int OpenFile(const TCHAR* filePath) const
     {
-        if (!SendMessage(_nppData._nppHandle, NPPM_DOOPEN,
-                0, (LPARAM)filePath))
+        if (!SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)filePath))
             return -1;
         return 0;
     }
 
     inline void SwitchToFile(const TCHAR* filePath) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_SWITCHTOFILE,
-                0, (LPARAM)filePath);
+        SendMessage(_nppData._nppHandle, NPPM_SWITCHTOFILE, 0, (LPARAM)filePath);
     }
 
     inline int GetCaretLineBack() const
@@ -171,8 +155,7 @@ public:
 
     inline void GetFontName(int style, char* fontName, int size) const
     {
-        SendMessage(_hSC, SCI_STYLEGETFONT, style,
-                (LPARAM)fontName);
+        SendMessage(_hSC, SCI_STYLEGETFONT, style, (LPARAM)fontName);
     }
 
     inline int GetFontSize(int style) const
@@ -237,8 +220,10 @@ public:
     inline long GetSelection(char* buf, int bufSize) const
     {
         long selLen = GetSelectionSize();
+
         if (selLen != 0 && bufSize > selLen)
             SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)buf);
+
         return selLen;
     }
 
@@ -262,19 +247,16 @@ public:
 
     inline long GetWordSize() const
     {
-        long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        long wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION,
-                currPos, true);
-        long wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION,
-                currPos, true);
+        long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+        long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
         return wordEnd - wordStart;
     }
 
     long GetWord(char* buf, int bufSize, bool select) const;
     void ReplaceWord(const char* replText) const;
-    bool SearchText(const char* text,
-            bool matchCase, bool wholeWord, bool regExp,
+    bool SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
             long* startPos = NULL, long* endPos = NULL) const;
 
     inline void Backspace() const
