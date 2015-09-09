@@ -25,6 +25,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <process.h>
+#include "tstring.h"
 #include "INpp.h"
 #include "Config.h"
 #include "GTags.h"
@@ -224,14 +225,6 @@ unsigned CmdEngine::runProcess()
     TCHAR buf[2048];
     composeCmd(buf, _countof(buf));
 
-    TCHAR header[512];
-    if (_cmd->_id == CREATE_DATABASE)
-        _sntprintf_s(header, _countof(header), _TRUNCATE, _T("%s - \"%s\""), _cmd->Name(), _cmd->DbPath());
-    else if (_cmd->_id == VERSION)
-        _sntprintf_s(header, _countof(header), _TRUNCATE, _T("%s"), _cmd->Name());
-    else
-        _sntprintf_s(header, _countof(header), _TRUNCATE, _T("%s - \"%s\""), _cmd->Name(), _cmd->Tag());
-
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* env = NULL;
     const TCHAR* currentDir = _cmd->DbPath();
@@ -275,8 +268,16 @@ unsigned CmdEngine::runProcess()
         return 1;
     }
 
+    tstring header(_cmd->Name());
+    header += _T(" - \"");
+    if (_cmd->_id == CREATE_DATABASE)
+        header += _cmd->DbPath();
+    else if (_cmd->_id != VERSION)
+        header += _cmd->Tag();
+    header.push_back(_T('\"'));
+
     // Display activity window and block until process is ready or user has cancelled the operation
-    bool cancelled = ActivityWin::Show(pi.hProcess, 600, header,
+    bool cancelled = ActivityWin::Show(pi.hProcess, 600, header.c_str(),
             (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ? 0 : 300);
     endProcess(pi);
 

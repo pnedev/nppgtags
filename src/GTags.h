@@ -38,7 +38,6 @@ namespace GTags
 
 const TCHAR cPluginName[]   = VER_PLUGIN_NAME;
 const TCHAR cBinsDir[]      = VER_PLUGIN_NAME;
-const unsigned cMaxTagLen   = 128;
 
 extern FuncItem     Menu[18];
 

@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
+#include <string>
 #include "Scintilla.h"
 #include "AutoLock.h"
 #include "Common.h"
@@ -78,18 +79,18 @@ private:
 
         inline bool operator==(const Tab& tab) const
         {
-            return (_cmdId == tab._cmdId && !strcmp(_projectPath, tab._projectPath) && !strcmp(_search, tab._search));
+            return (_cmdId == tab._cmdId && !strcmp(_projectPath, tab._projectPath) && _search == tab._search);
         }
 
-        const CmdId_t   _cmdId;
-        const bool      _regExp;
-        const bool      _matchCase;
-        char            _projectPath[MAX_PATH];
-        char            _search[cMaxTagLen];
-        bool            _outdated;
-        CTextA          _uiBuf;
-        int             _currentLine;
-        int             _firstVisibleLine;
+        const CmdId_t       _cmdId;
+        const bool          _regExp;
+        const bool          _matchCase;
+        char                _projectPath[MAX_PATH];
+        std::vector<char>   _search;
+        bool                _outdated;
+        CTextA              _uiBuf;
+        int                 _currentLine;
+        int                 _firstVisibleLine;
 
         void SetFolded(int lineNum);
         void ClearFolded(int lineNum);

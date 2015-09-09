@@ -70,12 +70,14 @@ ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
     _outdated(false), _currentLine(1), _firstVisibleLine(0)
 {
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->DbPath());
-    Tools::WtoA(_search, _countof(_search), cmd->Tag());
+
+    _search.resize(cmd->TagLen() + 1);
+    Tools::WtoA(_search.data(), _search.size(), cmd->Tag());
 
     // Add the search header - cmd name + search word + project path
     _uiBuf = cmd->Name();
     _uiBuf += " \"";
-    _uiBuf += _search;
+    _uiBuf += _search.data();
     _uiBuf += "\" (";
     _uiBuf += _regExp ? "regexp, ": "literal, ";
     _uiBuf += _matchCase ? "match case": "ignore case";
@@ -349,7 +351,7 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
     {
         if (i == 0) // search is completely new - add new tab
         {
-            TCHAR buf[256];
+            TCHAR buf[64];
             _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag());
 
             TCITEM tci  = {0};
@@ -736,7 +738,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        if (!npp.SearchText(_activeTab->_search, _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
+        if (!npp.SearchText(_activeTab->_search.data(), _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
                 &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
@@ -835,7 +837,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                     int findBegin = startPos;
                     int findEnd = endPos;
 
-                    if (findString(_activeTab->_search, &findBegin, &findEnd,
+                    if (findString(_activeTab->_search.data(), &findBegin, &findEnd,
                         _activeTab->_matchCase, false, _activeTab->_regExp))
                     {
                         // Highlight all matches in a single result line
@@ -849,7 +851,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                             findBegin = startPos = findEnd;
                             findEnd = endPos;
                         }
-                        while (findString(_activeTab->_search, &findBegin, &findEnd,
+                        while (findString(_activeTab->_search.data(), &findBegin, &findEnd,
                                 _activeTab->_matchCase, false, _activeTab->_regExp));
 
                         if (endPos - startPos)
@@ -880,7 +882,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
 
                 bool wholeWord = (_activeTab->_cmdId != GREP);
 
-                if (findString(_activeTab->_search, &findBegin, &findEnd,
+                if (findString(_activeTab->_search.data(), &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos, SCE_GTAGS_LINE_NUM);
@@ -896,7 +898,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                         findBegin = previewPos = findEnd;
                         findEnd = endPos;
                     }
-                    while (findString(_activeTab->_search, &findBegin, &findEnd,
+                    while (findString(_activeTab->_search.data(), &findBegin, &findEnd,
                             _activeTab->_matchCase, wholeWord, _activeTab->_regExp));
 
                     if (endPos - previewPos)
@@ -939,7 +941,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
-        for (int findEnd = endLine; findString(_activeTab->_search, &findBegin, &findEnd,
+        for (int findEnd = endLine; findString(_activeTab->_search.data(), &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp);
                 findBegin = findEnd, findEnd = endLine, matchNum++)
             if (notify->position >= findBegin && notify->position <= findEnd)

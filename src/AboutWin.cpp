@@ -173,7 +173,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     str += VER_PLUGIN_NAME;
 
     _hWnd = CreateWindowEx(styleEx, cClassName, str.c_str(), style,
-            (win.right + win.left) / 2 - 250, (win.top + win.bottom) / 2 - 200, 500, 400,
+            (win.right + win.left) / 2 - 150, (win.top + win.bottom) / 2 - 100, 300, 200,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;

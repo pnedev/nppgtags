@@ -30,6 +30,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <vector>
+#include "tstring.h"
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -185,10 +186,10 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
-    TCHAR header[32] = {VER_PLUGIN_NAME};
-    _tcscat_s(header, _countof(header), _T(" Settings"));
+    tstring header(VER_PLUGIN_NAME);
+    header += _T(" Settings");
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, header,
+    _hWnd = CreateWindowEx(styleEx, cClassName, header.c_str(),
             style, win.left, win.top, width, height,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
