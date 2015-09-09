@@ -121,6 +121,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
 {
     HWND hOwner = INpp::Get().GetSciHandle();
     RECT win;
+
     GetWindowRect(hOwner, &win);
 
     _hWnd = CreateWindow(cClassName, NULL,
@@ -131,6 +132,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
         return NULL;
 
     GetClientRect(_hWnd, &win);
+
     _hLVWnd = CreateWindow(WC_LISTVIEW, NULL,
             WS_CHILD | WS_VISIBLE |
             LVS_REPORT | LVS_SINGLESEL | LVS_NOLABELWRAP |
@@ -139,12 +141,15 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
             _hWnd, NULL, HMod, NULL);
 
     HDC hdc = GetWindowDC(_hLVWnd);
+
     _hFont = CreateFont(
             -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName);
+
     ReleaseDC(_hLVWnd, hdc);
+
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
@@ -157,7 +162,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
     lvCol.pszText       = buf;
     lvCol.cchTextMax    = _countof(buf);
-    lvCol.cx            = 300;
+    lvCol.cx            = 360;
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
     DWORD backgroundColor = GetSysColor(cBackgroundColor);
@@ -387,11 +392,10 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         }
     }
 
-    char wordA[MAX_PATH];
-    INpp::Get().GetWord(wordA, _countof(wordA), true);
+    std::string wordA = INpp::Get().GetWord(true);
 
     TCHAR word[MAX_PATH];
-    Tools::AtoW(word, _countof(word), wordA);
+    Tools::AtoW(word, _countof(word), wordA.c_str());
     int lvItemsCnt = filterLV(word);
 
     if (lvItemsCnt == 0)

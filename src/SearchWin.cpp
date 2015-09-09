@@ -38,7 +38,6 @@ namespace GTags
 {
 
 const TCHAR SearchWin::cClassName[] = _T("SearchWin");
-const TCHAR SearchWin::cBtnFont[]   = _T("Tahoma");
 const int SearchWin::cWidth         = 420;
 const int SearchWin::cComplAfter    = 2;
 
@@ -192,13 +191,13 @@ SearchWin::~SearchWin()
  */
 HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 {
-    TEXTMETRIC tm;
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
     HDC hdc = GetWindowDC(hOwner);
 
-    GetTextMetrics(hdc, &tm);
-
-    int txtHeight = MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading + 1;
-    int btnHeight = MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading;
+    ncm.lfMenuFont.lfHeight = -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
 
     _hTxtFont = CreateFont(
             -MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
@@ -206,11 +205,13 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName);
 
-    _hBtnFont = CreateFont(
-            -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cBtnFont);
+    _hBtnFont = CreateFontIndirect(&ncm.lfMenuFont);
+
+    TEXTMETRIC tm;
+    GetTextMetrics(hdc, &tm);
+
+    int txtHeight = MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading + 1;
+    int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight;
 
     ReleaseDC(hOwner, hdc);
 

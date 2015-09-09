@@ -31,28 +31,28 @@ INpp INpp::Instance;
 /**
  *  \brief
  */
-long INpp::GetWord(char* buf, int bufSize, bool select) const
+std::string INpp::GetWord(bool select) const
 {
     long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
     long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     long len = wordEnd - wordStart;
-    if (len != 0)
-    {
-        if (select)
-            SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
-        else
-            SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
+    if (len == 0)
+        return std::string();
 
-        if (bufSize > len)
-        {
-            struct TextRange tr = { { wordStart, wordEnd }, buf };
-            SendMessage(_hSC, SCI_GETTEXTRANGE, 0, (LPARAM)&tr);
-        }
-    }
+    if (select)
+        SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
+    else
+        SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
 
-    return len;
+    std::vector<char> buf;
+    buf.resize(len);
+
+    struct TextRange tr = { { wordStart, wordEnd }, buf.data() };
+    SendMessage(_hSC, SCI_GETTEXTRANGE, 0, (LPARAM)&tr);
+
+    return std::string(buf.cbegin(), buf.cend());
 }
 
 

@@ -29,6 +29,7 @@
 #include <tchar.h>
 #include <memory>
 #include <vector>
+#include "tstring.h"
 #include "Common.h"
 #include "DbManager.h"
 
@@ -75,25 +76,15 @@ public:
     inline void Id(CmdId_t id) { _id = id; }
     inline CmdId_t Id() const { return _id; }
 
-    inline void Name(const TCHAR* name)
-    {
-        if (name)
-            _tcscpy_s(_name, _countof(_name), name);
-        else
-            _name[0] = 0;
-    }
-    inline const TCHAR* Name() const { return _name; }
+    inline void Name(const TCHAR* name) { if (name) _name = name; }
+    inline const TCHAR* Name() const { return _name.c_str(); }
 
     inline DbHandle Db() const { return _db; }
     inline const TCHAR* DbPath() const { return _dbPath.C_str(); }
 
-    inline void Tag(const TCHAR* tag)
-    {
-        if (tag)
-            _tag.assign(tag, tag + _tcslen(tag) + 1);
-    }
-    inline const TCHAR* Tag() const { return _tag.data(); }
-    inline unsigned TagLen() const { return _tag.size() - 1; }
+    inline void Tag(const TCHAR* tag) { if (tag) _tag = tag; }
+    inline const TCHAR* Tag() const { return _tag.c_str(); }
+    inline unsigned TagLen() const { return _tag.length(); }
 
     inline void RegExp(bool re) { _regExp = re; }
     inline bool RegExp() const { return _regExp; }
@@ -122,11 +113,11 @@ private:
     }
 
     CmdId_t             _id;
-    TCHAR               _name[32];
+    tstring             _name;
     DbHandle const      _db;
     CPath               _dbPath;
 
-    std::vector<TCHAR>  _tag;
+    tstring             _tag;
     bool                _regExp;
     bool                _matchCase;
 

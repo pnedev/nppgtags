@@ -106,13 +106,11 @@ private:
     static const COLORREF   cWhite = RGB(255,255,255);
 
     static const TCHAR      cClassName[];
-    static const TCHAR      cTabFont[];
 
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ResultWin() : _hWnd(NULL), _hSci(NULL), _hFont(NULL), _hKeyHook(NULL),
-        _sciFunc(NULL), _sciPtr(0), _activeTab(NULL) {}
+    ResultWin() : _hWnd(NULL), _hSci(NULL), _hKeyHook(NULL), _sciFunc(NULL), _sciPtr(0), _activeTab(NULL) {}
     ResultWin(const ResultWin&);
     ~ResultWin();
 
@@ -161,7 +159,6 @@ private:
     HWND        _hWnd;
     HWND        _hSci;
     HWND        _hTab;
-    HFONT       _hFont;
     HHOOK       _hKeyHook;
     SciFnDirect _sciFunc;
     sptr_t      _sciPtr;

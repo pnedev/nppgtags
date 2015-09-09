@@ -26,6 +26,7 @@
 #include <tchar.h>
 #include <shlobj.h>
 #include <list>
+#include "tstring.h"
 #include "AutoLock.h"
 #include "Common.h"
 #include "INpp.h"
@@ -101,12 +102,14 @@ bool checkForGTagsBinaries(const TCHAR* dllPath)
     if (!gtagsBinsFound)
     {
         gtags.StripFilename();
-        TCHAR msg[512];
-        _sntprintf_s(msg, _countof(msg), _TRUNCATE,
-                _T("GTags binaries not found in\n\"%s\"\n")
-                _T("%s plugin will not be loaded!"),
-                gtags.C_str(), cBinsDir);
-        MessageBox(NULL, msg, cPluginName, MB_OK | MB_ICONERROR);
+
+        tstring msg(_T("GTags binaries not found in\n\""));
+        msg += gtags.C_str();
+        msg += _T("\"\n");
+        msg += cPluginName;
+        msg += _T(" plugin will not be loaded!");
+
+        MessageBox(NULL, msg.c_str(), cPluginName, MB_OK | MB_ICONERROR);
         return false;
     }
 
@@ -117,35 +120,31 @@ bool checkForGTagsBinaries(const TCHAR* dllPath)
 /**
  *  \brief
  */
-unsigned getSelection(TCHAR* sel, bool autoSelectWord = false, bool skipPreSelect = false)
+tstring getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
 {
     INpp& npp = INpp::Get();
 
     npp.ReadSciHandle();
     if (npp.IsSelectionVertical())
-        return 0;
+        return tstring();
 
-    char tagA[cMaxTagLen];
-    unsigned len = npp.GetSelection(tagA, cMaxTagLen);
-    if (skipPreSelect || (len == 0 && autoSelectWord))
-        len = npp.GetWord(tagA, cMaxTagLen, true);
-    if (len)
-    {
-        if (len >= cMaxTagLen)
-        {
-            MessageBox(npp.GetHandle(), _T("Search string too long"),
-                    cPluginName, MB_OK | MB_ICONINFORMATION);
-            return 0;
-        }
+    std::string tagA;
 
-        Tools::AtoW(sel, cMaxTagLen, tagA);
-    }
-    else
-    {
-        sel[0] = 0;
-    }
+    if (!skipPreSelect)
+        tagA = npp.GetSelection();
 
-    return len;
+    if (skipPreSelect || (tagA.empty() && autoSelectWord))
+        tagA = npp.GetWord(true);
+
+    if (tagA.empty())
+        return tstring();
+
+    std::vector<TCHAR> buf;
+    buf.resize(tagA.length() + 1);
+
+    Tools::AtoW(buf.data(), buf.size(), tagA.c_str());
+
+    return tstring(buf.cbegin(), buf.cend());
 }
 
 
@@ -315,9 +314,10 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
         }
         else
         {
-            TCHAR msg[cMaxTagLen + 32];
-            _sntprintf_s(msg, _countof(msg), _TRUNCATE, _T("\"%s\" not found"), cmd->Tag());
-            MessageBox(INpp::Get().GetHandle(), msg, cmd->Name(), MB_OK | MB_ICONINFORMATION);
+            tstring msg(_T("\""));
+            msg += cmd->Tag();
+            msg += _T("\" not found");
+            MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
         }
     }
     else if (cmd->Status() == FAILED)
@@ -401,8 +401,8 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
  */
 void AutoComplete()
 {
-    TCHAR tag[cMaxTagLen];
-    if (!getSelection(tag, true, true))
+    tstring tag = getSelection(true, true);
+    if (tag.empty())
         return;
 
     DbHandle db = getDatabase();
@@ -412,7 +412,7 @@ void AutoComplete()
         return;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag));
+    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.c_str()));
 
     if (CmdEngine::Run(cmd))
     {
@@ -429,10 +429,11 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
-    TCHAR tag[cMaxTagLen];
-    tag[0] = _T('/');
-    if (!getSelection(&tag[1], true, true))
+    tstring tag = getSelection(true, true);
+    if (tag.empty())
         return;
+
+    tag.insert(0, _T("/"));
 
     DbHandle db = getDatabase();
     if (!db)
@@ -441,7 +442,7 @@ void AutoCompleteFile()
         return;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag));
+    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.c_str()));
 
     CmdEngine::Run(cmd);
     autoComplReady(cmd);
@@ -460,21 +461,21 @@ void FindFile()
         return;
 
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_FILE, cFindFile, db));
-    TCHAR tag[cMaxTagLen];
 
-    if (getSelection(tag))
-    {
-        cmd->Tag(tag);
-
-        CmdEngine::Run(cmd, showResult);
-    }
-    else
+    tstring tag = getSelection();
+    if (tag.empty())
     {
         TCHAR fileName[MAX_PATH];
         INpp::Get().GetFileNamePart(fileName);
         cmd->Tag(fileName);
 
         SearchWin::Show(cmd, showResult);
+    }
+    else
+    {
+        cmd->Tag(tag.c_str());
+
+        CmdEngine::Run(cmd, showResult);
     }
 }
 
@@ -491,17 +492,17 @@ void FindDefinition()
         return;
 
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db));
-    TCHAR tag[cMaxTagLen];
 
-    if (getSelection(tag, true))
+    tstring tag = getSelection(true);
+    if (tag.empty())
     {
-        cmd->Tag(tag);
-
-        CmdEngine::Run(cmd, findReady);
+        SearchWin::Show(cmd, findReady, false);
     }
     else
     {
-        SearchWin::Show(cmd, findReady, false);
+        cmd->Tag(tag.c_str());
+
+        CmdEngine::Run(cmd, findReady);
     }
 }
 
@@ -525,17 +526,17 @@ void FindReference()
         return;
 
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_REFERENCE, cFindReference, db));
-    TCHAR tag[cMaxTagLen];
 
-    if (getSelection(tag, true))
+    tstring tag = getSelection(true);
+    if (tag.empty())
     {
-        cmd->Tag(tag);
-
-        CmdEngine::Run(cmd, findReady);
+        SearchWin::Show(cmd, findReady, false);
     }
     else
     {
-        SearchWin::Show(cmd, findReady, false);
+        cmd->Tag(tag.c_str());
+
+        CmdEngine::Run(cmd, findReady);
     }
 }
 
@@ -552,17 +553,17 @@ void Search()
         return;
 
     std::shared_ptr<Cmd> cmd(new Cmd(GREP, cSearch, db));
-    TCHAR tag[cMaxTagLen];
 
-    if (getSelection(tag, true))
+    tstring tag = getSelection(true);
+    if (tag.empty())
     {
-        cmd->Tag(tag);
-
-        CmdEngine::Run(cmd, showResult);
+        SearchWin::Show(cmd, showResult);
     }
     else
     {
-        SearchWin::Show(cmd, showResult);
+        cmd->Tag(tag.c_str());
+
+        CmdEngine::Run(cmd, showResult);
     }
 }
 

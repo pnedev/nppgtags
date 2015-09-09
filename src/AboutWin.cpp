@@ -31,6 +31,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <vector>
+#include "tstring.h"
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
@@ -42,24 +43,7 @@ namespace GTags
 
 const TCHAR AboutWin::cClassName[]      = _T("AboutWin");
 const int AboutWin::cBackgroundColor    = COLOR_INFOBK;
-const TCHAR AboutWin::cFont[]           = _T("Tahoma");
-const int AboutWin::cFontSize           = 10;
-
-const TCHAR AboutWin::cAbout[] = {
-    _T("\n%s\n\n")
-    _T("Version: %s\n")
-    _T("Build date: %s %s\n")
-    _T("%s <pg.nedev@gmail.com>\n\n")
-    _T("Licensed under GNU GPLv2 ")
-    _T("as published by the Free Software Foundation.\n\n")
-    _T("This plugin is frontend to ")
-    _T("GNU Global source code tagging system (GTags):\n")
-    _T("http://www.gnu.org/software/global/global.html\n")
-    _T("Thanks to its developers and to ")
-    _T("Jason Hood for porting it to Windows.\n\n")
-    _T("Current GTags version:\n%s")
-};
-
+const unsigned AboutWin::cFontSize      = 10;
 
 AboutWin* AboutWin::AW = NULL;
 
@@ -179,56 +163,75 @@ AboutWin::~AboutWin()
  */
 HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 {
+    RECT win;
+    GetWindowRect(GetDesktopWindow(), &win);
+
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    TCHAR header[32] = {_T("About ")};
-    _tcscat_s(header, _countof(header), VER_PLUGIN_NAME);
+    tstring str(_T("About "));
+    str += VER_PLUGIN_NAME;
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, header, style, 0, 0, 200, 200, hOwner, NULL, HMod, NULL);
+    _hWnd = CreateWindowEx(styleEx, cClassName, str.c_str(), style,
+            (win.right + win.left) / 2 - 250, (win.top + win.bottom) / 2 - 200, 500, 400,
+            hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
-    RECT win;
     GetClientRect(_hWnd, &win);
 
     style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_NOOLEDRAGDROP;
 
-    HWND hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style, 0, 0,
-            win.right - win.left, win.bottom - win.top,
+    HWND hEdit = CreateWindowEx(0, RICHEDIT_CLASS, NULL, style,
+            0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
     SendMessage(hEdit, EM_SETBKGNDCOLOR, 0, GetSysColor(cBackgroundColor));
+
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
+    HDC hdc = GetWindowDC(hEdit);
+    ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    ReleaseDC(hEdit, hdc);
+
+    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
+    if (_hFont)
+        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     CHARFORMAT fmt  = {0};
     fmt.cbSize      = sizeof(fmt);
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
-
-    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
+    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
     SendMessage(hEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
 
-    HDC hdc = GetWindowDC(hEdit);
-    _hFont = CreateFont(
-            -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cFont);
-    ReleaseDC(hEdit, hdc);
-    if (_hFont)
-        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, TRUE);
-
-    DWORD events =
-            ENM_KEYEVENTS | ENM_MOUSEEVENTS | ENM_REQUESTRESIZE | ENM_LINK;
+    DWORD events = ENM_KEYEVENTS | ENM_MOUSEEVENTS | ENM_REQUESTRESIZE | ENM_LINK;
     SendMessage(hEdit, EM_SETEVENTMASK, 0, events);
     SendMessage(hEdit, EM_AUTOURLDETECT, TRUE, 0);
 
-    TCHAR text[2048];
-    _sntprintf_s(text, _countof(text), _TRUNCATE, cAbout, VER_DESCRIPTION, VER_VERSION_STR,
-            _T(__DATE__), _T(__TIME__), VER_COPYRIGHT, info);
-    Edit_SetText(hEdit, text);
+    str = _T("\n");
+    str += VER_DESCRIPTION;
+    str += _T("\n\nVersion: ");
+    str += VER_VERSION_STR;
+    str += _T("\nBuild date: ");
+    str += _T(__DATE__);
+    str.push_back(_T(' '));
+    str += _T(__TIME__);
+    str.push_back(_T('\n'));
+    str += VER_COPYRIGHT;
+    str += _T(" <pg.nedev@gmail.com>\n\n")
+            _T("Licensed under GNU GPLv2 as published by the Free Software Foundation.\n\n")
+            _T("This plugin is frontend to GNU Global source code tagging system (GTags):\n")
+            _T("http://www.gnu.org/software/global/global.html\n")
+            _T("Thanks to its developers and to Jason Hood for porting it to Windows.\n\n")
+            _T("Current GTags version:\n");
+    str += info;
+
+    Edit_SetText(hEdit, str.c_str());
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);

@@ -31,6 +31,7 @@
 #include "DocLocation.h"
 #include <commctrl.h>
 #include <vector>
+#include "tstring.h"
 
 
 // Scintilla user defined styles IDs
@@ -56,7 +57,6 @@ namespace GTags
 {
 
 const TCHAR ResultWin::cClassName[]   = _T("ResultWin");
-const TCHAR ResultWin::cTabFont[]     = _T("Tahoma");
 
 
 ResultWin* ResultWin::RW = NULL;
@@ -301,15 +301,13 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
 
     if (cmd->ResultLen() > 262144) // 256k
     {
-        TCHAR buf[512];
+        tstring msg = cmd->Name();
+        msg += _T(" \"");
+        msg += cmd->Tag();
+        msg += _T("\": A lot of matches were found, parsing those will be rather slow.\n")
+                _T("Are you sure you want to proceed?");
 
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE,
-                _T("%s \"%s\": A lot of matches were found, ")
-                _T("parsing those will be rather slow.\n")
-                _T("Are you sure you want to proceed?"),
-                cmd->Name(), cmd->Tag());
-
-        int choice = MessageBox(npp.GetHandle(), buf, cPluginName,
+        int choice = MessageBox(npp.GetHandle(), msg.c_str(), cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return;
@@ -426,19 +424,9 @@ void ResultWin::applyStyle()
     COLORREF findForeColor =
             RGB(GetRValue(backColor) ^ 0x1C, GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
 
-    if (_hFont)
-        DeleteObject(_hFont);
-
-    HDC hdc = GetWindowDC(_hTab);
-    _hFont = CreateFont(
-            -MulDiv(size - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET,
-            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cTabFont);
-    ReleaseDC(_hTab, hdc);
-
-    if (_hFont)
-        SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFont, TRUE);
+    HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+    if (hFont)
+        SendMessage(_hTab, WM_SETFONT, (WPARAM)hFont, TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);
@@ -473,12 +461,6 @@ ResultWin::~ResultWin()
         }
 
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
-
-        if (_hFont)
-        {
-            DeleteObject(_hFont);
-            _hFont = NULL;
-        }
     }
 }
 

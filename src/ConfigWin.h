@@ -48,14 +48,13 @@ private:
     static const TCHAR  cClassName[];
     static const TCHAR  cHeader[];
     static const int    cBackgroundColor;
-    static const TCHAR  cFont[];
     static const int    cFontSize;
 
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    ConfigWin(CConfig* cfg) : _cfg(cfg), _hKeyHook(NULL) {}
+    ConfigWin(CConfig* cfg) : _cfg(cfg), _hKeyHook(NULL), _hFont(NULL) {}
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 

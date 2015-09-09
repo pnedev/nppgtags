@@ -75,7 +75,7 @@ bool ReadPipe::Open()
 
     CloseHandle(_hIn);
     _hIn = NULL;
-    _hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc, (void*)this, 0, NULL);
+    _hThread = (HANDLE)_beginthreadex(NULL, 0, threadFunc, this, 0, NULL);
     if (_hThread)
         return true;
 

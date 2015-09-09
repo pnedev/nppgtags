@@ -41,16 +41,14 @@ public:
     static void Show(const TCHAR *info);
 
 private:
-    static const TCHAR  cClassName[];
-    static const int    cBackgroundColor;
-    static const TCHAR  cFont[];
-    static const int    cFontSize;
-    static const TCHAR  cAbout[];
+    static const TCHAR      cClassName[];
+    static const int        cBackgroundColor;
+    static const unsigned   cFontSize;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hWnd, int width, int height);
 
-    AboutWin() {}
+    AboutWin() : _hWnd(NULL), _hFont(NULL) {}
     AboutWin(const AboutWin&);
     ~AboutWin();
 

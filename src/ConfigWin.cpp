@@ -42,7 +42,6 @@ namespace GTags
 
 const TCHAR ConfigWin::cClassName[]   = _T("ConfigWin");
 const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
-const TCHAR ConfigWin::cFont[]        = _T("Tahoma");
 const int ConfigWin::cFontSize        = 10;
 
 
@@ -166,19 +165,18 @@ ConfigWin::~ConfigWin()
  */
 HWND ConfigWin::composeWindow(HWND hOwner)
 {
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
     TEXTMETRIC tm;
+
     HDC hdc = GetWindowDC(hOwner);
-
+    ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
     GetTextMetrics(hdc, &tm);
-
-    int txtHeight = MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading;
-    _hFont = CreateFont(
-            -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cFont);
-
     ReleaseDC(hOwner, hdc);
+
+    int txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
@@ -268,8 +266,11 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cFontSize * 20;
-    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), cFont);
+    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
+
     SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+
+    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
 
     if (_hFont)
         SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);

@@ -34,27 +34,27 @@ DocLocation DocLocation::Instance;
 /**
  *  \brief
  */
-void DocLocation::SetDepth(unsigned depth)
-{
-    AUTOLOCK(_lock);
+// void DocLocation::SetDepth(unsigned depth)
+// {
+    // AUTOLOCK(_lock);
 
-    if (_locList.capacity() < depth)
-    {
-        _locList.reserve(depth);
-    }
-    else
-    {
-        int diff = _locList.size() - depth;
-        if (diff > 0)
-        {
-            _locList.erase(_locList.begin(), _locList.begin() + diff);
-            _locList.resize(depth);
-            _backLocIdx = _locList.size() - 1;
-        }
-    }
+    // if (_locList.capacity() < depth)
+    // {
+        // _locList.reserve(depth);
+    // }
+    // else
+    // {
+        // int diff = _locList.size() - depth;
+        // if (diff > 0)
+        // {
+            // _locList.erase(_locList.begin(), _locList.begin() + diff);
+            // _locList.resize(depth);
+            // _backLocIdx = _locList.size() - 1;
+        // }
+    // }
 
-    _maxDepth = depth;
-}
+    // _maxDepth = depth;
+// }
 
 
 /**

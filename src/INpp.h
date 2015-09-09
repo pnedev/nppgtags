@@ -27,6 +27,8 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <vector>
+#include <string>
 #include "Notepad_plus_msgs.h"
 #include "Docking.h"
 #include "PluginInterface.h"
@@ -217,14 +219,16 @@ public:
         return SendMessage(_hSC, SCI_GETSELTEXT, 0, 0) - 1;
     }
 
-    inline long GetSelection(char* buf, int bufSize) const
+    inline std::string GetSelection() const
     {
         long selLen = GetSelectionSize();
 
-        if (selLen != 0 && bufSize > selLen)
-            SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)buf);
+        std::vector<char> buf;
+        buf.resize(selLen);
 
-        return selLen;
+        SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)buf.data());
+
+        return std::string(buf.cbegin(), buf.cend());
     }
 
     inline void SetSelection(long startPos, long endPos) const
@@ -254,7 +258,7 @@ public:
         return wordEnd - wordStart;
     }
 
-    long GetWord(char* buf, int bufSize, bool select) const;
+    std::string GetWord(bool select) const;
     void ReplaceWord(const char* replText) const;
     bool SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
             long* startPos = NULL, long* endPos = NULL) const;

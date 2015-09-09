@@ -46,9 +46,8 @@ public:
 
 private:
     static const TCHAR      cClassName[];
-    static const TCHAR      cFont[];
-    static const unsigned   cFontSize;
     static const int        cBackgroundColor;
+    static const unsigned   cFontSize;
 
     static volatile LONG RefCount;
 

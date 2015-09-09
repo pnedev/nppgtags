@@ -37,9 +37,8 @@ namespace GTags
 {
 
 const TCHAR ActivityWin::cClassName[]   = _T("ActivityWin");
-const TCHAR ActivityWin::cFont[]        = _T("Tahoma");
-const unsigned ActivityWin::cFontSize   = 8;
 const int ActivityWin::cBackgroundColor = COLOR_WINDOW;
+const unsigned ActivityWin::cFontSize   = 8;
 
 
 volatile LONG ActivityWin::RefCount = 0;
@@ -178,8 +177,7 @@ void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
  */
 HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 {
-    HWND hWnd = CreateWindow(cClassName, NULL,
-            WS_POPUP | WS_BORDER,
+    HWND hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             INpp::Get().GetHandle(), NULL, HMod, (LPVOID)this);
     if (hWnd == NULL)
@@ -189,12 +187,14 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, hWnd, NULL, HMod, NULL);
 
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
     HDC hdc = GetWindowDC(hWndTxt);
-    _hFont = CreateFont(
-            -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, cFont);
+    ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+
+    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
     if (_hFont)
         SendMessage(hWndTxt, WM_SETFONT, (WPARAM)_hFont, TRUE);
 

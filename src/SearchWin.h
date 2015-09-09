@@ -52,7 +52,6 @@ public:
 
 private:
     static const TCHAR  cClassName[];
-    static const TCHAR  cBtnFont[];
     static const int    cWidth;
     static const int    cComplAfter;
 
