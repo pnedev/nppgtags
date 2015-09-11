@@ -29,12 +29,45 @@
 #include <tchar.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <vector>
+
+
+#ifdef UNICODE
+#define tstring std::wstring
+#else
+#define tstring std::string
+#endif
 
 
 namespace Tools
 {
 
 void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
+
+
+inline void AppendToString(std::string& dst, const wchar_t* src)
+{
+    std::vector<char> buf;
+    buf.resize(_tcslen(src) + 1);
+
+    size_t cnt;
+    wcstombs_s(&cnt, buf.data(), buf.size(), src, _TRUNCATE);
+
+    dst += buf.data();
+}
+
+
+inline void AppendToString(std::wstring& dst, const char* src)
+{
+    std::vector<wchar_t> buf;
+    buf.resize(strlen(src) + 1);
+
+    size_t cnt;
+    mbstowcs_s(&cnt, buf.data(), buf.size(), src, _TRUNCATE);
+
+    dst += buf.data();
+}
 
 
 inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)

@@ -31,7 +31,7 @@
 #include "DocLocation.h"
 #include <commctrl.h>
 #include <vector>
-#include "tstring.h"
+#include "Common.h"
 
 
 // Scintilla user defined styles IDs

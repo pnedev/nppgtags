@@ -67,7 +67,7 @@ public:
     int     _parserIdx;
     bool    _autoUpdate;
     bool    _useLibDb;
-    CText   _libDbPath;
+    tstring _libDbPath;
 
 private:
     static const TCHAR cDefaultParser[];

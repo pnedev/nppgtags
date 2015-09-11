@@ -25,7 +25,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <process.h>
-#include "tstring.h"
+#include "Common.h"
 #include "INpp.h"
 #include "Config.h"
 #include "GTags.h"
@@ -229,7 +229,7 @@ unsigned CmdEngine::runProcess()
     const TCHAR* env = NULL;
     const TCHAR* currentDir = _cmd->DbPath();
 
-    CText envVars(_T("GTAGSLIBPATH="));
+    tstring envVars(_T("GTAGSLIBPATH="));
     if (Config._useLibDb)
         envVars += Config._libDbPath;
 
@@ -239,7 +239,7 @@ unsigned CmdEngine::runProcess()
     }
     else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
     {
-        env = envVars.C_str();
+        env = envVars.c_str();
         createFlags |= CREATE_UNICODE_ENVIRONMENT;
     }
 

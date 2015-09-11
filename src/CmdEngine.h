@@ -29,7 +29,6 @@
 #include <tchar.h>
 #include <memory>
 #include <vector>
-#include "tstring.h"
 #include "Common.h"
 #include "DbManager.h"
 

@@ -26,7 +26,6 @@
 #include <tchar.h>
 #include <shlobj.h>
 #include <list>
-#include "tstring.h"
 #include "AutoLock.h"
 #include "Common.h"
 #include "INpp.h"
@@ -246,8 +245,9 @@ void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
 
     if (cmd->Status() == FAILED)
     {
-        CText msg(cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        tstring msg;
+        Tools::AppendToString(msg, cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -277,9 +277,10 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
         releaseKeys();
         INpp::Get().ClearSelection();
 
-        CText msg(cmd->Result());
+        tstring msg;
+        Tools::AppendToString(msg, cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -322,9 +323,10 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
     }
     else if (cmd->Status() == FAILED)
     {
-        CText msg(cmd->Result());
+        tstring msg;
+        Tools::AppendToString(msg, cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -710,13 +712,14 @@ void About()
     std::shared_ptr<Cmd> cmd(new Cmd(VERSION, cVersion));
     CmdEngine::Run(cmd);
 
-    CText msg;
+    tstring msg;
+
     if (cmd->Status() == OK)
-        msg = cmd->Result();
+        Tools::AppendToString(msg, cmd->Result());
     else
         msg = _T("VERSION READ FAILED\n");
 
-    AboutWin::Show(msg.C_str());
+    AboutWin::Show(msg.c_str());
 }
 
 } // anonymous namespace

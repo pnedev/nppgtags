@@ -30,7 +30,6 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <vector>
-#include "tstring.h"
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -278,8 +277,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
-    if (_cfg->_libDbPath.Len())
-        Edit_SetText(_hLibDb, _cfg->_libDbPath.C_str());
+    if (_cfg->_libDbPath.length())
+        Edit_SetText(_hLibDb, _cfg->_libDbPath.c_str());
     if (!_cfg->_useLibDb)
     {
         EnableWindow(_hCreateDb, FALSE);
@@ -330,7 +329,7 @@ void ConfigWin::onOK()
     }
     else
     {
-        _cfg->_libDbPath = _T("");
+        _cfg->_libDbPath.clear();
     }
 
     _cfg->_autoUpdate   = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
@@ -343,10 +342,10 @@ void ConfigWin::onOK()
         CPath cfgFile;
         CConfig::GetDefaultCfgFile(cfgFile);
 
-        CText msg(_T("Failed saving config to\n\""));
+        tstring msg(_T("Failed saving config to\n\""));
         msg += cfgFile.C_str();
         msg += _T("\"\nIs the path read only?");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
     }
     else
     {

@@ -31,7 +31,6 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <vector>
-#include "tstring.h"
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
