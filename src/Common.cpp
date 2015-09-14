@@ -32,10 +32,10 @@ unsigned CPath::StripFilename()
 {
     int len;
 
-    for (len = _tcslen(_str) - 1; len >= 0; len--)
-        if (_str[len] == _T('\\') || _str[len] == _T('/'))
+    for (len = _tcslen(_buf) - 1; len >= 0; len--)
+        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
             break;
-    _str[++len] = 0;
+    _buf[++len] = 0;
 
     return (unsigned)len;
 }
@@ -48,11 +48,11 @@ const TCHAR* CPath::GetFilename() const
 {
     int len;
 
-    for (len = _tcslen(_str) - 1; len >= 0; len--)
-        if (_str[len] == _T('\\') || _str[len] == _T('/'))
+    for (len = _tcslen(_buf) - 1; len >= 0; len--)
+        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
             break;
 
-    return &_str[++len];
+    return &_buf[++len];
 }
 
 
@@ -61,14 +61,14 @@ const TCHAR* CPath::GetFilename() const
  */
 unsigned CPath::Up()
 {
-    int len = _tcslen(_str) - 1;
-    if (_str[len] == _T('\\') || _str[len] == _T('/'))
+    int len = _tcslen(_buf) - 1;
+    if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
         len--;
 
     for (; len >= 0; len--)
-        if (_str[len] == _T('\\') || _str[len] == _T('/'))
+        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
             break;
-    _str[++len] = 0;
+    _buf[++len] = 0;
 
     return (unsigned)len;
 }
@@ -79,11 +79,11 @@ unsigned CPath::Up()
  */
 bool CPath::Contains(const TCHAR* pathStr) const
 {
-    unsigned len = _tcslen(_str);
+    unsigned len = _tcslen(_buf);
     if (len >= _tcslen(pathStr))
         return false;
 
-    return !_tcsncmp(_str, pathStr, len);
+    return !_tcsncmp(_buf, pathStr, len);
 }
 
 
@@ -92,11 +92,11 @@ bool CPath::Contains(const TCHAR* pathStr) const
  */
 bool CPath::Contains(const CPath& path) const
 {
-    unsigned len = _tcslen(_str);
+    unsigned len = _tcslen(_buf);
     if (len >= path.Len())
         return false;
 
-    return !_tcsncmp(_str, path._str, len);
+    return !_tcsncmp(_buf, path._buf, len);
 }
 
 
@@ -106,10 +106,10 @@ bool CPath::Contains(const CPath& path) const
 bool CPath::IsContainedIn(const TCHAR* pathStr) const
 {
     unsigned len = _tcslen(pathStr);
-    if (len >= _tcslen(_str))
+    if (len >= _tcslen(_buf))
         return false;
 
-    return !_tcsncmp(_str, pathStr, len);
+    return !_tcsncmp(_buf, pathStr, len);
 }
 
 
@@ -119,23 +119,10 @@ bool CPath::IsContainedIn(const TCHAR* pathStr) const
 bool CPath::IsContainedIn(const CPath& path) const
 {
     unsigned len = path.Len();
-    if (len >= _tcslen(_str))
+    if (len >= _tcslen(_buf))
         return false;
 
-    return !_tcsncmp(_str, path._str, len);
-}
-
-
-/**
- *  \brief
- */
-CTextW::CTextW(const wchar_t* str)
-{
-    if (str)
-    {
-        _str.resize(wcslen(str) + 1);
-        wcscpy_s(_str.data(), _str.size(), str);
-    }
+    return !_tcsncmp(_buf, path._buf, len);
 }
 
 
@@ -146,22 +133,10 @@ CTextW::CTextW(const char* str)
 {
     if (str)
     {
-        _str.resize(strlen(str) + 1);
+        _buf.resize(strlen(str) + 1);
         size_t cnt;
-        mbstowcs_s(&cnt, _str.data(), _str.size(), str, _TRUNCATE);
+        mbstowcs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
-}
-
-
-/**
- *  \brief
- */
-const CTextW& CTextW::operator=(const wchar_t* str)
-{
-    if (str)
-        _str.assign(str, str + wcslen(str) + 1);
-
-    return *this;
 }
 
 
@@ -172,9 +147,9 @@ const CTextW& CTextW::operator=(const char* str)
 {
     if (str)
     {
-        _str.resize(strlen(str) + 1);
+        _buf.resize(strlen(str) + 1);
         size_t cnt;
-        mbstowcs_s(&cnt, _str.data(), _str.size(), str, _TRUNCATE);
+        mbstowcs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
 
     return *this;
@@ -191,8 +166,8 @@ void CTextW::operator+=(const wchar_t* str)
         unsigned len = wcslen(str);
         if (len)
         {
-            _str.pop_back();
-            _str.insert(_str.end(), str, str + len + 1);
+            _buf.pop_back();
+            _buf.insert(_buf.cend(), str, str + len + 1);
         }
     }
 }
@@ -208,15 +183,13 @@ void CTextW::operator+=(const char* str)
         unsigned len = strlen(str);
         if (len)
         {
-            _str.pop_back();
+            _buf.pop_back();
 
-            unsigned size = _str.size();
-            if (size == 0)
-                size++;
+            unsigned size = _buf.size();
+            _buf.resize(size + len + 1);
 
-            _str.resize(size + len);
             size_t cnt;
-            mbstowcs_s(&cnt, &_str[size - 1], len + 1, str, _TRUNCATE);
+            mbstowcs_s(&cnt, &_buf[size], len + 1, str, _TRUNCATE);
         }
     }
 }
@@ -225,85 +198,14 @@ void CTextW::operator+=(const char* str)
 /**
  *  \brief
  */
-CTextA::CTextA(unsigned size) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
+CTextA::CTextA(const wchar_t* str)
 {
-    _buf[0] = 0;
-    if (_size < size)
-    {
-        _size = (size / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-        _str = new char[_size];
-        _str[0] = 0;
-    }
-}
-
-
-/**
- *  \brief
- */
-CTextA::CTextA(const char* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
-{
-    _buf[0] = 0;
     if (str)
     {
-        _len = strlen(str);
-        if (_len >= _size)
-        {
-            _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-            _str = new char[_size];
-        }
-        strcpy_s(_str, _size, str);
-    }
-}
-
-
-/**
- *  \brief
- */
-CTextA::CTextA(const wchar_t* str) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
-{
-    _buf[0] = 0;
-    if (str)
-    {
-        _len = wcslen(str);
-        if (_len >= _size)
-        {
-            _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-            _str = new char[_size];
-        }
+        _buf.resize(wcslen(str) + 1);
         size_t cnt;
-        wcstombs_s(&cnt, _str, _size, str, _TRUNCATE);
+        wcstombs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
-}
-
-
-/**
- *  \brief
- */
-CTextA::CTextA(const CTextA& txt) : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf)
-{
-    _buf[0] = 0;
-    if (_size < txt._size)
-    {
-        _size = txt._size;
-        _str = new char[_size];
-    }
-    _len = txt._len;
-    strcpy_s(_str, _size, txt._str);
-}
-
-
-/**
- *  \brief
- */
-const CTextA& CTextA::operator=(const char* str)
-{
-    if (str)
-    {
-        resize(strlen(str));
-        strcpy_s(_str, _size, str);
-    }
-
-    return *this;
 }
 
 
@@ -314,9 +216,9 @@ const CTextA& CTextA::operator=(const wchar_t* str)
 {
     if (str)
     {
-        resize(wcslen(str));
+        _buf.resize(wcslen(str) + 1);
         size_t cnt;
-        wcstombs_s(&cnt, _str, _size, str, _TRUNCATE);
+        wcstombs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
 
     return *this;
@@ -326,131 +228,39 @@ const CTextA& CTextA::operator=(const wchar_t* str)
 /**
  *  \brief
  */
-const CTextA& CTextA::operator=(const CTextA& txt)
-{
-    if (this != &txt)
-    {
-        resize(txt._len);
-        strcpy_s(_str, _size, txt._str);
-    }
-
-    return *this;
-}
-
-
-/**
- *  \brief
- */
-const CTextA& CTextA::operator+=(const char* str)
+void CTextA::operator+=(const char* str)
 {
     if (str)
     {
         unsigned len = strlen(str);
         if (len)
         {
-            expand(len);
-            strcat_s(_str, _size, str);
+            _buf.pop_back();
+            _buf.insert(_buf.cend(), str, str + len + 1);
         }
     }
-
-    return *this;
 }
 
 
 /**
  *  \brief
  */
-const CTextA& CTextA::operator+=(const wchar_t* str)
+void CTextA::operator+=(const wchar_t* str)
 {
     if (str)
     {
         unsigned len = wcslen(str);
         if (len)
         {
-            len = expand(len);
+            _buf.pop_back();
+
+            unsigned size = _buf.size();
+            _buf.resize(size + len + 1);
+
             size_t cnt;
-            wcstombs_s(&cnt, &_str[len], _size - len, str, _TRUNCATE);
+            wcstombs_s(&cnt, &_buf[size], len + 1, str, _TRUNCATE);
         }
     }
-
-    return *this;
-}
-
-
-/**
- *  \brief
- */
-const CTextA& CTextA::operator+=(const CTextA& txt)
-{
-    unsigned len = txt._len;
-    if (len)
-    {
-        expand(len);
-        strcat_s(_str, _size, txt._str);
-    }
-
-    return *this;
-}
-
-
-/**
- *  \brief
- */
-const CTextA& CTextA::Append(const char* str, unsigned len)
-{
-    if (str && len)
-    {
-        expand(len);
-        strncat_s(_str, _size, str, len);
-    }
-
-    return *this;
-}
-
-
-/**
- *  \brief
- */
-void CTextA::resize(unsigned newLen)
-{
-    unsigned newSize = (newLen / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-
-    _len = newLen;
-    if (_size != newSize)
-    {
-        if (_str != _buf)
-            delete [] _str;
-        if (newSize != ALLOC_CHUNK_SIZE)
-            _str = new char[newSize];
-        else
-            _str = _buf;
-        _size = newSize;
-    }
-}
-
-
-/**
- *  \brief
- */
-unsigned CTextA::expand(unsigned newLen)
-{
-    if (newLen == 0)
-        return 0;
-
-    unsigned len = _len;
-    _len += newLen;
-
-    if (_size <= _len)
-    {
-        char *oldStr = _str;
-        _size = (_len / ALLOC_CHUNK_SIZE + 1) * ALLOC_CHUNK_SIZE;
-        _str = new char[_size];
-        strcpy_s(_str, _size, oldStr);
-        if (oldStr != _buf)
-            delete [] oldStr;
-    }
-
-    return len;
 }
 
 

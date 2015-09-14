@@ -66,12 +66,10 @@ ResultWin* ResultWin::RW = NULL;
  *  \brief
  */
 ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()),
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _search(cmd->Tag()),
     _outdated(false), _currentLine(1), _firstVisibleLine(0)
 {
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->DbPath());
-
-    _search = cmd->Tag();
 
     // Add the search header - cmd name + search word + project path
     _uiBuf = cmd->Name();

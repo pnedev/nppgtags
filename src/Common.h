@@ -27,7 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 #include <string.h>
 #include <vector>
 
@@ -113,31 +113,31 @@ class CPath
 public:
     CPath(const TCHAR* pathStr = NULL)
     {
-        _str[0] = 0;
+        _buf[0] = 0;
         if (pathStr)
-            _tcscpy_s(_str, MAX_PATH, pathStr);
+            _tcscpy_s(_buf, MAX_PATH, pathStr);
     }
 
     CPath(const char* pathStr)
     {
-        _str[0] = 0;
+        _buf[0] = 0;
         if (pathStr)
         {
             size_t cnt;
-            mbstowcs_s(&cnt, _str, MAX_PATH, pathStr, _TRUNCATE);
+            mbstowcs_s(&cnt, _buf, MAX_PATH, pathStr, _TRUNCATE);
         }
     }
 
     CPath(const CPath& path)
     {
-        _tcscpy_s(_str, MAX_PATH, path._str);
+        _tcscpy_s(_buf, MAX_PATH, path._buf);
     }
 
     ~CPath() {}
 
     inline const CPath& operator=(const TCHAR* pathStr)
     {
-        _tcscpy_s(_str, MAX_PATH, pathStr);
+        _tcscpy_s(_buf, MAX_PATH, pathStr);
         return *this;
     }
 
@@ -145,45 +145,45 @@ public:
     {
         if (this != &path)
         {
-            _tcscpy_s(_str, MAX_PATH, path._str);
+            _tcscpy_s(_buf, MAX_PATH, path._buf);
         }
         return *this;
     }
 
     inline bool operator==(const TCHAR* pathStr) const
     {
-        return !_tcscmp(_str, pathStr);
+        return !_tcscmp(_buf, pathStr);
     }
 
     inline bool operator==(const CPath& path) const
     {
-        return !_tcscmp(_str, path._str);
+        return !_tcscmp(_buf, path._buf);
     }
 
     inline const CPath& operator+=(const TCHAR* str)
     {
-        _tcscat_s(_str, MAX_PATH, str);
+        _tcscat_s(_buf, MAX_PATH, str);
         return *this;
     }
 
     inline const CPath& operator+=(const CPath& path)
     {
-        _tcscat_s(_str, MAX_PATH, path._str);
+        _tcscat_s(_buf, MAX_PATH, path._buf);
         return *this;
     }
 
-    inline const TCHAR* C_str() const { return _str; }
-    inline unsigned Len() const { return _tcslen(_str); }
+    inline const TCHAR* C_str() const { return _buf; }
+    inline unsigned Len() const { return _tcslen(_buf); }
 
     inline bool Exists() const
     {
-        DWORD dwAttrib = GetFileAttributes(_str);
+        DWORD dwAttrib = GetFileAttributes(_buf);
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES);
     }
 
     inline bool FileExists() const
     {
-        DWORD dwAttrib = GetFileAttributes(_str);
+        DWORD dwAttrib = GetFileAttributes(_buf);
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
@@ -200,7 +200,7 @@ public:
 #endif
 
 private:
-    TCHAR _str[MAX_PATH];
+    TCHAR _buf[MAX_PATH];
 };
 
 
@@ -211,43 +211,57 @@ private:
 class CTextW
 {
 private:
-    std::vector<wchar_t> _str;
+    std::vector<wchar_t> _buf;
 
 public:
     CTextW() {}
-    CTextW(const CTextW& txt) : _str(txt._str) {}
-    CTextW(const wchar_t* str);
+    CTextW(const CTextW& txt) : _buf(txt._buf) {}
+
+    CTextW(const wchar_t* str)
+    {
+        if (str)
+            _buf.assign(str, str + wcslen(str) + 1);
+    }
+
     CTextW(const char* str);
+
     CTextW(unsigned size)
     {
         if (size)
-            _str.resize(size + 1);
+            _buf.resize(size + 1, 0);
     }
+
     ~CTextW() {}
 
     inline const CTextW& operator=(const CTextW& txt)
     {
-        _str = txt._str;
+        _buf = txt._buf;
         return *this;
     }
 
-    const CTextW& operator=(const wchar_t* str);
+    inline const CTextW& operator=(const wchar_t* str)
+    {
+        if (str)
+            _buf.assign(str, str + wcslen(str) + 1);
+        return *this;
+    }
+
     const CTextW& operator=(const char* str);
 
     inline bool operator==(const CTextW& txt) const
     {
-        return (_str == txt._str);
+        return (_buf == txt._buf);
     }
 
     inline bool operator==(const wchar_t* str) const
     {
-        return !wcscmp(_str.data(), str);
+        return !wcscmp(_buf.data(), str);
     }
 
     inline void operator+=(const CTextW& txt)
     {
-        _str.pop_back();
-        _str.insert(_str.end(), txt._str.begin(), txt._str.end());
+        _buf.pop_back();
+        _buf.insert(_buf.cend(), txt._buf.begin(), txt._buf.end());
     }
 
     void operator+=(const wchar_t* str);
@@ -255,39 +269,40 @@ public:
 
     inline void operator+=(wchar_t letter)
     {
-        _str.pop_back();
-        _str.push_back(letter);
-        _str.push_back(_T('\0'));
+        _buf.pop_back();
+        _buf.push_back(letter);
+        _buf.push_back(L'\0');
     }
 
-    inline void Append(const wchar_t* str, unsigned len)
+    inline void Append(const wchar_t* data, unsigned len)
     {
-        if (str && len)
+        if (data && len)
         {
-            _str.pop_back();
-            _str.insert(_str.end(), str, str + len);
+            _buf.pop_back();
+            _buf.insert(_buf.cend(), data, data + len);
+            _buf.push_back(L'\0');
         }
     }
 
     inline void Insert(unsigned at_pos, wchar_t letter)
     {
-        if (at_pos < _str.size())
-            _str.insert(_str.begin() + at_pos, letter);
+        if (at_pos < _buf.size())
+            _buf.insert(_buf.cbegin() + at_pos, letter);
     }
 
-    inline void Insert(unsigned at_pos, const wchar_t* str, unsigned len)
+    inline void Insert(unsigned at_pos, const wchar_t* data, unsigned len)
     {
-        if ((at_pos < _str.size()) && str && len)
-            _str.insert(_str.begin() + at_pos, str, str + len);
+        if ((at_pos < _buf.size()) && data && len)
+            _buf.insert(_buf.cbegin() + at_pos, data, data + len);
     }
 
-    inline const wchar_t* C_str() const { return _str.data(); }
-    inline wchar_t* C_str() { return _str.data(); }
-    inline bool Empty() const { return _str.empty(); }
-    inline unsigned Size() const { return _str.size(); }
-    inline unsigned Len() const { return Empty() ? 0 : (_str.size() - 1); }
-    inline void Resize(unsigned size) { _str.resize(size + 1, 0); }
-    inline void Clear() { _str.clear(); }
+    inline const wchar_t* C_str() const { return _buf.data(); }
+    inline wchar_t* C_str() { return _buf.data(); }
+    inline bool Empty() const { return _buf.empty(); }
+    inline unsigned Size() const { return _buf.size(); }
+    inline unsigned Len() const { return Empty() ? 0 : (_buf.size() - 1); }
+    inline void Resize(unsigned size) { _buf.resize(size + 1, 0); }
+    inline void Clear() { _buf.clear(); }
 
 #ifdef DEVELOPMENT
     inline void Print() { Tools::MsgW(C_str()); }
@@ -302,54 +317,98 @@ public:
 class CTextA
 {
 private:
-    enum
-    {
-        ALLOC_CHUNK_SIZE = 4096
-    };
-
-    void resize(unsigned newLen);
-    unsigned expand(unsigned newLen);
-
-    unsigned    _size;
-    unsigned    _len;
-    char*       _str;
-    char        _buf[ALLOC_CHUNK_SIZE];
+    std::vector<char> _buf;
 
 public:
-    CTextA() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
-    CTextA(unsigned size);
-    CTextA(const char* str);
+    CTextA() {}
+    CTextA(const CTextA& txt) : _buf(txt._buf) {}
+
+    CTextA(const char* str)
+    {
+        if (str)
+            _buf.assign(str, str + strlen(str) + 1);
+    }
+
     CTextA(const wchar_t* str);
-    CTextA(const CTextA& txt);
-    ~CTextA()
+
+    CTextA(unsigned size)
     {
-        if (_str != _buf)
-            delete [] _str;
+        if (size)
+            _buf.resize(size + 1, 0);
     }
 
-    const CTextA& operator=(const char* str);
+    ~CTextA() {}
+
+    inline const CTextA& operator=(const CTextA& txt)
+    {
+        _buf = txt._buf;
+        return *this;
+    }
+
+    inline const CTextA& operator=(const char* str)
+    {
+        if (str)
+            _buf.assign(str, str + strlen(str) + 1);
+        return *this;
+    }
+
     const CTextA& operator=(const wchar_t* str);
-    const CTextA& operator=(const CTextA& txt);
-
-    inline bool operator==(const char* str) const
-    {
-        return !strcmp(_str, str);
-    }
 
     inline bool operator==(const CTextA& txt) const
     {
-        return !strcmp(_str, txt._str);
+        return (_buf == txt._buf);
     }
 
-    const CTextA& operator+=(const char* str);
-    const CTextA& operator+=(const wchar_t* str);
-    const CTextA& operator+=(const CTextA& txt);
-    const CTextA& Append(const char* str, unsigned len);
+    inline bool operator==(const char* str) const
+    {
+        return !strcmp(_buf.data(), str);
+    }
 
-    inline const char* C_str() const { return _str; }
-    inline unsigned Size() const { return _size; }
-    inline unsigned Len() const { return _len; }
-    inline void Clear() { _str[0] = 0; }
+    inline void operator+=(const CTextA& txt)
+    {
+        _buf.pop_back();
+        _buf.insert(_buf.cend(), txt._buf.begin(), txt._buf.end());
+    }
+
+    void operator+=(const char* str);
+    void operator+=(const wchar_t* str);
+
+    inline void operator+=(char letter)
+    {
+        _buf.pop_back();
+        _buf.push_back(letter);
+        _buf.push_back('\0');
+    }
+
+    inline void Append(const char* data, unsigned len)
+    {
+        if (data && len)
+        {
+            _buf.pop_back();
+            _buf.insert(_buf.cend(), data, data + len);
+            _buf.push_back('\0');
+        }
+    }
+
+    inline void Insert(unsigned at_pos, char letter)
+    {
+        if (at_pos < _buf.size())
+            _buf.insert(_buf.cbegin() + at_pos, letter);
+    }
+
+    inline void Insert(unsigned at_pos, const char* data, unsigned len)
+    {
+        if ((at_pos < _buf.size()) && data && len)
+            _buf.insert(_buf.cbegin() + at_pos, data, data + len);
+    }
+
+    inline const char* C_str() const { return _buf.data(); }
+    inline char* C_str() { return _buf.data(); }
+    inline bool Empty() const { return _buf.empty(); }
+    inline unsigned Size() const { return _buf.size(); }
+    inline unsigned Len() const { return Empty() ? 0 : (_buf.size() - 1); }
+    inline void Resize(unsigned size) { _buf.resize(size + 1, 0); }
+    inline void Clear() { _buf.clear(); }
 
 #ifdef DEVELOPMENT
     inline void Print() { Tools::MsgA(C_str()); }
