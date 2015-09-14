@@ -71,13 +71,12 @@ ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
 {
     Tools::WtoA(_projectPath, _countof(_projectPath), cmd->DbPath());
 
-    _search.resize(cmd->TagLen() + 1);
-    Tools::WtoA(_search.data(), _search.size(), cmd->Tag());
+    _search = cmd->Tag();
 
     // Add the search header - cmd name + search word + project path
     _uiBuf = cmd->Name();
     _uiBuf += " \"";
-    _uiBuf += _search.data();
+    _uiBuf += _search.C_str();
     _uiBuf += "\" (";
     _uiBuf += _regExp ? "regexp, ": "literal, ";
     _uiBuf += _matchCase ? "match case": "ignore case";
@@ -120,7 +119,7 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
             pPreviousFile = src;
             pPreviousFileLen = pLine - src;
             dst += "\n\t";
-            dst.append(pPreviousFile, pPreviousFileLen);
+            dst.Append(pPreviousFile, pPreviousFileLen);
         }
 
         src = ++pLine;
@@ -128,7 +127,7 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
             src++;
 
         dst += "\n\t\tline ";
-        dst.append(pLine, src - pLine);
+        dst.Append(pLine, src - pLine);
         dst += ":\t";
 
         pLine = ++src;
@@ -145,7 +144,7 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
             break;
         }
 
-        dst.append(pLine, src - pLine);
+        dst.Append(pLine, src - pLine);
     }
 }
 
@@ -168,7 +167,7 @@ void ResultWin::Tab::parseFindFile(CTextA& dst, const char* src)
             eol++;
 
         dst += "\n\t";
-        dst.append(src, eol - src);
+        dst.Append(src, eol - src);
         src = eol;
     }
 }
@@ -303,13 +302,13 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
 
     if (cmd->ResultLen() > 262144) // 256k
     {
-        tstring msg = cmd->Name();
+        CText msg(cmd->Name());
         msg += _T(" \"");
         msg += cmd->Tag();
         msg += _T("\": A lot of matches were found, parsing those will be rather slow.\n")
                 _T("Are you sure you want to proceed?");
 
-        int choice = MessageBox(npp.GetHandle(), msg.c_str(), cPluginName,
+        int choice = MessageBox(npp.GetHandle(), msg.C_str(), cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return;
@@ -738,7 +737,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
     {
-        if (!npp.SearchText(_activeTab->_search.data(), _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
+        if (!npp.SearchText(_activeTab->_search.C_str(), _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
                 &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
@@ -837,7 +836,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                     int findBegin = startPos;
                     int findEnd = endPos;
 
-                    if (findString(_activeTab->_search.data(), &findBegin, &findEnd,
+                    if (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                         _activeTab->_matchCase, false, _activeTab->_regExp))
                     {
                         // Highlight all matches in a single result line
@@ -851,7 +850,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                             findBegin = startPos = findEnd;
                             findEnd = endPos;
                         }
-                        while (findString(_activeTab->_search.data(), &findBegin, &findEnd,
+                        while (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                                 _activeTab->_matchCase, false, _activeTab->_regExp));
 
                         if (endPos - startPos)
@@ -882,7 +881,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
 
                 bool wholeWord = (_activeTab->_cmdId != GREP);
 
-                if (findString(_activeTab->_search.data(), &findBegin, &findEnd,
+                if (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos, SCE_GTAGS_LINE_NUM);
@@ -898,7 +897,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                         findBegin = previewPos = findEnd;
                         findEnd = endPos;
                     }
-                    while (findString(_activeTab->_search.data(), &findBegin, &findEnd,
+                    while (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                             _activeTab->_matchCase, wholeWord, _activeTab->_regExp));
 
                     if (endPos - previewPos)
@@ -941,7 +940,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
-        for (int findEnd = endLine; findString(_activeTab->_search.data(), &findBegin, &findEnd,
+        for (int findEnd = endLine; findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp);
                 findBegin = findEnd, findEnd = endLine, matchNum++)
             if (notify->position >= findBegin && notify->position <= findEnd)

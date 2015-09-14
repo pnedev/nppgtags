@@ -29,7 +29,6 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
-#include <vector>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -185,10 +184,10 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
-    tstring header(VER_PLUGIN_NAME);
+    CText header(VER_PLUGIN_NAME);
     header += _T(" Settings");
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, header.c_str(),
+    _hWnd = CreateWindowEx(styleEx, cClassName, header.C_str(),
             style, win.left, win.top, width, height,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -277,8 +276,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
-    if (_cfg->_libDbPath.length())
-        Edit_SetText(_hLibDb, _cfg->_libDbPath.c_str());
+    if (!_cfg->_libDbPath.Empty())
+        Edit_SetText(_hLibDb, _cfg->_libDbPath.C_str());
     if (!_cfg->_useLibDb)
     {
         EnableWindow(_hCreateDb, FALSE);
@@ -322,14 +321,13 @@ void ConfigWin::onOK()
     int len = Edit_GetTextLength(_hLibDb);
     if (len)
     {
-        std::vector<TCHAR> buf;
-        buf.resize(len + 1);
-        Edit_GetText(_hLibDb, buf.data(), buf.size());
-        _cfg->_libDbPath = buf.data();
+        _cfg->_libDbPath.Resize(len);
+        Edit_GetText(_hLibDb, _cfg->_libDbPath.C_str(), _cfg->_libDbPath.Size());
     }
     else
     {
-        _cfg->_libDbPath.clear();
+        _cfg->_libDbPath.Clear();
+        _cfg->_libDbPath += _T('\0');
     }
 
     _cfg->_autoUpdate   = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
@@ -342,10 +340,10 @@ void ConfigWin::onOK()
         CPath cfgFile;
         CConfig::GetDefaultCfgFile(cfgFile);
 
-        tstring msg(_T("Failed saving config to\n\""));
+        CText msg(_T("Failed saving config to\n\""));
         msg += cfgFile.C_str();
         msg += _T("\"\nIs the path read only?");
-        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
     }
     else
     {
@@ -437,39 +435,36 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                     if (libLen)
                     {
-                        std::vector<TCHAR> buf;
                         int len = Edit_GetTextLength(CW->_hLibDb);
+                        CText buf(len);
                         bool found = false;
 
                         if (len)
                         {
-                            buf.resize(len + 1, 0);
-                            Edit_GetText(CW->_hLibDb, buf.data(), buf.size());
+                            Edit_GetText(CW->_hLibDb, buf.C_str(), buf.Size());
 
-                            for (TCHAR* ptr = _tcsstr(buf.data(), libraryPath.C_str());
+                            for (TCHAR* ptr = _tcsstr(buf.C_str(), libraryPath.C_str());
                                     ptr; ptr = _tcsstr(ptr, libraryPath.C_str()))
                             {
-                                if (ptr[libLen] == 0 || ptr[libLen] == _T(';'))
+                                if (ptr[libLen] == _T('\0') || ptr[libLen] == _T(';'))
                                 {
                                     found = true;
                                     break;
                                 }
                             }
 
-                            buf.pop_back(); // Remove the terminating '\0'
-
                             if (!found)
-                                buf.push_back(_T(';'));
+                                buf += _T(';');
                         }
 
                         if (!found)
                         {
-                            buf.insert(buf.cend(), libraryPath.C_str(), libraryPath.C_str() + libLen + 1);
-                            Edit_SetText(CW->_hLibDb, buf.data());
+                            buf += libraryPath.C_str();
+                            Edit_SetText(CW->_hLibDb, buf.C_str());
                         }
 
                         SetFocus(CW->_hLibDb);
-                        Edit_SetSel(CW->_hLibDb, buf.size(), buf.size());
+                        Edit_SetSel(CW->_hLibDb, buf.Len(), buf.Len());
                         Edit_ScrollCaret(CW->_hLibDb);
                     }
 

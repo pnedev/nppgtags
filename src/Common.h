@@ -29,14 +29,13 @@
 #include <tchar.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <vector>
 
 
 #ifdef UNICODE
-#define tstring std::wstring
+#define CText   CTextW
 #else
-#define tstring std::string
+#define CText   CTextA
 #endif
 
 
@@ -44,30 +43,6 @@ namespace Tools
 {
 
 void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
-
-
-inline void AppendToString(std::string& dst, const wchar_t* src)
-{
-    std::vector<char> buf;
-    buf.resize(_tcslen(src) + 1);
-
-    size_t cnt;
-    wcstombs_s(&cnt, buf.data(), buf.size(), src, _TRUNCATE);
-
-    dst += buf.data();
-}
-
-
-inline void AppendToString(std::wstring& dst, const char* src)
-{
-    std::vector<wchar_t> buf;
-    buf.resize(strlen(src) + 1);
-
-    size_t cnt;
-    mbstowcs_s(&cnt, buf.data(), buf.size(), src, _TRUNCATE);
-
-    dst += buf.data();
-}
 
 
 inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)
@@ -236,54 +211,83 @@ private:
 class CTextW
 {
 private:
-    enum
-    {
-        ALLOC_CHUNK_SIZE = 4096
-    };
-
-    void resize(unsigned newLen);
-    unsigned expand(unsigned newLen);
-
-    unsigned    _size;
-    unsigned    _len;
-    wchar_t*    _str;
-    wchar_t     _buf[ALLOC_CHUNK_SIZE];
+    std::vector<wchar_t> _str;
 
 public:
-    CTextW() : _size(ALLOC_CHUNK_SIZE), _len(0), _str(_buf) { _buf[0] = 0; }
-    CTextW(unsigned size);
+    CTextW() {}
+    CTextW(const CTextW& txt) : _str(txt._str) {}
     CTextW(const wchar_t* str);
     CTextW(const char* str);
-    CTextW(const CTextW& txt);
-    ~CTextW()
+    CTextW(unsigned size)
     {
-        if (_str != _buf)
-            delete [] _str;
+        if (size)
+            _str.resize(size + 1);
+    }
+    ~CTextW() {}
+
+    inline const CTextW& operator=(const CTextW& txt)
+    {
+        _str = txt._str;
+        return *this;
     }
 
     const CTextW& operator=(const wchar_t* str);
     const CTextW& operator=(const char* str);
-    const CTextW& operator=(const CTextW& txt);
-
-    inline bool operator==(const wchar_t* str) const
-    {
-        return !wcscmp(_str, str);
-    }
 
     inline bool operator==(const CTextW& txt) const
     {
-        return !wcscmp(_str, txt._str);
+        return (_str == txt._str);
     }
 
-    const CTextW& operator+=(const wchar_t* str);
-    const CTextW& operator+=(const char* str);
-    const CTextW& operator+=(const CTextW& txt);
-    const CTextW& append(const wchar_t* str, unsigned len);
+    inline bool operator==(const wchar_t* str) const
+    {
+        return !wcscmp(_str.data(), str);
+    }
 
-    inline const wchar_t* C_str() const { return _str; }
-    inline unsigned Size() const { return _size; }
-    inline unsigned Len() const { return _len; }
-    inline void Clear() { _str[0] = 0; }
+    inline void operator+=(const CTextW& txt)
+    {
+        _str.pop_back();
+        _str.insert(_str.end(), txt._str.begin(), txt._str.end());
+    }
+
+    void operator+=(const wchar_t* str);
+    void operator+=(const char* str);
+
+    inline void operator+=(wchar_t letter)
+    {
+        _str.pop_back();
+        _str.push_back(letter);
+        _str.push_back(_T('\0'));
+    }
+
+    inline void Append(const wchar_t* str, unsigned len)
+    {
+        if (str && len)
+        {
+            _str.pop_back();
+            _str.insert(_str.end(), str, str + len);
+        }
+    }
+
+    inline void Insert(unsigned at_pos, wchar_t letter)
+    {
+        if (at_pos < _str.size())
+            _str.insert(_str.begin() + at_pos, letter);
+    }
+
+    inline void Insert(unsigned at_pos, const wchar_t* str, unsigned len)
+    {
+        if ((at_pos < _str.size()) && str && len)
+            _str.insert(_str.begin() + at_pos, str, str + len);
+    }
+
+    inline const wchar_t* C_str() const { return _str.data(); }
+    inline wchar_t* C_str() { return _str.data(); }
+    inline bool Empty() const { return _str.empty(); }
+    inline unsigned Size() const { return _str.size(); }
+    inline unsigned Len() const { return Empty() ? 0 : (_str.size() - 1); }
+    inline void Resize(unsigned size) { _str.resize(size + 1, 0); }
+    inline void Clear() { _str.clear(); }
 
 #ifdef DEVELOPMENT
     inline void Print() { Tools::MsgW(C_str()); }
@@ -340,7 +344,7 @@ public:
     const CTextA& operator+=(const char* str);
     const CTextA& operator+=(const wchar_t* str);
     const CTextA& operator+=(const CTextA& txt);
-    const CTextA& append(const char* str, unsigned len);
+    const CTextA& Append(const char* str, unsigned len);
 
     inline const char* C_str() const { return _str; }
     inline unsigned Size() const { return _size; }
@@ -351,9 +355,3 @@ public:
     inline void Print() { Tools::MsgA(C_str()); }
 #endif
 };
-
-#ifdef UNICODE
-#define CText   CTextW
-#else
-#define CText   CTextA
-#endif

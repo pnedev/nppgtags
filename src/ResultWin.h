@@ -28,7 +28,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
-#include <string>
 #include "Scintilla.h"
 #include "AutoLock.h"
 #include "Common.h"
@@ -86,7 +85,7 @@ private:
         const bool          _regExp;
         const bool          _matchCase;
         char                _projectPath[MAX_PATH];
-        std::vector<char>   _search;
+        CTextA              _search;
         bool                _outdated;
         CTextA              _uiBuf;
         int                 _currentLine;

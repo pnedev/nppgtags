@@ -102,13 +102,13 @@ bool checkForGTagsBinaries(const TCHAR* dllPath)
     {
         gtags.StripFilename();
 
-        tstring msg(_T("GTags binaries not found in\n\""));
+        CText msg(_T("GTags binaries not found in\n\""));
         msg += gtags.C_str();
         msg += _T("\"\n");
         msg += cPluginName;
         msg += _T(" plugin will not be loaded!");
 
-        MessageBox(NULL, msg.c_str(), cPluginName, MB_OK | MB_ICONERROR);
+        MessageBox(NULL, msg.C_str(), cPluginName, MB_OK | MB_ICONERROR);
         return false;
     }
 
@@ -119,13 +119,13 @@ bool checkForGTagsBinaries(const TCHAR* dllPath)
 /**
  *  \brief
  */
-tstring getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
+CText getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
 {
     INpp& npp = INpp::Get();
 
     npp.ReadSciHandle();
     if (npp.IsSelectionVertical())
-        return tstring();
+        return CText();
 
     std::string tagA;
 
@@ -136,14 +136,9 @@ tstring getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
         tagA = npp.GetWord(true);
 
     if (tagA.empty())
-        return tstring();
+        return CText();
 
-    std::vector<TCHAR> buf;
-    buf.resize(tagA.length() + 1);
-
-    Tools::AtoW(buf.data(), buf.size(), tagA.c_str());
-
-    return tstring(buf.cbegin(), buf.cend());
+    return CText(tagA.c_str());
 }
 
 
@@ -245,9 +240,8 @@ void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
 
     if (cmd->Status() == FAILED)
     {
-        tstring msg;
-        Tools::AppendToString(msg, cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        CText msg(cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -277,10 +271,9 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
         releaseKeys();
         INpp::Get().ClearSelection();
 
-        tstring msg;
-        Tools::AppendToString(msg, cmd->Result());
+        CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -315,18 +308,17 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
         }
         else
         {
-            tstring msg(_T("\""));
+            CText msg(_T("\""));
             msg += cmd->Tag();
             msg += _T("\" not found");
-            MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
+            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
         }
     }
     else if (cmd->Status() == FAILED)
     {
-        tstring msg;
-        Tools::AppendToString(msg, cmd->Result());
+        CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.c_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -403,8 +395,8 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
  */
 void AutoComplete()
 {
-    tstring tag = getSelection(true, true);
-    if (tag.empty())
+    CText tag = getSelection(true, true);
+    if (tag.Empty())
         return;
 
     DbHandle db = getDatabase();
@@ -414,7 +406,7 @@ void AutoComplete()
         return;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.c_str()));
+    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.C_str()));
 
     if (CmdEngine::Run(cmd))
     {
@@ -431,11 +423,11 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
-    tstring tag = getSelection(true, true);
-    if (tag.empty())
+    CText tag = getSelection(true, true);
+    if (tag.Empty())
         return;
 
-    tag.insert(0, _T("/"));
+    tag.Insert(0, _T('/'));
 
     DbHandle db = getDatabase();
     if (!db)
@@ -444,7 +436,7 @@ void AutoCompleteFile()
         return;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.c_str()));
+    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.C_str()));
 
     CmdEngine::Run(cmd);
     autoComplReady(cmd);
@@ -464,8 +456,8 @@ void FindFile()
 
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_FILE, cFindFile, db));
 
-    tstring tag = getSelection();
-    if (tag.empty())
+    CText tag = getSelection();
+    if (tag.Empty())
     {
         TCHAR fileName[MAX_PATH];
         INpp::Get().GetFileNamePart(fileName);
@@ -475,7 +467,7 @@ void FindFile()
     }
     else
     {
-        cmd->Tag(tag.c_str());
+        cmd->Tag(tag.C_str());
 
         CmdEngine::Run(cmd, showResult);
     }
@@ -495,14 +487,14 @@ void FindDefinition()
 
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db));
 
-    tstring tag = getSelection(true);
-    if (tag.empty())
+    CText tag = getSelection(true);
+    if (tag.Empty())
     {
         SearchWin::Show(cmd, findReady, false);
     }
     else
     {
-        cmd->Tag(tag.c_str());
+        cmd->Tag(tag.C_str());
 
         CmdEngine::Run(cmd, findReady);
     }
@@ -529,14 +521,14 @@ void FindReference()
 
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_REFERENCE, cFindReference, db));
 
-    tstring tag = getSelection(true);
-    if (tag.empty())
+    CText tag = getSelection(true);
+    if (tag.Empty())
     {
         SearchWin::Show(cmd, findReady, false);
     }
     else
     {
-        cmd->Tag(tag.c_str());
+        cmd->Tag(tag.C_str());
 
         CmdEngine::Run(cmd, findReady);
     }
@@ -556,14 +548,14 @@ void Search()
 
     std::shared_ptr<Cmd> cmd(new Cmd(GREP, cSearch, db));
 
-    tstring tag = getSelection(true);
-    if (tag.empty())
+    CText tag = getSelection(true);
+    if (tag.Empty())
     {
         SearchWin::Show(cmd, showResult);
     }
     else
     {
-        cmd->Tag(tag.c_str());
+        cmd->Tag(tag.C_str());
 
         CmdEngine::Run(cmd, showResult);
     }
@@ -712,14 +704,14 @@ void About()
     std::shared_ptr<Cmd> cmd(new Cmd(VERSION, cVersion));
     CmdEngine::Run(cmd);
 
-    tstring msg;
+    CText msg;
 
     if (cmd->Status() == OK)
-        Tools::AppendToString(msg, cmd->Result());
+        msg = cmd->Result();
     else
         msg = _T("VERSION READ FAILED\n");
 
-    AboutWin::Show(msg.c_str());
+    AboutWin::Show(msg.C_str());
 }
 
 } // anonymous namespace

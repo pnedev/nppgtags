@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <string>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
@@ -97,11 +98,8 @@ void AutoCompleteWin::Show(const std::shared_ptr<Cmd>& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const std::shared_ptr<Cmd>& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()),
-    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->TagLen() - 1 : cmd->TagLen()))
-{
-    _result.resize(cmd->ResultLen() + 1, 0);
-    Tools::AtoW(_result.data(), _result.size(), cmd->Result());
-}
+    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->TagLen() - 1 : cmd->TagLen())), _result(cmd->Result())
+{}
 
 
 /**
@@ -191,7 +189,7 @@ int AutoCompleteWin::fillLV()
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_result.data(), _T("\n\r"), &pTmp);
+    for (TCHAR* pToken = _tcstok_s(_result.C_str(), _T("\n\r"), &pTmp);
             pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         lvItem.pszText = (_cmdId == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;

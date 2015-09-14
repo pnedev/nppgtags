@@ -76,14 +76,14 @@ public:
     inline CmdId_t Id() const { return _id; }
 
     inline void Name(const TCHAR* name) { if (name) _name = name; }
-    inline const TCHAR* Name() const { return _name.c_str(); }
+    inline const TCHAR* Name() const { return _name.C_str(); }
 
     inline DbHandle Db() const { return _db; }
     inline const TCHAR* DbPath() const { return _dbPath.C_str(); }
 
     inline void Tag(const TCHAR* tag) { if (tag) _tag = tag; }
-    inline const TCHAR* Tag() const { return _tag.c_str(); }
-    inline unsigned TagLen() const { return _tag.length(); }
+    inline const TCHAR* Tag() const { return _tag.C_str(); }
+    inline unsigned TagLen() const { return _tag.Len(); }
 
     inline void RegExp(bool re) { _regExp = re; }
     inline bool RegExp() const { return _regExp; }
@@ -112,11 +112,11 @@ private:
     }
 
     CmdId_t             _id;
-    tstring             _name;
+    CText               _name;
     DbHandle const      _db;
     CPath               _dbPath;
 
-    tstring             _tag;
+    CText               _tag;
     bool                _regExp;
     bool                _matchCase;
 

@@ -30,7 +30,6 @@
 #include <shellapi.h>
 #include <commctrl.h>
 #include <richedit.h>
-#include <vector>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
@@ -168,10 +167,10 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    tstring str(_T("About "));
+    CText str(_T("About "));
     str += VER_PLUGIN_NAME;
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, str.c_str(), style,
+    _hWnd = CreateWindowEx(styleEx, cClassName, str.C_str(), style,
             (win.right + win.left) / 2 - 150, (win.top + win.bottom) / 2 - 100, 300, 200,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -218,9 +217,9 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     str += VER_VERSION_STR;
     str += _T("\nBuild date: ");
     str += _T(__DATE__);
-    str.push_back(_T(' '));
+    str += _T(' ');
     str += _T(__TIME__);
-    str.push_back(_T('\n'));
+    str += _T('\n');
     str += VER_COPYRIGHT;
     str += _T(" <pg.nedev@gmail.com>\n\n")
             _T("Licensed under GNU GPLv2 as published by the Free Software Foundation.\n\n")
@@ -230,7 +229,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
             _T("Current GTags version:\n");
     str += info;
 
-    Edit_SetText(hEdit, str.c_str());
+    Edit_SetText(hEdit, str.C_str());
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -297,13 +296,12 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                     ENLINK* pEnLink = (ENLINK*)lParam;
                     if (pEnLink->msg == WM_LBUTTONUP)
                     {
-                        std::vector<TCHAR> link;
-                        link.resize(pEnLink->chrg.cpMax - pEnLink->chrg.cpMin + 1, 0);
+                        CText link(pEnLink->chrg.cpMax - pEnLink->chrg.cpMin);
                         TEXTRANGE range;
                         range.chrg = pEnLink->chrg;
-                        range.lpstrText = link.data();
+                        range.lpstrText = link.C_str();
                         SendMessage(pEnLink->nmhdr.hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM) &range);
-                        ShellExecute(NULL, _T("open"), link.data(), NULL, NULL, SW_SHOWNORMAL);
+                        ShellExecute(NULL, _T("open"), link.C_str(), NULL, NULL, SW_SHOWNORMAL);
                         return 1;
                     }
                 }

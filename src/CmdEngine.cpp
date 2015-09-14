@@ -229,7 +229,7 @@ unsigned CmdEngine::runProcess()
     const TCHAR* env = NULL;
     const TCHAR* currentDir = _cmd->DbPath();
 
-    tstring envVars(_T("GTAGSLIBPATH="));
+    CText envVars(_T("GTAGSLIBPATH="));
     if (Config._useLibDb)
         envVars += Config._libDbPath;
 
@@ -239,7 +239,7 @@ unsigned CmdEngine::runProcess()
     }
     else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
     {
-        env = envVars.c_str();
+        env = envVars.C_str();
         createFlags |= CREATE_UNICODE_ENVIRONMENT;
     }
 
@@ -268,16 +268,16 @@ unsigned CmdEngine::runProcess()
         return 1;
     }
 
-    tstring header(_cmd->Name());
+    CText header(_cmd->Name());
     header += _T(" - \"");
     if (_cmd->_id == CREATE_DATABASE)
         header += _cmd->DbPath();
     else if (_cmd->_id != VERSION)
         header += _cmd->Tag();
-    header.push_back(_T('\"'));
+    header += _T('\"');
 
     // Display activity window and block until process is ready or user has cancelled the operation
-    bool cancelled = ActivityWin::Show(pi.hProcess, 600, header.c_str(),
+    bool cancelled = ActivityWin::Show(pi.hProcess, 600, header.C_str(),
             (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ? 0 : 300);
     endProcess(pi);
 

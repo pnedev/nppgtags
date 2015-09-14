@@ -71,7 +71,7 @@ private:
     HFONT               _hFont;
     const CmdId_t       _cmdId;
     const int           _cmdTagLen;
-    std::vector<TCHAR>  _result;
+    CText               _result;
     std::vector<TCHAR*> _resultIndex;
 };
 

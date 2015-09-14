@@ -91,7 +91,7 @@ private:
     bool                _cancelled;
     int                 _keyPressed;
     bool                _completionDone;
-    std::vector<TCHAR>  _complData;
+    CText               _complData;
     std::vector<TCHAR*> _complIndex;
 };
 

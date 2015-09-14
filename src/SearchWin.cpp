@@ -329,8 +329,7 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 {
     if (cmpl->Status() == OK && cmpl->Result())
     {
-        _complData.resize(cmpl->ResultLen() + 1);
-        Tools::AtoW(_complData.data(), _complData.size(), cmpl->Result());
+        _complData = cmpl->Result();
         parseCompletion();
         filterComplList();
     }
@@ -345,7 +344,7 @@ void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
 void SearchWin::parseCompletion()
 {
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_complData.data(), _T("\n\r"), &pTmp); pToken;
+    for (TCHAR* pToken = _tcstok_s(_complData.C_str(), _T("\n\r"), &pTmp); pToken;
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         if (_cmd->Id() == FIND_FILE)
@@ -360,15 +359,14 @@ void SearchWin::parseCompletion()
  */
 void SearchWin::clearCompletion()
 {
-    std::vector<TCHAR> txt;
-    txt.resize(ComboBox_GetTextLength(_hSearch) + 1);
+    CText txt(ComboBox_GetTextLength(_hSearch));
 
-    ComboBox_GetText(_hSearch, txt.data(), txt.size());
+    ComboBox_GetText(_hSearch, txt.C_str(), txt.Size());
     int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     ComboBox_ResetContent(_hSearch);
     ComboBox_ShowDropdown(_hSearch, FALSE);
-    ComboBox_SetText(_hSearch, txt.data());
+    ComboBox_SetText(_hSearch, txt.C_str());
     PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 
     _complIndex.clear();
@@ -384,10 +382,9 @@ void SearchWin::filterComplList()
     if (_complIndex.empty())
         return;
 
-    std::vector<TCHAR> filter;
-    filter.resize(ComboBox_GetTextLength(_hSearch) + 1);
+    CText filter(ComboBox_GetTextLength(_hSearch));
 
-    ComboBox_GetText(_hSearch, filter.data(), filter.size());
+    ComboBox_GetText(_hSearch, filter.C_str(), filter.Size());
 
     int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
@@ -400,12 +397,12 @@ void SearchWin::filterComplList()
 
     ComboBox_ResetContent(_hSearch);
     ComboBox_ShowDropdown(_hSearch, FALSE);
-    ComboBox_SetText(_hSearch, filter.data());
+    ComboBox_SetText(_hSearch, filter.C_str());
     PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
-    if (filter.size() - 1 == cComplAfter)
+    if (filter.Len() == cComplAfter)
     {
         for (unsigned i = 0; i < _complIndex.size(); i++)
             ComboBox_AddString(_hSearch, _complIndex[i]);
@@ -413,7 +410,7 @@ void SearchWin::filterComplList()
     else
     {
         for (unsigned i = 0; i < _complIndex.size(); i++)
-            if (!pCompare(_complIndex[i], filter.data(), filter.size() - 1))
+            if (!pCompare(_complIndex[i], filter.C_str(), filter.Len()))
                 ComboBox_AddString(_hSearch, _complIndex[i]);
     }
 
@@ -422,7 +419,7 @@ void SearchWin::filterComplList()
         ComboBox_ShowDropdown(_hSearch, TRUE);
 
         if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
-            ComboBox_SetText(_hSearch, filter.data());
+            ComboBox_SetText(_hSearch, filter.C_str());
 
         PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
     }
@@ -461,15 +458,14 @@ void SearchWin::onOK()
 {
     if (ComboBox_GetTextLength(_hSearch))
     {
-        std::vector<TCHAR> tag;
-        tag.resize(ComboBox_GetTextLength(_hSearch) + 1);
+        CText tag(ComboBox_GetTextLength(_hSearch));
 
-        ComboBox_GetText(_hSearch, tag.data(), tag.size());
+        ComboBox_GetText(_hSearch, tag.C_str(), tag.Size());
 
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
         bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
 
-        _cmd->Tag(tag.data());
+        _cmd->Tag(tag.C_str());
         _cmd->RegExp(re);
         _cmd->MatchCase(mc);
 
