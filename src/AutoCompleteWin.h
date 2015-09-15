@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
+#include "Common.h"
 #include "CmdEngine.h"
 
 
@@ -58,7 +59,7 @@ private:
 
     HWND composeWindow(const TCHAR* header);
     int fillLV();
-    int filterLV(const TCHAR* filter);
+    int filterLV(const CText& filter);
     void resizeLV();
 
     void onDblClick();

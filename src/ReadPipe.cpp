@@ -154,7 +154,7 @@ unsigned ReadPipe::thread()
 
     _output.resize(totalBytesRead);
     if (totalBytesRead)
-        _output.push_back(0); // Terminating '\0'
+        _output.push_back('\0');
 
     return 0;
 }

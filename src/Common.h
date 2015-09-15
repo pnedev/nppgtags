@@ -27,7 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
-// #include <stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <vector>
 
@@ -43,16 +43,6 @@ namespace Tools
 {
 
 void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
-
-
-inline unsigned WtoA(char* dst, unsigned dstSize, const wchar_t* src)
-{
-    size_t cnt;
-
-    wcstombs_s(&cnt, dst, dstSize, src, _TRUNCATE);
-
-    return cnt;
-}
 
 
 inline unsigned AtoW(wchar_t* dst, unsigned dstSize, const char* src)
@@ -105,106 +95,6 @@ inline void MsgNum(int num, int radix = 10)
 
 
 /**
- *  \class  CPath
- *  \brief
- */
-class CPath
-{
-public:
-    CPath(const TCHAR* pathStr = NULL)
-    {
-        _buf[0] = 0;
-        if (pathStr)
-            _tcscpy_s(_buf, MAX_PATH, pathStr);
-    }
-
-    CPath(const char* pathStr)
-    {
-        _buf[0] = 0;
-        if (pathStr)
-        {
-            size_t cnt;
-            mbstowcs_s(&cnt, _buf, MAX_PATH, pathStr, _TRUNCATE);
-        }
-    }
-
-    CPath(const CPath& path)
-    {
-        _tcscpy_s(_buf, MAX_PATH, path._buf);
-    }
-
-    ~CPath() {}
-
-    inline const CPath& operator=(const TCHAR* pathStr)
-    {
-        _tcscpy_s(_buf, MAX_PATH, pathStr);
-        return *this;
-    }
-
-    inline const CPath& operator=(const CPath& path)
-    {
-        if (this != &path)
-        {
-            _tcscpy_s(_buf, MAX_PATH, path._buf);
-        }
-        return *this;
-    }
-
-    inline bool operator==(const TCHAR* pathStr) const
-    {
-        return !_tcscmp(_buf, pathStr);
-    }
-
-    inline bool operator==(const CPath& path) const
-    {
-        return !_tcscmp(_buf, path._buf);
-    }
-
-    inline const CPath& operator+=(const TCHAR* str)
-    {
-        _tcscat_s(_buf, MAX_PATH, str);
-        return *this;
-    }
-
-    inline const CPath& operator+=(const CPath& path)
-    {
-        _tcscat_s(_buf, MAX_PATH, path._buf);
-        return *this;
-    }
-
-    inline const TCHAR* C_str() const { return _buf; }
-    inline unsigned Len() const { return _tcslen(_buf); }
-
-    inline bool Exists() const
-    {
-        DWORD dwAttrib = GetFileAttributes(_buf);
-        return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES);
-    }
-
-    inline bool FileExists() const
-    {
-        DWORD dwAttrib = GetFileAttributes(_buf);
-        return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-    }
-
-    unsigned StripFilename();
-    const TCHAR* GetFilename() const;
-    unsigned Up();
-    bool Contains(const TCHAR* pathStr) const;
-    bool Contains(const CPath& path) const;
-    bool IsContainedIn(const TCHAR* pathStr) const;
-    bool IsContainedIn(const CPath& path) const;
-
-#ifdef DEVELOPMENT
-    inline void Print() { Tools::Msg(C_str()); }
-#endif
-
-private:
-    TCHAR _buf[MAX_PATH];
-};
-
-
-/**
  *  \class  CTextW
  *  \brief
  */
@@ -214,28 +104,30 @@ private:
     std::vector<wchar_t> _buf;
 
 public:
-    CTextW() {}
+    CTextW() { _buf.push_back(L'\0'); }
     CTextW(const CTextW& txt) : _buf(txt._buf) {}
 
     CTextW(const wchar_t* str)
     {
         if (str)
             _buf.assign(str, str + wcslen(str) + 1);
+        else
+            _buf.push_back(L'\0');
     }
 
     CTextW(const char* str);
 
     CTextW(unsigned size)
     {
-        if (size)
-            _buf.resize(size + 1, 0);
+        _buf.resize(size + 1, L'\0');
     }
 
     ~CTextW() {}
 
     inline const CTextW& operator=(const CTextW& txt)
     {
-        _buf = txt._buf;
+        if (this != &txt)
+            _buf = txt._buf;
         return *this;
     }
 
@@ -298,11 +190,16 @@ public:
 
     inline const wchar_t* C_str() const { return _buf.data(); }
     inline wchar_t* C_str() { return _buf.data(); }
-    inline bool Empty() const { return _buf.empty(); }
+    inline bool IsEmpty() const { return !(_buf.size() - 1); }
     inline unsigned Size() const { return _buf.size(); }
-    inline unsigned Len() const { return Empty() ? 0 : (_buf.size() - 1); }
-    inline void Resize(unsigned size) { _buf.resize(size + 1, 0); }
-    inline void Clear() { _buf.clear(); }
+    inline unsigned Len() const { return (_buf.size() - 1); }
+    inline void Resize(unsigned size) { _buf.resize(size + 1, L'\0'); }
+
+    inline void Clear()
+    {
+        _buf.clear();
+        _buf.push_back(L'\0');
+    }
 
 #ifdef DEVELOPMENT
     inline void Print() { Tools::MsgW(C_str()); }
@@ -320,28 +217,30 @@ private:
     std::vector<char> _buf;
 
 public:
-    CTextA() {}
+    CTextA() { _buf.push_back('\0'); }
     CTextA(const CTextA& txt) : _buf(txt._buf) {}
 
     CTextA(const char* str)
     {
         if (str)
             _buf.assign(str, str + strlen(str) + 1);
+        else
+            _buf.push_back('\0');
     }
 
     CTextA(const wchar_t* str);
 
     CTextA(unsigned size)
     {
-        if (size)
-            _buf.resize(size + 1, 0);
+        _buf.resize(size + 1, '\0');
     }
 
     ~CTextA() {}
 
     inline const CTextA& operator=(const CTextA& txt)
     {
-        _buf = txt._buf;
+        if (this != &txt)
+            _buf = txt._buf;
         return *this;
     }
 
@@ -404,13 +303,191 @@ public:
 
     inline const char* C_str() const { return _buf.data(); }
     inline char* C_str() { return _buf.data(); }
-    inline bool Empty() const { return _buf.empty(); }
+    inline bool IsEmpty() const { return !(_buf.size() - 1); }
     inline unsigned Size() const { return _buf.size(); }
-    inline unsigned Len() const { return Empty() ? 0 : (_buf.size() - 1); }
-    inline void Resize(unsigned size) { _buf.resize(size + 1, 0); }
-    inline void Clear() { _buf.clear(); }
+    inline unsigned Len() const { return (_buf.size() - 1); }
+    inline void Resize(unsigned size) { _buf.resize(size + 1, '\0'); }
+
+    inline void Clear()
+    {
+        _buf.clear();
+        _buf.push_back('\0');
+    }
 
 #ifdef DEVELOPMENT
     inline void Print() { Tools::MsgA(C_str()); }
 #endif
 };
+
+
+/**
+ *  \class  CPath
+ *  \brief
+ */
+class CPath : public CText
+{
+public:
+    CPath(const TCHAR* pathStr) : CText(pathStr) {}
+    CPath(const char* pathStr) : CText(pathStr) {}
+    ~CPath() {}
+
+    inline const CPath& operator=(const TCHAR* pathStr)
+    {
+        CText::operator=(pathStr);
+        return *this;
+    }
+
+    inline const CPath& operator=(const CPath& path)
+    {
+        if (this != &path)
+        {
+            _tcscpy_s(_buf, MAX_PATH, path._buf);
+        }
+        return *this;
+    }
+
+    inline bool operator==(const TCHAR* pathStr) const
+    {
+        return !_tcscmp(_buf, pathStr);
+    }
+
+    inline bool operator==(const CPath& path) const
+    {
+        return !_tcscmp(_buf, path._buf);
+    }
+
+    inline const CPath& operator+=(const TCHAR* str)
+    {
+        _tcscat_s(_buf, MAX_PATH, str);
+        return *this;
+    }
+
+    inline const CPath& operator+=(const CPath& path)
+    {
+        _tcscat_s(_buf, MAX_PATH, path._buf);
+        return *this;
+    }
+
+    inline const TCHAR* C_str() const { return _buf; }
+    inline unsigned Len() const { return _tcslen(_buf); }
+
+    inline bool Exists() const
+    {
+        DWORD dwAttrib = GetFileAttributes(_buf);
+        return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES);
+    }
+
+    inline bool FileExists() const
+    {
+        DWORD dwAttrib = GetFileAttributes(_buf);
+        return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    }
+
+    unsigned StripFilename();
+    const TCHAR* GetFilename() const;
+    unsigned Up();
+    bool Contains(const TCHAR* pathStr) const;
+    bool Contains(const CPath& path) const;
+    bool IsContainedIn(const TCHAR* pathStr) const;
+    bool IsContainedIn(const CPath& path) const;
+};
+
+
+/**
+ *  \class  CPath
+ *  \brief
+ */
+// class CPath
+// {
+// public:
+    // CPath(const TCHAR* pathStr = NULL)
+    // {
+        // _buf[0] = 0;
+        // if (pathStr)
+            // _tcscpy_s(_buf, MAX_PATH, pathStr);
+    // }
+
+    // CPath(const char* pathStr)
+    // {
+        // _buf[0] = 0;
+        // if (pathStr)
+        // {
+            // size_t cnt;
+            // mbstowcs_s(&cnt, _buf, MAX_PATH, pathStr, _TRUNCATE);
+        // }
+    // }
+
+    // CPath(const CPath& path)
+    // {
+        // _tcscpy_s(_buf, MAX_PATH, path._buf);
+    // }
+
+    // ~CPath() {}
+
+    // inline const CPath& operator=(const TCHAR* pathStr)
+    // {
+        // _tcscpy_s(_buf, MAX_PATH, pathStr);
+        // return *this;
+    // }
+
+    // inline const CPath& operator=(const CPath& path)
+    // {
+        // if (this != &path)
+        // {
+            // _tcscpy_s(_buf, MAX_PATH, path._buf);
+        // }
+        // return *this;
+    // }
+
+    // inline bool operator==(const TCHAR* pathStr) const
+    // {
+        // return !_tcscmp(_buf, pathStr);
+    // }
+
+    // inline bool operator==(const CPath& path) const
+    // {
+        // return !_tcscmp(_buf, path._buf);
+    // }
+
+    // inline const CPath& operator+=(const TCHAR* str)
+    // {
+        // _tcscat_s(_buf, MAX_PATH, str);
+        // return *this;
+    // }
+
+    // inline const CPath& operator+=(const CPath& path)
+    // {
+        // _tcscat_s(_buf, MAX_PATH, path._buf);
+        // return *this;
+    // }
+
+    // inline const TCHAR* C_str() const { return _buf; }
+    // inline unsigned Len() const { return _tcslen(_buf); }
+
+    // inline bool Exists() const
+    // {
+        // DWORD dwAttrib = GetFileAttributes(_buf);
+        // return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES);
+    // }
+
+    // inline bool FileExists() const
+    // {
+        // DWORD dwAttrib = GetFileAttributes(_buf);
+        // return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    // }
+
+    // unsigned StripFilename();
+    // const TCHAR* GetFilename() const;
+    // unsigned Up();
+    // bool Contains(const TCHAR* pathStr) const;
+    // bool Contains(const CPath& path) const;
+    // bool IsContainedIn(const TCHAR* pathStr) const;
+    // bool IsContainedIn(const CPath& path) const;
+
+// #ifdef DEVELOPMENT
+    // inline void Print() { Tools::Msg(C_str()); }
+// #endif
+
+// private:
+    // TCHAR _buf[MAX_PATH];
+// };

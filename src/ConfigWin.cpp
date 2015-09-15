@@ -276,7 +276,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
-    if (!_cfg->_libDbPath.Empty())
+    if (!_cfg->_libDbPath.IsEmpty())
         Edit_SetText(_hLibDb, _cfg->_libDbPath.C_str());
     if (!_cfg->_useLibDb)
     {
@@ -327,7 +327,6 @@ void ConfigWin::onOK()
     else
     {
         _cfg->_libDbPath.Clear();
-        _cfg->_libDbPath += _T('\0');
     }
 
     _cfg->_autoUpdate   = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;

@@ -211,18 +211,18 @@ int AutoCompleteWin::fillLV()
 /**
  *  \brief
  */
-int AutoCompleteWin::filterLV(const TCHAR* filter)
+int AutoCompleteWin::filterLV(const CText& filter)
 {
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
-    int len = _tcslen(filter);
+    int len = filter.Len();
 
     ListView_DeleteAllItems(_hLVWnd);
 
     for (unsigned i = 0; i < _resultIndex.size(); i++)
     {
-        if (!_tcsncmp(_resultIndex[i], filter, len))
+        if (!_tcsncmp(_resultIndex[i], filter.C_str(), len))
         {
             lvItem.pszText = _resultIndex[i];
             ListView_InsertItem(_hLVWnd, &lvItem);
@@ -325,10 +325,9 @@ void AutoCompleteWin::onDblClick()
     ListView_GetItem(_hLVWnd, &lvItem);
     lvItem.pszText[lvItem.cchTextMax - 1] = 0;
 
-    char str[MAX_PATH];
-    Tools::WtoA(str, _countof(str), lvItem.pszText);
+    CTextA completion(itemTxt);
+    INpp::Get().ReplaceWord(completion.C_str());
 
-    INpp::Get().ReplaceWord(str);
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
@@ -390,10 +389,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         }
     }
 
-    std::string wordA = INpp::Get().GetWord(true);
-
-    TCHAR word[MAX_PATH];
-    Tools::AtoW(word, _countof(word), wordA.c_str());
+    CText word(INpp::Get().GetWord(true).c_str());
     int lvItemsCnt = filterLV(word);
 
     if (lvItemsCnt == 0)
@@ -412,7 +408,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         ListView_GetItem(_hLVWnd, &lvItem);
         lvItem.pszText[lvItem.cchTextMax - 1] = 0;
 
-        if (!_tcscmp(word, lvItem.pszText))
+        if (!_tcscmp(word.C_str(), lvItem.pszText))
             SendMessage(_hWnd, WM_CLOSE, 0, 0);
     }
 

@@ -396,7 +396,7 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
 void AutoComplete()
 {
     CText tag = getSelection(true, true);
-    if (tag.Empty())
+    if (tag.IsEmpty())
         return;
 
     DbHandle db = getDatabase();
@@ -424,7 +424,7 @@ void AutoComplete()
 void AutoCompleteFile()
 {
     CText tag = getSelection(true, true);
-    if (tag.Empty())
+    if (tag.IsEmpty())
         return;
 
     tag.Insert(0, _T('/'));
@@ -457,7 +457,7 @@ void FindFile()
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_FILE, cFindFile, db));
 
     CText tag = getSelection();
-    if (tag.Empty())
+    if (tag.IsEmpty())
     {
         TCHAR fileName[MAX_PATH];
         INpp::Get().GetFileNamePart(fileName);
@@ -488,7 +488,7 @@ void FindDefinition()
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db));
 
     CText tag = getSelection(true);
-    if (tag.Empty())
+    if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, findReady, false);
     }
@@ -522,7 +522,7 @@ void FindReference()
     std::shared_ptr<Cmd> cmd(new Cmd(FIND_REFERENCE, cFindReference, db));
 
     CText tag = getSelection(true);
-    if (tag.Empty())
+    if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, findReady, false);
     }
@@ -549,7 +549,7 @@ void Search()
     std::shared_ptr<Cmd> cmd(new Cmd(GREP, cSearch, db));
 
     CText tag = getSelection(true);
-    if (tag.Empty())
+    if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, showResult);
     }

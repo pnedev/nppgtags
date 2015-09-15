@@ -66,11 +66,9 @@ ResultWin* ResultWin::RW = NULL;
  *  \brief
  */
 ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _search(cmd->Tag()),
-    _outdated(false), _currentLine(1), _firstVisibleLine(0)
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath()),
+    _search(cmd->Tag()), _outdated(false), _currentLine(1), _firstVisibleLine(0)
 {
-    Tools::WtoA(_projectPath, _countof(_projectPath), cmd->DbPath());
-
     // Add the search header - cmd name + search word + project path
     _uiBuf = cmd->Name();
     _uiBuf += " \"";
@@ -705,7 +703,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     for (i = 1; (i <= lineLen) && (lineTxt[i] != '\r') && (lineTxt[i] != '\n'); i++);
     lineTxt[i] = 0;
 
-    CPath file(_activeTab->_projectPath);
+    CPath file(_activeTab->_projectPath.C_str());
     CText str(&lineTxt[1]);
     file += str.C_str();
 
@@ -819,7 +817,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
 
         if ((char)sendSci(SCI_GETCHARAT, startPos) != '\t')
         {
-            int pathLen = strlen(_activeTab->_projectPath);
+            int pathLen = _activeTab->_projectPath.Len();
 
             // 2 * '"' + LF + CR = 4
             sendSci(SCI_SETSTYLING, lineLen - pathLen - 4, SCE_GTAGS_HEADER);
