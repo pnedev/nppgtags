@@ -176,14 +176,19 @@ void CTextA::operator+=(const wchar_t* str)
  */
 unsigned CPath::StripFilename()
 {
-    int len;
+    unsigned len;
 
-    for (len = _tcslen(_buf) - 1; len >= 0; len--)
+    for (len = Len(); len > 0; len--)
         if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
+        {
+            len++;
             break;
-    _buf[++len] = 0;
+        }
 
-    return (unsigned)len;
+    _buf.erase(_buf.begin() + len, _buf.end());
+    _buf.push_back(_T('\0'));
+
+    return len;
 }
 
 
@@ -192,13 +197,16 @@ unsigned CPath::StripFilename()
  */
 const TCHAR* CPath::GetFilename() const
 {
-    int len;
+    unsigned len;
 
-    for (len = _tcslen(_buf) - 1; len >= 0; len--)
+    for (len = Len(); len > 0; len--)
         if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
+        {
+            len++;
             break;
+        }
 
-    return &_buf[++len];
+    return &_buf[len];
 }
 
 
@@ -207,16 +215,20 @@ const TCHAR* CPath::GetFilename() const
  */
 unsigned CPath::Up()
 {
-    int len = _tcslen(_buf) - 1;
+    unsigned len = Len();
     if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
         len--;
 
-    for (; len >= 0; len--)
-        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
+    for (; len > 0; len--)
+        {
+            len++;
             break;
-    _buf[++len] = 0;
+        }
 
-    return (unsigned)len;
+    _buf.erase(_buf.begin() + len, _buf.end());
+    _buf.push_back(_T('\0'));
+
+    return len;
 }
 
 
@@ -225,11 +237,11 @@ unsigned CPath::Up()
  */
 bool CPath::Contains(const TCHAR* pathStr) const
 {
-    unsigned len = _tcslen(_buf);
+    unsigned len = Len();
     if (len >= _tcslen(pathStr))
         return false;
 
-    return !_tcsncmp(_buf, pathStr, len);
+    return !_tcsncmp(_buf.data(), pathStr, len);
 }
 
 
@@ -238,11 +250,11 @@ bool CPath::Contains(const TCHAR* pathStr) const
  */
 bool CPath::Contains(const CPath& path) const
 {
-    unsigned len = _tcslen(_buf);
+    unsigned len = Len();
     if (len >= path.Len())
         return false;
 
-    return !_tcsncmp(_buf, path._buf, len);
+    return !_tcsncmp(_buf.data(), path._buf.data(), len);
 }
 
 
@@ -252,10 +264,10 @@ bool CPath::Contains(const CPath& path) const
 bool CPath::IsContainedIn(const TCHAR* pathStr) const
 {
     unsigned len = _tcslen(pathStr);
-    if (len >= _tcslen(_buf))
+    if (len >= Len())
         return false;
 
-    return !_tcsncmp(_buf, pathStr, len);
+    return !_tcsncmp(_buf.data(), pathStr, len);
 }
 
 
@@ -265,10 +277,10 @@ bool CPath::IsContainedIn(const TCHAR* pathStr) const
 bool CPath::IsContainedIn(const CPath& path) const
 {
     unsigned len = path.Len();
-    if (len >= _tcslen(_buf))
+    if (len >= Len())
         return false;
 
-    return !_tcsncmp(_buf, path._buf, len);
+    return !_tcsncmp(_buf.data(), path._buf.data(), len);
 }
 
 
