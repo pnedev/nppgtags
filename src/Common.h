@@ -100,7 +100,7 @@ inline void MsgNum(int num, int radix = 10)
  */
 class CTextW
 {
-private:
+protected:
     std::vector<wchar_t> _buf;
 
 public:
@@ -213,7 +213,7 @@ public:
  */
 class CTextA
 {
-private:
+protected:
     std::vector<char> _buf;
 
 public:
@@ -333,22 +333,20 @@ public:
 
     inline const CPath& operator=(const TCHAR* pathStr)
     {
-        CText::operator=(pathStr);
+        ((CText*)this)->operator=(pathStr);
         return *this;
     }
 
     inline const CPath& operator=(const CPath& path)
     {
         if (this != &path)
-        {
-            _tcscpy_s(_buf, MAX_PATH, path._buf);
-        }
+            _buf = path._buf;
         return *this;
     }
 
     inline bool operator==(const TCHAR* pathStr) const
     {
-        return !_tcscmp(_buf, pathStr);
+        return ((CText*)this)->operator==(pathStr);
     }
 
     inline bool operator==(const CPath& path) const
