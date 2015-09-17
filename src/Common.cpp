@@ -176,9 +176,9 @@ void CTextA::operator+=(const wchar_t* str)
  */
 unsigned CPath::StripFilename()
 {
-    unsigned len;
+    unsigned len = Len();
 
-    for (len = Len(); len > 0; len--)
+    for (; len > 0; len--)
         if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
         {
             len++;
@@ -197,9 +197,9 @@ unsigned CPath::StripFilename()
  */
 const TCHAR* CPath::GetFilename() const
 {
-    unsigned len;
+    unsigned len = Len();
 
-    for (len = Len(); len > 0; len--)
+    for (; len > 0; len--)
         if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
         {
             len++;
@@ -220,6 +220,7 @@ unsigned CPath::Up()
         len--;
 
     for (; len > 0; len--)
+        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
         {
             len++;
             break;

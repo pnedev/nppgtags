@@ -328,8 +328,9 @@ class CPath : public CText
 {
 public:
 	CPath() : CText() {}
-	CPath(const TCHAR* pathStr) : CText(pathStr) {}
-    CPath(const char* pathStr) : CText(pathStr) {}
+	CPath(const char* pathStr) : CText(pathStr) {}
+	CPath(const wchar_t* pathStr) : CText(pathStr) {}
+    CPath(const CPath& path) : CText(path) {}
     ~CPath() {}
 
     inline bool Exists() const
