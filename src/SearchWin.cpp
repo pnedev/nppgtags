@@ -203,7 +203,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             -MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, UIFontName);
+            FF_DONTCARE | DEFAULT_PITCH, UIFontName.C_str());
 
     _hBtnFont = CreateFontIndirect(&ncm.lfMenuFont);
 

@@ -28,11 +28,11 @@
 /**
  *  \brief
  */
-CTextW::CTextW(const char* str)
+CTextW::CTextW(const char* str) : _invalidStrLen(false)
 {
     if (str)
     {
-        _buf.resize(strlen(str) + 1);
+        _buf.resize(strlen(str) + 1, L'\0');
         size_t cnt;
         mbstowcs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
@@ -50,9 +50,10 @@ const CTextW& CTextW::operator=(const char* str)
 {
     if (str)
     {
-        _buf.resize(strlen(str) + 1);
+        _buf.resize(strlen(str) + 1, L'\0');
         size_t cnt;
         mbstowcs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
+        _invalidStrLen = false;
     }
 
     return *this;
@@ -62,8 +63,22 @@ const CTextW& CTextW::operator=(const char* str)
 /**
  *  \brief
  */
+void CTextW::operator+=(const CTextW& txt)
+{
+    AutoFit();
+
+    _buf.pop_back();
+    _buf.insert(_buf.cend(), txt._buf.begin(), txt._buf.begin() + txt.Len() + 1);
+}
+
+
+/**
+ *  \brief
+ */
 void CTextW::operator+=(const wchar_t* str)
 {
+    AutoFit();
+
     if (str)
     {
         unsigned len = wcslen(str);
@@ -81,6 +96,8 @@ void CTextW::operator+=(const wchar_t* str)
  */
 void CTextW::operator+=(const char* str)
 {
+    AutoFit();
+
     if (str)
     {
         unsigned len = strlen(str);
@@ -89,7 +106,7 @@ void CTextW::operator+=(const char* str)
             _buf.pop_back();
 
             unsigned size = _buf.size();
-            _buf.resize(size + len + 1);
+            _buf.resize(size + len + 1, L'\0');
 
             size_t cnt;
             mbstowcs_s(&cnt, &_buf[size], len + 1, str, _TRUNCATE);
@@ -101,11 +118,64 @@ void CTextW::operator+=(const char* str)
 /**
  *  \brief
  */
-CTextA::CTextA(const wchar_t* str)
+void CTextW::operator+=(wchar_t letter)
+{
+    AutoFit();
+
+    _buf.pop_back();
+    _buf.push_back(letter);
+    _buf.push_back(L'\0');
+}
+
+
+/**
+ *  \brief
+ */
+void CTextW::Append(const wchar_t* data, unsigned len)
+{
+    AutoFit();
+
+    if (data && len)
+    {
+        _buf.pop_back();
+        _buf.insert(_buf.cend(), data, data + len);
+        _buf.push_back(L'\0');
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void CTextW::Insert(unsigned at_pos, wchar_t letter)
+{
+    AutoFit();
+
+    if (at_pos < _buf.size())
+        _buf.insert(_buf.cbegin() + at_pos, letter);
+}
+
+
+/**
+ *  \brief
+ */
+void CTextW::Insert(unsigned at_pos, const wchar_t* data, unsigned len)
+{
+    AutoFit();
+
+    if ((at_pos < _buf.size()) && data && len)
+        _buf.insert(_buf.cbegin() + at_pos, data, data + len);
+}
+
+
+/**
+ *  \brief
+ */
+CTextA::CTextA(const wchar_t* str)  : _invalidStrLen(false)
 {
     if (str)
     {
-        _buf.resize(wcslen(str) + 1);
+        _buf.resize(wcslen(str) + 1, '\0');
         size_t cnt;
         wcstombs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
@@ -123,9 +193,10 @@ const CTextA& CTextA::operator=(const wchar_t* str)
 {
     if (str)
     {
-        _buf.resize(wcslen(str) + 1);
+        _buf.resize(wcslen(str) + 1, '\0');
         size_t cnt;
         wcstombs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
+        _invalidStrLen = false;
     }
 
     return *this;
@@ -135,8 +206,22 @@ const CTextA& CTextA::operator=(const wchar_t* str)
 /**
  *  \brief
  */
+void CTextA::operator+=(const CTextA& txt)
+{
+    AutoFit();
+
+    _buf.pop_back();
+    _buf.insert(_buf.cend(), txt._buf.begin(), txt._buf.begin() + txt.Len() + 1);
+}
+
+
+/**
+ *  \brief
+ */
 void CTextA::operator+=(const char* str)
 {
+    AutoFit();
+
     if (str)
     {
         unsigned len = strlen(str);
@@ -154,6 +239,8 @@ void CTextA::operator+=(const char* str)
  */
 void CTextA::operator+=(const wchar_t* str)
 {
+    AutoFit();
+
     if (str)
     {
         unsigned len = wcslen(str);
@@ -162,7 +249,7 @@ void CTextA::operator+=(const wchar_t* str)
             _buf.pop_back();
 
             unsigned size = _buf.size();
-            _buf.resize(size + len + 1);
+            _buf.resize(size + len + 1, '\0');
 
             size_t cnt;
             wcstombs_s(&cnt, &_buf[size], len + 1, str, _TRUNCATE);
@@ -174,16 +261,90 @@ void CTextA::operator+=(const wchar_t* str)
 /**
  *  \brief
  */
+void CTextA::operator+=(char letter)
+{
+    AutoFit();
+
+    _buf.pop_back();
+    _buf.push_back(letter);
+    _buf.push_back('\0');
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::Append(const char* data, unsigned len)
+{
+    AutoFit();
+
+    if (data && len)
+    {
+        _buf.pop_back();
+        _buf.insert(_buf.cend(), data, data + len);
+        _buf.push_back('\0');
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::Insert(unsigned at_pos, char letter)
+{
+    AutoFit();
+
+    if (at_pos < _buf.size())
+        _buf.insert(_buf.cbegin() + at_pos, letter);
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::Insert(unsigned at_pos, const char* data, unsigned len)
+{
+    AutoFit();
+
+    if ((at_pos < _buf.size()) && data && len)
+        _buf.insert(_buf.cbegin() + at_pos, data, data + len);
+}
+
+
+/**
+ *  \brief
+ */
 unsigned CPath::StripFilename()
 {
+    AutoFit();
+
     unsigned len = Len();
 
     for (; len > 0; len--)
-        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
-        {
-            len++;
+        if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
             break;
-        }
+
+    _buf.erase(_buf.begin() + len, _buf.end());
+    _buf.push_back(_T('\0'));
+
+    return len;
+}
+
+
+/**
+ *  \brief
+ */
+unsigned CPath::DirUp()
+{
+    AutoFit();
+
+    unsigned len = Len();
+    if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
+        len--;
+
+    for (; len > 0; len--)
+        if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
+            break;
 
     _buf.erase(_buf.begin() + len, _buf.end());
     _buf.push_back(_T('\0'));
@@ -200,7 +361,7 @@ const TCHAR* CPath::GetFilename() const
     unsigned len = Len();
 
     for (; len > 0; len--)
-        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
+        if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
         {
             len++;
             break;
@@ -213,43 +374,7 @@ const TCHAR* CPath::GetFilename() const
 /**
  *  \brief
  */
-unsigned CPath::Up()
-{
-    unsigned len = Len();
-    if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
-        len--;
-
-    for (; len > 0; len--)
-        if (_buf[len] == _T('\\') || _buf[len] == _T('/'))
-        {
-            len++;
-            break;
-        }
-
-    _buf.erase(_buf.begin() + len, _buf.end());
-    _buf.push_back(_T('\0'));
-
-    return len;
-}
-
-
-/**
- *  \brief
- */
-bool CPath::Contains(const TCHAR* pathStr) const
-{
-    unsigned len = Len();
-    if (len >= _tcslen(pathStr))
-        return false;
-
-    return !_tcsncmp(_buf.data(), pathStr, len);
-}
-
-
-/**
- *  \brief
- */
-bool CPath::Contains(const CPath& path) const
+bool CPath::IsParentOf(const CPath& path) const
 {
     unsigned len = Len();
     if (len >= path.Len())
@@ -262,10 +387,10 @@ bool CPath::Contains(const CPath& path) const
 /**
  *  \brief
  */
-bool CPath::IsContainedIn(const TCHAR* pathStr) const
+bool CPath::IsParentOf(const TCHAR* pathStr) const
 {
-    unsigned len = _tcslen(pathStr);
-    if (len >= Len())
+    unsigned len = Len();
+    if (len >= _tcslen(pathStr))
         return false;
 
     return !_tcsncmp(_buf.data(), pathStr, len);
@@ -275,13 +400,26 @@ bool CPath::IsContainedIn(const TCHAR* pathStr) const
 /**
  *  \brief
  */
-bool CPath::IsContainedIn(const CPath& path) const
+bool CPath::IsSubpathOf(const CPath& path) const
 {
     unsigned len = path.Len();
     if (len >= Len())
         return false;
 
     return !_tcsncmp(_buf.data(), path._buf.data(), len);
+}
+
+
+/**
+ *  \brief
+ */
+bool CPath::IsSubpathOf(const TCHAR* pathStr) const
+{
+    unsigned len = _tcslen(pathStr);
+    if (len >= Len())
+        return false;
+
+    return !_tcsncmp(_buf.data(), pathStr, len);
 }
 
 

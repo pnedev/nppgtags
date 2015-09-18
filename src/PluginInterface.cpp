@@ -88,7 +88,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         case NPPN_FILESAVED:
             if (GTags::Config._autoUpdate)
             {
-                TCHAR file[MAX_PATH];
+                CPath file;
                 INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                 GTags::UpdateSingleFile(file);
             }
@@ -98,9 +98,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         case NPPN_FILEBEFOREDELETE:
             if (GTags::Config._autoUpdate)
             {
-                TCHAR file[MAX_PATH];
-                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                ChangedFile.reset(new CPath(file));
+                ChangedFile.reset(new CPath());
+                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, *ChangedFile);
             }
         break;
 
@@ -112,13 +111,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         case NPPN_FILERENAMED:
             if (GTags::Config._autoUpdate)
             {
-                TCHAR file[MAX_PATH];
+                CPath file;
                 INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                 GTags::UpdateSingleFile(file);
 
                 if (ChangedFile)
                 {
-                    GTags::UpdateSingleFile(ChangedFile->C_str());
+                    GTags::UpdateSingleFile(*ChangedFile);
                     ChangedFile.reset();
                 }
             }
@@ -129,12 +128,12 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             {
                 if (ChangedFile)
                 {
-                    GTags::UpdateSingleFile(ChangedFile->C_str());
+                    GTags::UpdateSingleFile(*ChangedFile);
                     ChangedFile.reset();
                 }
                 else
                 {
-                    TCHAR file[MAX_PATH];
+                    CPath file;
                     INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
                     GTags::UpdateSingleFile(file);
                 }
@@ -146,8 +145,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             INpp& npp = INpp::Get();
             char font[32];
 
-            npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
-            Tools::AtoW(GTags::UIFontName, _countof(GTags::UIFontName), font);
+            npp.GetFontName(STYLE_DEFAULT, font);
+            GTags::UIFontName = font;
             GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
             GTags::ResultWin::ApplyStyle();
         }

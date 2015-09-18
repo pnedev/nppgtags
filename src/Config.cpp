@@ -60,10 +60,8 @@ const TCHAR CConfig::cLibraryPathKey[]  = _T("LibraryPath = ");
  */
 void CConfig::GetDefaultCfgFile(CPath& cfgFile)
 {
-    TCHAR cfgDir[MAX_PATH];
-    INpp::Get().GetPluginsConfDir(_countof(cfgDir), cfgDir);
+    INpp::Get().GetPluginsConfDir(cfgFile);
 
-    cfgFile = cfgDir;
     cfgFile += _T("\\");
     cfgFile += cPluginName;
     cfgFile += _T(".cfg");

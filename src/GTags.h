@@ -30,6 +30,7 @@
 
 
 struct FuncItem;
+class CText;
 class CPath;
 
 
@@ -44,7 +45,7 @@ extern FuncItem     Menu[18];
 extern HINSTANCE    HMod;
 extern CPath        DllPath;
 
-extern TCHAR        UIFontName[32];
+extern CText        UIFontName;
 extern unsigned     UIFontSize;
 
 class CConfig;
@@ -55,7 +56,7 @@ BOOL PluginLoad(HINSTANCE hMod);
 void PluginInit();
 void PluginDeInit();
 
-bool UpdateSingleFile(const TCHAR* file = NULL);
+bool UpdateSingleFile(const CPath& file);
 const CPath CreateLibraryDatabase(HWND hWnd);
 
 } // namespace GTags

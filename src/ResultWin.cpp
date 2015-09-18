@@ -409,7 +409,7 @@ void ResultWin::applyStyle()
     INpp& npp = INpp::Get();
 
     char font[32];
-    npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
+    npp.GetFontName(STYLE_DEFAULT, font);
     int size = npp.GetFontSize(STYLE_DEFAULT);
     COLORREF caretLineBackColor = npp.GetCaretLineBack();
     COLORREF foreColor = npp.GetForegroundColor(STYLE_DEFAULT);

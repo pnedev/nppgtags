@@ -27,8 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <vector>
-#include <string>
+#include "Common.h"
 #include "Notepad_plus_msgs.h"
 #include "Docking.h"
 #include "PluginInterface.h"
@@ -113,29 +112,39 @@ public:
         SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE, 0, (LPARAM)hSciWnd);
     }
 
-    inline void GetMainDir(unsigned size, TCHAR* buf) const
+    inline void GetMainDir(CPath& path) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY, (WPARAM)size, (LPARAM)buf);
+        path.Resize(MAX_PATH);
+        SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY, (WPARAM)path.Size(), (LPARAM)path.C_str());
+        path.AutoFit();
     }
 
-    inline void GetPluginsConfDir(unsigned size, TCHAR* buf) const
+    inline void GetPluginsConfDir(CPath& path) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, (WPARAM)size, (LPARAM)buf);
+        path.Resize(MAX_PATH);
+        SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, (WPARAM)path.Size(), (LPARAM)path.C_str());
+        path.AutoFit();
     }
 
-    inline void GetFilePath(TCHAR* filePath) const
+    inline void GetFilePath(CPath& filePath) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)filePath);
+        filePath.Resize(MAX_PATH);
+        SendMessage(_nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)filePath.C_str());
+        filePath.AutoFit();
     }
 
-    inline void GetFilePathFromBufID(int bufId, TCHAR* filePath) const
+    inline void GetFilePathFromBufID(int bufId, CPath& filePath) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, bufId, (LPARAM)filePath);
+        filePath.Resize(MAX_PATH);
+        SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, bufId, (LPARAM)filePath.C_str());
+        filePath.AutoFit();
     }
 
-    inline void GetFileNamePart(TCHAR* fileName) const
+    inline void GetFileNamePart(CPath& fileName) const
     {
-        SendMessage(_nppData._nppHandle, NPPM_GETNAMEPART, 0, (LPARAM)fileName);
+        fileName.Resize(MAX_PATH);
+        SendMessage(_nppData._nppHandle, NPPM_GETNAMEPART, 0, (LPARAM)fileName.C_str());
+        fileName.AutoFit();
     }
 
     inline int OpenFile(const TCHAR* filePath) const
@@ -155,7 +164,7 @@ public:
         return SendMessage(_hSC, SCI_GETCARETLINEBACK, 0, 0);
     }
 
-    inline void GetFontName(int style, char* fontName, int size) const
+    inline void GetFontName(int style, char* fontName) const
     {
         SendMessage(_hSC, SCI_STYLEGETFONT, style, (LPARAM)fontName);
     }
@@ -219,16 +228,13 @@ public:
         return SendMessage(_hSC, SCI_GETSELTEXT, 0, 0) - 1;
     }
 
-    inline std::string GetSelection() const
+    inline void GetSelection(CTextA& sel) const
     {
         long selLen = GetSelectionSize();
 
-        std::vector<char> buf;
-        buf.resize(selLen);
-
-        SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)buf.data());
-
-        return std::string(buf.cbegin(), buf.cend());
+        sel.Resize(selLen);
+        SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)sel.C_str());
+        sel.AutoFit();
     }
 
     inline void SetSelection(long startPos, long endPos) const
@@ -258,7 +264,7 @@ public:
         return wordEnd - wordStart;
     }
 
-    std::string GetWord(bool select) const;
+    void GetWord(CTextA& word, bool select) const;
     void ReplaceWord(const char* replText) const;
     bool SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
             long* startPos = NULL, long* endPos = NULL) const;

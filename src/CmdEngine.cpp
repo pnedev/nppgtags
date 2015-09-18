@@ -181,38 +181,38 @@ const TCHAR* CmdEngine::getCmdLine() const
 /**
  *  \brief
  */
-void CmdEngine::composeCmd(TCHAR* buf, unsigned len) const
+void CmdEngine::composeCmd(CText& buf) const
 {
     CPath path(DllPath);
     path.StripFilename();
     path += cBinsDir;
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
-        _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str());
+        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str());
     else
-        _sntprintf_s(buf, len, _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag());
+        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag());
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
     {
         path += _T("\\gtags.conf");
         if (path.FileExists())
         {
-            _tcscat_s(buf, len, _T(" --gtagsconf \""));
-            _tcscat_s(buf, len, path.C_str());
-            _tcscat_s(buf, len, _T("\""));
-            _tcscat_s(buf, len, _T(" --gtagslabel="));
-            _tcscat_s(buf, len, Config.Parser());
+            buf += _T(" --gtagsconf \"");
+            buf += path.C_str();
+            buf += _T("\"");
+            buf += _T(" --gtagslabel=");
+            buf += Config.Parser();
         }
     }
     else if (_cmd->_id != VERSION)
     {
         if (_cmd->_matchCase)
-            _tcscat_s(buf, len, _T(" -M"));
+            buf += _T(" -M");
         else
-            _tcscat_s(buf, len, _T(" -i"));
+            buf += _T(" -i");
 
         if (!_cmd->_regExp)
-            _tcscat_s(buf, len, _T(" --literal"));
+            buf += _T(" --literal");
     }
 }
 
@@ -222,8 +222,8 @@ void CmdEngine::composeCmd(TCHAR* buf, unsigned len) const
  */
 unsigned CmdEngine::runProcess()
 {
-    TCHAR buf[2048];
-    composeCmd(buf, _countof(buf));
+    CText buf(2048);
+    composeCmd(buf);
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
     const TCHAR* env = NULL;
@@ -253,7 +253,7 @@ unsigned CmdEngine::runProcess()
     si.hStdOutput   = dataPipe.GetInputHandle();
 
     PROCESS_INFORMATION pi;
-    if (!CreateProcess(NULL, buf, NULL, NULL, TRUE, createFlags, (LPVOID)env, currentDir, &si, &pi))
+    if (!CreateProcess(NULL, buf.C_str(), NULL, NULL, TRUE, createFlags, (LPVOID)env, currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
         return 1;

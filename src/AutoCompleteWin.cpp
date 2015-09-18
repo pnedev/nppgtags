@@ -27,7 +27,6 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include <string>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
@@ -144,7 +143,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
             -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, UIFontName);
+            FF_DONTCARE | DEFAULT_PITCH, UIFontName.C_str());
 
     ReleaseDC(_hLVWnd, hdc);
 
@@ -389,7 +388,9 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         }
     }
 
-    CText word(INpp::Get().GetWord(true).c_str());
+    CTextA wordA;
+    INpp::Get().GetWord(wordA, true);
+    CText word(wordA.C_str());
     int lvItemsCnt = filterLV(word);
 
     if (lvItemsCnt == 0)

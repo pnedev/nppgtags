@@ -108,7 +108,7 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
     CPath dbPath(filePath);
 
     int len;
-    for (len = dbPath.StripFilename(); len; len = dbPath.Up())
+    for (len = dbPath.StripFilename(); len; len = dbPath.DirUp())
         if (DbExistsInFolder(dbPath))
             break;
 
@@ -198,7 +198,7 @@ DbHandle DbManager::lockDb(const CPath& filePath, bool writeEn, bool* success)
 {
     for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
     {
-        if (dbi->_path.Contains(filePath))
+        if (dbi->_path.IsParentOf(filePath))
         {
             if (!DbExistsInFolder(dbi->_path))
             {

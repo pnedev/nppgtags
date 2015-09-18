@@ -28,6 +28,7 @@
 #include <tchar.h>
 #include <vector>
 #include "AutoLock.h"
+#include "Common.h"
 
 
 /**
@@ -52,19 +53,19 @@ private:
      */
     struct Location
     {
-        TCHAR   _filePath[MAX_PATH];
+        CPath   _filePath;
         long    _posInFile;
 
         inline const Location& operator=(const Location& loc)
         {
             _posInFile = loc._posInFile;
-            _tcscpy_s(_filePath, MAX_PATH, loc._filePath);
+            _filePath = loc._filePath;
             return loc;
         }
 
         inline bool operator==(const Location& loc) const
         {
-            return ((_posInFile == loc._posInFile) && !_tcscmp(_filePath, loc._filePath));
+            return ((_posInFile == loc._posInFile) && (_filePath == loc._filePath));
         }
     };
 

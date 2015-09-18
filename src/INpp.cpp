@@ -31,7 +31,7 @@ INpp INpp::Instance;
 /**
  *  \brief
  */
-std::string INpp::GetWord(bool select) const
+void INpp::GetWord(CTextA& word, bool select) const
 {
     long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
@@ -39,20 +39,21 @@ std::string INpp::GetWord(bool select) const
 
     long len = wordEnd - wordStart;
     if (len == 0)
-        return std::string();
+    {
+        word.Clear();
+        return;
+    }
 
     if (select)
         SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
     else
         SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
 
-    std::vector<char> buf;
-    buf.resize(len);
+    word.Resize(len);
 
-    struct TextRange tr = { { wordStart, wordEnd }, buf.data() };
+    struct TextRange tr = { { wordStart, wordEnd }, word.C_str() };
     SendMessage(_hSC, SCI_GETTEXTRANGE, 0, (LPARAM)&tr);
-
-    return std::string(buf.cbegin(), buf.cend());
+    word.AutoFit();
 }
 
 

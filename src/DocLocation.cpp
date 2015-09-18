@@ -92,7 +92,7 @@ void DocLocation::Back()
     {
         Location& loc = _locList.at(_backLocIdx--);
 
-        if (Tools::FileExists(loc._filePath))
+        if (loc._filePath.FileExists())
         {
             swapView(loc);
             break;
@@ -112,7 +112,7 @@ void DocLocation::Forward()
     {
         Location& loc = _locList.at(++_backLocIdx);
 
-        if (Tools::FileExists(loc._filePath))
+        if (loc._filePath.FileExists())
         {
             swapView(loc);
             break;
@@ -132,7 +132,7 @@ void DocLocation::swapView(Location& loc)
     npp.GetFilePath(newLoc._filePath);
     newLoc._posInFile = npp.GetPos();
 
-    npp.OpenFile(loc._filePath);
+    npp.OpenFile(loc._filePath.C_str());
     npp.SetView(loc._posInFile);
 
     loc = newLoc;

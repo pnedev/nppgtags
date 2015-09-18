@@ -157,7 +157,7 @@ private:
     ~CmdEngine();
 
     const TCHAR* getCmdLine() const;
-    void composeCmd(TCHAR* buf, unsigned len) const;
+    void composeCmd(CText& buf) const;
     unsigned runProcess();
     void endProcess(PROCESS_INFORMATION& pi);
 

@@ -83,27 +83,26 @@ inline void releaseKeys()
 /**
  *  \brief
  */
-bool checkForGTagsBinaries(const TCHAR* dllPath)
+bool checkForGTagsBinaries(CPath& dllPath)
 {
-    CPath gtags(dllPath);
-    gtags.StripFilename();
-    gtags += cBinsDir;
-    gtags += _T("\\global.exe");
+    dllPath.StripFilename();
+    dllPath += cBinsDir;
+    dllPath += _T("\\global.exe");
 
-    bool gtagsBinsFound = gtags.FileExists();
+    bool gtagsBinsFound = dllPath.FileExists();
     if (gtagsBinsFound)
     {
-        gtags.StripFilename();
-        gtags += _T("gtags.exe");
-        gtagsBinsFound = gtags.FileExists();
+        dllPath.StripFilename();
+        dllPath += _T("gtags.exe");
+        gtagsBinsFound = dllPath.FileExists();
     }
 
     if (!gtagsBinsFound)
     {
-        gtags.StripFilename();
+        dllPath.StripFilename();
 
         CText msg(_T("GTags binaries not found in\n\""));
-        msg += gtags.C_str();
+        msg += dllPath.C_str();
         msg += _T("\"\n");
         msg += cPluginName;
         msg += _T(" plugin will not be loaded!");
@@ -127,18 +126,18 @@ CText getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
     if (npp.IsSelectionVertical())
         return CText();
 
-    std::string tagA;
+    CTextA tagA;
 
     if (!skipPreSelect)
-        tagA = npp.GetSelection();
+        npp.GetSelection(tagA);
 
-    if (skipPreSelect || (tagA.empty() && autoSelectWord))
-        tagA = npp.GetWord(true);
+    if (skipPreSelect || (tagA.IsEmpty() && autoSelectWord))
+        npp.GetWord(tagA, true);
 
-    if (tagA.empty())
+    if (tagA.IsEmpty())
         return CText();
 
-    return CText(tagA.c_str());
+    return CText(tagA.C_str());
 }
 
 
@@ -149,9 +148,8 @@ DbHandle getDatabase(bool writeEn = false)
 {
     INpp& npp = INpp::Get();
     bool success;
-    TCHAR file[MAX_PATH];
-    npp.GetFilePath(file);
-    CPath currentFile(file);
+    CPath currentFile;
+    npp.GetFilePath(currentFile);
 
     DbHandle db = DbManager::Get().GetDb(currentFile, writeEn, &success);
     if (!db)
@@ -209,7 +207,7 @@ bool runSheduledUpdate(const TCHAR* dbPath)
 
         std::list<CPath>::iterator iFile;
         for (iFile = UpdateList.begin(); iFile != UpdateList.end(); iFile++)
-            if (iFile->IsContainedIn(dbPath))
+            if (iFile->IsSubpathOf(dbPath))
                 break;
 
         if (iFile == UpdateList.end())
@@ -219,7 +217,7 @@ bool runSheduledUpdate(const TCHAR* dbPath)
         UpdateList.erase(iFile);
     }
 
-    if (!UpdateSingleFile(file.C_str()))
+    if (!UpdateSingleFile(file))
         return runSheduledUpdate(dbPath);
 
     return true;
@@ -459,9 +457,9 @@ void FindFile()
     CText tag = getSelection();
     if (tag.IsEmpty())
     {
-        TCHAR fileName[MAX_PATH];
+        CPath fileName;
         INpp::Get().GetFileNamePart(fileName);
-        cmd->Tag(fileName);
+        cmd->Tag(fileName.C_str());
 
         SearchWin::Show(cmd, showResult);
     }
@@ -587,11 +585,12 @@ void CreateDatabase()
 {
     SearchWin::Close();
 
-    INpp& npp = INpp::Get();
-    bool success;
     TCHAR path[MAX_PATH];
-    npp.GetFilePath(path);
-    CPath currentFile(path);
+    CPath currentFile;
+
+    bool success;
+    INpp& npp = INpp::Get();
+    npp.GetFilePath(currentFile);
 
     DbHandle db = DbManager::Get().GetDb(currentFile, true, &success);
     if (db)
@@ -603,9 +602,10 @@ void CreateDatabase()
             return;
         }
 
-        TCHAR buf[512];
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Database at\n\"%s\" exists.\nRe-create?"), db->C_str());
-        int choice = MessageBox(npp.GetHandle(), buf, cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+        CText msg(_T("Database at\n\""));
+        msg += db->C_str();
+        msg += _T("\" exists.\nRe-create?");
+        int choice = MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
         {
             DbManager::Get().PutDb(db);
@@ -744,7 +744,7 @@ FuncItem Menu[18] = {
 HINSTANCE HMod = NULL;
 CPath DllPath;
 
-TCHAR UIFontName[32];
+CText UIFontName;
 unsigned UIFontSize;
 
 CConfig Config;
@@ -755,8 +755,10 @@ CConfig Config;
  */
 BOOL PluginLoad(HINSTANCE hMod)
 {
-    TCHAR moduleFileName[MAX_PATH];
-    GetModuleFileName((HMODULE)hMod, moduleFileName, MAX_PATH);
+    CPath moduleFileName(MAX_PATH);
+    GetModuleFileName((HMODULE)hMod, moduleFileName.C_str(), MAX_PATH);
+    moduleFileName.AutoFit();
+
     DllPath = moduleFileName;
 
     if (!checkForGTagsBinaries(moduleFileName))
@@ -776,8 +778,8 @@ void PluginInit()
     INpp& npp = INpp::Get();
     char font[32];
 
-    npp.GetFontName(STYLE_DEFAULT, font, _countof(font));
-    Tools::AtoW(UIFontName, _countof(UIFontName), font);
+    npp.GetFontName(STYLE_DEFAULT, font);
+    UIFontName = font;
     UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
 
     ActivityWin::Register();
@@ -810,28 +812,20 @@ void PluginDeInit()
 /**
  *  \brief
  */
-bool UpdateSingleFile(const TCHAR* file)
+bool UpdateSingleFile(const CPath& file)
 {
-    CPath upFile(file);
-    if (!file)
-    {
-        TCHAR filePath[MAX_PATH];
-        INpp::Get().GetFilePath(filePath);
-        upFile = filePath;
-    }
-
     bool success;
-    DbHandle db = DbManager::Get().GetDb(upFile, true, &success);
+    DbHandle db = DbManager::Get().GetDb(file, true, &success);
     if (!db)
         return false;
 
     if (!success)
     {
-        sheduleForUpdate(upFile);
+        sheduleForUpdate(file);
         return true;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, upFile.C_str()));
+    std::shared_ptr<Cmd> cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
 
     releaseKeys();
     if (!CmdEngine::Run(cmd, dbWriteReady))
@@ -876,10 +870,10 @@ const CPath CreateLibraryDatabase(HWND hWnd)
 
     if (DbManager::Get().DbExistsInFolder(libraryPath))
     {
-        TCHAR buf[512];
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Database at\n\"%s\" exists.\nRe-create?"),
-                libraryPath.C_str());
-        int choice = MessageBox(hWnd, buf, cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+        CText msg(_T("Database at\n\""));
+        msg += libraryPath;
+        msg += _T("\" exists.\nRe-create?");
+        int choice = MessageBox(hWnd, msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return libraryPath;
 
@@ -889,7 +883,7 @@ const CPath CreateLibraryDatabase(HWND hWnd)
         if (!success)
         {
             MessageBox(hWnd, _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
-            libraryPath = _T("");
+            libraryPath.Clear();
 
             return libraryPath;
         }
@@ -905,7 +899,7 @@ const CPath CreateLibraryDatabase(HWND hWnd)
 
     dbWriteReady(cmd);
     if (cmd->Status() != OK)
-        libraryPath = _T("");
+        libraryPath.Clear();
 
     return libraryPath;
 }
