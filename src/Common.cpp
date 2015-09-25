@@ -28,6 +28,18 @@
 /**
  *  \brief
  */
+CTextW::CTextW(const wchar_t* str) : _invalidStrLen(false)
+{
+    if (str)
+        _buf.assign(str, str + wcslen(str) + 1);
+    else
+        _buf.push_back(L'\0');
+}
+
+
+/**
+ *  \brief
+ */
 CTextW::CTextW(const char* str) : _invalidStrLen(false)
 {
     if (str)
@@ -40,6 +52,34 @@ CTextW::CTextW(const char* str) : _invalidStrLen(false)
     {
         _buf.push_back('\0');
     }
+}
+
+
+/**
+ *  \brief
+ */
+const CTextW& CTextW::operator=(const CTextW& txt)
+{
+    if (this != &txt)
+    {
+        _buf = txt._buf;
+        _invalidStrLen = txt._invalidStrLen;
+    }
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextW& CTextW::operator=(const wchar_t* str)
+{
+    if (str)
+    {
+        _buf.assign(str, str + wcslen(str) + 1);
+        _invalidStrLen = false;
+    }
+    return *this;
 }
 
 
@@ -171,7 +211,41 @@ void CTextW::Insert(unsigned at_pos, const wchar_t* data, unsigned len)
 /**
  *  \brief
  */
-CTextA::CTextA(const wchar_t* str)  : _invalidStrLen(false)
+void CTextW::Clear()
+{
+    _buf.clear();
+    _buf.push_back(L'\0');
+    _invalidStrLen = false;
+}
+
+
+/**
+ *  \brief
+ */
+void CTextW::Resize(unsigned size)
+{
+    _buf.resize(size);
+    _buf.push_back(L'\0');
+    _invalidStrLen = true;
+}
+
+
+/**
+ *  \brief
+ */
+CTextA::CTextA(const char* str) : _invalidStrLen(false)
+{
+    if (str)
+        _buf.assign(str, str + strlen(str) + 1);
+    else
+        _buf.push_back('\0');
+}
+
+
+/**
+ *  \brief
+ */
+CTextA::CTextA(const wchar_t* str) : _invalidStrLen(false)
 {
     if (str)
     {
@@ -183,6 +257,34 @@ CTextA::CTextA(const wchar_t* str)  : _invalidStrLen(false)
     {
         _buf.push_back('\0');
     }
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator=(const CTextA& txt)
+{
+    if (this != &txt)
+    {
+        _buf = txt._buf;
+        _invalidStrLen = txt._invalidStrLen;
+    }
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+const CTextA& CTextA::operator=(const char* str)
+{
+    if (str)
+    {
+        _buf.assign(str, str + strlen(str) + 1);
+        _invalidStrLen = false;
+    }
+    return *this;
 }
 
 
@@ -308,6 +410,28 @@ void CTextA::Insert(unsigned at_pos, const char* data, unsigned len)
 
     if ((at_pos < _buf.size()) && data && len)
         _buf.insert(_buf.cbegin() + at_pos, data, data + len);
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::Clear()
+{
+    _buf.clear();
+    _buf.push_back('\0');
+    _invalidStrLen = false;
+}
+
+
+/**
+ *  \brief
+ */
+void CTextA::Resize(unsigned size)
+{
+    _buf.resize(size);
+    _buf.push_back('\0');
+    _invalidStrLen = true;
 }
 
 

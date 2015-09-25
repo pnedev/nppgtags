@@ -44,14 +44,6 @@ namespace Tools
 
 void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
 
-
-inline bool FileExists(TCHAR* file)
-{
-    DWORD dwAttrib = GetFileAttributes(file);
-    return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
-
 #ifdef DEVELOPMENT
 
 #ifdef UNICODE
@@ -96,22 +88,12 @@ protected:
 
 public:
     CTextW() : _invalidStrLen(false) { _buf.push_back(L'\0'); }
-    CTextW(const CTextW& txt) : _buf(txt._buf), _invalidStrLen(txt._invalidStrLen) {}
+    CTextW(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, L'\0'); }
 
-    CTextW(const wchar_t* str) : _invalidStrLen(false)
-    {
-        if (str)
-            _buf.assign(str, str + wcslen(str) + 1);
-        else
-            _buf.push_back(L'\0');
-    }
-
+    CTextW(const wchar_t* str);
     CTextW(const char* str);
 
-    CTextW(unsigned size) : _invalidStrLen(true)
-    {
-        _buf.resize(size + 1, L'\0');
-    }
+    CTextW(const CTextW& txt) : _buf(txt._buf), _invalidStrLen(txt._invalidStrLen) {}
 
     ~CTextW() {}
 
@@ -124,26 +106,8 @@ public:
         }
     }
 
-    inline const CTextW& operator=(const CTextW& txt)
-    {
-        if (this != &txt)
-        {
-            _buf = txt._buf;
-            _invalidStrLen = txt._invalidStrLen;
-        }
-        return *this;
-    }
-
-    inline const CTextW& operator=(const wchar_t* str)
-    {
-        if (str)
-        {
-            _buf.assign(str, str + wcslen(str) + 1);
-            _invalidStrLen = false;
-        }
-        return *this;
-    }
-
+    const CTextW& operator=(const CTextW& txt);
+    const CTextW& operator=(const wchar_t* str);
     const CTextW& operator=(const char* str);
 
     inline bool operator==(const CTextW& txt) const { return (_buf == txt._buf); }
@@ -158,19 +122,8 @@ public:
     void Insert(unsigned at_pos, wchar_t letter);
     void Insert(unsigned at_pos, const wchar_t* data, unsigned len);
 
-    inline void Resize(unsigned size)
-    {
-        _buf.resize(size);
-        _buf.push_back(L'\0');
-        _invalidStrLen = true;
-    }
-
-    inline void Clear()
-    {
-        _buf.clear();
-        _buf.push_back(L'\0');
-        _invalidStrLen = false;
-    }
+    void Clear();
+    void Resize(unsigned size);
 
     inline unsigned Len() const { return (_invalidStrLen) ? wcslen(_buf.data()) : (_buf.size() - 1); }
     inline bool IsEmpty() const { return (Len() == 0); }
@@ -196,22 +149,12 @@ protected:
 
 public:
     CTextA() : _invalidStrLen(false) { _buf.push_back('\0'); }
-    CTextA(const CTextA& txt) : _buf(txt._buf), _invalidStrLen(txt._invalidStrLen) {}
+    CTextA(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, '\0'); }
 
-    CTextA(const char* str) : _invalidStrLen(false)
-    {
-        if (str)
-            _buf.assign(str, str + strlen(str) + 1);
-        else
-            _buf.push_back('\0');
-    }
-
+    CTextA(const char* str);
     CTextA(const wchar_t* str);
 
-    CTextA(unsigned size) : _invalidStrLen(true)
-    {
-        _buf.resize(size + 1, '\0');
-    }
+    CTextA(const CTextA& txt) : _buf(txt._buf), _invalidStrLen(txt._invalidStrLen) {}
 
     ~CTextA() {}
 
@@ -224,26 +167,8 @@ public:
         }
     }
 
-    inline const CTextA& operator=(const CTextA& txt)
-    {
-        if (this != &txt)
-        {
-            _buf = txt._buf;
-            _invalidStrLen = txt._invalidStrLen;
-        }
-        return *this;
-    }
-
-    inline const CTextA& operator=(const char* str)
-    {
-        if (str)
-        {
-            _buf.assign(str, str + strlen(str) + 1);
-            _invalidStrLen = false;
-        }
-        return *this;
-    }
-
+    const CTextA& operator=(const CTextA& txt);
+    const CTextA& operator=(const char* str);
     const CTextA& operator=(const wchar_t* str);
 
     inline bool operator==(const CTextA& txt) const { return (_buf == txt._buf); }
@@ -258,19 +183,8 @@ public:
     void Insert(unsigned at_pos, char letter);
     void Insert(unsigned at_pos, const char* data, unsigned len);
 
-    inline void Resize(unsigned size)
-    {
-        _buf.resize(size);
-        _buf.push_back('\0');
-        _invalidStrLen = true;
-    }
-
-    inline void Clear()
-    {
-        _buf.clear();
-        _buf.push_back('\0');
-        _invalidStrLen = false;
-    }
+    void Clear();
+    void Resize(unsigned size);
 
     inline unsigned Len() const { return (_invalidStrLen) ? strlen(_buf.data()) : (_buf.size() - 1); }
     inline bool IsEmpty() const { return (Len() == 0); }
