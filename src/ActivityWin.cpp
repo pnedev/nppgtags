@@ -41,7 +41,9 @@ const int ActivityWin::cBackgroundColor = COLOR_WINDOW;
 const unsigned ActivityWin::cFontSize   = 8;
 
 
-volatile LONG ActivityWin::RefCount = 0;
+std::list<HWND> ActivityWin::WindowList;
+Mutex           ActivityWin::ListLock;
+HFONT           ActivityWin::HFont = NULL;
 
 
 /**
@@ -123,7 +125,7 @@ bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text, int showA
 /**
  *  \brief
  */
-ActivityWin::ActivityWin() : _hFont(NULL), _isCancelled(false)
+ActivityWin::ActivityWin() : _hWnd(NULL), _isCancelled(false)
 {
     _initRefCount = InterlockedIncrement(&RefCount);
 }
@@ -134,17 +136,25 @@ ActivityWin::ActivityWin() : _hFont(NULL), _isCancelled(false)
  */
 ActivityWin::~ActivityWin()
 {
-    if (_hFont)
-        DeleteObject(_hFont);
+    AUTOLOCK(ListLock);
 
-    InterlockedDecrement(&RefCount);
+    for (auto iList = WindowList.begin(); iList != WindowList.end(); ++iList)
+    {
+        if (*iList == _hWnd)
+            WindowList.erase(iList);
+        else
+            onResize();
+    }
+
+    if (WindowList.empty() && HFont)
+        DeleteObject(HFont);
 }
 
 
 /**
  *  \brief
  */
-void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
+void ActivityWin::adjustSizeAndPos(int width, int height)
 {
     HWND hBias = INpp::Get().GetSciHandle();
 
@@ -177,15 +187,24 @@ void ActivityWin::adjustSizeAndPos(HWND hWnd, int width, int height)
  */
 HWND ActivityWin::composeWindow(int width, const TCHAR* text)
 {
-    HWND hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER,
+    _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             INpp::Get().GetHandle(), NULL, HMod, (LPVOID)this);
-    if (hWnd == NULL)
+    if (_hWnd == NULL)
         return NULL;
+
+    ListLock.Lock();
+
+    if (WindowList.empty())
+        HFont = CreateFontIndirect(&ncm.lfMessageFont);
+
+    WindowList.push_back(_hWnd);
+
+    ListLock.Unlock();
 
     HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
-            0, 0, 0, 0, hWnd, NULL, HMod, NULL);
+            0, 0, 0, 0, _hWnd, NULL, HMod, NULL);
 
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(ncm);
@@ -194,19 +213,18 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     HDC hdc = GetWindowDC(hWndTxt);
     ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
 
-    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
-    if (_hFont)
-        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)_hFont, TRUE);
+    if (HFont)
+        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)HFont, TRUE);
 
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
     ReleaseDC(hWndTxt, hdc);
 
     int textHeight = tm.tmHeight;
-    adjustSizeAndPos(hWnd, width, textHeight + 25);
+    adjustSizeAndPos(width, textHeight + 25);
 
     RECT win;
-    GetClientRect(hWnd, &win);
+    GetClientRect(_hWnd, &win);
     width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -217,33 +235,33 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, NULL,
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
-            hWnd, NULL, HMod, NULL);
+            _hWnd, NULL, HMod, NULL);
     SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 50);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
-            width - 85, (height - 25) / 2, 80, 25, hWnd,
+            width - 85, (height - 25) / 2, 80, 25, _hWnd,
             NULL, HMod, NULL);
 
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    UpdateWindow(hWnd);
+    ShowWindow(_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(_hWnd);
 
-    return hWnd;
+    return _hWnd;
 }
 
 
 /**
  *  \brief
  */
-void ActivityWin::onResize(HWND hWnd)
+void ActivityWin::onResize()
 {
     int refCount = (int)RefCount;
     if (_initRefCount > refCount)
     {
         _initRefCount = refCount;
         RECT win;
-        GetClientRect(hWnd, &win);
-        adjustSizeAndPos(hWnd, win.right - win.left, win.bottom - win.top);
+        GetClientRect(_hWnd, &win);
+        adjustSizeAndPos(win.right - win.left, win.bottom - win.top);
     }
 }
 
@@ -269,7 +287,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
         case WM_PAINT:
             aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
-            aw->onResize(hWnd);
+            aw->onResize();
         break;
 
         case WM_CTLCOLORSTATIC:

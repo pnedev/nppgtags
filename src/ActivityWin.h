@@ -27,6 +27,8 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <list>
+#include "AutoLock.h"
 
 
 namespace GTags
@@ -49,7 +51,9 @@ private:
     static const int        cBackgroundColor;
     static const unsigned   cFontSize;
 
-    static volatile LONG RefCount;
+    static std::list<HWND>  WindowList;
+    static Mutex            ListLock;
+    static HFONT            HFont;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -57,11 +61,11 @@ private:
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 
-    void adjustSizeAndPos(HWND hWnd, int width, int height);
+    void adjustSizeAndPos(int width, int height);
     HWND composeWindow(int width, const TCHAR* text);
-    void onResize(HWND hWnd);
+    void onResize();
 
-    HFONT   _hFont;
+    HWND    _hWnd;
     HWND    _hBtn;
     int     _initRefCount;
     bool    _isCancelled;
