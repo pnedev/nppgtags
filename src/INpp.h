@@ -253,6 +253,7 @@ public:
         return SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     }
 
+    void EnsureCurrentLineVisible() const;
     void SetView(long startPos, long endPos = 0) const;
 
     inline long GetWordSize() const

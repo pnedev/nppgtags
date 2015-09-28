@@ -78,6 +78,28 @@ void INpp::ReplaceWord(const char* replText) const
 /**
  *  \brief
  */
+void INpp::EnsureCurrentLineVisible() const
+{
+    int lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION, SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0), 0);
+    SendMessage(_hSC, SCI_ENSUREVISIBLE, lineNum, 0);
+    lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0);
+
+    int linesOnScreen       = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
+    int firstVisibleLine    = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
+
+    if (lineNum < firstVisibleLine || lineNum > firstVisibleLine + linesOnScreen)
+    {
+        lineNum -= linesOnScreen / 2;
+        if (lineNum < 0)
+            lineNum = 0;
+        SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, lineNum, 0);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void INpp::SetView(long startPos, long endPos) const
 {
     if (endPos == 0)
@@ -122,13 +144,12 @@ bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord, bool reg
     SendMessage(_hSC, SCI_SETTARGETEND, *endPos, 0);
 
     SendMessage(_hSC, SCI_SETSEL, *startPos, *endPos);
-    if (SendMessage(_hSC, SCI_SEARCHINTARGET, strlen(text), (LPARAM)text) < 0)
-        return false;
+    bool isFound = (SendMessage(_hSC, SCI_SEARCHINTARGET, strlen(text), (LPARAM)text) >= 0);
 
     *startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
     *endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
 
     SetView(*startPos, *endPos);
 
-    return true;
+    return isFound;
 }

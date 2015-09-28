@@ -29,13 +29,14 @@
 #include "INpp.h"
 #include "DbManager.h"
 #include "DocLocation.h"
+#include "ActivityWin.h"
 #include <commctrl.h>
 #include <vector>
 #include "Common.h"
 
 
 // Scintilla user defined styles IDs
-enum
+enum SciStyles_t
 {
     SCE_GTAGS_HEADER = 151,
     SCE_GTAGS_PROJECT_PATH,
@@ -46,7 +47,7 @@ enum
 
 
 // Scintilla fold levels
-enum
+enum SciFoldLevels_t
 {
     FILE_HEADER_LVL = SC_FOLDLEVELBASE,
     RESULT_LVL
@@ -396,7 +397,6 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
     TabCtrl_SetCurSel(_hTab, i);
     loadTab(tab);
 
-    npp.UpdateDockingWin(_hWnd);
     showWindow();
 }
 
@@ -588,7 +588,11 @@ HWND ResultWin::composeWindow()
  */
 void ResultWin::showWindow()
 {
-    INpp::Get().ShowDockingWin(_hWnd);
+    INpp& npp = INpp::Get();
+    npp.ShowDockingWin(_hWnd);
+
+    ActivityWin::UpdatePositions();
+
     SetFocus(_hWnd);
 }
 
@@ -606,6 +610,9 @@ void ResultWin::hideWindow()
 
     INpp& npp = INpp::Get();
     npp.HideDockingWin(_hWnd);
+
+    ActivityWin::UpdatePositions();
+
     SetFocus(npp.GetSciHandle());
 }
 
@@ -1195,7 +1202,6 @@ void ResultWin::onCloseTab()
         sendSci(SCI_CLEARALL);
         sendSci(SCI_SETREADONLY, 1);
 
-        INpp::Get().UpdateDockingWin(_hWnd);
         hideWindow();
     }
 

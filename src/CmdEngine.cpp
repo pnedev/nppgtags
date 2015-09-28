@@ -294,8 +294,12 @@ unsigned CmdEngine::runProcess()
     else if (!errorPipe.GetOutput().empty())
     {
         _cmd->setResult(errorPipe.GetOutput());
-        _cmd->_status = FAILED;
-        return 1;
+
+        if (_cmd->_id != CREATE_DATABASE)
+        {
+            _cmd->_status = FAILED;
+            return 1;
+        }
     }
 
     _cmd->_status = OK;

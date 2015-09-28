@@ -236,14 +236,14 @@ void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
 
     runSheduledUpdate(cmd->DbPath());
 
-    if (cmd->Status() == FAILED)
-    {
-        CText msg(cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
-    }
-    else if (cmd->Status() == RUN_ERROR)
+    if (cmd->Status() == RUN_ERROR)
     {
         MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == FAILED || cmd->Result())
+    {
+        CText msg(cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 }
 
@@ -597,7 +597,7 @@ void CreateDatabase()
     {
         if (!success)
         {
-            MessageBox(npp.GetHandle(), _T("GTags database exists and is currently in use"), cPluginName,
+            MessageBox(npp.GetHandle(), _T("GTags database is currently in use"), cPluginName,
                     MB_OK | MB_ICONINFORMATION);
             return;
         }

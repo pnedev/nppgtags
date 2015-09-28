@@ -45,25 +45,26 @@ public:
     static void Unregister();
 
     static bool Show(HANDLE hActivity, int width, const TCHAR *text, int showAfter_ms);
+    static void UpdatePositions();
 
 private:
     static const TCHAR      cClassName[];
     static const int        cBackgroundColor;
     static const unsigned   cFontSize;
 
-    static std::list<HWND>  WindowList;
-    static Mutex            ListLock;
-    static HFONT            HFont;
+    static std::list<ActivityWin*>  WindowList;
+    static Mutex                    ListLock;
+    static HFONT                    HFont;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ActivityWin();
+    ActivityWin() : _hWnd(NULL), _isCancelled(false) {};
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 
-    void adjustSizeAndPos(int width, int height);
+    void adjustSizeAndPos(int width, int height, int winNum);
     HWND composeWindow(int width, const TCHAR* text);
-    void onResize();
+    void onResize(int winNum);
 
     HWND    _hWnd;
     HWND    _hBtn;

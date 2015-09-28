@@ -40,8 +40,8 @@ class DocLocation
 public:
     static DocLocation& Get() { return Instance; }
 
-    // unsigned GetDepth() const { return _maxDepth; }
-    // void SetDepth(unsigned depth);
+    unsigned GetDepth() const { return _maxDepth; }
+    void SetDepth(unsigned depth);
     void Push();
     void Back();
     void Forward();
