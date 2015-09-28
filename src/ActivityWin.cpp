@@ -130,8 +130,8 @@ void ActivityWin::UpdatePositions()
     AUTOLOCK(ListLock);
 
     int i = 1;
-    for (auto iList = WindowList.begin(); iList != WindowList.end(); ++iList, ++i)
-        (*iList)->onResize(i);
+    for (auto iWin = WindowList.begin(); iWin != WindowList.end(); ++iWin, ++i)
+        (*iWin)->onResize(i);
 }
 
 
@@ -142,24 +142,25 @@ ActivityWin::~ActivityWin()
 {
     AUTOLOCK(ListLock);
 
-    for (auto iList = WindowList.begin(); iList != WindowList.end(); ++iList)
+    for (auto iWin = WindowList.begin(); iWin != WindowList.end(); ++iWin)
     {
-        if (*iList == this)
+        if (*iWin == this)
         {
-            WindowList.erase(iList);
+            WindowList.erase(iWin);
             break;
         }
     }
 
-    if (WindowList.empty() && HFont)
+    if (WindowList.empty())
     {
-        DeleteObject(HFont);
+        if (HFont)
+            DeleteObject(HFont);
     }
     else
     {
         int i = 1;
-        for (auto iList = WindowList.begin(); iList != WindowList.end(); ++iList, ++i)
-            (*iList)->onResize(i);
+        for (auto iWin = WindowList.begin(); iWin != WindowList.end(); ++iWin, ++i)
+            (*iWin)->onResize(i);
     }
 }
 

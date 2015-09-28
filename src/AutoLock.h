@@ -28,7 +28,9 @@
 #include <windows.h>
 
 
-#define AUTOLOCK(x)    AutoLock __lock_obj(x)
+#define AUTOLOCK(x)             AutoLock __lock_obj(x)
+#define IF_AUTO_TRYLOCK_FAIL(x) AutoTryLock __lock_obj(x); \
+                                if (!__lock_obj.IsLocked())
 
 
 /**
@@ -87,4 +89,30 @@ public:
 
 private:
     Mutex& _lock;
+};
+
+
+/**
+ *  \class  AutoTryLock
+ *  \brief
+ */
+class AutoTryLock
+{
+public:
+    AutoTryLock(Mutex& lock) : _lock(lock)
+    {
+        _isLocked = _lock.TryLock();
+    }
+
+    ~AutoTryLock()
+    {
+        if (_isLocked)
+            _lock.Unlock();
+    }
+
+	BOOL IsLocked() { return _isLocked; }
+
+private:
+    Mutex&  _lock;
+    BOOL    _isLocked;
 };

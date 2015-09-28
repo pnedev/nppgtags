@@ -805,7 +805,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
     if (_activeTab == NULL)
         return;
 
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return;
 
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
@@ -915,8 +915,6 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
             }
         }
     }
-
-    _lock.Unlock();
 }
 
 
@@ -925,7 +923,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
  */
 void ResultWin::onHotspotClick(SCNotification* notify)
 {
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return;
 
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
@@ -954,8 +952,6 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 
     // Clear false selection in results win when visiting result location
     sendSci(SCI_GOTOPOS, notify->position);
-
-    _lock.Unlock();
 }
 
 
@@ -964,7 +960,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
  */
 void ResultWin::onDoubleClick(int pos)
 {
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return;
 
     int lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
@@ -995,8 +991,6 @@ void ResultWin::onDoubleClick(int pos)
         else
             openItem(lineNum);
     }
-
-    _lock.Unlock();
 }
 
 
@@ -1005,7 +999,7 @@ void ResultWin::onDoubleClick(int pos)
  */
 void ResultWin::onMarginClick(SCNotification* notify)
 {
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return;
 
     int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
@@ -1022,8 +1016,6 @@ void ResultWin::onMarginClick(SCNotification* notify)
         lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
         sendSci(SCI_GOTOLINE, lineNum);
     }
-
-    _lock.Unlock();
 }
 
 
@@ -1032,7 +1024,7 @@ void ResultWin::onMarginClick(SCNotification* notify)
  */
 bool ResultWin::onKeyPress(WORD keyCode)
 {
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return false;
 
     bool handled = true;
@@ -1153,8 +1145,6 @@ bool ResultWin::onKeyPress(WORD keyCode)
             handled = false;
     }
 
-    _lock.Unlock();
-
     return handled;
 }
 
@@ -1164,14 +1154,12 @@ bool ResultWin::onKeyPress(WORD keyCode)
  */
 void ResultWin::onTabChange()
 {
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return;
 
     Tab* tab = getTab();
     if (tab)
         loadTab(tab);
-
-    _lock.Unlock();
 }
 
 
@@ -1180,7 +1168,7 @@ void ResultWin::onTabChange()
  */
 void ResultWin::onCloseTab()
 {
-    if (!_lock.TryLock())
+    IF_AUTO_TRYLOCK_FAIL(_lock)
         return;
 
     int i = TabCtrl_GetCurSel(_hTab);
@@ -1204,8 +1192,6 @@ void ResultWin::onCloseTab()
 
         hideWindow();
     }
-
-    _lock.Unlock();
 }
 
 
