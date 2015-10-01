@@ -35,27 +35,13 @@ DbManager DbManager::Instance;
 /**
  *  \brief
  */
-DbHandle DbManager::RegisterDb(const CPath& dbPath, bool writeEn)
+DbHandle DbManager::RegisterDb(const CPath& dbPath)
 {
+    bool success;
+
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
-    {
-        if (dbi->_path == dbPath)
-        {
-            if (dbi->IsLocked())
-            {
-                return NULL;
-            }
-            else
-            {
-                dbi->Lock(writeEn);
-                return &(dbi->_path);
-            }
-        }
-    }
-
-    return addDb(dbPath, writeEn);
+    return lockDb(dbPath, true, &success);
 }
 
 
@@ -71,7 +57,7 @@ bool DbManager::UnregisterDb(DbHandle db)
 
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
         if (db == &(dbi->_path))
         {
@@ -101,23 +87,17 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
 
     *success = false;
 
-    DbHandle db = lockDb(filePath, writeEn, success);
-    if (db)
-        return db;
-
     CPath dbPath(filePath);
+    int len = dbPath.StripFilename();
 
-    int len;
-    for (len = dbPath.StripFilename(); len; len = dbPath.DirUp())
+    for (; len; len = dbPath.DirUp())
         if (DbExistsInFolder(dbPath))
             break;
 
     if (len == 0)
         return NULL;
 
-    *success = true;
-
-    return addDb(dbPath, writeEn);
+    return lockDb(dbPath, writeEn, success);
 }
 
 
@@ -131,7 +111,7 @@ bool DbManager::PutDb(DbHandle db)
 
     AUTOLOCK(_lock);
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
         if (db == &(dbi->_path))
         {
@@ -182,35 +162,23 @@ bool DbManager::deleteDb(CPath& dbPath)
 /**
  *  \brief
  */
-DbHandle DbManager::addDb(const CPath& dbPath, bool writeEn)
+DbHandle DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* success)
 {
-    GTagsDb newDb(dbPath, writeEn);
-    _dbList.push_back(newDb);
-
-    return &(_dbList.rbegin()->_path);
-}
-
-
-/**
- *  \brief
- */
-DbHandle DbManager::lockDb(const CPath& filePath, bool writeEn, bool* success)
-{
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); dbi++)
+    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
-        if (dbi->_path.IsParentOf(filePath))
+        if (dbi->_path == dbPath)
         {
-            if (!DbExistsInFolder(dbi->_path))
-            {
-                _dbList.erase(dbi);
-                return NULL;
-            }
             *success = dbi->Lock(writeEn);
             return &(dbi->_path);
         }
     }
 
-    return NULL;
+    GTagsDb newDb(dbPath, writeEn);
+    _dbList.push_back(newDb);
+
+    *success = true;
+
+    return &(_dbList.rbegin()->_path);
 }
 
 } // namespace GTags

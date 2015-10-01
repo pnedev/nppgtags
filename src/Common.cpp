@@ -444,7 +444,7 @@ unsigned CPath::StripFilename()
 
     unsigned len = Len();
 
-    for (; len > 0; len--)
+    for (; len > 0; --len)
         if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
             break;
 
@@ -464,9 +464,9 @@ unsigned CPath::DirUp()
 
     unsigned len = Len();
     if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
-        len--;
+        --len;
 
-    for (; len > 0; len--)
+    for (; len > 0; --len)
         if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
             break;
 
@@ -484,10 +484,10 @@ const TCHAR* CPath::GetFilename() const
 {
     unsigned len = Len();
 
-    for (; len > 0; len--)
+    for (; len > 0; --len)
         if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
         {
-            len++;
+            ++len;
             break;
         }
 

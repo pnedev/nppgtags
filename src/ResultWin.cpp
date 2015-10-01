@@ -101,12 +101,12 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
     for (;;)
     {
         while (*src == '\n' || *src == '\r')
-            src++;
+            ++src;
         if (*src == 0) break;
 
         pLine = src;
         while (*pLine != ':')
-            pLine++;
+            ++pLine;
 
         // add new file name to the UI buffer only if it is different
         // than the previous one
@@ -121,7 +121,7 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
 
         src = ++pLine;
         while (*src != ':')
-            src++;
+            ++src;
 
         dst += "\n\t\tline ";
         dst.Append(pLine, src - pLine);
@@ -129,11 +129,11 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
 
         pLine = ++src;
         while (*pLine == ' ' || *pLine == '\t')
-            pLine++;
+            ++pLine;
 
         src = pLine + 1;
         while (*src != '\n' && *src != '\r')
-            src++;
+            ++src;
 
         if (src == pLine + 1)
         {
@@ -156,12 +156,12 @@ void ResultWin::Tab::parseFindFile(CTextA& dst, const char* src)
     for (;;)
     {
         while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
-            src++;
+            ++src;
         if (*src == 0) break;
 
         eol = src;
         while (*eol != '\n' && *eol != '\r' && *eol != 0)
-            eol++;
+            ++eol;
 
         dst += "\n\t";
         dst.Append(src, eol - src);
@@ -175,7 +175,7 @@ void ResultWin::Tab::parseFindFile(CTextA& dst, const char* src)
  */
 void ResultWin::Tab::SetFolded(int lineNum)
 {
-    for (std::vector<int>::iterator i = _expandedLines.begin(); i != _expandedLines.end(); i++)
+    for (std::vector<int>::iterator i = _expandedLines.begin(); i != _expandedLines.end(); ++i)
     {
         if (*i == lineNum)
         {
@@ -202,7 +202,7 @@ bool ResultWin::Tab::IsFolded(int lineNum)
 {
     const int size = _expandedLines.size();
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size; ++i)
         if (_expandedLines[i] == lineNum)
             return false;
 
@@ -317,7 +317,7 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
     AUTOLOCK(_lock);
 
     int i;
-    for (i = TabCtrl_GetItemCount(_hTab); i; i--)
+    for (i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
         Tab* oldTab = getTab(i - 1);
 
@@ -691,7 +691,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     if (_activeTab->_cmdId != FIND_FILE)
     {
-        for (i = 7; i <= lineLen && lineTxt[i] != ':'; i++);
+        for (i = 7; i <= lineLen && lineTxt[i] != ':'; ++i);
         lineTxt[i] = 0;
         line = atoi(&lineTxt[7]) - 1;
 
@@ -707,7 +707,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
         sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt.data()));
     }
 
-    for (i = 1; (i <= lineLen) && (lineTxt[i] != '\r') && (lineTxt[i] != '\n'); i++);
+    for (i = 1; (i <= lineLen) && (lineTxt[i] != '\r') && (lineTxt[i] != '\n'); ++i);
     lineTxt[i] = 0;
 
     CPath file(_activeTab->_projectPath.C_str());
@@ -738,7 +738,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     // Highlight the corresponding match number if there are more than one
     // matches on single result line
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
-        matchNum; findBegin = findEnd, findEnd = endPos, matchNum--)
+        matchNum; findBegin = findEnd, findEnd = endPos, --matchNum)
     {
         if (!npp.SearchText(_activeTab->_search.C_str(), _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
                 &findBegin, &findEnd))
@@ -877,7 +877,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
             {
                 // "\t\tline: Num" - 'N' is at position 8
                 int previewPos = startPos + 8;
-                for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t'; previewPos++);
+                for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t'; ++previewPos);
 
                 int findBegin = previewPos;
                 int findEnd = endPos;
@@ -935,7 +935,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 
         // "\t\tline: Num" - 'N' is at position 8
         int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
-        for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; findBegin++);
+        for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; ++findBegin);
 
         bool wholeWord = (_activeTab->_cmdId != GREP);
 
@@ -943,7 +943,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
         // matches on single result line
         for (int findEnd = endLine; findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp);
-                findBegin = findEnd, findEnd = endLine, matchNum++)
+                findBegin = findEnd, findEnd = endLine, ++matchNum)
             if (notify->position >= findBegin && notify->position <= findEnd)
                 break;
     }
@@ -1202,7 +1202,7 @@ void ResultWin::closeAllTabs()
 {
     _activeTab = NULL;
 
-    for (int i = TabCtrl_GetItemCount(_hTab); i; i--)
+    for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
         Tab* tab = getTab(i - 1);
         if (tab)

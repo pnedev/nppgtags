@@ -299,7 +299,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ? BST_CHECKED : BST_UNCHECKED);
 
-    for (unsigned i = 0; CConfig::Parser(i); i++)
+    for (unsigned i = 0; CConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)CConfig::Parser(i));
 
     SendMessage(_hParser, CB_SETCURSEL, _cfg->_parserIdx, 0);

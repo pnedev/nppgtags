@@ -348,7 +348,7 @@ void SearchWin::parseCompletion()
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         if (_cmd->Id() == FIND_FILE)
-            pToken++;
+            ++pToken;
         _complIndex.push_back(pToken);
     }
 }
@@ -404,12 +404,12 @@ void SearchWin::filterComplList()
 
     if (filter.Len() == cComplAfter)
     {
-        for (unsigned i = 0; i < _complIndex.size(); i++)
+        for (unsigned i = 0; i < _complIndex.size(); ++i)
             ComboBox_AddString(_hSearch, _complIndex[i]);
     }
     else
     {
-        for (unsigned i = 0; i < _complIndex.size(); i++)
+        for (unsigned i = 0; i < _complIndex.size(); ++i)
             if (!pCompare(_complIndex[i], filter.C_str(), filter.Len()))
                 ComboBox_AddString(_hSearch, _complIndex[i]);
     }

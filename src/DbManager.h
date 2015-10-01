@@ -46,7 +46,7 @@ class DbManager
 public:
     static DbManager& Get() { return Instance; }
 
-    DbHandle RegisterDb(const CPath& dbPath, bool writeEn);
+    DbHandle RegisterDb(const CPath& dbPath);
     bool UnregisterDb(DbHandle db);
     DbHandle GetDb(const CPath& filePath, bool writeEn, bool* success);
     bool PutDb(DbHandle db);
@@ -79,7 +79,7 @@ private:
             {
                 if (_writeLock)
                     return false;
-                _readLocks++;
+                ++_readLocks;
             }
             return true;
         }
@@ -89,7 +89,7 @@ private:
             if (_writeLock)
                 _writeLock = false;
             else if (_readLocks > 0)
-                _readLocks--;
+                --_readLocks;
         }
 
     private:
@@ -113,8 +113,7 @@ private:
     ~DbManager() {}
 
     bool deleteDb(CPath& dbPath);
-    DbHandle addDb(const CPath& dbPath, bool writeEn);
-    DbHandle lockDb(const CPath& filePath, bool writeEn, bool* success);
+    DbHandle lockDb(const CPath& dbPath, bool writeEn, bool* success);
 
     Mutex               _lock;
     std::list<GTagsDb>  _dbList;

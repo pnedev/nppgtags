@@ -185,7 +185,7 @@ void sheduleForUpdate(const CPath& file)
     AUTOLOCK(UpdateLock);
 
     std::list<CPath>::reverse_iterator iFile;
-    for (iFile = UpdateList.rbegin(); iFile != UpdateList.rend(); iFile++)
+    for (iFile = UpdateList.rbegin(); iFile != UpdateList.rend(); ++iFile)
         if (*iFile == file)
             return;
 
@@ -206,7 +206,7 @@ bool runSheduledUpdate(const TCHAR* dbPath)
             return false;
 
         std::list<CPath>::iterator iFile;
-        for (iFile = UpdateList.begin(); iFile != UpdateList.end(); iFile++)
+        for (iFile = UpdateList.begin(); iFile != UpdateList.end(); ++iFile)
             if (iFile->IsSubpathOf(dbPath))
                 break;
 
@@ -363,12 +363,12 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
 
         int idx;
         int itemsCount = GetMenuItemCount(hMenu);
-        for (idx = 0; idx < itemsCount; idx++)
+        for (idx = 0; idx < itemsCount; ++idx)
         {
             mi.dwTypeData = NULL;
             GetMenuItemInfo(hMenu, idx, TRUE, &mi);
             mi.dwTypeData = buf;
-            mi.cch++;
+            ++mi.cch;
             GetMenuItemInfo(hMenu, idx, TRUE, &mi);
             mi.dwTypeData[mi.cch - 1] = 0;
             if (!_tcscmp(cPluginName, mi.dwTypeData))
@@ -585,7 +585,6 @@ void CreateDatabase()
 {
     SearchWin::Close();
 
-    TCHAR path[MAX_PATH];
     CPath currentFile;
 
     bool success;
@@ -614,6 +613,8 @@ void CreateDatabase()
     }
     else
     {
+        TCHAR path[MAX_PATH];
+
         currentFile.StripFilename();
 
         BROWSEINFO bi       = {0};
@@ -639,7 +640,7 @@ void CreateDatabase()
 
         currentFile = path;
         currentFile += _T("\\");
-        db = DbManager::Get().RegisterDb(currentFile, true);
+        db = DbManager::Get().RegisterDb(currentFile);
     }
 
     std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
@@ -890,7 +891,7 @@ const CPath CreateLibraryDatabase(HWND hWnd)
     }
     else
     {
-        db = DbManager::Get().RegisterDb(libraryPath, true);
+        db = DbManager::Get().RegisterDb(libraryPath);
     }
 
     std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
