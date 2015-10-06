@@ -101,14 +101,17 @@ public:
 private:
     friend class CmdEngine;
 
-    void setResult(const std::vector<char>& result)
+    void setResult(const std::vector<char>& data)
     {
-        _result.assign(result.cbegin(), result.cend());
+        _result.assign(data.begin(), data.end());
     }
 
-    void appendResult(const std::vector<char>& result)
+    void appendResult(const std::vector<char>& data)
     {
-        _result.insert(_result.cend(), result.cbegin(), result.cend());
+        // remove \0 string termination
+        if (!_result.empty())
+            _result.pop_back();
+        _result.insert(_result.cend(), data.begin(), data.end());
     }
 
     CmdId_t             _id;
