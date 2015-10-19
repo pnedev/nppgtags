@@ -70,7 +70,7 @@ Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag, bool regE
 /**
  *  \brief
  */
-bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
+bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
 {
     CmdEngine* engine = new CmdEngine(cmd, complCB);
     cmd->Status(RUN_ERROR);
@@ -121,7 +121,7 @@ bool CmdEngine::Run(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB)
 CmdEngine::~CmdEngine()
 {
     if (_complCB)
-        _complCB(_cmd);
+        SendMessage(MainHwnd, WM_RUN_CMD_CALLBACK, (WPARAM)_complCB, (LPARAM)(&_cmd));
 
     if (_hThread)
         CloseHandle(_hThread);
@@ -279,6 +279,7 @@ unsigned CmdEngine::runProcess()
     // Display activity window and block until process is ready or user has cancelled the operation
     bool cancelled = ActivityWin::Show(pi.hProcess, 600, header.C_str(),
             (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ? 0 : 300);
+
     endProcess(pi);
 
     if (cancelled)

@@ -30,6 +30,7 @@
 #include "DbManager.h"
 #include "DocLocation.h"
 #include "ActivityWin.h"
+#include "CmdEngine.h"
 #include <commctrl.h>
 #include <vector>
 #include "Common.h"
@@ -66,7 +67,7 @@ ResultWin* ResultWin::RW = NULL;
 /**
  *  \brief
  */
-ResultWin::Tab::Tab(const std::shared_ptr<Cmd>& cmd) :
+ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
     _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath()),
     _search(cmd->Tag()), _outdated(false), _currentLine(1), _firstVisibleLine(0)
 {
@@ -293,7 +294,7 @@ void ResultWin::show()
 /**
  *  \brief
  */
-void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
+void ResultWin::show(const CmdPtr_t& cmd)
 {
     INpp& npp = INpp::Get();
 
@@ -313,8 +314,6 @@ void ResultWin::show(const std::shared_ptr<Cmd>& cmd)
 
     // parsing results happens here
     Tab* tab = new Tab(cmd);
-
-    AUTOLOCK(_lock);
 
     int i;
     for (i = TabCtrl_GetItemCount(_hTab); i; --i)
@@ -805,9 +804,6 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
     if (_activeTab == NULL)
         return;
 
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return;
-
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
     const int endStylingPos = notify->position;
 
@@ -923,9 +919,6 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
  */
 void ResultWin::onHotspotClick(SCNotification* notify)
 {
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return;
-
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
     unsigned matchNum = 1;
 
@@ -960,9 +953,6 @@ void ResultWin::onHotspotClick(SCNotification* notify)
  */
 void ResultWin::onDoubleClick(int pos)
 {
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return;
-
     int lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
 
     if (lineNum == 0)
@@ -999,9 +989,6 @@ void ResultWin::onDoubleClick(int pos)
  */
 void ResultWin::onMarginClick(SCNotification* notify)
 {
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return;
-
     int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
 
     if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
@@ -1024,9 +1011,6 @@ void ResultWin::onMarginClick(SCNotification* notify)
  */
 bool ResultWin::onKeyPress(WORD keyCode)
 {
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return false;
-
     bool handled = true;
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
 
@@ -1154,9 +1138,6 @@ bool ResultWin::onKeyPress(WORD keyCode)
  */
 void ResultWin::onTabChange()
 {
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return;
-
     Tab* tab = getTab();
     if (tab)
         loadTab(tab);
@@ -1168,9 +1149,6 @@ void ResultWin::onTabChange()
  */
 void ResultWin::onCloseTab()
 {
-    IF_AUTO_TRYLOCK_FAIL(_lock)
-        return;
-
     int i = TabCtrl_GetCurSel(_hTab);
     delete _activeTab;
     _activeTab = NULL;
@@ -1269,8 +1247,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 /**
  *  \brief
  */
-LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
-        WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -1319,6 +1296,14 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
         return 0;
 
         case WM_RUN_CMD_CALLBACK:
+        {
+            CompletionCB    complCB = reinterpret_cast<CompletionCB>(static_cast<LONG_PTR>(wParam));
+            CmdPtr_t        cmd(*(reinterpret_cast<CmdPtr_t*>(static_cast<LONG_PTR>(lParam))));
+
+            ReplyMessage(0);
+
+            complCB(cmd);
+        }
         return 0;
     }
 

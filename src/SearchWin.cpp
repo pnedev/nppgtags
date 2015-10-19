@@ -80,7 +80,7 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-void SearchWin::Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB, bool enRE, bool enMC)
+void SearchWin::Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE, bool enMC)
 {
     if (SW)
         SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
@@ -304,7 +304,7 @@ void SearchWin::startCompletion()
         tag[cComplAfter] = 0;
     }
 
-    std::shared_ptr<Cmd> cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag, false,
+    CmdPtr_t cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag, false,
             (Button_GetCheck(_hMC) == BST_CHECKED)));
 
     if (_cmd->Id() == FIND_FILE)
@@ -325,7 +325,7 @@ void SearchWin::startCompletion()
 /**
  *  \brief
  */
-void SearchWin::endCompletion(const std::shared_ptr<Cmd>& cmpl)
+void SearchWin::endCompletion(const CmdPtr_t& cmpl)
 {
     if (cmpl->Status() == OK && cmpl->Result())
     {

@@ -27,7 +27,6 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <memory>
 #include <vector>
 #include "Common.h"
 #include "GTags.h"
@@ -47,7 +46,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB, bool enRE = true, bool enMC = true);
+    static void Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE = true, bool enMC = true);
     static void Close();
 
 private:
@@ -59,14 +58,14 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    SearchWin(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) :
+    SearchWin(const CmdPtr_t& cmd, CompletionCB complCB) :
         _cmd(cmd), _complCB(complCB), _hKeyHook(NULL), _cancelled(true), _keyPressed(0), _completionDone(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void startCompletion();
-    void endCompletion(const std::shared_ptr<Cmd>&);
+    void endCompletion(const CmdPtr_t&);
 
     void parseCompletion();
     void clearCompletion();
@@ -77,7 +76,7 @@ private:
 
     static SearchWin* SW;
 
-    std::shared_ptr<Cmd>    _cmd;
+    CmdPtr_t                _cmd;
     CompletionCB const      _complCB;
 
     HWND                _hWnd;

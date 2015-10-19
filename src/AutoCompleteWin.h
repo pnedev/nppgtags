@@ -45,7 +45,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const std::shared_ptr<Cmd>& cmd);
+    static void Show(const CmdPtr_t& cmd);
 
 private:
     static const TCHAR  cClassName[];
@@ -53,7 +53,7 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    AutoCompleteWin(const std::shared_ptr<Cmd>& cmd);
+    AutoCompleteWin(const CmdPtr_t& cmd);
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();
 

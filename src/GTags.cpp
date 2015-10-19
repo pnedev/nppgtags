@@ -227,7 +227,7 @@ bool runSheduledUpdate(const TCHAR* dbPath)
 /**
  *  \brief
  */
-void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
+void dbWriteReady(const CmdPtr_t& cmd)
 {
     if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
         DbManager::Get().UnregisterDb(cmd->Db());
@@ -251,7 +251,7 @@ void dbWriteReady(const std::shared_ptr<Cmd>& cmd)
 /**
  *  \brief
  */
-void autoComplReady(const std::shared_ptr<Cmd>& cmd)
+void autoComplReady(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
 
@@ -290,7 +290,7 @@ void autoComplReady(const std::shared_ptr<Cmd>& cmd)
 /**
  *  \brief
  */
-void showResult(const std::shared_ptr<Cmd>& cmd)
+void showResult(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
 
@@ -328,7 +328,7 @@ void showResult(const std::shared_ptr<Cmd>& cmd)
 /**
  *  \brief
  */
-void findReady(const std::shared_ptr<Cmd>& cmd)
+void findReady(const CmdPtr_t& cmd)
 {
     if (cmd->Status() == OK && cmd->Result() == NULL)
     {
@@ -404,7 +404,7 @@ void AutoComplete()
         return;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.C_str()));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.C_str()));
 
     if (CmdEngine::Run(cmd))
     {
@@ -434,7 +434,7 @@ void AutoCompleteFile()
         return;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.C_str()));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.C_str()));
 
     CmdEngine::Run(cmd);
     autoComplReady(cmd);
@@ -452,7 +452,7 @@ void FindFile()
     if (!db)
         return;
 
-    std::shared_ptr<Cmd> cmd(new Cmd(FIND_FILE, cFindFile, db));
+    CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db));
 
     CText tag = getSelection();
     if (tag.IsEmpty())
@@ -483,7 +483,7 @@ void FindDefinition()
     if (!db)
         return;
 
-    std::shared_ptr<Cmd> cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db));
+    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db));
 
     CText tag = getSelection(true);
     if (tag.IsEmpty())
@@ -517,7 +517,7 @@ void FindReference()
     if (!db)
         return;
 
-    std::shared_ptr<Cmd> cmd(new Cmd(FIND_REFERENCE, cFindReference, db));
+    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db));
 
     CText tag = getSelection(true);
     if (tag.IsEmpty())
@@ -544,7 +544,7 @@ void Search()
     if (!db)
         return;
 
-    std::shared_ptr<Cmd> cmd(new Cmd(GREP, cSearch, db));
+    CmdPtr_t cmd(new Cmd(GREP, cSearch, db));
 
     CText tag = getSelection(true);
     if (tag.IsEmpty())
@@ -643,7 +643,7 @@ void CreateDatabase()
         db = DbManager::Get().RegisterDb(currentFile);
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
     releaseKeys();
     CmdEngine::Run(cmd, dbWriteReady);
 }
@@ -702,7 +702,7 @@ void SettingsCfg()
  */
 void About()
 {
-    std::shared_ptr<Cmd> cmd(new Cmd(VERSION, cVersion));
+    CmdPtr_t cmd(new Cmd(VERSION, cVersion));
     CmdEngine::Run(cmd);
 
     CText msg;
@@ -748,6 +748,8 @@ CPath DllPath;
 CText UIFontName;
 unsigned UIFontSize;
 
+HWND MainHwnd = NULL;
+
 CConfig Config;
 
 
@@ -787,7 +789,8 @@ void PluginInit()
     SearchWin::Register();
     AutoCompleteWin::Register();
 
-    if (!ResultWin::Register())
+    MainHwnd = ResultWin::Register();
+    if (MainHwnd == NULL)
         MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
                 MB_OK | MB_ICONERROR);
     else if(!Config.LoadFromFile())
@@ -826,7 +829,7 @@ bool UpdateSingleFile(const CPath& file)
         return true;
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
+    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
 
     releaseKeys();
     if (!CmdEngine::Run(cmd, dbWriteReady))
@@ -894,7 +897,7 @@ const CPath CreateLibraryDatabase(HWND hWnd)
         db = DbManager::Get().RegisterDb(libraryPath);
     }
 
-    std::shared_ptr<Cmd> cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
     releaseKeys();
     CmdEngine::Run(cmd);
 

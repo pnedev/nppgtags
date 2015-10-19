@@ -29,7 +29,6 @@
 #include <tchar.h>
 #include <vector>
 #include "Scintilla.h"
-#include "AutoLock.h"
 #include "Common.h"
 #include "GTags.h"
 #include "CmdEngine.h"
@@ -54,7 +53,7 @@ public:
             RW->show();
     }
 
-    static void Show(const std::shared_ptr<Cmd>& cmd)
+    static void Show(const CmdPtr_t& cmd)
     {
         if (RW)
             RW->show(cmd);
@@ -73,7 +72,7 @@ private:
      */
     struct Tab
     {
-        Tab(const std::shared_ptr<Cmd>& cmd);
+        Tab(const CmdPtr_t& cmd);
         ~Tab() {}
 
         inline bool operator==(const Tab& tab) const
@@ -115,7 +114,7 @@ private:
     ~ResultWin();
 
     void show();
-    void show(const std::shared_ptr<Cmd>& cmd);
+    void show(const CmdPtr_t& cmd);
     void applyStyle();
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
@@ -155,7 +154,6 @@ private:
 
     static ResultWin* RW;
 
-    Mutex       _lock;
     HWND        _hWnd;
     HWND        _hSci;
     HWND        _hTab;

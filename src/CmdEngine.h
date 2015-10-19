@@ -128,7 +128,8 @@ private:
 };
 
 
-typedef void (*CompletionCB)(const std::shared_ptr<Cmd>&);
+typedef std::shared_ptr<Cmd> CmdPtr_t;
+typedef void (*CompletionCB)(const CmdPtr_t&);
 
 
 /**
@@ -138,8 +139,7 @@ typedef void (*CompletionCB)(const std::shared_ptr<Cmd>&);
 class CmdEngine
 {
 public:
-    static bool Run(const std::shared_ptr<Cmd>& cmd,
-            CompletionCB complCB = NULL);
+    static bool Run(const CmdPtr_t& cmd, CompletionCB complCB = NULL);
 
 private:
     static const TCHAR  cCreateDatabaseCmd[];
@@ -156,7 +156,7 @@ private:
 
     static unsigned __stdcall threadFunc(void* data);
 
-    CmdEngine(const std::shared_ptr<Cmd>& cmd, CompletionCB complCB) : _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
+    CmdEngine(const CmdPtr_t& cmd, CompletionCB complCB) : _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
     ~CmdEngine();
 
     const TCHAR* getCmdLine() const;
@@ -164,7 +164,7 @@ private:
     unsigned runProcess();
     void endProcess(PROCESS_INFORMATION& pi);
 
-    std::shared_ptr<Cmd>    _cmd;
+    CmdPtr_t                _cmd;
     CompletionCB const      _complCB;
     HANDLE                  _hThread;
 };

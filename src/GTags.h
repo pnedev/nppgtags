@@ -25,6 +25,7 @@
 #pragma once
 
 
+#include <windows.h>
 #include <tchar.h>
 #include "resource.h"
 
@@ -48,10 +49,11 @@ extern CPath        DllPath;
 extern CText        UIFontName;
 extern unsigned     UIFontSize;
 
+extern HWND         MainHwnd;
+const UINT          WM_RUN_CMD_CALLBACK = WM_USER;
+
 class CConfig;
 extern CConfig      Config;
-
-const UINT          WM_RUN_CMD_CALLBACK = WM_USER;
 
 
 BOOL PluginLoad(HINSTANCE hMod);
