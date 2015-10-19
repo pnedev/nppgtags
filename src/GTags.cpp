@@ -787,7 +787,7 @@ void PluginInit()
     SearchWin::Register();
     AutoCompleteWin::Register();
 
-    if (ResultWin::Register())
+    if (!ResultWin::Register())
         MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
                 MB_OK | MB_ICONERROR);
     else if(!Config.LoadFromFile())

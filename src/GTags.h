@@ -51,6 +51,8 @@ extern unsigned     UIFontSize;
 class CConfig;
 extern CConfig      Config;
 
+const UINT          WM_RUN_CMD_CALLBACK = WM_USER;
+
 
 BOOL PluginLoad(HINSTANCE hMod);
 void PluginInit();

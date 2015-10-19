@@ -45,7 +45,7 @@ namespace GTags
 class ResultWin
 {
 public:
-    static int Register();
+    static HWND Register();
     static void Unregister();
 
     static void Show()

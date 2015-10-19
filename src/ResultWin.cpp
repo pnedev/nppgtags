@@ -213,10 +213,10 @@ bool ResultWin::Tab::IsFolded(int lineNum)
 /**
  *  \brief
  */
-int ResultWin::Register()
+HWND ResultWin::Register()
 {
     if (RW)
-        return 0;
+        return NULL;
 
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -241,7 +241,7 @@ int ResultWin::Register()
     if (RW->composeWindow() == NULL)
     {
         Unregister();
-        return -1;
+        return NULL;
     }
 
     tTbData data        = {0};
@@ -257,7 +257,7 @@ int ResultWin::Register()
     npp.RegisterDockingWin(data);
     npp.HideDockingWin(RW->_hWnd);
 
-    return 0;
+    return RW->_hWnd;
 }
 
 
@@ -1316,6 +1316,9 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg,
         return 0;
 
         case WM_DESTROY:
+        return 0;
+
+        case WM_RUN_CMD_CALLBACK:
         return 0;
     }
 
