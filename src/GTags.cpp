@@ -26,7 +26,6 @@
 #include <tchar.h>
 #include <shlobj.h>
 #include <list>
-#include "AutoLock.h"
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -64,7 +63,6 @@ const TCHAR cVersion[]          = _T("About");
 
 
 std::list<CPath> UpdateList;
-Mutex UpdateLock;
 
 
 /**
@@ -182,8 +180,6 @@ int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
  */
 void sheduleForUpdate(const CPath& file)
 {
-    AUTOLOCK(UpdateLock);
-
     std::list<CPath>::reverse_iterator iFile;
     for (iFile = UpdateList.rbegin(); iFile != UpdateList.rend(); ++iFile)
         if (*iFile == file)
@@ -200,8 +196,6 @@ bool runSheduledUpdate(const TCHAR* dbPath)
 {
     CPath file;
     {
-        AUTOLOCK(UpdateLock);
-
         if (UpdateList.empty())
             return false;
 

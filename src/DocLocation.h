@@ -27,7 +27,6 @@
 
 #include <tchar.h>
 #include <vector>
-#include "AutoLock.h"
 #include "Common.h"
 
 
@@ -81,6 +80,5 @@ private:
 
     unsigned                _maxDepth;
     int                     _backLocIdx;
-    Mutex                   _lock;
     std::vector<Location>   _locList;
 };

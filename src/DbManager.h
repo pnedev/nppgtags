@@ -28,7 +28,6 @@
 #include <tchar.h>
 #include <list>
 #include "Common.h"
-#include "AutoLock.h"
 
 
 namespace GTags
@@ -115,7 +114,6 @@ private:
     bool deleteDb(CPath& dbPath);
     DbHandle lockDb(const CPath& dbPath, bool writeEn, bool* success);
 
-    Mutex               _lock;
     std::list<GTagsDb>  _dbList;
 };
 

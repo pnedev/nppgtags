@@ -39,8 +39,6 @@ DbHandle DbManager::RegisterDb(const CPath& dbPath)
 {
     bool success;
 
-    AUTOLOCK(_lock);
-
     return lockDb(dbPath, true, &success);
 }
 
@@ -54,8 +52,6 @@ bool DbManager::UnregisterDb(DbHandle db)
         return false;
 
     bool ret = false;
-
-    AUTOLOCK(_lock);
 
     for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
@@ -83,8 +79,6 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
     if (!success)
         return NULL;
 
-    AUTOLOCK(_lock);
-
     *success = false;
 
     CPath dbPath(filePath);
@@ -108,8 +102,6 @@ bool DbManager::PutDb(DbHandle db)
 {
     if (!db)
         return false;
-
-    AUTOLOCK(_lock);
 
     for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {

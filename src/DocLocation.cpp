@@ -36,8 +36,6 @@ DocLocation DocLocation::Instance;
  */
 void DocLocation::SetDepth(unsigned depth)
 {
-    AUTOLOCK(_lock);
-
     if (_locList.capacity() < depth)
     {
         _locList.reserve(depth);
@@ -62,8 +60,6 @@ void DocLocation::SetDepth(unsigned depth)
  */
 void DocLocation::Push()
 {
-    AUTOLOCK(_lock);
-
     if (_backLocIdx + 1 < (int)_locList.size())
         _locList.erase(_locList.begin() + _backLocIdx + 1, _locList.end());
     else if (_locList.size() == _maxDepth)
@@ -86,8 +82,6 @@ void DocLocation::Push()
  */
 void DocLocation::Back()
 {
-    AUTOLOCK(_lock);
-
     while (_backLocIdx >= 0)
     {
         Location& loc = _locList.at(_backLocIdx--);
@@ -106,8 +100,6 @@ void DocLocation::Back()
  */
 void DocLocation::Forward()
 {
-    AUTOLOCK(_lock);
-
     while (_backLocIdx + 1 <= (int)_locList.size() - 1)
     {
         Location& loc = _locList.at(++_backLocIdx);
