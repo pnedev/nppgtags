@@ -429,7 +429,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 if ((HWND)lParam == CW->_hCreateDb)
                 {
+                    EnableWindow(hWnd, FALSE);
                     CPath libraryPath = CreateLibraryDatabase(hWnd);
+                    EnableWindow(hWnd, TRUE);
                     int libLen = libraryPath.Len();
 
                     if (libLen)

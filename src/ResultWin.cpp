@@ -1295,6 +1295,8 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         case WM_DESTROY:
         return 0;
 
+        // Below are WM_USER messages for DLL threads synchronization
+
         case WM_RUN_CMD_CALLBACK:
         {
             CompletionCB    complCB = reinterpret_cast<CompletionCB>(static_cast<LONG_PTR>(wParam));
@@ -1302,7 +1304,32 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
             ReplyMessage(0);
 
-            complCB(cmd);
+            if (complCB && cmd)
+                complCB(cmd);
+        }
+        return 0;
+
+        case WM_OPEN_ACTIVITY_WIN:
+        {
+            TCHAR* header   = reinterpret_cast<TCHAR*>(static_cast<LONG_PTR>(wParam));
+            HANDLE hCancel  = reinterpret_cast<HANDLE>(static_cast<LONG_PTR>(lParam));
+
+            if (hCancel)
+                ActivityWin::Show(header, hCancel);
+        }
+        return 0;
+
+        case WM_CLOSE_ACTIVITY_WIN:
+        {
+            HANDLE hCancel = reinterpret_cast<HANDLE>(static_cast<LONG_PTR>(lParam));
+
+            if (hCancel)
+            {
+                HWND hActivityWin = ActivityWin::GetHwnd(hCancel);
+
+                if (hActivityWin)
+                    SendMessage(hActivityWin, WM_CLOSE, 0, 0);
+            }
         }
         return 0;
     }

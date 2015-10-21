@@ -39,10 +39,10 @@ namespace GTags
 const TCHAR ActivityWin::cClassName[]   = _T("ActivityWin");
 const int ActivityWin::cBackgroundColor = COLOR_WINDOW;
 const unsigned ActivityWin::cFontSize   = 8;
+const int ActivityWin::cWidth           = 600;
 
 
 std::list<ActivityWin*> ActivityWin::WindowList;
-Mutex                   ActivityWin::ListLock;
 HFONT                   ActivityWin::HFont = NULL;
 
 
@@ -81,44 +81,14 @@ void ActivityWin::Unregister()
 /**
  *  \brief
  */
-bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text, int showAfter_ms)
+void ActivityWin::Show(const TCHAR* text, HANDLE hCancel)
 {
-    if (!hActivity)
-        return false;
+    if (!hCancel)
+        return;
 
-    if (WaitForSingleObject(hActivity, showAfter_ms) == WAIT_OBJECT_0)
-        return false;
-
-    ActivityWin aw;
-    HWND hWnd = aw.composeWindow(width, text);
-    if (hWnd == NULL)
-        return true;
-
-    while (1)
-    {
-        // Wait for window event or activity signal
-        DWORD r = MsgWaitForMultipleObjects(1, &hActivity, FALSE, INFINITE, QS_ALLINPUT);
-
-        // Post close message if event is not related to the window
-        if (r != WAIT_OBJECT_0 + 1)
-            PostMessage(hWnd, WM_CLOSE, 0, 0);
-
-        // Handle all window messages
-        MSG msg;
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            if (msg.message == WM_QUIT)
-                break;
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        // Window closed - exit
-        if (msg.message == WM_QUIT)
-            break;
-    }
-
-    return aw._isCancelled;
+    ActivityWin* aw = new ActivityWin(hCancel);
+    if (aw->composeWindow(text) == NULL)
+        delete aw;
 }
 
 
@@ -127,8 +97,6 @@ bool ActivityWin::Show(HANDLE hActivity, int width, const TCHAR* text, int showA
  */
 void ActivityWin::UpdatePositions()
 {
-    AUTOLOCK(ListLock);
-
     int i = 1;
     for (auto iWin = WindowList.begin(); iWin != WindowList.end(); ++iWin, ++i)
         (*iWin)->onResize(i);
@@ -138,10 +106,23 @@ void ActivityWin::UpdatePositions()
 /**
  *  \brief
  */
+HWND ActivityWin::GetHwnd(HANDLE hCancel)
+{
+    for (auto iWin = WindowList.begin(); iWin != WindowList.end(); ++iWin)
+    {
+        if ((*iWin)->_hCancel == hCancel)
+            return (*iWin)->_hWnd;
+    }
+
+    return NULL;
+}
+
+
+/**
+ *  \brief
+ */
 ActivityWin::~ActivityWin()
 {
-    AUTOLOCK(ListLock);
-
     for (auto iWin = WindowList.begin(); iWin != WindowList.end(); ++iWin)
     {
         if (*iWin == this)
@@ -199,15 +180,13 @@ void ActivityWin::adjustSizeAndPos(int width, int height, int winNum)
 /**
  *  \brief
  */
-HWND ActivityWin::composeWindow(int width, const TCHAR* text)
+HWND ActivityWin::composeWindow(const TCHAR* text)
 {
     _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             INpp::Get().GetHandle(), NULL, HMod, (LPVOID)this);
     if (_hWnd == NULL)
         return NULL;
-
-    ListLock.Lock();
 
     if (WindowList.empty())
     {
@@ -226,8 +205,6 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     WindowList.push_back(this);
     int winNum = WindowList.size();
 
-    ListLock.Unlock();
-
     HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, _hWnd, NULL, HMod, NULL);
@@ -241,11 +218,11 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
     ReleaseDC(hWndTxt, hdc);
 
     int textHeight = tm.tmHeight;
-    adjustSizeAndPos(width, textHeight + 25, winNum);
+    adjustSizeAndPos(cWidth, textHeight + 25, winNum);
 
     RECT win;
     GetClientRect(_hWnd, &win);
-    width = win.right - win.left;
+    int width = win.right - win.left;
     int height = win.bottom - win.top;
 
     MoveWindow(hWndTxt, 5, 5, width - 95, textHeight, TRUE);
@@ -256,7 +233,7 @@ HWND ActivityWin::composeWindow(int width, const TCHAR* text)
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
             5, textHeight + 10, width - 95, 10,
             _hWnd, NULL, HMod, NULL);
-    SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 50);
+    SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 100);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
@@ -309,14 +286,16 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
             {
                 aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
                 EnableWindow(aw->_hBtn, FALSE);
-                aw->_isCancelled = true;
-                SendMessage(hWnd, WM_CLOSE, 0, 0);
+                SetEvent(aw->_hCancel);
                 return 0;
             }
         break;
 
         case WM_DESTROY:
-            PostQuitMessage(0);
+        {
+            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            delete aw;
+        }
         return 0;
     }
 

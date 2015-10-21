@@ -42,8 +42,6 @@
 namespace Tools
 {
 
-void ReleaseKey(WORD virtKey, bool onlyIfPressed = true);
-
 #ifdef DEVELOPMENT
 
 #ifdef UNICODE

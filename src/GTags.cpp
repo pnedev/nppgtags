@@ -41,9 +41,6 @@
 #include "GTags.h"
 
 
-#define LINUX_WINE_WORKAROUNDS
-
-
 namespace
 {
 
@@ -63,19 +60,6 @@ const TCHAR cVersion[]          = _T("About");
 
 
 std::list<CPath> UpdateList;
-
-
-/**
-*  \brief
-*/
-inline void releaseKeys()
-{
-#ifdef LINUX_WINE_WORKAROUNDS
-    Tools::ReleaseKey(VK_SHIFT, false);
-    Tools::ReleaseKey(VK_CONTROL, false);
-    Tools::ReleaseKey(VK_MENU, false);
-#endif // LINUX_WINE_WORKAROUNDS
-}
 
 
 /**
@@ -260,7 +244,6 @@ void autoComplReady(const CmdPtr_t& cmd)
     }
     else if (cmd->Status() == FAILED)
     {
-        releaseKeys();
         INpp::Get().ClearSelection();
 
         CText msg(cmd->Result());
@@ -269,7 +252,6 @@ void autoComplReady(const CmdPtr_t& cmd)
     }
     else if (cmd->Status() == RUN_ERROR)
     {
-        releaseKeys();
         INpp::Get().ClearSelection();
 
         MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
@@ -289,8 +271,6 @@ void showResult(const CmdPtr_t& cmd)
     DbManager::Get().PutDb(cmd->Db());
 
     runSheduledUpdate(cmd->DbPath());
-
-    releaseKeys();
 
     if (cmd->Status() == OK)
     {
@@ -638,7 +618,6 @@ void CreateDatabase()
     }
 
     CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    releaseKeys();
     CmdEngine::Run(cmd, dbWriteReady);
 }
 
@@ -677,7 +656,6 @@ void DeleteDatabase()
  */
 void ToggleResultWinFocus()
 {
-    releaseKeys();
     ResultWin::Show();
 }
 
@@ -825,7 +803,6 @@ bool UpdateSingleFile(const CPath& file)
 
     CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
 
-    releaseKeys();
     if (!CmdEngine::Run(cmd, dbWriteReady))
         return false;
 
@@ -892,7 +869,6 @@ const CPath CreateLibraryDatabase(HWND hWnd)
     }
 
     CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    releaseKeys();
     CmdEngine::Run(cmd);
 
     dbWriteReady(cmd);

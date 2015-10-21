@@ -545,26 +545,3 @@ bool CPath::IsSubpathOf(const TCHAR* pathStr) const
 
     return !_tcsncmp(_buf.data(), pathStr, len);
 }
-
-
-namespace Tools
-{
-
-/**
- *  \brief
- */
-void ReleaseKey(WORD virtKey, bool onlyIfPressed)
-{
-    if (!onlyIfPressed || GetKeyState(virtKey))
-    {
-        INPUT input          = {0};
-        input.type           = INPUT_KEYBOARD;
-        input.ki.wVk         = virtKey;
-        input.ki.dwFlags     = KEYEVENTF_KEYUP;
-        input.ki.dwExtraInfo = GetMessageExtraInfo();
-
-        SendInput(1, &input, sizeof(input));
-    }
-}
-
-} // namespace Tools

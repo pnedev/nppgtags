@@ -29,7 +29,6 @@
 #include "INpp.h"
 #include "Config.h"
 #include "GTags.h"
-#include "ActivityWin.h"
 #include "ReadPipe.h"
 #include "CmdEngine.h"
 
@@ -91,9 +90,6 @@ bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
     while (MsgWaitForMultipleObjects(1, &engine->_hThread, FALSE, INFINITE, QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
     {
         MSG msg;
-
-        // Flush all N++ user input
-        while (PeekMessage(&msg, NULL, 0, 0, PM_QS_INPUT | PM_REMOVE));
 
         // Handle all other messages
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -268,21 +264,46 @@ unsigned CmdEngine::runProcess()
         return 1;
     }
 
-    CText header(_cmd->Name());
-    header += _T(" - \"");
-    if (_cmd->_id == CREATE_DATABASE)
-        header += _cmd->DbPath();
-    else if (_cmd->_id != VERSION)
-        header += _cmd->Tag();
-    header += _T('\"');
+    bool showActivityWin = true;
+    if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
+    {
+        // Wait 300 ms and if process has finished don't show Activity Window
+        if (WaitForSingleObject(pi.hProcess, 300) == WAIT_OBJECT_0)
+            showActivityWin = false;
+    }
 
-    // Display activity window and block until process is ready or user has cancelled the operation
-    bool cancelled = ActivityWin::Show(pi.hProcess, 600, header.C_str(),
-            (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE) ? 0 : 300);
+    if (showActivityWin)
+    {
+        HANDLE hCancel = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+        if (hCancel)
+        {
+            CText header(_cmd->Name());
+            header += _T(" - \"");
+            if (_cmd->_id == CREATE_DATABASE)
+                header += _cmd->DbPath();
+            else if (_cmd->_id != VERSION)
+                header += _cmd->Tag();
+            header += _T('\"');
+
+            SendMessage(MainHwnd, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
+
+            HANDLE waitHandles[] = {pi.hProcess, hCancel};
+            WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE);
+
+            SendMessage(MainHwnd, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
+
+            CloseHandle(hCancel);
+        }
+        else
+        {
+            WaitForSingleObject(pi.hProcess, INFINITE);
+        }
+    }
 
     endProcess(pi);
 
-    if (cancelled)
+    if (_cmd->_status == CANCELLED)
     {
         _cmd->_status = CANCELLED;
         return 1;

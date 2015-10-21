@@ -12,7 +12,6 @@
     <ClInclude Include="src\Scintilla.h" />
     <ClInclude Include="src\Docking.h" />
     <ClInclude Include="src\resource.h" />
-    <ClInclude Include="src\AutoLock.h" />
     <ClCompile Include="src\Common.cpp" />
     <ClInclude Include="src\Common.h" />
     <ClCompile Include="src\INpp.cpp" />
