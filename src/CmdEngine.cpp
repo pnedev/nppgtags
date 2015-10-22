@@ -289,7 +289,9 @@ unsigned CmdEngine::runProcess()
             SendMessage(MainHwnd, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
 
             HANDLE waitHandles[] = {pi.hProcess, hCancel};
-            WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE);
+            DWORD handleId = WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE) - WAIT_OBJECT_0;
+            if (handleId > 0 && handleId < 2 && waitHandles[handleId] == hCancel)
+                _cmd->_status = CANCELLED;
 
             SendMessage(MainHwnd, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
 
@@ -304,10 +306,7 @@ unsigned CmdEngine::runProcess()
     endProcess(pi);
 
     if (_cmd->_status == CANCELLED)
-    {
-        _cmd->_status = CANCELLED;
         return 1;
-    }
 
     if (!dataPipe.GetOutput().empty())
     {
