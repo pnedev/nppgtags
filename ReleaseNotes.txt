@@ -1,3 +1,18 @@
+What's new in v4.0.0
+=======================
+
+- Code re-factored for improved stability and speed
+- Use STL containers instead of custom ones
+- Use single UI thread and dedicated command threads.
+    This provides better UI experience, responsiveness and improved speed
+
+- Update Activity windows position when necessary for better user experience
+
+- Update GTAGS binaries to v6.5.1
+- Use the new feature of v6.5.1 to ignore non parse-able files while creating native database.
+    This does not abort database creation anymore
+
+
 What's new in v3.1.0
 =======================
 
