@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags command execution and result classes
+ *  \brief  GTags command execution engine
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -27,110 +27,12 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <memory>
-#include <vector>
 #include "Common.h"
-#include "DbManager.h"
+#include "CmdDefines.h"
 
 
 namespace GTags
 {
-
-enum CmdId_t
-{
-    CREATE_DATABASE = 0,
-    UPDATE_SINGLE,
-    AUTOCOMPLETE,
-    AUTOCOMPLETE_SYMBOL,
-    AUTOCOMPLETE_FILE,
-    FIND_FILE,
-    FIND_DEFINITION,
-    FIND_REFERENCE,
-    FIND_SYMBOL,
-    GREP,
-    VERSION
-};
-
-
-enum CmdStatus_t
-{
-    CANCELLED = 0,
-    RUN_ERROR,
-    FAILED,
-    OK
-};
-
-
-/**
- *  \class  Cmd
- *  \brief
- */
-class Cmd
-{
-public:
-    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL, const TCHAR* tag = NULL,
-            bool regExp = false, bool matchCase = true);
-    ~Cmd() {};
-
-    inline void Id(CmdId_t id) { _id = id; }
-    inline CmdId_t Id() const { return _id; }
-
-    inline void Name(const TCHAR* name) { if (name) _name = name; }
-    inline const TCHAR* Name() const { return _name.C_str(); }
-
-    inline DbHandle Db() const { return _db; }
-    inline const TCHAR* DbPath() const { return _dbPath.C_str(); }
-
-    inline void Tag(const TCHAR* tag) { if (tag) _tag = tag; }
-    inline const TCHAR* Tag() const { return _tag.C_str(); }
-    inline unsigned TagLen() const { return _tag.Len(); }
-
-    inline void RegExp(bool re) { _regExp = re; }
-    inline bool RegExp() const { return _regExp; }
-
-    inline void MatchCase(bool mc) { _matchCase = mc; }
-    inline bool MatchCase() const { return _matchCase; }
-
-    inline void Status(CmdStatus_t stat) { _status = stat; }
-    inline CmdStatus_t Status() const { return _status; }
-
-    inline char* Result() { return _result.data(); }
-    inline const char* Result() const { return _result.data(); }
-    inline unsigned ResultLen() const { return _result.size() - 1; }
-
-private:
-    friend class CmdEngine;
-
-    void setResult(const std::vector<char>& data)
-    {
-        _result.assign(data.begin(), data.end());
-    }
-
-    void appendResult(const std::vector<char>& data)
-    {
-        // remove \0 string termination
-        if (!_result.empty())
-            _result.pop_back();
-        _result.insert(_result.cend(), data.begin(), data.end());
-    }
-
-    CmdId_t             _id;
-    CText               _name;
-    DbHandle const      _db;
-    CPath               _dbPath;
-
-    CText               _tag;
-    bool                _regExp;
-    bool                _matchCase;
-
-    CmdStatus_t         _status;
-    std::vector<char>   _result;
-};
-
-
-typedef std::shared_ptr<Cmd> CmdPtr_t;
-typedef void (*CompletionCB)(const CmdPtr_t&);
-
 
 /**
  *  \class  CmdEngine

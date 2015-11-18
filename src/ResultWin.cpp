@@ -30,7 +30,7 @@
 #include "DbManager.h"
 #include "DocLocation.h"
 #include "ActivityWin.h"
-#include "CmdEngine.h"
+#include "Cmd.h"
 #include <commctrl.h>
 #include <vector>
 #include "Common.h"
@@ -536,7 +536,7 @@ HWND ResultWin::composeWindow()
     RECT win;
     GetWindowRect(hOwner, &win);
 
-    DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX | WS_CLIPCHILDREN;
 
     _hWnd = CreateWindow(cClassName, cPluginName,
             style, win.left, win.top,

@@ -30,6 +30,7 @@
 #include "INpp.h"
 #include "Config.h"
 #include "DbManager.h"
+#include "Cmd.h"
 #include "CmdEngine.h"
 #include "DocLocation.h"
 #include "SearchWin.h"
@@ -100,6 +101,97 @@ bool checkForGTagsBinaries(CPath& dllPath)
 /**
  *  \brief
  */
+void sheduleForUpdate(const CPath& file)
+{
+    std::list<CPath>::reverse_iterator iFile;
+    for (iFile = UpdateList.rbegin(); iFile != UpdateList.rend(); ++iFile)
+        if (*iFile == file)
+            return;
+
+    UpdateList.push_back(file);
+}
+
+
+/**
+ *  \brief
+ */
+bool runSheduledUpdate(const TCHAR* dbPath)
+{
+    CPath file;
+    {
+        if (UpdateList.empty())
+            return false;
+
+        std::list<CPath>::iterator iFile;
+        for (iFile = UpdateList.begin(); iFile != UpdateList.end(); ++iFile)
+            if (iFile->IsSubpathOf(dbPath))
+                break;
+
+        if (iFile == UpdateList.end())
+            return false;
+
+        file = *iFile;
+        UpdateList.erase(iFile);
+    }
+
+    if (!UpdateSingleFile(file))
+        return runSheduledUpdate(dbPath);
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
+{
+    if (uMsg == BFFM_INITIALIZED)
+        SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
+    return 0;
+}
+
+
+/**
+ *  \brief
+ */
+bool getDatabaseName(HWND hOwnerWin, CPath& dbPath)
+{
+    TCHAR path[MAX_PATH];
+
+    BROWSEINFO bi       = {0};
+    bi.hwndOwner        = hOwnerWin;
+    bi.pszDisplayName   = path;
+    bi.lpszTitle        = _T("Select the database root (indexed recursively)");
+    bi.ulFlags          = BIF_RETURNONLYFSDIRS;
+    bi.lpfn             = browseFolderCB;
+
+    if (!dbPath.IsEmpty() && dbPath.Exists())
+        bi.lParam = (DWORD)dbPath.C_str();
+
+    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+    if (!pidl)
+        return false;
+
+    SHGetPathFromIDList(pidl, path);
+
+    IMalloc* imalloc = NULL;
+    if (SUCCEEDED(SHGetMalloc(&imalloc)))
+    {
+        imalloc->Free(pidl);
+        imalloc->Release();
+    }
+
+    dbPath = path;
+    dbPath += _T("\\");
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
 CText getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
 {
     INpp& npp = INpp::Get();
@@ -151,78 +243,10 @@ DbHandle getDatabase(bool writeEn = false)
 /**
  *  \brief
  */
-int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
+inline void putDatabase(const CmdPtr_t& cmd)
 {
-    if (uMsg == BFFM_INITIALIZED)
-        SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
-    return 0;
-}
-
-
-/**
- *  \brief
- */
-void sheduleForUpdate(const CPath& file)
-{
-    std::list<CPath>::reverse_iterator iFile;
-    for (iFile = UpdateList.rbegin(); iFile != UpdateList.rend(); ++iFile)
-        if (*iFile == file)
-            return;
-
-    UpdateList.push_back(file);
-}
-
-
-/**
- *  \brief
- */
-bool runSheduledUpdate(const TCHAR* dbPath)
-{
-    CPath file;
-    {
-        if (UpdateList.empty())
-            return false;
-
-        std::list<CPath>::iterator iFile;
-        for (iFile = UpdateList.begin(); iFile != UpdateList.end(); ++iFile)
-            if (iFile->IsSubpathOf(dbPath))
-                break;
-
-        if (iFile == UpdateList.end())
-            return false;
-
-        file = *iFile;
-        UpdateList.erase(iFile);
-    }
-
-    if (!UpdateSingleFile(file))
-        return runSheduledUpdate(dbPath);
-
-    return true;
-}
-
-
-/**
- *  \brief
- */
-void dbWriteReady(const CmdPtr_t& cmd)
-{
-    if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
-        DbManager::Get().UnregisterDb(cmd->Db());
-    else
-        DbManager::Get().PutDb(cmd->Db());
-
+    DbManager::Get().PutDb(cmd->Db());
     runSheduledUpdate(cmd->DbPath());
-
-    if (cmd->Status() == RUN_ERROR)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
-    }
-    else if (cmd->Status() == FAILED || cmd->Result())
-    {
-        CText msg(cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
-    }
 }
 
 
@@ -231,9 +255,7 @@ void dbWriteReady(const CmdPtr_t& cmd)
  */
 void autoComplReady(const CmdPtr_t& cmd)
 {
-    DbManager::Get().PutDb(cmd->Db());
-
-    runSheduledUpdate(cmd->DbPath());
+    putDatabase(cmd);
 
     if (cmd->Status() == OK)
     {
@@ -268,9 +290,7 @@ void autoComplReady(const CmdPtr_t& cmd)
  */
 void showResult(const CmdPtr_t& cmd)
 {
-    DbManager::Get().PutDb(cmd->Db());
-
-    runSheduledUpdate(cmd->DbPath());
+    putDatabase(cmd);
 
     if (cmd->Status() == OK)
     {
@@ -587,38 +607,16 @@ void CreateDatabase()
     }
     else
     {
-        TCHAR path[MAX_PATH];
-
         currentFile.StripFilename();
 
-        BROWSEINFO bi       = {0};
-        bi.hwndOwner        = npp.GetHandle();
-        bi.pszDisplayName   = path;
-        bi.lpszTitle        = _T("Select the project root");
-        bi.ulFlags          = BIF_RETURNONLYFSDIRS;
-        bi.lpfn             = browseFolderCB;
-        bi.lParam           = (DWORD)currentFile.C_str();
-
-        LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-        if (!pidl)
+        if (!getDatabaseName(npp.GetHandle(), currentFile))
             return;
 
-        SHGetPathFromIDList(pidl, path);
-
-        IMalloc* imalloc = NULL;
-        if (SUCCEEDED(SHGetMalloc(&imalloc)))
-        {
-            imalloc->Free(pidl);
-            imalloc->Release();
-        }
-
-        currentFile = path;
-        currentFile += _T("\\");
         db = DbManager::Get().RegisterDb(currentFile);
     }
 
     CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    CmdEngine::Run(cmd, dbWriteReady);
+    CmdEngine::Run(cmd, DbWriteReady);
 }
 
 
@@ -803,7 +801,7 @@ bool UpdateSingleFile(const CPath& file)
 
     CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
 
-    if (!CmdEngine::Run(cmd, dbWriteReady))
+    if (!CmdEngine::Run(cmd, DbWriteReady))
         return false;
 
     return true;
@@ -813,69 +811,82 @@ bool UpdateSingleFile(const CPath& file)
 /**
  *  \brief
  */
-const CPath CreateLibraryDatabase(HWND hWnd)
+bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
 {
-    TCHAR path[MAX_PATH];
-    CPath libraryPath;
+    if (!complCB)
+        return false;
 
-    BROWSEINFO bi       = {0};
-    bi.hwndOwner        = hWnd;
-    bi.pszDisplayName   = path;
-    bi.lpszTitle        = _T("Select the library root");
-    bi.ulFlags          = BIF_RETURNONLYFSDIRS;
-    bi.lpfn             = browseFolderCB;
-
-    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-    if (!pidl)
-        return libraryPath;
-
-    SHGetPathFromIDList(pidl, path);
-
-    IMalloc* imalloc = NULL;
-    if (SUCCEEDED(SHGetMalloc(&imalloc)))
+    if (dbPath.IsEmpty())
     {
-        imalloc->Free(pidl);
-        imalloc->Release();
+        if (!getDatabaseName(hOwnerWin, dbPath))
+        {
+            complCB(CmdPtr_t());
+            return false;
+        }
     }
-
-    libraryPath = path;
-    libraryPath += _T("\\");
 
     DbHandle db;
 
-    if (DbManager::Get().DbExistsInFolder(libraryPath))
+    if (DbManager::Get().DbExistsInFolder(dbPath))
     {
         CText msg(_T("Database at\n\""));
-        msg += libraryPath;
+        msg += dbPath;
         msg += _T("\" exists.\nRe-create?");
-        int choice = MessageBox(hWnd, msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+        int choice = MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
+                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
-            return libraryPath;
+        {
+            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, &dbPath));
+            cmd->Status(OK);
+            complCB(cmd);
+            return true;
+        }
 
         bool success;
-        db = DbManager::Get().GetDb(libraryPath, true, &success);
+        db = DbManager::Get().GetDb(dbPath, true, &success);
 
         if (!success)
         {
-            MessageBox(hWnd, _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
-            libraryPath.Clear();
+            MessageBox(INpp::Get().GetHandle(), _T("GTags database is currently in use"), cPluginName,
+                    MB_OK | MB_ICONINFORMATION);
 
-            return libraryPath;
+            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, &dbPath));
+            cmd->Status(OK);
+            complCB(cmd);
+            return true;
         }
     }
     else
     {
-        db = DbManager::Get().RegisterDb(libraryPath);
+        db = DbManager::Get().RegisterDb(dbPath);
     }
 
     CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    CmdEngine::Run(cmd);
+    CmdEngine::Run(cmd, complCB);
 
-    dbWriteReady(cmd);
-    if (cmd->Status() != OK)
-        libraryPath.Clear();
+    return true;
+}
 
-    return libraryPath;
+
+/**
+ *  \brief
+ */
+void DbWriteReady(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
+        DbManager::Get().UnregisterDb(cmd->Db());
+    else
+        putDatabase(cmd);
+
+    if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == FAILED || cmd->Result())
+    {
+        CText msg(cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
 }
 
 } // namespace GTags

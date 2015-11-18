@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include "resource.h"
+#include "CmdDefines.h"
 
 
 struct FuncItem;
@@ -63,6 +64,7 @@ void PluginInit();
 void PluginDeInit();
 
 bool UpdateSingleFile(const CPath& file);
-const CPath CreateLibraryDatabase(HWND hWnd);
+bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB);
+void DbWriteReady(const CmdPtr_t& cmd);
 
 } // namespace GTags

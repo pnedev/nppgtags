@@ -42,6 +42,7 @@ set (project_sources
     src/PluginInterface.cpp
     src/ReadPipe.cpp
     src/GTags.cpp
+    src/Cmd.cpp
     src/CmdEngine.cpp
     src/DbManager.cpp
     src/Config.cpp

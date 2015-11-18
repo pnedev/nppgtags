@@ -22,6 +22,9 @@
     <ClInclude Include="src\ReadPipe.h" />
     <ClCompile Include="src\GTags.cpp" />
     <ClInclude Include="src\GTags.h" />
+    <ClInclude Include="src\CmdDefines.h" />
+    <ClCompile Include="src\Cmd.cpp" />
+    <ClInclude Include="src\Cmd.h" />
     <ClCompile Include="src\CmdEngine.cpp" />
     <ClInclude Include="src\CmdEngine.h" />
     <ClCompile Include="src\DbManager.cpp" />

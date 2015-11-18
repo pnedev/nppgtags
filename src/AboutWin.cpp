@@ -165,7 +165,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     GetWindowRect(GetDesktopWindow(), &win);
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
     CText str(_T("About "));
     str += VER_PLUGIN_NAME;

@@ -29,7 +29,7 @@
 #include <tchar.h>
 #include <vector>
 #include "Common.h"
-#include "CmdEngine.h"
+#include "CmdDefines.h"
 
 
 namespace GTags

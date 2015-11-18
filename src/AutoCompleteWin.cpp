@@ -31,6 +31,7 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "AutoCompleteWin.h"
+#include "Cmd.h"
 
 
 namespace GTags
@@ -122,18 +123,16 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     GetWindowRect(hOwner, &win);
 
     _hWnd = CreateWindow(cClassName, NULL,
-            WS_POPUP | WS_BORDER, win.left, win.top,
-            win.right - win.left, win.bottom - win.top,
+            WS_POPUP | WS_BORDER | WS_CLIPCHILDREN,
+            win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
     GetClientRect(_hWnd, &win);
 
-    _hLVWnd = CreateWindow(WC_LISTVIEW, NULL,
-            WS_CHILD | WS_VISIBLE |
-            LVS_REPORT | LVS_SINGLESEL | LVS_NOLABELWRAP |
-            LVS_NOSORTHEADER | LVS_SORTASCENDING,
+    _hLVWnd = CreateWindow(WC_LISTVIEW, NULL, WS_CHILD | WS_VISIBLE |
+            LVS_REPORT | LVS_SINGLESEL | LVS_NOLABELWRAP | LVS_NOSORTHEADER | LVS_SORTASCENDING,
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -188,8 +187,8 @@ int AutoCompleteWin::fillLV()
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_result.C_str(), _T("\n\r"), &pTmp);
-            pToken; pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+    for (TCHAR* pToken = _tcstok_s(_result.C_str(), _T("\n\r"), &pTmp); pToken;
+            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         lvItem.pszText = (_cmdId == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
         ListView_InsertItem(_hLVWnd, &lvItem);

@@ -32,6 +32,7 @@
 #include "INpp.h"
 #include "CmdEngine.h"
 #include "SearchWin.h"
+#include "Cmd.h"
 
 
 namespace GTags
@@ -216,7 +217,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     ReleaseDC(hOwner, hdc);
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
     RECT win    = adjustSizeAndPos(hOwner, styleEx, style, cWidth, txtHeight + btnHeight + 17);
     int width   = win.right - win.left;

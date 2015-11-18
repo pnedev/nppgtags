@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include "CmdDefines.h"
 
 
 namespace GTags
@@ -50,16 +51,20 @@ private:
     static const int    cBackgroundColor;
     static const int    cFontSize;
 
+    static void createDbCB(const CmdPtr_t& cmd);
+    static void updateDbCB(const CmdPtr_t& cmd);
+
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    ConfigWin(CConfig* cfg) : _cfg(cfg), _hKeyHook(NULL), _hFont(NULL) {}
+    ConfigWin(CConfig* cfg) : _cfg(cfg), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0) {}
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 
     HWND composeWindow(HWND hOwner);
 
+    void onUpdateDb();
     void onOK();
 
     static ConfigWin* CW;
@@ -70,11 +75,13 @@ private:
     HWND        _hAutoUpdate;
     HWND        _hEnLibDb;
     HWND        _hCreateDb;
+    HWND        _hUpdateDb;
     HWND        _hLibDb;
     HWND        _hOK;
     HWND        _hCancel;
     HHOOK       _hKeyHook;
     HFONT       _hFont;
+    unsigned    _hUpdateCount;
 };
 
 } // namespace GTags

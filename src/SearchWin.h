@@ -30,7 +30,7 @@
 #include <vector>
 #include "Common.h"
 #include "GTags.h"
-#include "CmdEngine.h"
+#include "CmdDefines.h"
 
 
 namespace GTags

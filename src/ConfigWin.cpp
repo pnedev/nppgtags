@@ -29,11 +29,13 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <vector>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
 #include "GTags.h"
 #include "ConfigWin.h"
+#include "Cmd.h"
 
 
 namespace GTags
@@ -178,17 +180,17 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 5 * txtHeight + 120);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 6 * txtHeight + 130);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
     CText header(VER_PLUGIN_NAME);
     header += _T(" Settings");
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, header.C_str(),
-            style, win.left, win.top, width, height,
+    _hWnd = CreateWindowEx(styleEx, cClassName, header.C_str(), style,
+            win.left, win.top, width, height,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
@@ -228,7 +230,13 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             (width / 2) + 10, yPos, (width / 2) - 20, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (((txtHeight > 25) ? txtHeight : 25) + 10);
+    yPos += (txtHeight + 10);
+    _hUpdateDb = CreateWindowEx(0, _T("BUTTON"), _T("Update Library DBs"),
+            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            (width / 2) + 10, yPos, (width / 2) - 20, 25,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (txtHeight + 10);
     hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
@@ -281,6 +289,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     if (!_cfg->_useLibDb)
     {
         EnableWindow(_hCreateDb, FALSE);
+        EnableWindow(_hUpdateDb, FALSE);
         Edit_Enable(_hLibDb, FALSE);
         SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
     }
@@ -310,6 +319,41 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     UpdateWindow(_hWnd);
 
     return _hWnd;
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::onUpdateDb()
+{
+    int len = Edit_GetTextLength(_hLibDb);
+    CText buf(len);
+
+    if (!len)
+        return;
+
+    Edit_GetText(_hLibDb, buf.C_str(), buf.Size());
+
+    std::vector<CPath> dbs;
+
+    TCHAR* pTmp = NULL;
+    for (TCHAR* ptr = _tcstok_s(buf.C_str(), _T(";"), &pTmp); ptr; ptr = _tcstok_s(NULL, _T(";"), &pTmp))
+    {
+        CPath db(ptr);
+        if (db.Exists())
+            dbs.push_back(db);
+    }
+
+    _hUpdateCount = dbs.size();
+
+    if (_hUpdateCount)
+    {
+        EnableWindow(_hWnd, FALSE);
+
+        for (unsigned i = 0; i < _hUpdateCount; ++i)
+            CreateLibDatabase(_hWnd, dbs[i], updateDbCB);
+    }
 }
 
 
@@ -347,6 +391,80 @@ void ConfigWin::onOK()
     else
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::createDbCB(const CmdPtr_t& cmd)
+{
+    if (cmd)
+        DbWriteReady(cmd);
+
+    if (CW == NULL)
+        return;
+
+    EnableWindow(CW->_hWnd, TRUE);
+
+    if (!cmd || cmd->Status() != OK)
+        return;
+
+    int libLen = cmd->DbPathLen();
+
+    if (libLen == 0)
+        return;
+
+    int len = Edit_GetTextLength(CW->_hLibDb);
+    CText buf(len);
+    bool found = false;
+
+    if (len)
+    {
+        Edit_GetText(CW->_hLibDb, buf.C_str(), buf.Size());
+
+        for (TCHAR* ptr = _tcsstr(buf.C_str(), cmd->DbPath());
+                ptr; ptr = _tcsstr(ptr, cmd->DbPath()))
+        {
+            if (ptr[libLen] == _T('\0') || ptr[libLen] == _T(';'))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+            buf += _T(';');
+    }
+
+    if (!found)
+    {
+        buf += cmd->DbPath();
+        Edit_SetText(CW->_hLibDb, buf.C_str());
+    }
+
+    SetFocus(CW->_hLibDb);
+    Edit_SetSel(CW->_hLibDb, buf.Len(), buf.Len());
+    Edit_ScrollCaret(CW->_hLibDb);
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
+{
+    if (cmd)
+        DbWriteReady(cmd);
+
+    if (CW == NULL)
+        return;
+
+    if (!--CW->_hUpdateCount)
+    {
+        EnableWindow(CW->_hWnd, TRUE);
+        SetFocus(CW->_hOK);
     }
 }
 
@@ -411,6 +529,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                 {
                     BOOL en;
                     int color;
+
                     if (Button_GetCheck(CW->_hEnLibDb) == BST_CHECKED)
                     {
                         en = TRUE;
@@ -421,7 +540,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                         en = FALSE;
                         color = COLOR_BTNFACE;
                     }
+
                     EnableWindow(CW->_hCreateDb, en);
+                    EnableWindow(CW->_hUpdateDb, en);
                     Edit_Enable(CW->_hLibDb, en);
                     SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
                     return 0;
@@ -430,45 +551,14 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                 if ((HWND)lParam == CW->_hCreateDb)
                 {
                     EnableWindow(hWnd, FALSE);
-                    CPath libraryPath = CreateLibraryDatabase(hWnd);
-                    EnableWindow(hWnd, TRUE);
-                    int libLen = libraryPath.Len();
+                    CPath libraryPath;
+                    CreateLibDatabase(hWnd, libraryPath, createDbCB);
+                    return 0;
+                }
 
-                    if (libLen)
-                    {
-                        int len = Edit_GetTextLength(CW->_hLibDb);
-                        CText buf(len);
-                        bool found = false;
-
-                        if (len)
-                        {
-                            Edit_GetText(CW->_hLibDb, buf.C_str(), buf.Size());
-
-                            for (TCHAR* ptr = _tcsstr(buf.C_str(), libraryPath.C_str());
-                                    ptr; ptr = _tcsstr(ptr, libraryPath.C_str()))
-                            {
-                                if (ptr[libLen] == _T('\0') || ptr[libLen] == _T(';'))
-                                {
-                                    found = true;
-                                    break;
-                                }
-                            }
-
-                            if (!found)
-                                buf += _T(';');
-                        }
-
-                        if (!found)
-                        {
-                            buf += libraryPath.C_str();
-                            Edit_SetText(CW->_hLibDb, buf.C_str());
-                        }
-
-                        SetFocus(CW->_hLibDb);
-                        Edit_SetSel(CW->_hLibDb, buf.Len(), buf.Len());
-                        Edit_ScrollCaret(CW->_hLibDb);
-                    }
-
+                if ((HWND)lParam == CW->_hUpdateDb)
+                {
+                    CW->onUpdateDb();
                     return 0;
                 }
             }

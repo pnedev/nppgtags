@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags command execution and result classes
+ *  \brief  GTags command execution engine
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -31,6 +31,7 @@
 #include "GTags.h"
 #include "ReadPipe.h"
 #include "CmdEngine.h"
+#include "Cmd.h"
 
 
 namespace GTags
@@ -47,23 +48,6 @@ const TCHAR CmdEngine::cFindReferenceCmd[]  = _T("\"%s\\global.exe\" -r --result
 const TCHAR CmdEngine::cFindSymbolCmd[]     = _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
 const TCHAR CmdEngine::cGrepCmd[]           = _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
 const TCHAR CmdEngine::cVersionCmd[]        = _T("\"%s\\global.exe\" --version");
-
-
-/**
- *  \brief
- */
-Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, const TCHAR* tag, bool regExp, bool matchCase) :
-        _id(id), _db(db), _regExp(regExp), _matchCase(matchCase), _status(CANCELLED)
-{
-    if (db)
-        _dbPath = *db;
-
-    if (name)
-        _name = name;
-
-    if (tag)
-        _tag = tag;
-}
 
 
 /**

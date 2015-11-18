@@ -182,7 +182,7 @@ void ActivityWin::adjustSizeAndPos(int width, int height, int winNum)
  */
 HWND ActivityWin::composeWindow(const TCHAR* text)
 {
-    _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER,
+    _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER | WS_CLIPCHILDREN,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             INpp::Get().GetHandle(), NULL, HMod, (LPVOID)this);
     if (_hWnd == NULL)
