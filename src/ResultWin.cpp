@@ -34,6 +34,7 @@
 #include <commctrl.h>
 #include <vector>
 #include "Common.h"
+#include "GTags.h"
 
 
 // Scintilla user defined styles IDs
@@ -297,20 +298,6 @@ void ResultWin::show()
 void ResultWin::show(const CmdPtr_t& cmd)
 {
     INpp& npp = INpp::Get();
-
-    if (cmd->ResultLen() > 262144) // 256k
-    {
-        CText msg(cmd->Name());
-        msg += _T(" \"");
-        msg += cmd->Tag();
-        msg += _T("\": A lot of matches were found, parsing those will be rather slow.\n")
-                _T("Are you sure you want to proceed?");
-
-        int choice = MessageBox(npp.GetHandle(), msg.C_str(), cPluginName,
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
-        if (choice != IDYES)
-            return;
-    }
 
     // parsing results happens here
     Tab* tab = new Tab(cmd);

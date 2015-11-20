@@ -291,35 +291,63 @@ void SearchWin::startCompletion()
     if (Button_GetCheck(_hRE) == BST_CHECKED)
         return;
 
+    CmdId_t cmdId;
     TCHAR tag[cComplAfter + 2];
+    CompletionCB complCB;
 
     if (_cmd->Id() == FIND_FILE)
     {
+        cmdId = AUTOCOMPLETE_FILE;
+
         tag[0] = _T('/');
         ComboBox_GetText(_hSearch, tag + 1, _countof(tag) - 1);
         tag[cComplAfter + 1] = 0;
+
+        complCB = endCompletion;
     }
     else
     {
+        cmdId = AUTOCOMPLETE;
+
         ComboBox_GetText(_hSearch, tag, _countof(tag));
         tag[cComplAfter] = 0;
+
+        complCB = halfComplete;
     }
 
-    CmdPtr_t cmpl(new Cmd(AUTOCOMPLETE, _T("AutoComplete"), _cmd->Db(), tag, false,
-            (Button_GetCheck(_hMC) == BST_CHECKED)));
+    CmdPtr_t cmpl(new Cmd(cmdId, _T("AutoComplete"), _cmd->Db(), tag, false, (Button_GetCheck(_hMC) == BST_CHECKED)));
 
-    if (_cmd->Id() == FIND_FILE)
+    _completionStarted = true;
+
+    CmdEngine::Run(cmpl, complCB);
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::halfComplete(const CmdPtr_t& cmpl)
+{
+    if (SW == NULL)
+        return;
+
+    if (ComboBox_GetTextLength(SW->_hSearch) < cComplAfter)
     {
-        cmpl->Id(AUTOCOMPLETE_FILE);
+        SW->_completionStarted = false;
+        return;
+    }
+
+    if (cmpl->Status() == OK)
+    {
+        cmpl->Id(AUTOCOMPLETE_SYMBOL);
+
+        CmdEngine::Run(cmpl, endCompletion);
     }
     else
     {
-        CmdEngine::Run(cmpl);
-        cmpl->Id(AUTOCOMPLETE_SYMBOL);
+        SW->_completionStarted = false;
+        SW->_completionDone = true;
     }
-
-    CmdEngine::Run(cmpl);
-    endCompletion(cmpl);
 }
 
 
@@ -328,14 +356,22 @@ void SearchWin::startCompletion()
  */
 void SearchWin::endCompletion(const CmdPtr_t& cmpl)
 {
+    if (SW == NULL)
+        return;
+
+    SW->_completionStarted = false;
+
+    if (ComboBox_GetTextLength(SW->_hSearch) < cComplAfter)
+        return;
+
     if (cmpl->Status() == OK && cmpl->Result())
     {
-        _complData = cmpl->Result();
-        parseCompletion();
-        filterComplList();
+        SW->_complData = cmpl->Result();
+        SW->parseCompletion();
+        SW->filterComplList();
     }
 
-    _completionDone = true;
+    SW->_completionDone = true;
 }
 
 
@@ -360,6 +396,9 @@ void SearchWin::parseCompletion()
  */
 void SearchWin::clearCompletion()
 {
+    if (_completionStarted)
+        return;
+
     CText txt(ComboBox_GetTextLength(_hSearch));
 
     ComboBox_GetText(_hSearch, txt.C_str(), txt.Size());
@@ -435,6 +474,9 @@ void SearchWin::filterComplList()
  */
 void SearchWin::onEditChange()
 {
+    if (_completionStarted)
+        return;
+
     int len = ComboBox_GetTextLength(_hSearch);
 
     if (_completionDone)

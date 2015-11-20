@@ -65,6 +65,6 @@ void PluginDeInit();
 
 bool UpdateSingleFile(const CPath& file);
 bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB);
-void DbWriteReady(const CmdPtr_t& cmd);
+void DbWriteCB(const CmdPtr_t& cmd);
 
 } // namespace GTags

@@ -30,7 +30,6 @@
 #include <vector>
 #include "Scintilla.h"
 #include "Common.h"
-#include "GTags.h"
 #include "CmdDefines.h"
 
 

@@ -401,7 +401,7 @@ void ConfigWin::onOK()
 void ConfigWin::createDbCB(const CmdPtr_t& cmd)
 {
     if (cmd)
-        DbWriteReady(cmd);
+        DbWriteCB(cmd);
 
     if (CW == NULL)
         return;
@@ -456,7 +456,7 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
 void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
 {
     if (cmd)
-        DbWriteReady(cmd);
+        DbWriteCB(cmd);
 
     if (CW == NULL)
         return;

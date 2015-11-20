@@ -240,7 +240,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
             width - 85, (height - 25) / 2, 80, 25, _hWnd,
             NULL, HMod, NULL);
 
-    ShowWindow(_hWnd, SW_SHOWNORMAL);
+    ShowWindow(_hWnd, SW_SHOWNOACTIVATE);
     UpdateWindow(_hWnd);
 
     return _hWnd;

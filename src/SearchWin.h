@@ -58,15 +58,17 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
+    static void halfComplete(const CmdPtr_t&);
+    static void endCompletion(const CmdPtr_t&);
+
     SearchWin(const CmdPtr_t& cmd, CompletionCB complCB) :
-        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL), _cancelled(true), _keyPressed(0), _completionDone(false) {}
+        _cmd(cmd), _complCB(complCB), _hKeyHook(NULL), _cancelled(true), _keyPressed(0),
+        _completionStarted(false), _completionDone(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void startCompletion();
-    void endCompletion(const CmdPtr_t&);
-
     void parseCompletion();
     void clearCompletion();
     void filterComplList();
@@ -76,8 +78,8 @@ private:
 
     static SearchWin* SW;
 
-    CmdPtr_t                _cmd;
-    CompletionCB const      _complCB;
+    CmdPtr_t            _cmd;
+    CompletionCB const  _complCB;
 
     HWND                _hWnd;
     HWND                _hSearch;
@@ -89,6 +91,7 @@ private:
     HHOOK               _hKeyHook;
     bool                _cancelled;
     int                 _keyPressed;
+    bool                _completionStarted;
     bool                _completionDone;
     CText               _complData;
     std::vector<TCHAR*> _complIndex;

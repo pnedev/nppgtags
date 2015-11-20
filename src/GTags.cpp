@@ -253,34 +253,50 @@ inline void putDatabase(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void autoComplReady(const CmdPtr_t& cmd)
+bool processResults(const CmdPtr_t& cmd)
+{
+    if (cmd->ResultLen() > 262144) // 256k
+    {
+        CText msg(cmd->Name());
+        msg += _T(" \"");
+        msg += cmd->Tag();
+        msg += _T("\": A lot of matches were found, parsing those will be rather slow.\n")
+                _T("Are you sure you want to proceed?");
+
+        int choice = MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
+                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+        if (choice != IDYES)
+            return false;
+    }
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+void autoComplCB(const CmdPtr_t& cmd)
 {
     putDatabase(cmd);
 
-    if (cmd->Status() == OK)
+    if (cmd->Status() == OK && cmd->Result() && processResults(cmd))
     {
-        if (cmd->Result())
-            AutoCompleteWin::Show(cmd);
-        else
-            INpp::Get().ClearSelection();
+        AutoCompleteWin::Show(cmd);
+        return;
     }
-    else if (cmd->Status() == FAILED)
-    {
-        INpp::Get().ClearSelection();
 
+    INpp::Get().ClearSelection();
+
+    if (cmd->Status() == FAILED)
+    {
         CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
-        INpp::Get().ClearSelection();
-
         MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
-    }
-    else
-    {
-        INpp::Get().ClearSelection();
     }
 }
 
@@ -288,7 +304,36 @@ void autoComplReady(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void showResult(const CmdPtr_t& cmd)
+void halfComplCB(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() == OK)
+    {
+        cmd->Id(AUTOCOMPLETE_SYMBOL);
+        CmdEngine::Run(cmd, autoComplCB);
+        return;
+    }
+
+    putDatabase(cmd);
+
+    INpp::Get().ClearSelection();
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void showResultCB(const CmdPtr_t& cmd)
 {
     putDatabase(cmd);
 
@@ -296,7 +341,8 @@ void showResult(const CmdPtr_t& cmd)
     {
         if (cmd->Result())
         {
-            ResultWin::Show(cmd);
+            if (processResults(cmd))
+                ResultWin::Show(cmd);
         }
         else
         {
@@ -322,19 +368,35 @@ void showResult(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void findReady(const CmdPtr_t& cmd)
+void findCB(const CmdPtr_t& cmd)
 {
     if (cmd->Status() == OK && cmd->Result() == NULL)
     {
         cmd->Id(FIND_SYMBOL);
         cmd->Name(cFindSymbol);
 
-        CmdEngine::Run(cmd, showResult);
+        CmdEngine::Run(cmd, showResultCB);
     }
     else
     {
-        showResult(cmd);
+        showResultCB(cmd);
     }
+}
+
+
+/**
+ *  \brief
+ */
+void aboutCB(const CmdPtr_t& cmd)
+{
+    CText msg;
+
+    if (cmd->Status() == OK)
+        msg = cmd->Result();
+    else
+        msg = _T("VERSION READ FAILED\n");
+
+    AboutWin::Show(msg.C_str());
 }
 
 
@@ -400,13 +462,7 @@ void AutoComplete()
 
     CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.C_str()));
 
-    if (CmdEngine::Run(cmd))
-    {
-        cmd->Id(AUTOCOMPLETE_SYMBOL);
-        CmdEngine::Run(cmd);
-    }
-
-    autoComplReady(cmd);
+    CmdEngine::Run(cmd, halfComplCB);
 }
 
 
@@ -430,8 +486,7 @@ void AutoCompleteFile()
 
     CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.C_str()));
 
-    CmdEngine::Run(cmd);
-    autoComplReady(cmd);
+    CmdEngine::Run(cmd, autoComplCB);
 }
 
 
@@ -455,13 +510,13 @@ void FindFile()
         INpp::Get().GetFileNamePart(fileName);
         cmd->Tag(fileName.C_str());
 
-        SearchWin::Show(cmd, showResult);
+        SearchWin::Show(cmd, showResultCB);
     }
     else
     {
         cmd->Tag(tag.C_str());
 
-        CmdEngine::Run(cmd, showResult);
+        CmdEngine::Run(cmd, showResultCB);
     }
 }
 
@@ -482,13 +537,13 @@ void FindDefinition()
     CText tag = getSelection(true);
     if (tag.IsEmpty())
     {
-        SearchWin::Show(cmd, findReady, false);
+        SearchWin::Show(cmd, findCB, false);
     }
     else
     {
         cmd->Tag(tag.C_str());
 
-        CmdEngine::Run(cmd, findReady);
+        CmdEngine::Run(cmd, findCB);
     }
 }
 
@@ -516,13 +571,13 @@ void FindReference()
     CText tag = getSelection(true);
     if (tag.IsEmpty())
     {
-        SearchWin::Show(cmd, findReady, false);
+        SearchWin::Show(cmd, findCB, false);
     }
     else
     {
         cmd->Tag(tag.C_str());
 
-        CmdEngine::Run(cmd, findReady);
+        CmdEngine::Run(cmd, findCB);
     }
 }
 
@@ -543,13 +598,13 @@ void Search()
     CText tag = getSelection(true);
     if (tag.IsEmpty())
     {
-        SearchWin::Show(cmd, showResult);
+        SearchWin::Show(cmd, showResultCB);
     }
     else
     {
         cmd->Tag(tag.C_str());
 
-        CmdEngine::Run(cmd, showResult);
+        CmdEngine::Run(cmd, showResultCB);
     }
 }
 
@@ -616,7 +671,7 @@ void CreateDatabase()
     }
 
     CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    CmdEngine::Run(cmd, DbWriteReady);
+    CmdEngine::Run(cmd, DbWriteCB);
 }
 
 
@@ -673,16 +728,7 @@ void SettingsCfg()
 void About()
 {
     CmdPtr_t cmd(new Cmd(VERSION, cVersion));
-    CmdEngine::Run(cmd);
-
-    CText msg;
-
-    if (cmd->Status() == OK)
-        msg = cmd->Result();
-    else
-        msg = _T("VERSION READ FAILED\n");
-
-    AboutWin::Show(msg.C_str());
+    CmdEngine::Run(cmd, aboutCB);
 }
 
 } // anonymous namespace
@@ -801,7 +847,7 @@ bool UpdateSingleFile(const CPath& file)
 
     CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
 
-    if (!CmdEngine::Run(cmd, DbWriteReady))
+    if (!CmdEngine::Run(cmd, DbWriteCB))
         return false;
 
     return true;
@@ -871,7 +917,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
 /**
  *  \brief
  */
-void DbWriteReady(const CmdPtr_t& cmd)
+void DbWriteCB(const CmdPtr_t& cmd)
 {
     if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
         DbManager::Get().UnregisterDb(cmd->Db());

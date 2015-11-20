@@ -55,6 +55,9 @@ const TCHAR CmdEngine::cVersionCmd[]        = _T("\"%s\\global.exe\" --version")
  */
 bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
 {
+    if (!complCB)
+        return false;
+
     CmdEngine* engine = new CmdEngine(cmd, complCB);
     cmd->Status(RUN_ERROR);
 
@@ -65,33 +68,7 @@ bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
         return false;
     }
 
-    if (complCB)
-        return true;
-
-    // If no callback is given then wait until command is ready
-    // Since this blocks the UI thread we need a message pump to
-    // handle N++ window messages
-    while (MsgWaitForMultipleObjects(1, &engine->_hThread, FALSE, INFINITE, QS_ALLINPUT) == WAIT_OBJECT_0 + 1)
-    {
-        MSG msg;
-
-        // Handle all other messages
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            if (msg.message == WM_QUIT)
-                break;
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        // N++ thread quit?!?
-        if (msg.message == WM_QUIT)
-            break;
-    }
-
-    delete engine;
-
-    return (cmd->Status() == OK ? true : false);
+    return true;
 }
 
 
@@ -100,8 +77,7 @@ bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
  */
 CmdEngine::~CmdEngine()
 {
-    if (_complCB)
-        SendMessage(MainHwnd, WM_RUN_CMD_CALLBACK, (WPARAM)_complCB, (LPARAM)(&_cmd));
+    SendMessage(MainHwnd, WM_RUN_CMD_CALLBACK, (WPARAM)_complCB, (LPARAM)(&_cmd));
 
     if (_hThread)
         CloseHandle(_hThread);
@@ -116,8 +92,7 @@ unsigned __stdcall CmdEngine::threadFunc(void* data)
     CmdEngine* engine = static_cast<CmdEngine*>(data);
     unsigned r = engine->runProcess();
 
-    if (engine->_complCB)
-        delete engine;
+    delete engine;
 
     return r;
 }

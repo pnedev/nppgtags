@@ -41,7 +41,7 @@ namespace GTags
 class CmdEngine
 {
 public:
-    static bool Run(const CmdPtr_t& cmd, CompletionCB complCB = NULL);
+    static bool Run(const CmdPtr_t& cmd, CompletionCB complCB);
 
 private:
     static const TCHAR  cCreateDatabaseCmd[];
@@ -66,9 +66,9 @@ private:
     unsigned runProcess();
     void endProcess(PROCESS_INFORMATION& pi);
 
-    CmdPtr_t                _cmd;
-    CompletionCB const      _complCB;
-    HANDLE                  _hThread;
+    CmdPtr_t            _cmd;
+    CompletionCB const  _complCB;
+    HANDLE              _hThread;
 };
 
 } // namespace GTags
