@@ -188,6 +188,8 @@ unsigned CmdEngine::runProcess()
     if (Config._useLibDb)
         envVars += Config._libDbPath;
 
+    envVars += _T('\0');
+
     if (_cmd->_id == VERSION)
     {
         currentDir = NULL;
