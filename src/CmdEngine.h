@@ -31,6 +31,9 @@
 #include "CmdDefines.h"
 
 
+class ReadPipe;
+
+
 namespace GTags
 {
 
@@ -61,9 +64,10 @@ private:
     CmdEngine(const CmdPtr_t& cmd, CompletionCB complCB) : _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
     ~CmdEngine();
 
+    unsigned start();
     const TCHAR* getCmdLine() const;
     void composeCmd(CText& buf) const;
-    unsigned runProcess();
+    int runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe);
     void endProcess(PROCESS_INFORMATION& pi);
 
     CmdPtr_t            _cmd;

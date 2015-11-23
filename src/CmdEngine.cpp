@@ -90,11 +90,90 @@ CmdEngine::~CmdEngine()
 unsigned __stdcall CmdEngine::threadFunc(void* data)
 {
     CmdEngine* engine = static_cast<CmdEngine*>(data);
-    unsigned r = engine->runProcess();
+    unsigned r = engine->start();
 
     delete engine;
 
     return r;
+}
+
+
+/**
+ *  \brief
+ */
+unsigned CmdEngine::start()
+{
+    ReadPipe dataPipe;
+    ReadPipe errorPipe;
+
+    PROCESS_INFORMATION pi;
+
+    if (runProcess(pi, dataPipe, errorPipe))
+        return 1;
+
+    bool showActivityWin = true;
+    if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
+    {
+        // Wait 300 ms and if process has finished don't show Activity Window
+        if (WaitForSingleObject(pi.hProcess, 300) == WAIT_OBJECT_0)
+            showActivityWin = false;
+    }
+
+    if (showActivityWin)
+    {
+        HANDLE hCancel = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+        if (hCancel)
+        {
+            CText header(_cmd->Name());
+            header += _T(" - \"");
+            if (_cmd->_id == CREATE_DATABASE)
+                header += _cmd->DbPath();
+            else if (_cmd->_id != VERSION)
+                header += _cmd->Tag();
+            header += _T('\"');
+
+            SendMessage(MainHwnd, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
+
+            HANDLE waitHandles[] = {pi.hProcess, hCancel};
+            DWORD handleId = WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE) - WAIT_OBJECT_0;
+            if (handleId > 0 && handleId < 2 && waitHandles[handleId] == hCancel)
+                _cmd->_status = CANCELLED;
+
+            SendMessage(MainHwnd, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
+
+            CloseHandle(hCancel);
+        }
+        else
+        {
+            WaitForSingleObject(pi.hProcess, INFINITE);
+        }
+    }
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    if (_cmd->_status == CANCELLED)
+        return 1;
+
+    if (!dataPipe.GetOutput().empty())
+    {
+        _cmd->appendResult(dataPipe.GetOutput());
+    }
+    else if (!errorPipe.GetOutput().empty())
+    {
+        _cmd->setResult(errorPipe.GetOutput());
+
+        if (_cmd->_id != CREATE_DATABASE)
+        {
+            _cmd->_status = FAILED;
+            return 1;
+        }
+    }
+
+    _cmd->_status = OK;
+
+    return 0;
 }
 
 
@@ -175,12 +254,12 @@ void CmdEngine::composeCmd(CText& buf) const
 /**
  *  \brief
  */
-unsigned CmdEngine::runProcess()
+int CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe)
 {
     CText buf(2048);
     composeCmd(buf);
 
-    DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW;
+    DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
     const TCHAR* env = NULL;
     const TCHAR* currentDir = _cmd->DbPath();
 
@@ -191,17 +270,9 @@ unsigned CmdEngine::runProcess()
     envVars += _T('\0');
 
     if (_cmd->_id == VERSION)
-    {
         currentDir = NULL;
-    }
     else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
-    {
         env = envVars.C_str();
-        createFlags |= CREATE_UNICODE_ENVIRONMENT;
-    }
-
-    ReadPipe errorPipe;
-    ReadPipe dataPipe;
 
     STARTUPINFO si  = {0};
     si.cb           = sizeof(si);
@@ -209,11 +280,10 @@ unsigned CmdEngine::runProcess()
     si.hStdError    = errorPipe.GetInputHandle();
     si.hStdOutput   = dataPipe.GetInputHandle();
 
-    PROCESS_INFORMATION pi;
     if (!CreateProcess(NULL, buf.C_str(), NULL, NULL, TRUE, createFlags, (LPVOID)env, currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
-        return 1;
+        return -1;
     }
 
     SetThreadPriority(pi.hThread, THREAD_PRIORITY_NORMAL);
@@ -222,69 +292,8 @@ unsigned CmdEngine::runProcess()
     {
         endProcess(pi);
         _cmd->_status = RUN_ERROR;
-        return 1;
+        return -1;
     }
-
-    bool showActivityWin = true;
-    if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
-    {
-        // Wait 300 ms and if process has finished don't show Activity Window
-        if (WaitForSingleObject(pi.hProcess, 300) == WAIT_OBJECT_0)
-            showActivityWin = false;
-    }
-
-    if (showActivityWin)
-    {
-        HANDLE hCancel = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-        if (hCancel)
-        {
-            CText header(_cmd->Name());
-            header += _T(" - \"");
-            if (_cmd->_id == CREATE_DATABASE)
-                header += _cmd->DbPath();
-            else if (_cmd->_id != VERSION)
-                header += _cmd->Tag();
-            header += _T('\"');
-
-            SendMessage(MainHwnd, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
-
-            HANDLE waitHandles[] = {pi.hProcess, hCancel};
-            DWORD handleId = WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE) - WAIT_OBJECT_0;
-            if (handleId > 0 && handleId < 2 && waitHandles[handleId] == hCancel)
-                _cmd->_status = CANCELLED;
-
-            SendMessage(MainHwnd, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
-
-            CloseHandle(hCancel);
-        }
-        else
-        {
-            WaitForSingleObject(pi.hProcess, INFINITE);
-        }
-    }
-
-    endProcess(pi);
-
-    if (_cmd->_status == CANCELLED)
-        return 1;
-
-    if (!dataPipe.GetOutput().empty())
-    {
-        _cmd->appendResult(dataPipe.GetOutput());
-    }
-    else if (!errorPipe.GetOutput().empty())
-    {
-        _cmd->setResult(errorPipe.GetOutput());
-
-        if (_cmd->_id != CREATE_DATABASE)
-        {
-            _cmd->_status = FAILED;
-            return 1;
-        }
-    }
-
-    _cmd->_status = OK;
 
     return 0;
 }
