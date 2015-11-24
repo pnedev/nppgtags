@@ -108,7 +108,7 @@ int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-bool getDatabaseName(HWND hOwnerWin, CPath& dbPath)
+bool browseForDbFolder(HWND hOwnerWin, CPath& dbPath)
 {
     TCHAR path[MAX_PATH];
 
@@ -607,7 +607,7 @@ void CreateDatabase()
     {
         currentFile.StripFilename();
 
-        if (!getDatabaseName(npp.GetHandle(), currentFile))
+        if (!browseForDbFolder(npp.GetHandle(), currentFile))
             return;
 
         db = DbManager::Get().RegisterDb(currentFile);
@@ -752,7 +752,7 @@ void PluginInit()
     if (MainHwnd == NULL)
         MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
                 MB_OK | MB_ICONERROR);
-    else if(!Config.LoadFromFile())
+    else if (!Config.LoadFromFile())
         MessageBox(npp.GetHandle(), _T("Bad config file, default settings will be used"), cPluginName,
                 MB_OK | MB_ICONEXCLAMATION);
 }
@@ -807,7 +807,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
 
     if (dbPath.IsEmpty())
     {
-        if (!getDatabaseName(hOwnerWin, dbPath))
+        if (!browseForDbFolder(hOwnerWin, dbPath))
         {
             complCB(CmdPtr_t());
             return false;
