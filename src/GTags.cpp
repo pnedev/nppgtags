@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <shlobj.h>
-#include <list>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -60,9 +59,6 @@ const TCHAR cSearch[]           = _T("Search");
 const TCHAR cVersion[]          = _T("About");
 
 
-std::list<CPath> UpdateList;
-
-
 /**
  *  \brief
  */
@@ -93,49 +89,6 @@ bool checkForGTagsBinaries(CPath& dllPath)
         MessageBox(NULL, msg.C_str(), cPluginName, MB_OK | MB_ICONERROR);
         return false;
     }
-
-    return true;
-}
-
-
-/**
- *  \brief
- */
-void sheduleForUpdate(const CPath& file)
-{
-    std::list<CPath>::reverse_iterator iFile;
-    for (iFile = UpdateList.rbegin(); iFile != UpdateList.rend(); ++iFile)
-        if (*iFile == file)
-            return;
-
-    UpdateList.push_back(file);
-}
-
-
-/**
- *  \brief
- */
-bool runSheduledUpdate(const TCHAR* dbPath)
-{
-    CPath file;
-    {
-        if (UpdateList.empty())
-            return false;
-
-        std::list<CPath>::iterator iFile;
-        for (iFile = UpdateList.begin(); iFile != UpdateList.end(); ++iFile)
-            if (iFile->IsSubpathOf(dbPath))
-                break;
-
-        if (iFile == UpdateList.end())
-            return false;
-
-        file = *iFile;
-        UpdateList.erase(iFile);
-    }
-
-    if (!UpdateSingleFile(file))
-        return runSheduledUpdate(dbPath);
 
     return true;
 }
@@ -243,16 +196,6 @@ DbHandle getDatabase(bool writeEn = false)
 /**
  *  \brief
  */
-inline void putDatabase(const CmdPtr_t& cmd)
-{
-    DbManager::Get().PutDb(cmd->Db());
-    runSheduledUpdate(cmd->DbPath());
-}
-
-
-/**
- *  \brief
- */
 bool processResults(const CmdPtr_t& cmd)
 {
     if (cmd->ResultLen() > 262144) // 256k
@@ -278,7 +221,7 @@ bool processResults(const CmdPtr_t& cmd)
  */
 void autoComplCB(const CmdPtr_t& cmd)
 {
-    putDatabase(cmd);
+    DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == OK && cmd->Result() && processResults(cmd))
     {
@@ -313,7 +256,7 @@ void halfComplCB(const CmdPtr_t& cmd)
         return;
     }
 
-    putDatabase(cmd);
+    DbManager::Get().PutDb(cmd->Db());
 
     INpp::Get().ClearSelection();
 
@@ -335,7 +278,7 @@ void halfComplCB(const CmdPtr_t& cmd)
  */
 void showResultCB(const CmdPtr_t& cmd)
 {
-    putDatabase(cmd);
+    DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == OK)
     {
@@ -841,7 +784,7 @@ bool UpdateSingleFile(const CPath& file)
 
     if (!success)
     {
-        sheduleForUpdate(file);
+        DbManager::Get().ScheduleUpdate(file);
         return true;
     }
 
@@ -922,7 +865,7 @@ void DbWriteCB(const CmdPtr_t& cmd)
     if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
         DbManager::Get().UnregisterDb(cmd->Db());
     else
-        putDatabase(cmd);
+        DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == RUN_ERROR)
     {

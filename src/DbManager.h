@@ -50,6 +50,7 @@ public:
     DbHandle GetDb(const CPath& filePath, bool writeEn, bool* success);
     bool PutDb(DbHandle db);
     bool DbExistsInFolder(const CPath& folder);
+    void ScheduleUpdate(const CPath& file);
 
 private:
     /**
@@ -113,8 +114,10 @@ private:
 
     bool deleteDb(CPath& dbPath);
     DbHandle lockDb(const CPath& dbPath, bool writeEn, bool* success);
+    bool runScheduledUpdate(const TCHAR* dbPath);
 
     std::list<GTagsDb>  _dbList;
+    std::list<CPath>    _updateList;
 };
 
 } // namespace GTags

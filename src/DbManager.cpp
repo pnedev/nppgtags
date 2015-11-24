@@ -22,8 +22,9 @@
  */
 
 
-#include "DbManager.h"
 #include <windows.h>
+#include "DbManager.h"
+#include "GTags.h"
 
 
 namespace GTags
@@ -108,7 +109,12 @@ bool DbManager::PutDb(DbHandle db)
         if (db == &(dbi->_path))
         {
             dbi->Unlock();
-            return dbi->IsLocked();
+
+            bool isLocked = dbi->IsLocked();
+            if (!isLocked)
+                runScheduledUpdate(dbi->_path.C_str());
+
+            return isLocked;
         }
     }
 
@@ -124,6 +130,20 @@ bool DbManager::DbExistsInFolder(const CPath& folder)
     CPath db(folder);
     db += _T("GTAGS");
     return db.FileExists();
+}
+
+
+/**
+ *  \brief
+ */
+void DbManager::ScheduleUpdate(const CPath& file)
+{
+    std::list<CPath>::reverse_iterator iFile;
+    for (iFile = _updateList.rbegin(); iFile != _updateList.rend(); ++iFile)
+        if (*iFile == file)
+            return;
+
+    _updateList.push_back(file);
 }
 
 
@@ -171,6 +191,35 @@ DbHandle DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* success)
     *success = true;
 
     return &(_dbList.rbegin()->_path);
+}
+
+
+/**
+ *  \brief
+ */
+bool DbManager::runScheduledUpdate(const TCHAR* dbPath)
+{
+    CPath file;
+    {
+        if (_updateList.empty())
+            return false;
+
+        std::list<CPath>::iterator iFile;
+        for (iFile = _updateList.begin(); iFile != _updateList.end(); ++iFile)
+            if (iFile->IsSubpathOf(dbPath))
+                break;
+
+        if (iFile == _updateList.end())
+            return false;
+
+        file = *iFile;
+        _updateList.erase(iFile);
+    }
+
+    if (!UpdateSingleFile(file))
+        return runScheduledUpdate(dbPath);
+
+    return true;
 }
 
 } // namespace GTags
