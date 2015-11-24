@@ -85,7 +85,7 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
         return;
 
     ACW = new AutoCompleteWin(cmd);
-    if (ACW->composeWindow(cmd->Name()) == NULL)
+    if (!ACW->parseCompletion() || ACW->composeWindow(cmd->Name()) == NULL)
     {
         delete ACW;
         ACW = NULL;
@@ -109,6 +109,24 @@ AutoCompleteWin::~AutoCompleteWin()
 {
     if (_hFont)
         DeleteObject(_hFont);
+}
+
+
+/**
+ *  \brief
+ */
+int AutoCompleteWin::parseCompletion()
+{
+    TCHAR* pTmp = NULL;
+    for (TCHAR* pToken = _tcstok_s(_result.C_str(), _T("\n\r"), &pTmp); pToken;
+            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+    {
+        if (_cmdId == AUTOCOMPLETE_FILE)
+            ++pToken;
+        _resultIndex.push_back(pToken);
+    }
+
+    return _resultIndex.size();
 }
 
 
@@ -165,7 +183,8 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     ListView_SetBkColor(_hLVWnd, backgroundColor);
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
 
-    if (!fillLV())
+    CText filter;
+    if (!filterLV(filter))
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
         return NULL;
@@ -175,34 +194,6 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     UpdateWindow(_hWnd);
 
     return _hWnd;
-}
-
-
-/**
- *  \brief
- */
-int AutoCompleteWin::fillLV()
-{
-    LVITEM lvItem   = {0};
-    lvItem.mask     = LVIF_TEXT | LVIF_STATE;
-
-    TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_result.C_str(), _T("\n\r"), &pTmp); pToken;
-            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
-    {
-        lvItem.pszText = (_cmdId == AUTOCOMPLETE_FILE) ? pToken + 1 : pToken;
-        ListView_InsertItem(_hLVWnd, &lvItem);
-        ++lvItem.iItem;
-        _resultIndex.push_back(lvItem.pszText);
-    }
-
-    if (lvItem.iItem > 0)
-    {
-        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-        resizeLV();
-    }
-
-    return lvItem.iItem;
 }
 
 
@@ -220,7 +211,7 @@ int AutoCompleteWin::filterLV(const CText& filter)
 
     for (unsigned i = 0; i < _resultIndex.size(); ++i)
     {
-        if (!_tcsncmp(_resultIndex[i], filter.C_str(), len))
+        if (!len || !_tcsncmp(_resultIndex[i], filter.C_str(), len))
         {
             lvItem.pszText = _resultIndex[i];
             ListView_InsertItem(_hLVWnd, &lvItem);

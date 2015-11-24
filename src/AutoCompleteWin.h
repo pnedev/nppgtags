@@ -57,8 +57,8 @@ private:
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();
 
+    int parseCompletion();
     HWND composeWindow(const TCHAR* header);
-    int fillLV();
     int filterLV(const CText& filter);
     void resizeLV();
 
