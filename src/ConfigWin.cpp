@@ -348,12 +348,8 @@ void ConfigWin::onUpdateDb()
     _hUpdateCount = dbs.size();
 
     if (_hUpdateCount)
-    {
-        EnableWindow(_hWnd, FALSE);
-
         for (unsigned i = 0; i < _hUpdateCount; ++i)
             CreateLibDatabase(_hWnd, dbs[i], updateDbCB);
-    }
 }
 
 
@@ -462,10 +458,7 @@ void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
         return;
 
     if (!--CW->_hUpdateCount)
-    {
-        EnableWindow(CW->_hWnd, TRUE);
         SetFocus(CW->_hOK);
-    }
 }
 
 

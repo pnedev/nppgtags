@@ -821,7 +821,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
         CText msg(_T("Database at\n\""));
         msg += dbPath;
         msg += _T("\" exists.\nRe-create?");
-        int choice = MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
+        int choice = MessageBox(hOwnerWin, msg.C_str(), cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
         {
@@ -836,7 +836,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
 
         if (!success)
         {
-            MessageBox(INpp::Get().GetHandle(), _T("GTags database is currently in use"), cPluginName,
+            MessageBox(hOwnerWin, _T("GTags database is currently in use"), cPluginName,
                     MB_OK | MB_ICONINFORMATION);
 
             CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, &dbPath));
