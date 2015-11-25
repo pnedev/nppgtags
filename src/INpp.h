@@ -256,17 +256,9 @@ public:
     void EnsureCurrentLineVisible() const;
     void SetView(long startPos, long endPos = 0) const;
 
-    inline long GetWordSize() const
-    {
-        long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-        long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
-
-        return wordEnd - wordStart;
-    }
-
-    void GetWord(CTextA& word, bool select) const;
-    void ReplaceWord(const char* replText) const;
+    long GetWordSize(bool partial = false) const;
+    void GetWord(CTextA& word, bool partial = false, bool select = false) const;
+    void ReplaceWord(const char* replText, bool partial = false) const;
     bool SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
             long* startPos = NULL, long* endPos = NULL) const;
 

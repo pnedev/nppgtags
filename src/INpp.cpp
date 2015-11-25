@@ -31,11 +31,28 @@ INpp INpp::Instance;
 /**
  *  \brief
  */
-void INpp::GetWord(CTextA& word, bool select) const
+long INpp::GetWordSize(bool partial) const
 {
     long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+
+    if (partial)
+        return currPos - wordStart;
+
     long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+
+    return wordEnd - wordStart;
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::GetWord(CTextA& word, bool partial, bool select) const
+{
+    long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    long wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     long len = wordEnd - wordStart;
     if (len == 0)
@@ -60,11 +77,11 @@ void INpp::GetWord(CTextA& word, bool select) const
 /**
  *  \brief
  */
-void INpp::ReplaceWord(const char* replText) const
+void INpp::ReplaceWord(const char* replText, bool partial) const
 {
     long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-    long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    long wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     SendMessage(_hSC, SCI_SETTARGETSTART, wordStart, 0);
     SendMessage(_hSC, SCI_SETTARGETEND, wordEnd, 0);

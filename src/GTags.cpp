@@ -51,7 +51,7 @@ using namespace GTags;
 const TCHAR cCreateDatabase[]   = _T("Create Database");
 const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
 const TCHAR cAutoCompl[]        = _T("AutoComplete");
-const TCHAR cAutoComplFile[]    = _T("AutoComplete Filename");
+const TCHAR cAutoComplFile[]    = _T("AutoComplete File Name");
 const TCHAR cFindFile[]         = _T("Find File");
 const TCHAR cFindDefinition[]   = _T("Find Definition");
 const TCHAR cFindReference[]    = _T("Find Reference");
@@ -143,10 +143,18 @@ bool browseForDbFolder(HWND hOwnerWin, CPath& dbPath)
 }
 
 
+enum WordSelection_t
+{
+    DONT_SELECT,
+    FULL_SELECT,
+    PARTIAL_SELECT
+};
+
+
 /**
  *  \brief
  */
-CText getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
+CText getSelection(bool skipPreSelect = false, WordSelection_t selectWord = FULL_SELECT, bool highlightWord = true)
 {
     INpp& npp = INpp::Get();
 
@@ -159,8 +167,8 @@ CText getSelection(bool autoSelectWord = false, bool skipPreSelect = false)
     if (!skipPreSelect)
         npp.GetSelection(tagA);
 
-    if (skipPreSelect || (tagA.IsEmpty() && autoSelectWord))
-        npp.GetWord(tagA, true);
+    if (skipPreSelect || (tagA.IsEmpty() && selectWord != DONT_SELECT))
+        npp.GetWord(tagA, selectWord == PARTIAL_SELECT, highlightWord);
 
     if (tagA.IsEmpty())
         return CText();
@@ -378,11 +386,9 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
  */
 void AutoComplete()
 {
-    CText tag = getSelection(true, true);
+    CText tag = getSelection(true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
-
-    INpp::Get().ClearSelection();
 
     DbHandle db = getDatabase();
     if (!db)
@@ -399,11 +405,9 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
-    CText tag = getSelection(true, true);
+    CText tag = getSelection(true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
-
-    INpp::Get().ClearSelection();
 
     tag.Insert(0, _T('/'));
 
@@ -432,7 +436,7 @@ void FindFile()
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser));
 
-    CText tag = getSelection();
+    CText tag = getSelection(false, DONT_SELECT);
     if (tag.IsEmpty())
     {
         CPath fileName;
@@ -464,7 +468,7 @@ void FindDefinition()
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db, parser));
 
-    CText tag = getSelection(true);
+    CText tag = getSelection();
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, findCB, false);
@@ -499,7 +503,7 @@ void FindReference()
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser));
 
-    CText tag = getSelection(true);
+    CText tag = getSelection();
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, findCB, false);
@@ -527,7 +531,7 @@ void Search()
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(GREP, cSearch, db, parser));
 
-    CText tag = getSelection(true);
+    CText tag = getSelection();
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, showResultCB);

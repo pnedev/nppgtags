@@ -168,7 +168,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
 
     CTextA wordA;
-    INpp::Get().GetWord(wordA, true);
+    INpp::Get().GetWord(wordA, true, true);
     CText word(wordA.C_str());
 
     if (!filterLV(word))
@@ -303,7 +303,7 @@ void AutoCompleteWin::onDblClick()
     lvItem.pszText[lvItem.cchTextMax - 1] = 0;
 
     CTextA completion(itemTxt);
-    INpp::Get().ReplaceWord(completion.C_str());
+    INpp::Get().ReplaceWord(completion.C_str(), true);
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
@@ -333,7 +333,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         return true;
 
         case VK_DELETE:
-            INpp::Get().ReplaceWord("");
+            INpp::Get().ReplaceWord("", true);
             SendMessage(_hWnd, WM_CLOSE, 0, 0);
         return true;
 
@@ -342,7 +342,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
             INpp& npp = INpp::Get();
             npp.ClearSelection();
             npp.Backspace();
-            if (npp.GetWordSize() < _cmdTagLen)
+            if (npp.GetWordSize(true) < _cmdTagLen)
             {
                 SendMessage(_hWnd, WM_CLOSE, 0, 0);
                 return true;
@@ -367,7 +367,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     }
 
     CTextA wordA;
-    INpp::Get().GetWord(wordA, true);
+    INpp::Get().GetWord(wordA, true, true);
     CText word(wordA.C_str());
     int lvItemsCnt = filterLV(word);
 
