@@ -52,14 +52,17 @@ enum CmdStatus_t
     CANCELLED = 0,
     RUN_ERROR,
     FAILED,
+    PARSE_ERROR,
     OK
 };
 
 
 class Cmd;
+class ResultParser;
 
 
 typedef std::shared_ptr<Cmd> CmdPtr_t;
+typedef std::shared_ptr<ResultParser> ParserPtr_t;
 typedef void (*CompletionCB)(const CmdPtr_t&);
 
 } // namespace GTags

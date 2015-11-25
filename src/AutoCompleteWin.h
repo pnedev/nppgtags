@@ -27,7 +27,6 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <vector>
 #include "Common.h"
 #include "CmdDefines.h"
 
@@ -50,6 +49,7 @@ public:
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
+    static const int    cWidth;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -57,7 +57,6 @@ private:
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();
 
-    int parseCompletion();
     HWND composeWindow(const TCHAR* header);
     int filterLV(const CText& filter);
     void resizeLV();
@@ -67,13 +66,12 @@ private:
 
     static AutoCompleteWin* ACW;
 
-    HWND                _hWnd;
-    HWND                _hLVWnd;
-    HFONT               _hFont;
-    const CmdId_t       _cmdId;
-    const int           _cmdTagLen;
-    CText               _result;
-    std::vector<TCHAR*> _resultIndex;
+    HWND            _hWnd;
+    HWND            _hLVWnd;
+    HFONT           _hFont;
+    const CmdId_t   _cmdId;
+    const int       _cmdTagLen;
+    ParserPtr_t     _completion;
 };
 
 } // namespace GTags

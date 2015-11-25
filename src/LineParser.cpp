@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags command class
+ *  \brief  Line parser (splitter) class
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -22,7 +22,7 @@
  */
 
 
-#include "Cmd.h"
+#include "LineParser.h"
 
 
 namespace GTags
@@ -31,18 +31,21 @@ namespace GTags
 /**
  *  \brief
  */
-Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, ParserPtr_t parser,
-        const TCHAR* tag, bool regExp, bool matchCase) :
-        _id(id), _db(db), _parser(parser), _regExp(regExp), _matchCase(matchCase), _status(CANCELLED)
+bool LineParser::Parse(const CmdPtr_t& cmd)
 {
-    if (db)
-        _dbPath = *db;
+    _lines.clear();
+    _buf = cmd->Result();
 
-    if (name)
-        _name = name;
+    TCHAR* pTmp = NULL;
+    for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken;
+            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
+    {
+        if (cmd->Id() == FIND_FILE || cmd->Id() == AUTOCOMPLETE_FILE)
+            ++pToken;
+        _lines.push_back(pToken);
+    }
 
-    if (tag)
-        _tag = tag;
+    return true;
 }
 
 } // namespace GTags

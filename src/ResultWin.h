@@ -30,7 +30,7 @@
 #include <vector>
 #include "Scintilla.h"
 #include "Common.h"
-#include "CmdDefines.h"
+#include "Cmd.h"
 
 
 namespace GTags
@@ -43,6 +43,28 @@ namespace GTags
 class ResultWin
 {
 public:
+    /**
+     *  \class  TabParser
+     *  \brief
+     */
+    class TabParser : public ResultParser
+    {
+    public:
+        TabParser() {}
+        virtual ~TabParser() {}
+
+        virtual bool Parse(const CmdPtr_t&);
+
+        const CTextA& operator()() const { return _buf; }
+
+    private:
+        bool parseCmd(const char* src);
+        bool parseFindFile(const char* src);
+
+        CTextA  _buf;
+    };
+
+
     static HWND Register();
     static void Unregister();
 
@@ -79,26 +101,23 @@ private:
             return (_cmdId == tab._cmdId && _projectPath == tab._projectPath && _search == tab._search);
         }
 
-        const CmdId_t       _cmdId;
-        const bool          _regExp;
-        const bool          _matchCase;
-        CTextA              _projectPath;
-        CTextA              _search;
-        bool                _outdated;
-        CTextA              _uiBuf;
-        int                 _currentLine;
-        int                 _firstVisibleLine;
+        const CmdId_t   _cmdId;
+        const bool      _regExp;
+        const bool      _matchCase;
+        CTextA          _projectPath;
+        CTextA          _search;
+        int             _currentLine;
+        int             _firstVisibleLine;
+        ParserPtr_t     _parser;
 
         void SetFolded(int lineNum);
         void ClearFolded(int lineNum);
         bool IsFolded(int lineNum);
 
     private:
-        void parseCmd(CTextA& dst, const char* src);
-        void parseFindFile(CTextA& dst, const char* src);
-
         std::vector<int> _expandedLines;
     };
+
 
     static const COLORREF   cBlack = RGB(0,0,0);
     static const COLORREF   cWhite = RGB(255,255,255);

@@ -108,7 +108,7 @@ unsigned CmdEngine::start()
 
     PROCESS_INFORMATION pi;
 
-    if (runProcess(pi, dataPipe, errorPipe))
+    if (!runProcess(pi, dataPipe, errorPipe))
         return 1;
 
     bool showActivityWin = true;
@@ -172,6 +172,15 @@ unsigned CmdEngine::start()
     }
 
     _cmd->_status = OK;
+
+    if (_cmd->_parser && _cmd->Result())
+    {
+        if (!_cmd->_parser->Parse(_cmd))
+        {
+            _cmd->_status = PARSE_ERROR;
+            return 1;
+        }
+    }
 
     return 0;
 }
@@ -254,7 +263,7 @@ void CmdEngine::composeCmd(CText& buf) const
 /**
  *  \brief
  */
-int CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe)
+bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe)
 {
     CText buf(2048);
     composeCmd(buf);
@@ -283,7 +292,7 @@ int CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe&
     if (!CreateProcess(NULL, buf.C_str(), NULL, NULL, TRUE, createFlags, (LPVOID)env, currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
-        return -1;
+        return false;
     }
 
     SetThreadPriority(pi.hThread, THREAD_PRIORITY_NORMAL);
@@ -292,10 +301,10 @@ int CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe&
     {
         endProcess(pi);
         _cmd->_status = RUN_ERROR;
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
 

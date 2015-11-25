@@ -67,7 +67,7 @@ private:
     unsigned start();
     const TCHAR* getCmdLine() const;
     void composeCmd(CText& buf) const;
-    int runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe);
+    bool runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe);
     void endProcess(PROCESS_INFORMATION& pi);
 
     CmdPtr_t            _cmd;

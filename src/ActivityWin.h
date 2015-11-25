@@ -59,7 +59,7 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ActivityWin(HANDLE hCancel) : _hCancel(hCancel), _hWnd(NULL) {};
+    ActivityWin(HANDLE hCancel) : _hCancel(hCancel), _hWnd(NULL) {}
     ActivityWin(const ActivityWin&);
     ~ActivityWin();
 

@@ -33,13 +33,14 @@
 #include "CmdEngine.h"
 #include "SearchWin.h"
 #include "Cmd.h"
+#include "LineParser.h"
 
 
 namespace GTags
 {
 
 const TCHAR SearchWin::cClassName[] = _T("SearchWin");
-const int SearchWin::cWidth         = 420;
+const int SearchWin::cWidth         = 450;
 const int SearchWin::cComplAfter    = 2;
 
 
@@ -294,6 +295,7 @@ void SearchWin::startCompletion()
     CmdId_t cmdId;
     TCHAR tag[cComplAfter + 2];
     CompletionCB complCB;
+    ParserPtr_t parser;
 
     if (_cmd->Id() == FIND_FILE)
     {
@@ -304,6 +306,7 @@ void SearchWin::startCompletion()
         tag[cComplAfter + 1] = 0;
 
         complCB = endCompletion;
+        parser.reset(new LineParser);
     }
     else
     {
@@ -315,7 +318,8 @@ void SearchWin::startCompletion()
         complCB = halfComplete;
     }
 
-    CmdPtr_t cmpl(new Cmd(cmdId, _T("AutoComplete"), _cmd->Db(), tag, false, (Button_GetCheck(_hMC) == BST_CHECKED)));
+    CmdPtr_t cmpl(new Cmd(cmdId, _T("AutoComplete"), _cmd->Db(), parser,
+            tag, false, (Button_GetCheck(_hMC) == BST_CHECKED)));
 
     _completionStarted = true;
 
@@ -340,6 +344,9 @@ void SearchWin::halfComplete(const CmdPtr_t& cmpl)
     if (cmpl->Status() == OK)
     {
         cmpl->Id(AUTOCOMPLETE_SYMBOL);
+
+        ParserPtr_t parser(new LineParser);
+        cmpl->Parser(parser);
 
         CmdEngine::Run(cmpl, endCompletion);
     }
@@ -366,28 +373,11 @@ void SearchWin::endCompletion(const CmdPtr_t& cmpl)
 
     if (cmpl->Status() == OK && cmpl->Result())
     {
-        SW->_complData = cmpl->Result();
-        SW->parseCompletion();
+        SW->_completion = cmpl->Parser();
         SW->filterComplList();
     }
 
     SW->_completionDone = true;
-}
-
-
-/**
- *  \brief
- */
-void SearchWin::parseCompletion()
-{
-    TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_complData.C_str(), _T("\n\r"), &pTmp); pToken;
-            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
-    {
-        if (_cmd->Id() == FIND_FILE)
-            ++pToken;
-        _complIndex.push_back(pToken);
-    }
 }
 
 
@@ -409,7 +399,7 @@ void SearchWin::clearCompletion()
     ComboBox_SetText(_hSearch, txt.C_str());
     PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 
-    _complIndex.clear();
+    _completion.reset();
     _completionDone = false;
 }
 
@@ -419,7 +409,7 @@ void SearchWin::clearCompletion()
  */
 void SearchWin::filterComplList()
 {
-    if (_complIndex.empty())
+    if (!_completion)
         return;
 
     CText filter(ComboBox_GetTextLength(_hSearch));
@@ -442,16 +432,17 @@ void SearchWin::filterComplList()
 
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
+    const LineParser& completion = *(const LineParser*)_completion.get();
     if (filter.Len() == cComplAfter)
     {
-        for (unsigned i = 0; i < _complIndex.size(); ++i)
-            ComboBox_AddString(_hSearch, _complIndex[i]);
+        for (unsigned i = 0; i < completion().size(); ++i)
+            ComboBox_AddString(_hSearch, completion()[i]);
     }
     else
     {
-        for (unsigned i = 0; i < _complIndex.size(); ++i)
-            if (!pCompare(_complIndex[i], filter.C_str(), filter.Len()))
-                ComboBox_AddString(_hSearch, _complIndex[i]);
+        for (unsigned i = 0; i < completion().size(); ++i)
+            if (!pCompare(completion()[i], filter.C_str(), filter.Len()))
+                ComboBox_AddString(_hSearch, completion()[i]);
     }
 
     if (ComboBox_GetCount(_hSearch))
@@ -483,7 +474,9 @@ void SearchWin::onEditChange()
     {
         int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
-        if (pos <= cComplAfter)
+        if (pos < cComplAfter)
+            clearCompletion();
+        else if (pos == cComplAfter && _keyPressed != VK_BACK && _keyPressed != VK_DELETE)
             clearCompletion();
         else
             filterComplList();

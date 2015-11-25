@@ -39,6 +39,7 @@
 #include "ConfigWin.h"
 #include "AboutWin.h"
 #include "GTags.h"
+#include "LineParser.h"
 
 
 namespace
@@ -196,34 +197,11 @@ DbHandle getDatabase(bool writeEn = false)
 /**
  *  \brief
  */
-bool processResults(const CmdPtr_t& cmd)
-{
-    if (cmd->ResultLen() > 262144) // 256k
-    {
-        CText msg(cmd->Name());
-        msg += _T(" \"");
-        msg += cmd->Tag();
-        msg += _T("\": A lot of matches were found, parsing those will be rather slow.\n")
-                _T("Are you sure you want to proceed?");
-
-        int choice = MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName,
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
-        if (choice != IDYES)
-            return false;
-    }
-
-    return true;
-}
-
-
-/**
- *  \brief
- */
 void autoComplCB(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
 
-    if (cmd->Status() == OK && cmd->Result() && processResults(cmd))
+    if (cmd->Status() == OK && cmd->Result())
     {
         AutoCompleteWin::Show(cmd);
         return;
@@ -252,6 +230,10 @@ void halfComplCB(const CmdPtr_t& cmd)
     if (cmd->Status() == OK)
     {
         cmd->Id(AUTOCOMPLETE_SYMBOL);
+
+        ParserPtr_t parser(new LineParser);
+        cmd->Parser(parser);
+
         CmdEngine::Run(cmd, autoComplCB);
         return;
     }
@@ -284,8 +266,7 @@ void showResultCB(const CmdPtr_t& cmd)
     {
         if (cmd->Result())
         {
-            if (processResults(cmd))
-                ResultWin::Show(cmd);
+            ResultWin::Show(cmd);
         }
         else
         {
@@ -304,6 +285,11 @@ void showResultCB(const CmdPtr_t& cmd)
     else if (cmd->Status() == RUN_ERROR)
     {
         MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == PARSE_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Database seems outdated.\nPlease re-create it and redo the search"),
+                cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 }
 
@@ -396,14 +382,13 @@ void AutoComplete()
     if (tag.IsEmpty())
         return;
 
+    INpp::Get().ClearSelection();
+
     DbHandle db = getDatabase();
     if (!db)
-    {
-        INpp::Get().ClearSelection();
         return;
-    }
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, tag.C_str()));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, NULL, tag.C_str()));
 
     CmdEngine::Run(cmd, halfComplCB);
 }
@@ -418,16 +403,16 @@ void AutoCompleteFile()
     if (tag.IsEmpty())
         return;
 
+    INpp::Get().ClearSelection();
+
     tag.Insert(0, _T('/'));
 
     DbHandle db = getDatabase();
     if (!db)
-    {
-        INpp::Get().ClearSelection();
         return;
-    }
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, tag.C_str()));
+    ParserPtr_t parser(new LineParser);
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, parser, tag.C_str()));
 
     CmdEngine::Run(cmd, autoComplCB);
 }
@@ -444,7 +429,8 @@ void FindFile()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db));
+    ParserPtr_t parser(new ResultWin::TabParser);
+    CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser));
 
     CText tag = getSelection();
     if (tag.IsEmpty())
@@ -475,7 +461,8 @@ void FindDefinition()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db));
+    ParserPtr_t parser(new ResultWin::TabParser);
+    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db, parser));
 
     CText tag = getSelection(true);
     if (tag.IsEmpty())
@@ -509,7 +496,8 @@ void FindReference()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db));
+    ParserPtr_t parser(new ResultWin::TabParser);
+    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser));
 
     CText tag = getSelection(true);
     if (tag.IsEmpty())
@@ -536,7 +524,8 @@ void Search()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(GREP, cSearch, db));
+    ParserPtr_t parser(new ResultWin::TabParser);
+    CmdPtr_t cmd(new Cmd(GREP, cSearch, db, parser));
 
     CText tag = getSelection(true);
     if (tag.IsEmpty())
@@ -788,7 +777,7 @@ bool UpdateSingleFile(const CPath& file)
         return true;
     }
 
-    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, file.C_str()));
+    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, NULL, file.C_str()));
 
     if (!CmdEngine::Run(cmd, DbWriteCB))
         return false;

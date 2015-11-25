@@ -40,15 +40,28 @@ class CmdEngine;
 
 
 /**
+ *  \class  ResultParser
+ *  \brief
+ */
+class ResultParser
+{
+public:
+    virtual ~ResultParser() {}
+
+    virtual bool Parse(const CmdPtr_t&) = 0;
+};
+
+
+/**
  *  \class  Cmd
  *  \brief
  */
 class Cmd
 {
 public:
-    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL, const TCHAR* tag = NULL,
-            bool regExp = false, bool matchCase = true);
-    ~Cmd() {};
+    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL, ParserPtr_t parser = ParserPtr_t(NULL),
+            const TCHAR* tag = NULL, bool regExp = false, bool matchCase = true);
+    ~Cmd() {}
 
     inline void Id(CmdId_t id) { _id = id; }
     inline CmdId_t Id() const { return _id; }
@@ -63,6 +76,9 @@ public:
     inline void Tag(const TCHAR* tag) { if (tag) _tag = tag; }
     inline const TCHAR* Tag() const { return _tag.C_str(); }
     inline unsigned TagLen() const { return _tag.Len(); }
+
+    inline void Parser(const ParserPtr_t& parser) { _parser = parser; }
+    inline const ParserPtr_t& Parser() const { return _parser; }
 
     inline void RegExp(bool re) { _regExp = re; }
     inline bool RegExp() const { return _regExp; }
@@ -99,6 +115,7 @@ private:
     CPath               _dbPath;
 
     CText               _tag;
+    ParserPtr_t         _parser;
     bool                _regExp;
     bool                _matchCase;
 

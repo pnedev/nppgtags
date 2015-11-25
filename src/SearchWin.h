@@ -27,7 +27,6 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <vector>
 #include "Common.h"
 #include "GTags.h"
 #include "CmdDefines.h"
@@ -69,7 +68,6 @@ private:
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void startCompletion();
-    void parseCompletion();
     void clearCompletion();
     void filterComplList();
 
@@ -81,20 +79,19 @@ private:
     CmdPtr_t            _cmd;
     CompletionCB const  _complCB;
 
-    HWND                _hWnd;
-    HWND                _hSearch;
-    HWND                _hRE;
-    HWND                _hMC;
-    HWND                _hOK;
-    HFONT               _hTxtFont;
-    HFONT               _hBtnFont;
-    HHOOK               _hKeyHook;
-    bool                _cancelled;
-    int                 _keyPressed;
-    bool                _completionStarted;
-    bool                _completionDone;
-    CText               _complData;
-    std::vector<TCHAR*> _complIndex;
+    HWND        _hWnd;
+    HWND        _hSearch;
+    HWND        _hRE;
+    HWND        _hMC;
+    HWND        _hOK;
+    HFONT       _hTxtFont;
+    HFONT       _hBtnFont;
+    HHOOK       _hKeyHook;
+    bool        _cancelled;
+    int         _keyPressed;
+    bool        _completionStarted;
+    bool        _completionDone;
+    ParserPtr_t _completion;
 };
 
 } // namespace GTags

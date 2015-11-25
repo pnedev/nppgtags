@@ -32,13 +32,15 @@
 #include "GTags.h"
 #include "AutoCompleteWin.h"
 #include "Cmd.h"
+#include "LineParser.h"
 
 
 namespace GTags
 {
 
-const TCHAR AutoCompleteWin::cClassName[]    = _T("AutoCompleteWin");
-const int AutoCompleteWin::cBackgroundColor  = COLOR_INFOBK;
+const TCHAR AutoCompleteWin::cClassName[]   = _T("AutoCompleteWin");
+const int AutoCompleteWin::cBackgroundColor = COLOR_INFOBK;
+const int AutoCompleteWin::cWidth           = 400;
 
 
 AutoCompleteWin* AutoCompleteWin::ACW = NULL;
@@ -85,7 +87,7 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
         return;
 
     ACW = new AutoCompleteWin(cmd);
-    if (!ACW->parseCompletion() || ACW->composeWindow(cmd->Name()) == NULL)
+    if (ACW->composeWindow(cmd->Name()) == NULL)
     {
         delete ACW;
         ACW = NULL;
@@ -98,7 +100,7 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()),
-    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->TagLen() - 1 : cmd->TagLen())), _result(cmd->Result())
+    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->TagLen() - 1 : cmd->TagLen())), _completion(cmd->Parser())
 {}
 
 
@@ -109,24 +111,6 @@ AutoCompleteWin::~AutoCompleteWin()
 {
     if (_hFont)
         DeleteObject(_hFont);
-}
-
-
-/**
- *  \brief
- */
-int AutoCompleteWin::parseCompletion()
-{
-    TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_result.C_str(), _T("\n\r"), &pTmp); pToken;
-            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))
-    {
-        if (_cmdId == AUTOCOMPLETE_FILE)
-            ++pToken;
-        _resultIndex.push_back(pToken);
-    }
-
-    return _resultIndex.size();
 }
 
 
@@ -176,15 +160,18 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
     lvCol.pszText       = buf;
     lvCol.cchTextMax    = _countof(buf);
-    lvCol.cx            = 360;
+    lvCol.cx            = cWidth;
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
     DWORD backgroundColor = GetSysColor(cBackgroundColor);
     ListView_SetBkColor(_hLVWnd, backgroundColor);
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
 
-    CText filter;
-    if (!filterLV(filter))
+    CTextA wordA;
+    INpp::Get().GetWord(wordA, true);
+    CText word(wordA.C_str());
+
+    if (!filterLV(word))
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
         return NULL;
@@ -209,11 +196,12 @@ int AutoCompleteWin::filterLV(const CText& filter)
 
     ListView_DeleteAllItems(_hLVWnd);
 
-    for (unsigned i = 0; i < _resultIndex.size(); ++i)
+    const LineParser& completion = *(const LineParser*)_completion.get();
+    for (unsigned i = 0; i < completion().size(); ++i)
     {
-        if (!len || !_tcsncmp(_resultIndex[i], filter.C_str(), len))
+        if (!len || !_tcsncmp(completion()[i], filter.C_str(), len))
         {
-            lvItem.pszText = _resultIndex[i];
+            lvItem.pszText = completion()[i];
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
         }

@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags command class
+ *  \brief  Line parser (splitter) class
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -22,6 +22,14 @@
  */
 
 
+#pragma once
+
+
+#include <windows.h>
+#include <tchar.h>
+#include <vector>
+#include <memory>
+#include "Common.h"
 #include "Cmd.h"
 
 
@@ -29,20 +37,22 @@ namespace GTags
 {
 
 /**
+ *  \class  LineParser
  *  \brief
  */
-Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, ParserPtr_t parser,
-        const TCHAR* tag, bool regExp, bool matchCase) :
-        _id(id), _db(db), _parser(parser), _regExp(regExp), _matchCase(matchCase), _status(CANCELLED)
+class LineParser : public ResultParser
 {
-    if (db)
-        _dbPath = *db;
+public:
+    LineParser() {}
+    virtual ~LineParser() {}
 
-    if (name)
-        _name = name;
+    virtual bool Parse(const CmdPtr_t&);
 
-    if (tag)
-        _tag = tag;
-}
+    const std::vector<TCHAR*>& operator()() const { return _lines; }
+
+private:
+    CText               _buf;
+    std::vector<TCHAR*> _lines;
+};
 
 } // namespace GTags

@@ -68,33 +68,57 @@ ResultWin* ResultWin::RW = NULL;
 /**
  *  \brief
  */
-ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath()),
-    _search(cmd->Tag()), _outdated(false), _currentLine(1), _firstVisibleLine(0)
+bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 {
     // Add the search header - cmd name + search word + project path
-    _uiBuf = cmd->Name();
-    _uiBuf += " \"";
-    _uiBuf += _search.C_str();
-    _uiBuf += "\" (";
-    _uiBuf += _regExp ? "regexp, ": "literal, ";
-    _uiBuf += _matchCase ? "match case": "ignore case";
-    _uiBuf += ") in \"";
-    _uiBuf += _projectPath;
-    _uiBuf += "\"";
+    _buf = cmd->Name();
+    _buf += " \"";
+    _buf += cmd->Tag();
+    _buf += "\" (";
+    _buf += cmd->RegExp() ? "regexp, ": "literal, ";
+    _buf += cmd->MatchCase() ? "match case": "ignore case";
+    _buf += ") in \"";
+    _buf += cmd->DbPath();
+    _buf += "\"";
 
-    // parsing result buffer and composing UI buffer
-    if (_cmdId == FIND_FILE)
-        parseFindFile(_uiBuf, cmd->Result());
+    // parsing command result
+    if (cmd->Id() == FIND_FILE)
+        return parseFindFile(cmd->Result());
     else
-        parseCmd(_uiBuf, cmd->Result());
+        return parseCmd(cmd->Result());
 }
 
 
 /**
  *  \brief
  */
-void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
+bool ResultWin::TabParser::parseFindFile(const char* src)
+{
+    const char* eol;
+
+    for (;;)
+    {
+        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
+            ++src;
+        if (*src == 0) break;
+
+        eol = src;
+        while (*eol != '\n' && *eol != '\r' && *eol != 0)
+            ++eol;
+
+        _buf += "\n\t";
+        _buf.Append(src, eol - src);
+        src = eol;
+    }
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+bool ResultWin::TabParser::parseCmd(const char* src)
 {
     const char* pLine;
     const char* pPreviousFile = NULL;
@@ -117,17 +141,17 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
         {
             pPreviousFile = src;
             pPreviousFileLen = pLine - src;
-            dst += "\n\t";
-            dst.Append(pPreviousFile, pPreviousFileLen);
+            _buf += "\n\t";
+            _buf.Append(pPreviousFile, pPreviousFileLen);
         }
 
         src = ++pLine;
         while (*src != ':')
             ++src;
 
-        dst += "\n\t\tline ";
-        dst.Append(pLine, src - pLine);
-        dst += ":\t";
+        _buf += "\n\t\tline ";
+        _buf.Append(pLine, src - pLine);
+        _buf += ":\t";
 
         pLine = ++src;
         while (*pLine == ' ' || *pLine == '\t')
@@ -138,37 +162,22 @@ void ResultWin::Tab::parseCmd(CTextA& dst, const char* src)
             ++src;
 
         if (src == pLine + 1)
-        {
-            _outdated = true;
-            break;
-        }
+            return false;
 
-        dst.Append(pLine, src - pLine);
+        _buf.Append(pLine, src - pLine);
     }
+
+    return true;
 }
 
 
 /**
  *  \brief
  */
-void ResultWin::Tab::parseFindFile(CTextA& dst, const char* src)
+ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath()),
+    _search(cmd->Tag()), _currentLine(1), _firstVisibleLine(0), _parser(cmd->Parser())
 {
-    const char* eol;
-
-    for (;;)
-    {
-        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
-            ++src;
-        if (*src == 0) break;
-
-        eol = src;
-        while (*eol != '\n' && *eol != '\r' && *eol != 0)
-            ++eol;
-
-        dst += "\n\t";
-        dst.Append(src, eol - src);
-        src = eol;
-    }
 }
 
 
@@ -297,9 +306,6 @@ void ResultWin::show()
  */
 void ResultWin::show(const CmdPtr_t& cmd)
 {
-    INpp& npp = INpp::Get();
-
-    // parsing results happens here
     Tab* tab = new Tab(cmd);
 
     int i;
@@ -316,50 +322,34 @@ void ResultWin::show(const CmdPtr_t& cmd)
         }
     }
 
-    if (tab->_outdated)
+    if (i == 0) // search is completely new - add new tab
     {
-        MessageBox(npp.GetHandle(),
-                _T("Database is outdated.\n")
-                _T("Please re-create it and redo the search"),
-                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        TCHAR buf[64];
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag());
 
-        if (i)
-            TabCtrl_DeleteItem(_hTab, --i);
+        TCITEM tci  = {0};
+        tci.mask    = TCIF_TEXT | TCIF_PARAM;
+        tci.pszText = buf;
+        tci.lParam  = (LPARAM)tab;
 
-        delete tab;
-        tab = NULL;
-    }
-    else
-    {
-        if (i == 0) // search is completely new - add new tab
+        i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+        if (i == -1)
         {
-            TCHAR buf[64];
-            _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag());
-
-            TCITEM tci  = {0};
-            tci.mask    = TCIF_TEXT | TCIF_PARAM;
-            tci.pszText = buf;
-            tci.lParam  = (LPARAM)tab;
-
-            i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
-            if (i == -1)
-            {
-                delete tab;
-                return;
-            }
+            delete tab;
+            return;
         }
-        else // same search tab exists - reuse it, just update results
-        {
-            TCITEM tci  = {0};
-            tci.mask    = TCIF_PARAM;
-            tci.lParam  = (LPARAM)tab;
+    }
+    else // same search tab exists - reuse it, just update results
+    {
+        TCITEM tci  = {0};
+        tci.mask    = TCIF_PARAM;
+        tci.lParam  = (LPARAM)tab;
 
-            if (!TabCtrl_SetItem(_hTab, --i, &tci))
-            {
-                TabCtrl_DeleteItem(_hTab, i);
-                delete tab;
-                tab = NULL;
-            }
+        if (!TabCtrl_SetItem(_hTab, --i, &tci))
+        {
+            TabCtrl_DeleteItem(_hTab, i);
+            delete tab;
+            tab = NULL;
         }
     }
 
@@ -646,7 +636,8 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
 
     _activeTab = tab;
 
-    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_uiBuf.C_str()));
+    const TabParser& data = *(const TabParser*)tab->_parser.get();
+    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(data().C_str()));
     sendSci(SCI_SETREADONLY, 1);
 
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
