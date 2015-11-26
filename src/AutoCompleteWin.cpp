@@ -100,7 +100,7 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()),
-    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->TagLen() - 1 : cmd->TagLen())), _completion(cmd->Parser())
+    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())), _completion(cmd->Parser())
 {}
 
 

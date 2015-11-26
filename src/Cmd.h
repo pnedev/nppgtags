@@ -70,12 +70,10 @@ public:
     inline const TCHAR* Name() const { return _name.C_str(); }
 
     inline DbHandle Db() const { return _db; }
-    inline const TCHAR* DbPath() const { return _dbPath.C_str(); }
-    inline unsigned DbPathLen() const { return _dbPath.Len(); }
+    inline const CPath& DbPath() const { return _dbPath; }
 
-    inline void Tag(const TCHAR* tag) { if (tag) _tag = tag; }
-    inline const TCHAR* Tag() const { return _tag.C_str(); }
-    inline unsigned TagLen() const { return _tag.Len(); }
+    inline void Tag(const CText& tag) { _tag = tag; }
+    inline const CText& Tag() const { return _tag; }
 
     inline void Parser(const ParserPtr_t& parser) { _parser = parser; }
     inline const ParserPtr_t& Parser() const { return _parser; }

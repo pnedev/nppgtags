@@ -441,14 +441,12 @@ void FindFile()
     {
         CPath fileName;
         INpp::Get().GetFileNamePart(fileName);
-        cmd->Tag(fileName.C_str());
-
+        cmd->Tag(fileName);
         SearchWin::Show(cmd, showResultCB);
     }
     else
     {
-        cmd->Tag(tag.C_str());
-
+        cmd->Tag(tag);
         CmdEngine::Run(cmd, showResultCB);
     }
 }
@@ -475,8 +473,7 @@ void FindDefinition()
     }
     else
     {
-        cmd->Tag(tag.C_str());
-
+        cmd->Tag(tag);
         CmdEngine::Run(cmd, findCB);
     }
 }
@@ -510,8 +507,7 @@ void FindReference()
     }
     else
     {
-        cmd->Tag(tag.C_str());
-
+        cmd->Tag(tag);
         CmdEngine::Run(cmd, findCB);
     }
 }
@@ -538,8 +534,7 @@ void Search()
     }
     else
     {
-        cmd->Tag(tag.C_str());
-
+        cmd->Tag(tag);
         CmdEngine::Run(cmd, showResultCB);
     }
 }
@@ -801,10 +796,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
     if (dbPath.IsEmpty())
     {
         if (!browseForDbFolder(hOwnerWin, dbPath))
-        {
-            complCB(CmdPtr_t());
             return false;
-        }
     }
 
     DbHandle db;
@@ -817,12 +809,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
         int choice = MessageBox(hOwnerWin, msg.C_str(), cPluginName,
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
-        {
-            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, &dbPath));
-            cmd->Status(OK);
-            complCB(cmd);
-            return true;
-        }
+            return false;
 
         bool success;
         db = DbManager::Get().GetDb(dbPath, true, &success);
@@ -831,11 +818,7 @@ bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
         {
             MessageBox(hOwnerWin, _T("GTags database is currently in use"), cPluginName,
                     MB_OK | MB_ICONINFORMATION);
-
-            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, &dbPath));
-            cmd->Status(OK);
-            complCB(cmd);
-            return true;
+            return false;
         }
     }
     else

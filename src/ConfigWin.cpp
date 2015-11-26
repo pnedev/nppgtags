@@ -399,24 +399,8 @@ void ConfigWin::onSave()
 /**
  *  \brief
  */
-void ConfigWin::createDbCB(const CmdPtr_t& cmd)
+void ConfigWin::fillLibDb(const CPath& lib)
 {
-    if (cmd)
-        DbWriteCB(cmd);
-
-    if (CW == NULL)
-        return;
-
-    EnableWindow(CW->_hWnd, TRUE);
-
-    if (!cmd || cmd->Status() != OK)
-        return;
-
-    int libLen = cmd->DbPathLen();
-
-    if (libLen == 0)
-        return;
-
     int len = Edit_GetTextLength(CW->_hLibDb);
     CText buf(len);
     bool found = false;
@@ -425,8 +409,9 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
     {
         Edit_GetText(CW->_hLibDb, buf.C_str(), buf.Size());
 
-        for (TCHAR* ptr = _tcsstr(buf.C_str(), cmd->DbPath());
-                ptr; ptr = _tcsstr(ptr, cmd->DbPath()))
+        int libLen = lib.Len();
+
+        for (TCHAR* ptr = _tcsstr(buf.C_str(), lib.C_str()); ptr; ptr = _tcsstr(ptr, lib.C_str()))
         {
             if (ptr[libLen] == _T('\0') || ptr[libLen] == _T('\n') || ptr[libLen] == _T('\r'))
             {
@@ -441,13 +426,32 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
 
     if (!found)
     {
-        buf += cmd->DbPath();
+        buf += lib;
         Edit_SetText(CW->_hLibDb, buf.C_str());
     }
 
     SetFocus(CW->_hLibDb);
     Edit_SetSel(CW->_hLibDb, buf.Len(), buf.Len());
     Edit_ScrollCaret(CW->_hLibDb);
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::createDbCB(const CmdPtr_t& cmd)
+{
+    if (cmd)
+        DbWriteCB(cmd);
+
+    if (CW == NULL)
+        return;
+
+    ShowWindow(CW->_hWnd, SW_SHOW);
+    // EnableWindow(CW->_hWnd, TRUE);
+
+    if (cmd->Status() == OK)
+        CW->fillLibDb(cmd->DbPath());
 }
 
 
@@ -548,9 +552,19 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 if ((HWND)lParam == CW->_hCreateDb)
                 {
-                    EnableWindow(hWnd, FALSE);
                     CPath libraryPath;
-                    CreateLibDatabase(hWnd, libraryPath, createDbCB);
+
+                    if (CreateLibDatabase(hWnd, libraryPath, createDbCB))
+                    {
+                        ShowWindow(hWnd, SW_HIDE);
+                        // EnableWindow(hWnd, FALSE);
+                        // SetFocus(INpp::Get().GetHandle());
+                    }
+                    else if (!libraryPath.IsEmpty())
+                    {
+                        CW->fillLibDb(libraryPath);
+                    }
+
                     return 0;
                 }
 

@@ -150,8 +150,7 @@ unsigned CmdEngine::start()
         }
     }
 
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    endProcess(pi);
 
     if (_cmd->_status == CANCELLED)
         return 1;
@@ -233,7 +232,7 @@ void CmdEngine::composeCmd(CText& buf) const
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
         _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str());
     else
-        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag());
+        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag().C_str());
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
     {
@@ -269,7 +268,7 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     composeCmd(buf);
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
-    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->DbPath();
+    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->DbPath().C_str();
 
     const TCHAR* env = NULL;
     if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)

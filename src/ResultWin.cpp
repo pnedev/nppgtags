@@ -73,12 +73,12 @@ bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
     // Add the search header - cmd name + search word + project path
     _buf = cmd->Name();
     _buf += " \"";
-    _buf += cmd->Tag();
+    _buf += cmd->Tag().C_str();
     _buf += "\" (";
     _buf += cmd->RegExp() ? "regexp, ": "literal, ";
     _buf += cmd->MatchCase() ? "match case": "ignore case";
     _buf += ") in \"";
-    _buf += cmd->DbPath();
+    _buf += cmd->DbPath().C_str();
     _buf += "\"";
 
     // parsing command result
@@ -175,8 +175,8 @@ bool ResultWin::TabParser::parseCmd(const char* src)
  *  \brief
  */
 ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath()),
-    _search(cmd->Tag()), _currentLine(1), _firstVisibleLine(0), _parser(cmd->Parser())
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath().C_str()),
+    _search(cmd->Tag().C_str()), _currentLine(1), _firstVisibleLine(0), _parser(cmd->Parser())
 {
 }
 
@@ -325,7 +325,7 @@ void ResultWin::show(const CmdPtr_t& cmd)
     if (i == 0) // search is completely new - add new tab
     {
         TCHAR buf[64];
-        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag());
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag().C_str());
 
         TCITEM tci  = {0};
         tci.mask    = TCIF_TEXT | TCIF_PARAM;

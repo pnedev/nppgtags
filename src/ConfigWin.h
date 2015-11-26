@@ -30,6 +30,9 @@
 #include "CmdDefines.h"
 
 
+class CPath;
+
+
 namespace GTags
 {
 
@@ -66,6 +69,7 @@ private:
 
     void onUpdateDb();
     void onSave();
+    void fillLibDb(const CPath& lib);
 
     static ConfigWin* CW;
 

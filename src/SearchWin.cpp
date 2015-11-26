@@ -258,8 +258,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     ComboBox_SetMinVisible(_hSearch, 8);
 
-    if (_cmd->Tag())
-        ComboBox_SetText(_hSearch, _cmd->Tag());
+    if (!_cmd->Tag().IsEmpty())
+        ComboBox_SetText(_hSearch, _cmd->Tag().C_str());
 
     if (_hBtnFont)
     {
@@ -501,7 +501,7 @@ void SearchWin::onOK()
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
         bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
 
-        _cmd->Tag(tag.C_str());
+        _cmd->Tag(tag);
         _cmd->RegExp(re);
         _cmd->MatchCase(mc);
 
