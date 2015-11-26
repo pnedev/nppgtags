@@ -269,19 +269,31 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     composeCmd(buf);
 
     DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
+    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->DbPath();
+
     const TCHAR* env = NULL;
-    const TCHAR* currentDir = _cmd->DbPath();
+    if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
+    {
+        CText envVars(_T("GTAGSLIBPATH="));
 
-    CText envVars(_T("GTAGSLIBPATH="));
-    if (Config._useLibDb)
-        envVars += Config._libDbPath;
+        if (Config._useLibDb && Config._libDbPaths.size())
+        {
+            if (!Config._libDbPaths[0].IsSubpathOf(_cmd->DbPath()))
+                envVars += Config._libDbPaths[0];
 
-    envVars += _T('\0');
+            for (unsigned i = 1; i < Config._libDbPaths.size(); ++i)
+            {
+                if (!Config._libDbPaths[i].IsSubpathOf(_cmd->DbPath()))
+                {
+                    envVars += _T(';');
+                    envVars += Config._libDbPaths[i];
+                }
+            }
+        }
 
-    if (_cmd->_id == VERSION)
-        currentDir = NULL;
-    else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
+        envVars += _T('\0');
         env = envVars.C_str();
+    }
 
     STARTUPINFO si  = {0};
     si.cb           = sizeof(si);

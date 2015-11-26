@@ -85,7 +85,7 @@ void CConfig::SetDefaults()
     _parserIdx = DEFAULT_PARSER;
     _autoUpdate = true;
     _useLibDb = false;
-    _libDbPath.Clear();
+    _libDbPaths.clear();
 }
 
 
@@ -94,6 +94,8 @@ void CConfig::SetDefaults()
  */
 bool CConfig::LoadFromFile(const TCHAR* file)
 {
+    SetDefaults();
+
     CPath cfgFile(file);
     if (file == NULL)
     {
@@ -146,7 +148,7 @@ bool CConfig::LoadFromFile(const TCHAR* file)
         else if (!_tcsncmp(line, cLibraryPathKey, _countof(cLibraryPathKey) - 1))
         {
             unsigned pos = _countof(cLibraryPathKey) - 1;
-            _libDbPath = &line[pos];
+            DbPathsFromBuf(&line[pos], _T(";"));
         }
         else
         {
@@ -176,16 +178,52 @@ bool CConfig::SaveToFile(const TCHAR* file) const
     if (fp == NULL)
         return false;
 
+    CText libDbPaths;
+    DbPathsToBuf(libDbPaths, _T(';'));
+
     bool success = false;
     if (_ftprintf_s(fp, _T("%s\n"), cInfo) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cParserKey, Parser()) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cAutoUpdateKey, (_autoUpdate ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cUseLibraryKey, (_useLibDb ? _T("yes") : _T("no"))) > 0)
-    if (_ftprintf_s(fp, _T("%s%s\n"), cLibraryPathKey, _libDbPath.C_str()) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n"), cLibraryPathKey, libDbPaths.C_str()) > 0)
         success = true;
 
     fclose(fp);
     return success;
+}
+
+
+/**
+ *  \brief
+ */
+void CConfig::DbPathsFromBuf(TCHAR* buf, const TCHAR* separators)
+{
+    TCHAR* pTmp = NULL;
+    for (TCHAR* ptr = _tcstok_s(buf, separators, &pTmp); ptr; ptr = _tcstok_s(NULL, separators, &pTmp))
+    {
+        CPath db(ptr);
+        if (db.Exists())
+            _libDbPaths.push_back(db);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void CConfig::DbPathsToBuf(CText& buf, TCHAR separator) const
+{
+    if (!_libDbPaths.size())
+        return;
+
+    buf += _libDbPaths[0];
+
+    for (unsigned i = 1; i < _libDbPaths.size(); ++i)
+    {
+        buf += separator;
+        buf += _libDbPaths[i];
+    }
 }
 
 } // namespace GTags

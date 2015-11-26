@@ -65,7 +65,7 @@ private:
     HWND composeWindow(HWND hOwner);
 
     void onUpdateDb();
-    void onOK();
+    void onSave();
 
     static ConfigWin* CW;
 
@@ -77,7 +77,7 @@ private:
     HWND        _hCreateDb;
     HWND        _hUpdateDb;
     HWND        _hLibDb;
-    HWND        _hOK;
+    HWND        _hSave;
     HWND        _hCancel;
     HHOOK       _hKeyHook;
     HFONT       _hFont;

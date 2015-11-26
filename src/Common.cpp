@@ -501,7 +501,7 @@ const TCHAR* CPath::GetFilename() const
 bool CPath::IsParentOf(const CPath& path) const
 {
     unsigned len = Len();
-    if (len >= path.Len())
+    if (len > path.Len())
         return false;
 
     return !_tcsncmp(_buf.data(), path._buf.data(), len);
@@ -514,7 +514,7 @@ bool CPath::IsParentOf(const CPath& path) const
 bool CPath::IsParentOf(const TCHAR* pathStr) const
 {
     unsigned len = Len();
-    if (len >= _tcslen(pathStr))
+    if (len > _tcslen(pathStr))
         return false;
 
     return !_tcsncmp(_buf.data(), pathStr, len);
@@ -527,7 +527,7 @@ bool CPath::IsParentOf(const TCHAR* pathStr) const
 bool CPath::IsSubpathOf(const CPath& path) const
 {
     unsigned len = path.Len();
-    if (len >= Len())
+    if (len > Len())
         return false;
 
     return !_tcsncmp(_buf.data(), path._buf.data(), len);
@@ -540,7 +540,7 @@ bool CPath::IsSubpathOf(const CPath& path) const
 bool CPath::IsSubpathOf(const TCHAR* pathStr) const
 {
     unsigned len = _tcslen(pathStr);
-    if (len >= Len())
+    if (len > Len())
         return false;
 
     return !_tcsncmp(_buf.data(), pathStr, len);

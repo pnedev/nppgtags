@@ -182,7 +182,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 6 * txtHeight + 130);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 130);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -241,15 +241,17 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
 
-    SetWindowText(hStatic, _T("Paths to library databases (';' separated)"));
+    SetWindowText(hStatic, _T("Paths to library databases"));
 
     yPos += (txtHeight + 5);
-    styleEx     = WS_EX_CLIENTEDGE;
-    style       = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | ES_NOOLEDRAGDROP;
     win.top     = yPos;
-    win.bottom  = win.top + txtHeight;
+    win.bottom  = win.top + 4 * txtHeight;
     win.left    = 10;
     win.right   = width - 10;
+
+    styleEx = WS_EX_CLIENTEDGE;
+    style   = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |
+            ES_NOOLEDRAGDROP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL;// | ES_DISABLENOSCROLL;
 
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hLibDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
@@ -258,7 +260,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     yPos += (win.bottom - win.top + 15);
     width = width / 5;
-    _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
+    _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
             width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
@@ -284,8 +286,12 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
-    if (!_cfg->_libDbPath.IsEmpty())
-        Edit_SetText(_hLibDb, _cfg->_libDbPath.C_str());
+    if (!_cfg->_libDbPaths.empty())
+    {
+        CText libDbPaths;
+        _cfg->DbPathsToBuf(libDbPaths, _T('\n'));
+        Edit_SetText(_hLibDb, libDbPaths.C_str());
+    }
     if (!_cfg->_useLibDb)
     {
         EnableWindow(_hCreateDb, FALSE);
@@ -328,17 +334,17 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 void ConfigWin::onUpdateDb()
 {
     int len = Edit_GetTextLength(_hLibDb);
-    CText buf(len);
-
     if (!len)
         return;
+
+    CText buf(len);
 
     Edit_GetText(_hLibDb, buf.C_str(), buf.Size());
 
     std::vector<CPath> dbs;
 
     TCHAR* pTmp = NULL;
-    for (TCHAR* ptr = _tcstok_s(buf.C_str(), _T(";"), &pTmp); ptr; ptr = _tcstok_s(NULL, _T(";"), &pTmp))
+    for (TCHAR* ptr = _tcstok_s(buf.C_str(), _T("\n\r"), &pTmp); ptr; ptr = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         CPath db(ptr);
         if (db.Exists())
@@ -356,17 +362,16 @@ void ConfigWin::onUpdateDb()
 /**
  *  \brief
  */
-void ConfigWin::onOK()
+void ConfigWin::onSave()
 {
+    _cfg->_libDbPaths.clear();
+
     int len = Edit_GetTextLength(_hLibDb);
     if (len)
     {
-        _cfg->_libDbPath.Resize(len);
-        Edit_GetText(_hLibDb, _cfg->_libDbPath.C_str(), _cfg->_libDbPath.Size());
-    }
-    else
-    {
-        _cfg->_libDbPath.Clear();
+        CText libDbPaths(len);
+        Edit_GetText(_hLibDb, libDbPaths.C_str(), libDbPaths.Size());
+        _cfg->DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
     }
 
     _cfg->_autoUpdate   = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
@@ -423,7 +428,7 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
         for (TCHAR* ptr = _tcsstr(buf.C_str(), cmd->DbPath());
                 ptr; ptr = _tcsstr(ptr, cmd->DbPath()))
         {
-            if (ptr[libLen] == _T('\0') || ptr[libLen] == _T(';'))
+            if (ptr[libLen] == _T('\0') || ptr[libLen] == _T('\n') || ptr[libLen] == _T('\r'))
             {
                 found = true;
                 break;
@@ -431,7 +436,7 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
         }
 
         if (!found)
-            buf += _T(';');
+            buf += _T('\n');
     }
 
     if (!found)
@@ -458,7 +463,7 @@ void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
         return;
 
     if (!--CW->_hUpdateCount)
-        SetFocus(CW->_hOK);
+        SetFocus(CW->_hSave);
 }
 
 
@@ -506,9 +511,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             }
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                if ((HWND)lParam == CW->_hOK)
+                if ((HWND)lParam == CW->_hSave)
                 {
-                    CW->onOK();
+                    CW->onSave();
                     return 0;
                 }
 

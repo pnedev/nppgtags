@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <vector>
 #include "Common.h"
 
 
@@ -64,10 +65,13 @@ public:
     bool LoadFromFile(const TCHAR* file = NULL);
     bool SaveToFile(const TCHAR* file = NULL) const;
 
-    int     _parserIdx;
-    bool    _autoUpdate;
-    bool    _useLibDb;
-    CText   _libDbPath;
+    void DbPathsFromBuf(TCHAR* buf, const TCHAR* separators);
+    void DbPathsToBuf(CText& buf, TCHAR separator) const;
+
+    int                 _parserIdx;
+    bool                _autoUpdate;
+    bool                _useLibDb;
+    std::vector<CPath>  _libDbPaths;
 
 private:
     static const TCHAR cDefaultParser[];
