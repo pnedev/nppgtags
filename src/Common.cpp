@@ -438,6 +438,27 @@ void CTextA::Resize(unsigned size)
 /**
  *  \brief
  */
+unsigned CPath::StripTrailingSpaces()
+{
+    AutoFit();
+
+    unsigned len = Len();
+
+    for (; len > 0; --len)
+        if (_buf[len - 1] != _T(' ') && _buf[len - 1] != _T('\t') &&
+                _buf[len - 1] != _T('\r') && _buf[len - 1] != _T('\n'))
+            break;
+
+    _buf.erase(_buf.begin() + len, _buf.end());
+    _buf.push_back(_T('\0'));
+
+    return len;
+}
+
+
+/**
+ *  \brief
+ */
 unsigned CPath::StripFilename()
 {
     AutoFit();

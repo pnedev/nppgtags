@@ -222,6 +222,7 @@ public:
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
+    unsigned StripTrailingSpaces();
     unsigned StripFilename();
     unsigned DirUp();
 

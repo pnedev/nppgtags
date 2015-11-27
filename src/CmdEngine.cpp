@@ -172,12 +172,37 @@ unsigned CmdEngine::start()
 
     _cmd->_status = OK;
 
-    if (_cmd->_parser && _cmd->Result())
+    if (_cmd->_parser)
     {
-        if (!_cmd->_parser->Parse(_cmd))
+        if (_cmd->Result())
         {
-            _cmd->_status = PARSE_ERROR;
-            return 1;
+            if (!_cmd->_parser->Parse(_cmd))
+            {
+                _cmd->_status = PARSE_ERROR;
+                return 1;
+            }
+        }
+        // Blink the auto-complete word to inform the user if nothing is found
+        else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == AUTOCOMPLETE_FILE || _cmd->_id == AUTOCOMPLETE_SYMBOL)
+        {
+            CTextA wordA;
+            INpp::Get().GetWord(wordA, true, true);
+
+            if (wordA.Len())
+            {
+                CText word(wordA.C_str());
+
+                TCHAR* tag = _cmd->_tag.C_str();
+                int len = _cmd->_tag.Len();
+                if (_cmd->_id == AUTOCOMPLETE_FILE)
+                {
+                    ++tag;
+                    --len;
+                }
+
+                if (!_tcsncmp(word.C_str(), tag, len))
+                    Sleep(50);
+            }
         }
     }
 

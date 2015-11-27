@@ -56,7 +56,12 @@ void ConfigWin::Show(CConfig* cfg)
 {
     if (CW)
     {
-        SetFocus(CW->_hWnd);
+        if (IsWindowVisible(CW->_hWnd))
+            SetFocus(CW->_hWnd);
+        else
+            MessageBox(INpp::Get().GetHandle(),
+                _T("Settings Window is already opened but is currently busy.\n\n")
+                _T("Please wait all library databases to be created."), cPluginName, MB_OK | MB_ICONINFORMATION);
         return;
     }
 

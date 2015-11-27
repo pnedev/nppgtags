@@ -242,6 +242,15 @@ public:
         SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
     }
 
+    inline void SelectWord(bool partial = false) const
+    {
+        long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+        long wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+
+        SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
+    }
+
     inline void ClearSelection() const
     {
         long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);

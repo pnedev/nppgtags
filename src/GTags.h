@@ -51,9 +51,13 @@ extern CText        UIFontName;
 extern unsigned     UIFontSize;
 
 extern HWND         MainHwnd;
-const UINT          WM_RUN_CMD_CALLBACK     = WM_USER;
-const UINT          WM_OPEN_ACTIVITY_WIN    = WM_USER + 1;
-const UINT          WM_CLOSE_ACTIVITY_WIN   = WM_USER + 2;
+
+enum UserMessages_t
+{
+    WM_RUN_CMD_CALLBACK = WM_USER,
+    WM_OPEN_ACTIVITY_WIN,
+    WM_CLOSE_ACTIVITY_WIN
+};
 
 class CConfig;
 extern CConfig      Config;

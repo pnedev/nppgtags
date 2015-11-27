@@ -203,6 +203,7 @@ void CConfig::DbPathsFromBuf(TCHAR* buf, const TCHAR* separators)
     for (TCHAR* ptr = _tcstok_s(buf, separators, &pTmp); ptr; ptr = _tcstok_s(NULL, separators, &pTmp))
     {
         CPath db(ptr);
+        db.StripTrailingSpaces();
         if (db.Exists())
             _libDbPaths.push_back(db);
     }
