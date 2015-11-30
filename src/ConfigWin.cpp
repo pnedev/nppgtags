@@ -453,7 +453,6 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
         return;
 
     ShowWindow(CW->_hWnd, SW_SHOW);
-    // EnableWindow(CW->_hWnd, TRUE);
 
     if (cmd->Status() == OK)
         CW->fillLibDb(cmd->DbPath());
@@ -560,15 +559,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                     CPath libraryPath;
 
                     if (CreateLibDatabase(hWnd, libraryPath, createDbCB))
-                    {
                         ShowWindow(hWnd, SW_HIDE);
-                        // EnableWindow(hWnd, FALSE);
-                        // SetFocus(INpp::Get().GetHandle());
-                    }
                     else if (!libraryPath.IsEmpty())
-                    {
                         CW->fillLibDb(libraryPath);
-                    }
 
                     return 0;
                 }
