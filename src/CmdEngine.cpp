@@ -268,7 +268,7 @@ void CmdEngine::composeCmd(CText& buf) const
         if (path.FileExists())
         {
             buf += _T(" --gtagsconf \"");
-            buf += path.C_str();
+            buf += path;
             buf += _T("\"");
             buf += _T(" --gtagslabel=");
             buf += Config.Parser();

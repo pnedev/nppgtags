@@ -352,6 +352,7 @@ void ConfigWin::onUpdateDb()
     for (TCHAR* ptr = _tcstok_s(buf.C_str(), _T("\n\r"), &pTmp); ptr; ptr = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         CPath db(ptr);
+        db.StripTrailingSpaces();
         if (db.Exists())
             dbs.push_back(db);
     }
@@ -446,8 +447,7 @@ void ConfigWin::fillLibDb(const CPath& lib)
  */
 void ConfigWin::createDbCB(const CmdPtr_t& cmd)
 {
-    if (cmd)
-        DbWriteCB(cmd);
+    DbWriteCB(cmd);
 
     if (CW == NULL)
         return;
@@ -464,8 +464,7 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
  */
 void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
 {
-    if (cmd)
-        DbWriteCB(cmd);
+    DbWriteCB(cmd);
 
     if (CW == NULL)
         return;
