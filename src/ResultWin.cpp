@@ -710,7 +710,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     const long endPos = npp.LineEndPosition(line);
 
-    const bool wholeWord = (_activeTab->_cmdId != GREP);
+    const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
     // Highlight the corresponding match number if there are more than one
     // matches on single result line
@@ -856,7 +856,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                 int findBegin = previewPos;
                 int findEnd = endPos;
 
-                bool wholeWord = (_activeTab->_cmdId != GREP);
+                const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
                 if (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                     _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
@@ -908,7 +908,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
         int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; ++findBegin);
 
-        bool wholeWord = (_activeTab->_cmdId != GREP);
+        const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line

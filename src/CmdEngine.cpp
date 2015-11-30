@@ -47,6 +47,7 @@ const TCHAR CmdEngine::cFindDefinitionCmd[] = _T("\"%s\\global.exe\" -dT --resul
 const TCHAR CmdEngine::cFindReferenceCmd[]  = _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
 const TCHAR CmdEngine::cFindSymbolCmd[]     = _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
 const TCHAR CmdEngine::cGrepCmd[]           = _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
+const TCHAR CmdEngine::cGrepTxtCmd[]        = _T("\"%s\\global.exe\" -gO --result=grep \"%s\"");
 const TCHAR CmdEngine::cVersionCmd[]        = _T("\"%s\\global.exe\" --version");
 
 
@@ -237,6 +238,8 @@ const TCHAR* CmdEngine::getCmdLine() const
             return cFindSymbolCmd;
         case GREP:
             return cGrepCmd;
+        case GREP_TEXT:
+            return cGrepTxtCmd;
         case VERSION:
             return cVersionCmd;
     }

@@ -57,6 +57,7 @@ const TCHAR cFindDefinition[]   = _T("Find Definition");
 const TCHAR cFindReference[]    = _T("Find Reference");
 const TCHAR cFindSymbol[]       = _T("Find Symbol");
 const TCHAR cSearch[]           = _T("Search");
+const TCHAR cSearchText[]       = _T("Search in Text Files");
 const TCHAR cVersion[]          = _T("About");
 
 
@@ -543,6 +544,33 @@ void Search()
 /**
  *  \brief
  */
+void SearchTextFiles()
+{
+    SearchWin::Close();
+
+    DbHandle db = getDatabase();
+    if (!db)
+        return;
+
+    ParserPtr_t parser(new ResultWin::TabParser);
+    CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchText, db, parser));
+
+    CText tag = getSelection();
+    if (tag.IsEmpty())
+    {
+        SearchWin::Show(cmd, showResultCB);
+    }
+    else
+    {
+        cmd->Tag(tag);
+        CmdEngine::Run(cmd, showResultCB);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void GoBack()
 {
     DocLocation::Get().Back();
@@ -668,25 +696,26 @@ void About()
 namespace GTags
 {
 
-FuncItem Menu[18] = {
+FuncItem Menu[19] = {
     /* 0 */  FuncItem(cAutoCompl, AutoComplete),
     /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
     /* 2 */  FuncItem(cFindFile, FindFile),
     /* 3 */  FuncItem(cFindDefinition, FindDefinition),
     /* 4 */  FuncItem(cFindReference, FindReference),
     /* 5 */  FuncItem(cSearch, Search),
-    /* 6 */  FuncItem(),
-    /* 7 */  FuncItem(_T("Go Back"), GoBack),
-    /* 8 */  FuncItem(_T("Go Forward"), GoForward),
-    /* 9 */  FuncItem(),
-    /* 10 */ FuncItem(cCreateDatabase, CreateDatabase),
-    /* 11 */ FuncItem(_T("Delete Database"), DeleteDatabase),
-    /* 12 */ FuncItem(),
-    /* 13 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
-    /* 14 */ FuncItem(),
-    /* 15 */ FuncItem(_T("Settings"), SettingsCfg),
-    /* 16 */ FuncItem(),
-    /* 17 */ FuncItem(cVersion, About)
+    /* 6 */  FuncItem(cSearchText, SearchTextFiles),
+    /* 7 */  FuncItem(),
+    /* 8 */  FuncItem(_T("Go Back"), GoBack),
+    /* 9 */  FuncItem(_T("Go Forward"), GoForward),
+    /* 10 */ FuncItem(),
+    /* 11 */ FuncItem(cCreateDatabase, CreateDatabase),
+    /* 12 */ FuncItem(_T("Delete Database"), DeleteDatabase),
+    /* 13 */ FuncItem(),
+    /* 14 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
+    /* 15 */ FuncItem(),
+    /* 16 */ FuncItem(_T("Settings"), SettingsCfg),
+    /* 17 */ FuncItem(),
+    /* 18 */ FuncItem(cVersion, About)
 };
 
 HINSTANCE HMod = NULL;

@@ -57,6 +57,7 @@ private:
     static const TCHAR  cFindReferenceCmd[];
     static const TCHAR  cFindSymbolCmd[];
     static const TCHAR  cGrepCmd[];
+    static const TCHAR  cGrepTxtCmd[];
     static const TCHAR  cVersionCmd[];
 
     static unsigned __stdcall threadFunc(void* data);

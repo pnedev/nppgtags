@@ -43,6 +43,7 @@ enum CmdId_t
     FIND_REFERENCE,
     FIND_SYMBOL,
     GREP,
+    GREP_TEXT,
     VERSION
 };
 
