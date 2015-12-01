@@ -84,6 +84,9 @@ public:
     inline void MatchCase(bool mc) { _matchCase = mc; }
     inline bool MatchCase() const { return _matchCase; }
 
+    inline void SkipLibs(bool skipLibs) { _skipLibs = skipLibs; }
+    inline bool SkipLibs() const { return _skipLibs; }
+
     inline void Status(CmdStatus_t stat) { _status = stat; }
     inline CmdStatus_t Status() const { return _status; }
 
@@ -116,6 +119,7 @@ private:
     ParserPtr_t         _parser;
     bool                _regExp;
     bool                _matchCase;
+    bool                _skipLibs;
 
     CmdStatus_t         _status;
     std::vector<char>   _result;

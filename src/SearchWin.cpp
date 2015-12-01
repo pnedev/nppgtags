@@ -292,14 +292,14 @@ void SearchWin::startCompletion()
     if (Button_GetCheck(_hRE) == BST_CHECKED)
         return;
 
-    CmdId_t cmdId;
+    CmdId_t cmplId;
     TCHAR tag[cComplAfter + 2];
     CompletionCB complCB;
     ParserPtr_t parser;
 
     if (_cmd->Id() == FIND_FILE)
     {
-        cmdId = AUTOCOMPLETE_FILE;
+        cmplId = AUTOCOMPLETE_FILE;
 
         tag[0] = _T('/');
         ComboBox_GetText(_hSearch, tag + 1, _countof(tag) - 1);
@@ -310,7 +310,7 @@ void SearchWin::startCompletion()
     }
     else
     {
-        cmdId = AUTOCOMPLETE;
+        cmplId = AUTOCOMPLETE;
 
         ComboBox_GetText(_hSearch, tag, _countof(tag));
         tag[cComplAfter] = 0;
@@ -318,8 +318,11 @@ void SearchWin::startCompletion()
         complCB = halfComplete;
     }
 
-    CmdPtr_t cmpl(new Cmd(cmdId, _T("AutoComplete"), _cmd->Db(), parser,
+    CmdPtr_t cmpl(new Cmd(cmplId, _T("AutoComplete"), _cmd->Db(), parser,
             tag, false, (Button_GetCheck(_hMC) == BST_CHECKED)));
+
+    if (_cmd->Id() != FIND_DEFINITION)
+        cmpl->SkipLibs(true);
 
     _completionStarted = true;
 

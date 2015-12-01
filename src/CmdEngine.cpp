@@ -299,7 +299,7 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->DbPath().C_str();
 
     const TCHAR* env = NULL;
-    if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION)
+    if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
         CText envVars(_T("GTAGSLIBPATH="));
 
