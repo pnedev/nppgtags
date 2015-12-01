@@ -295,13 +295,12 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     CText buf(2048);
     composeCmd(buf);
 
-    DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
+    const DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
+    CText envVars(_T("GTAGSLIBPATH="));
     const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->DbPath().C_str();
 
-    const TCHAR* env = NULL;
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
-        CText envVars(_T("GTAGSLIBPATH="));
 
         if (Config._useLibDb && Config._libDbPaths.size())
         {
@@ -317,10 +316,9 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
                 }
             }
         }
-
-        envVars += _T('\0');
-        env = envVars.C_str();
     }
+
+    envVars += _T('\0');
 
     STARTUPINFO si  = {0};
     si.cb           = sizeof(si);
@@ -328,7 +326,8 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     si.hStdError    = errorPipe.GetInputHandle();
     si.hStdOutput   = dataPipe.GetInputHandle();
 
-    if (!CreateProcess(NULL, buf.C_str(), NULL, NULL, TRUE, createFlags, (LPVOID)env, currentDir, &si, &pi))
+    if (!CreateProcess(NULL, buf.C_str(), NULL, NULL, TRUE, createFlags, (LPVOID)envVars.C_str(),
+            currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
         return false;
