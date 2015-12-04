@@ -806,9 +806,7 @@ bool UpdateSingleFile(const CPath& file)
     }
 
     CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, NULL, file.C_str()));
-
-    if (!CmdEngine::Run(cmd, DbWriteCB))
-        return false;
+    CmdEngine::Run(cmd, DbWriteCB);
 
     return true;
 }

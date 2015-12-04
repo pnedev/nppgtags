@@ -216,8 +216,7 @@ bool DbManager::runScheduledUpdate(const TCHAR* dbPath)
         _updateList.erase(iFile);
     }
 
-    if (!UpdateSingleFile(file))
-        return runScheduledUpdate(dbPath);
+    UpdateSingleFile(file);
 
     return true;
 }
