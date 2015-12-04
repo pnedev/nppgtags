@@ -70,7 +70,6 @@ public:
     inline const TCHAR* Name() const { return _name.C_str(); }
 
     inline DbHandle Db() const { return _db; }
-    inline const CPath& DbPath() const { return _dbPath; }
 
     inline void Tag(const CText& tag) { _tag = tag; }
     inline const CText& Tag() const { return _tag; }
@@ -112,8 +111,7 @@ private:
 
     CmdId_t             _id;
     CText               _name;
-    DbHandle const      _db;
-    CPath               _dbPath;
+    DbHandle            _db;
 
     CText               _tag;
     ParserPtr_t         _parser;

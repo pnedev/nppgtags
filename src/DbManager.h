@@ -27,13 +27,75 @@
 
 #include <tchar.h>
 #include <list>
+#include <memory>
 #include "Common.h"
+#include "Config.h"
 
 
 namespace GTags
 {
 
-typedef const CPath* DbHandle;
+/**
+ *  \class  GTagsDb
+ *  \brief
+ */
+class GTagsDb
+{
+public:
+    ~GTagsDb() {}
+
+    inline const CPath& GetPath() const { return _path; }
+
+    inline const CConfigPtr_t& GetConfig() const { return _cfg; }
+    inline void SetConfig(const CConfigPtr_t& cfg) { _cfg = cfg; }
+
+private:
+    friend class DbManager;
+
+    GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
+    {
+        _readLocks = writeEn ? 0 : 1;
+    }
+
+    bool IsLocked()
+    {
+        return (_writeLock || _readLocks);
+    }
+
+    bool Lock(bool writeEn)
+    {
+        if (writeEn)
+        {
+            if (_writeLock || _readLocks)
+                return false;
+            _writeLock = true;
+        }
+        else
+        {
+            if (_writeLock)
+                return false;
+            ++_readLocks;
+        }
+        return true;
+    }
+
+    void Unlock()
+    {
+        if (_writeLock)
+            _writeLock = false;
+        else if (_readLocks > 0)
+            --_readLocks;
+    }
+
+    CPath           _path;
+    CConfigPtr_t    _cfg;
+
+    int     _readLocks;
+    bool    _writeLock;
+};
+
+
+typedef std::shared_ptr<GTagsDb> DbHandle;
 
 
 /**
@@ -45,67 +107,14 @@ class DbManager
 public:
     static DbManager& Get() { return Instance; }
 
-    DbHandle RegisterDb(const CPath& dbPath);
-    bool UnregisterDb(DbHandle db);
+    const DbHandle& RegisterDb(const CPath& dbPath);
+    bool UnregisterDb(const DbHandle& db);
     DbHandle GetDb(const CPath& filePath, bool writeEn, bool* success);
-    bool PutDb(DbHandle db);
+    bool PutDb(const DbHandle& db);
     bool DbExistsInFolder(const CPath& folder);
     void ScheduleUpdate(const CPath& file);
 
 private:
-    /**
-     *  \class  GTagsDb
-     *  \brief
-     */
-    class GTagsDb
-    {
-    public:
-        ~GTagsDb() {}
-
-        bool IsLocked()
-        {
-            return (_writeLock || _readLocks);
-        }
-
-        bool Lock(bool writeEn)
-        {
-            if (writeEn)
-            {
-                if (_writeLock || _readLocks)
-                    return false;
-                _writeLock = true;
-            }
-            else
-            {
-                if (_writeLock)
-                    return false;
-                ++_readLocks;
-            }
-            return true;
-        }
-
-        void Unlock()
-        {
-            if (_writeLock)
-                _writeLock = false;
-            else if (_readLocks > 0)
-                --_readLocks;
-        }
-
-    private:
-        friend class DbManager;
-
-        GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
-        {
-            _readLocks = writeEn ? 0 : 1;
-        }
-
-        CPath   _path;
-
-        int     _readLocks;
-        bool    _writeLock;
-    };
-
     static DbManager Instance;
 
     DbManager() {}
@@ -113,10 +122,10 @@ private:
     ~DbManager() {}
 
     bool deleteDb(CPath& dbPath);
-    DbHandle lockDb(const CPath& dbPath, bool writeEn, bool* success);
+    const DbHandle& lockDb(const CPath& dbPath, bool writeEn, bool* success);
     bool runScheduledUpdate(const TCHAR* dbPath);
 
-    std::list<GTagsDb>  _dbList;
+    std::list<DbHandle> _dbList;
     std::list<CPath>    _updateList;
 };
 

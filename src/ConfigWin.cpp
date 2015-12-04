@@ -455,7 +455,7 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
     ShowWindow(CW->_hWnd, SW_SHOW);
 
     if (cmd->Status() == OK)
-        CW->fillLibDb(cmd->DbPath());
+        CW->fillLibDb(cmd->Db()->GetPath());
 }
 
 

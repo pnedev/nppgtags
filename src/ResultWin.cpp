@@ -78,7 +78,7 @@ bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
     _buf += cmd->RegExp() ? "regexp, ": "literal, ";
     _buf += cmd->MatchCase() ? "match case": "ignore case";
     _buf += ") in \"";
-    _buf += cmd->DbPath().C_str();
+    _buf += cmd->Db()->GetPath().C_str();
     _buf += "\"";
 
     // parsing command result
@@ -175,8 +175,9 @@ bool ResultWin::TabParser::parseCmd(const char* src)
  *  \brief
  */
 ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()), _projectPath(cmd->DbPath().C_str()),
-    _search(cmd->Tag().C_str()), _currentLine(1), _firstVisibleLine(0), _parser(cmd->Parser())
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()),
+    _projectPath(cmd->Db()->GetPath().C_str()), _search(cmd->Tag().C_str()), _currentLine(1), _firstVisibleLine(0),
+    _parser(cmd->Parser())
 {
 }
 

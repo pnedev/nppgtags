@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
+#include <memory>
 #include "Common.h"
 
 
@@ -87,5 +88,8 @@ private:
     static const TCHAR cUseLibraryKey[];
     static const TCHAR cLibraryPathKey[];
 };
+
+
+typedef std::shared_ptr<CConfig> CConfigPtr_t;
 
 } // namespace GTags

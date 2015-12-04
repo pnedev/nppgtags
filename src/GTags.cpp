@@ -610,7 +610,7 @@ void CreateDatabase()
         }
 
         CText msg(_T("Database at\n\""));
-        msg += db->C_str();
+        msg += db->GetPath().C_str();
         msg += _T("\" exists.\nRe-create?");
         int choice = MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
@@ -647,7 +647,7 @@ void DeleteDatabase()
 
     INpp& npp = INpp::Get();
     TCHAR buf[512];
-    _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Delete database from\n\"%s\"?"), db->C_str());
+    _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("Delete database from\n\"%s\"?"), db->GetPath().C_str());
     int choice = MessageBox(npp.GetHandle(), buf, cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
     if (choice != IDYES)
     {

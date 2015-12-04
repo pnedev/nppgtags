@@ -36,7 +36,7 @@ DbManager DbManager::Instance;
 /**
  *  \brief
  */
-DbHandle DbManager::RegisterDb(const CPath& dbPath)
+const DbHandle& DbManager::RegisterDb(const CPath& dbPath)
 {
     bool success;
 
@@ -47,21 +47,21 @@ DbHandle DbManager::RegisterDb(const CPath& dbPath)
 /**
  *  \brief
  */
-bool DbManager::UnregisterDb(DbHandle db)
+bool DbManager::UnregisterDb(const DbHandle& db)
 {
     if (!db)
         return false;
 
     bool ret = false;
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
+    for (std::list<DbHandle>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
-        if (db == &(dbi->_path))
+        if (db == *dbi)
         {
-            dbi->Unlock();
-            if (!dbi->IsLocked())
+            db->Unlock();
+            if (!db->IsLocked())
             {
-                ret = deleteDb(dbi->_path);
+                ret = deleteDb(db->_path);
                 _dbList.erase(dbi);
             }
             break;
@@ -99,20 +99,20 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
 /**
  *  \brief
  */
-bool DbManager::PutDb(DbHandle db)
+bool DbManager::PutDb(const DbHandle& db)
 {
     if (!db)
         return false;
 
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
+    for (std::list<DbHandle>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
-        if (db == &(dbi->_path))
+        if (db == *dbi)
         {
-            dbi->Unlock();
+            db->Unlock();
 
-            bool isLocked = dbi->IsLocked();
+            bool isLocked = db->IsLocked();
             if (!isLocked)
-                runScheduledUpdate(dbi->_path.C_str());
+                runScheduledUpdate(db->_path.C_str());
 
             return isLocked;
         }
@@ -174,23 +174,23 @@ bool DbManager::deleteDb(CPath& dbPath)
 /**
  *  \brief
  */
-DbHandle DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* success)
+const DbHandle& DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* success)
 {
-    for (std::list<GTagsDb>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
+    for (std::list<DbHandle>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
-        if (dbi->_path == dbPath)
+        if ((*dbi)->_path == dbPath)
         {
-            *success = dbi->Lock(writeEn);
-            return &(dbi->_path);
+            *success = (*dbi)->Lock(writeEn);
+            return *dbi;
         }
     }
 
-    GTagsDb newDb(dbPath, writeEn);
+    DbHandle newDb(new GTagsDb(dbPath, writeEn));
     _dbList.push_back(newDb);
 
     *success = true;
 
-    return &(_dbList.rbegin()->_path);
+    return *(_dbList.begin());
 }
 
 

@@ -129,7 +129,7 @@ unsigned CmdEngine::start()
             CText header(_cmd->Name());
             header += _T(" - \"");
             if (_cmd->_id == CREATE_DATABASE)
-                header += _cmd->DbPath();
+                header += _cmd->Db()->GetPath();
             else if (_cmd->_id != VERSION)
                 header += _cmd->Tag();
             header += _T('\"');
@@ -297,19 +297,19 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
 
     const DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
     CText envVars(_T("GTAGSLIBPATH="));
-    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->DbPath().C_str();
+    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->Db()->GetPath().C_str();
 
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
 
         if (Config._useLibDb && Config._libDbPaths.size())
         {
-            if (!Config._libDbPaths[0].IsSubpathOf(_cmd->DbPath()))
+            if (!Config._libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
                 envVars += Config._libDbPaths[0];
 
             for (unsigned i = 1; i < Config._libDbPaths.size(); ++i)
             {
-                if (!Config._libDbPaths[i].IsSubpathOf(_cmd->DbPath()))
+                if (!Config._libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
                 {
                     envVars += _T(';');
                     envVars += Config._libDbPaths[i];

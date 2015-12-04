@@ -36,9 +36,6 @@ Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, ParserPtr_t parser,
         _id(id), _db(db), _parser(parser),
         _regExp(regExp), _matchCase(matchCase), _skipLibs(false), _status(CANCELLED)
 {
-    if (db)
-        _dbPath = *db;
-
     if (name)
         _name = name;
 
