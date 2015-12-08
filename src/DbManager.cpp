@@ -190,7 +190,7 @@ const DbHandle& DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* succe
 
     *success = true;
 
-    return *(_dbList.begin());
+    return *(_dbList.rbegin());
 }
 
 
