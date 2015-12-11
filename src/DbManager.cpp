@@ -112,7 +112,10 @@ bool DbManager::PutDb(const DbHandle& db)
 
             bool isLocked = db->IsLocked();
             if (!isLocked)
+            {
                 runScheduledUpdate(db->_path.C_str());
+                isLocked = db->IsLocked();
+            }
 
             return isLocked;
         }
