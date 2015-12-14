@@ -765,7 +765,7 @@ void PluginDeInit()
 /**
  *  \brief
  */
-bool UpdateSingleFile(const CPath& file)
+bool OnFileChange(const CPath& file)
 {
     bool success;
     DbHandle db = DbManager::Get().GetDb(file, true, &success);

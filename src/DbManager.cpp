@@ -58,7 +58,7 @@ void GTagsDb::runScheduledUpdate()
     CPath file = *(_updateList.begin());
     _updateList.erase(_updateList.begin());
 
-    UpdateSingleFile(file);
+    OnFileChange(file);
 }
 
 

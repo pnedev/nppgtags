@@ -90,7 +90,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             {
                 CPath file;
                 INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                GTags::UpdateSingleFile(file);
+                GTags::OnFileChange(file);
             }
         break;
 
@@ -113,11 +113,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             {
                 CPath file;
                 INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                GTags::UpdateSingleFile(file);
+                GTags::OnFileChange(file);
 
                 if (ChangedFile)
                 {
-                    GTags::UpdateSingleFile(*ChangedFile);
+                    GTags::OnFileChange(*ChangedFile);
                     ChangedFile.reset();
                 }
             }
@@ -128,14 +128,14 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
             {
                 if (ChangedFile)
                 {
-                    GTags::UpdateSingleFile(*ChangedFile);
+                    GTags::OnFileChange(*ChangedFile);
                     ChangedFile.reset();
                 }
                 else
                 {
                     CPath file;
                     INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                    GTags::UpdateSingleFile(file);
+                    GTags::OnFileChange(file);
                 }
             }
         break;

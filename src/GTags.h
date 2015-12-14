@@ -67,6 +67,8 @@ BOOL PluginLoad(HINSTANCE hMod);
 void PluginInit();
 void PluginDeInit();
 
-bool UpdateSingleFile(const CPath& file);
+bool OnFileBeforeChange(const CPath& file);
+bool OnFileChange(const CPath& file);
+bool OnFileChangeCancel(const CPath& file);
 
 } // namespace GTags
