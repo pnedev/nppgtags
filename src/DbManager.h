@@ -49,6 +49,8 @@ public:
     inline const CConfigPtr_t& GetConfig() const { return _cfg; }
     inline void SetConfig(const CConfigPtr_t& cfg) { _cfg = cfg; }
 
+    void ScheduleUpdate(const CPath& file);
+
 private:
     friend class DbManager;
 
@@ -57,12 +59,12 @@ private:
         _readLocks = writeEn ? 0 : 1;
     }
 
-    bool IsLocked()
+    bool isLocked()
     {
         return (_writeLock || _readLocks);
     }
 
-    bool Lock(bool writeEn)
+    bool lock(bool writeEn)
     {
         if (writeEn)
         {
@@ -79,7 +81,7 @@ private:
         return true;
     }
 
-    void Unlock()
+    void unlock()
     {
         if (_writeLock)
             _writeLock = false;
@@ -87,11 +89,15 @@ private:
             --_readLocks;
     }
 
+    void runScheduledUpdate();
+
     CPath           _path;
     CConfigPtr_t    _cfg;
 
     int     _readLocks;
     bool    _writeLock;
+
+    std::list<CPath>    _updateList;
 };
 
 
@@ -110,9 +116,8 @@ public:
     const DbHandle& RegisterDb(const CPath& dbPath);
     bool UnregisterDb(const DbHandle& db);
     DbHandle GetDb(const CPath& filePath, bool writeEn, bool* success);
-    bool PutDb(const DbHandle& db);
+    void PutDb(const DbHandle& db);
     bool DbExistsInFolder(const CPath& folder);
-    void ScheduleUpdate(const CPath& file);
 
 private:
     static DbManager Instance;
@@ -123,10 +128,8 @@ private:
 
     bool deleteDb(CPath& dbPath);
     const DbHandle& lockDb(const CPath& dbPath, bool writeEn, bool* success);
-    bool runScheduledUpdate(const TCHAR* dbPath);
 
     std::list<DbHandle> _dbList;
-    std::list<CPath>    _updateList;
 };
 
 } // namespace GTags

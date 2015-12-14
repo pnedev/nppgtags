@@ -54,6 +54,7 @@ private:
     static const int    cBackgroundColor;
     static const int    cFontSize;
 
+    static void dbWriteReady(const CmdPtr_t& cmd);
     static void createDbCB(const CmdPtr_t& cmd);
     static void updateDbCB(const CmdPtr_t& cmd);
 
@@ -70,6 +71,8 @@ private:
     void onUpdateDb();
     void onSave();
     void fillLibDb(const CPath& lib);
+
+    bool createLibDatabase(CPath& dbPath, CompletionCB complCB);
 
     static ConfigWin* CW;
 

@@ -24,7 +24,6 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <shlobj.h>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -91,54 +90,6 @@ bool checkForGTagsBinaries(CPath& dllPath)
         MessageBox(NULL, msg.C_str(), cPluginName, MB_OK | MB_ICONERROR);
         return false;
     }
-
-    return true;
-}
-
-
-/**
- *  \brief
- */
-int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
-{
-    if (uMsg == BFFM_INITIALIZED)
-        SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
-    return 0;
-}
-
-
-/**
- *  \brief
- */
-bool browseForDbFolder(HWND hOwnerWin, CPath& dbPath)
-{
-    TCHAR path[MAX_PATH];
-
-    BROWSEINFO bi       = {0};
-    bi.hwndOwner        = hOwnerWin;
-    bi.pszDisplayName   = path;
-    bi.lpszTitle        = _T("Select the database root (indexed recursively)");
-    bi.ulFlags          = BIF_RETURNONLYFSDIRS;
-    bi.lpfn             = browseFolderCB;
-
-    if (!dbPath.IsEmpty() && dbPath.Exists())
-        bi.lParam = (DWORD)dbPath.C_str();
-
-    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-    if (!pidl)
-        return false;
-
-    SHGetPathFromIDList(pidl, path);
-
-    IMalloc* imalloc = NULL;
-    if (SUCCEEDED(SHGetMalloc(&imalloc)))
-    {
-        imalloc->Free(pidl);
-        imalloc->Release();
-    }
-
-    dbPath = path;
-    dbPath += _T("\\");
 
     return true;
 }
@@ -318,6 +269,28 @@ void findCB(const CmdPtr_t& cmd)
     else
     {
         showResultCB(cmd);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void dbWriteCB(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
+        DbManager::Get().UnregisterDb(cmd->Db());
+    else
+        DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == FAILED || cmd->Result())
+    {
+        CText msg(cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 }
 
@@ -623,14 +596,14 @@ void CreateDatabase()
     {
         currentFile.StripFilename();
 
-        if (!browseForDbFolder(npp.GetHandle(), currentFile))
+        if (!Tools::BrowseForFolder(npp.GetHandle(), currentFile))
             return;
 
         db = DbManager::Get().RegisterDb(currentFile);
     }
 
     CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    CmdEngine::Run(cmd, DbWriteCB);
+    CmdEngine::Run(cmd, dbWriteCB);
 }
 
 
@@ -724,7 +697,7 @@ CPath DllPath;
 CText UIFontName;
 unsigned UIFontSize;
 
-HWND MainHwnd = NULL;
+HWND MainWndH = NULL;
 
 CConfig Config;
 
@@ -765,8 +738,8 @@ void PluginInit()
     SearchWin::Register();
     AutoCompleteWin::Register();
 
-    MainHwnd = ResultWin::Register();
-    if (MainHwnd == NULL)
+    MainWndH = ResultWin::Register();
+    if (MainWndH == NULL)
         MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
                 MB_OK | MB_ICONERROR);
     else if (!Config.LoadFromFile())
@@ -801,84 +774,14 @@ bool UpdateSingleFile(const CPath& file)
 
     if (!success)
     {
-        DbManager::Get().ScheduleUpdate(file);
+        db->ScheduleUpdate(file);
         return true;
     }
 
     CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, NULL, file.C_str()));
-    CmdEngine::Run(cmd, DbWriteCB);
+    CmdEngine::Run(cmd, dbWriteCB);
 
     return true;
-}
-
-
-/**
- *  \brief
- */
-bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB)
-{
-    if (!complCB)
-        return false;
-
-    if (dbPath.IsEmpty())
-    {
-        if (!browseForDbFolder(hOwnerWin, dbPath))
-            return false;
-    }
-
-    DbHandle db;
-
-    if (DbManager::Get().DbExistsInFolder(dbPath))
-    {
-        CText msg(_T("Database at\n\""));
-        msg += dbPath;
-        msg += _T("\" exists.\nRe-create?");
-        int choice = MessageBox(hOwnerWin, msg.C_str(), cPluginName,
-                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
-        if (choice != IDYES)
-            return false;
-
-        bool success;
-        db = DbManager::Get().GetDb(dbPath, true, &success);
-
-        if (!success)
-        {
-            MessageBox(hOwnerWin, _T("GTags database is currently in use"), cPluginName,
-                    MB_OK | MB_ICONINFORMATION);
-            return false;
-        }
-    }
-    else
-    {
-        db = DbManager::Get().RegisterDb(dbPath);
-    }
-
-    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
-    CmdEngine::Run(cmd, complCB);
-
-    return true;
-}
-
-
-/**
- *  \brief
- */
-void DbWriteCB(const CmdPtr_t& cmd)
-{
-    if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
-        DbManager::Get().UnregisterDb(cmd->Db());
-    else
-        DbManager::Get().PutDb(cmd->Db());
-
-    if (cmd->Status() == RUN_ERROR)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
-    }
-    else if (cmd->Status() == FAILED || cmd->Result())
-    {
-        CText msg(cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
-    }
 }
 
 } // namespace GTags

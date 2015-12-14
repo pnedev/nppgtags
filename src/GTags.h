@@ -42,6 +42,13 @@ namespace GTags
 const TCHAR cPluginName[]   = VER_PLUGIN_NAME;
 const TCHAR cBinsDir[]      = VER_PLUGIN_NAME;
 
+enum PluginWinMessages_t
+{
+    WM_RUN_CMD_CALLBACK = WM_USER,
+    WM_OPEN_ACTIVITY_WIN,
+    WM_CLOSE_ACTIVITY_WIN
+};
+
 extern FuncItem     Menu[19];
 
 extern HINSTANCE    HMod;
@@ -50,14 +57,7 @@ extern CPath        DllPath;
 extern CText        UIFontName;
 extern unsigned     UIFontSize;
 
-extern HWND         MainHwnd;
-
-enum UserMessages_t
-{
-    WM_RUN_CMD_CALLBACK = WM_USER,
-    WM_OPEN_ACTIVITY_WIN,
-    WM_CLOSE_ACTIVITY_WIN
-};
+extern HWND         MainWndH;
 
 class CConfig;
 extern CConfig      Config;
@@ -68,7 +68,5 @@ void PluginInit();
 void PluginDeInit();
 
 bool UpdateSingleFile(const CPath& file);
-bool CreateLibDatabase(HWND hOwnerWin, CPath& dbPath, CompletionCB complCB);
-void DbWriteCB(const CmdPtr_t& cmd);
 
 } // namespace GTags

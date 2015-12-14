@@ -39,41 +39,6 @@
 #endif
 
 
-namespace Tools
-{
-
-#ifdef DEVELOPMENT
-
-#ifdef UNICODE
-#define Msg(x)  MsgW(x)
-#else
-#define Msg(x)  MsgA(x)
-#endif
-
-inline void MsgW(const wchar_t* msg)
-{
-    MessageBoxW(NULL, msg, L"", MB_OK);
-}
-
-
-inline void MsgA(const char* msg)
-{
-    MessageBoxA(NULL, msg, "", MB_OK);
-}
-
-
-inline void MsgNum(int num, int radix = 10)
-{
-    char buf[128];
-    _itoa_s(num, buf, _countof(buf), radix);
-    MessageBoxA(NULL, buf, "", MB_OK);
-}
-
-#endif
-
-} // namespace Tools
-
-
 /**
  *  \class  CTextW
  *  \brief
@@ -128,10 +93,6 @@ public:
     inline const wchar_t* C_str() const { return _buf.data(); }
     inline wchar_t* C_str() { return _buf.data(); }
     inline unsigned Size() const { return _buf.size(); }
-
-#ifdef DEVELOPMENT
-    inline void Print() { Tools::MsgW(C_str()); }
-#endif
 };
 
 
@@ -189,10 +150,6 @@ public:
     inline const char* C_str() const { return _buf.data(); }
     inline char* C_str() { return _buf.data(); }
     inline unsigned Size() const { return _buf.size(); }
-
-#ifdef DEVELOPMENT
-    inline void Print() { Tools::MsgA(C_str()); }
-#endif
 };
 
 
@@ -232,3 +189,41 @@ public:
     bool IsSubpathOf(const CPath& path) const;
     bool IsSubpathOf(const TCHAR* pathStr) const;
 };
+
+
+namespace Tools
+{
+
+bool BrowseForFolder(HWND hOwnerWin, CPath& path);
+
+
+#ifdef DEVELOPMENT
+
+#ifdef UNICODE
+#define Msg(x)  MsgW(x)
+#else
+#define Msg(x)  MsgA(x)
+#endif
+
+inline void MsgW(const wchar_t* msg)
+{
+    MessageBoxW(NULL, msg, L"", MB_OK);
+}
+
+
+inline void MsgA(const char* msg)
+{
+    MessageBoxA(NULL, msg, "", MB_OK);
+}
+
+
+inline void MsgNum(int num, int radix = 10)
+{
+    char buf[128];
+    _itoa_s(num, buf, _countof(buf), radix);
+    MessageBoxA(NULL, buf, "", MB_OK);
+}
+
+#endif
+
+} // namespace Tools

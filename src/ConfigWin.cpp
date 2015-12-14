@@ -35,7 +35,9 @@
 #include "Config.h"
 #include "GTags.h"
 #include "ConfigWin.h"
+#include "DbManager.h"
 #include "Cmd.h"
+#include "CmdEngine.h"
 
 
 namespace GTags
@@ -361,7 +363,7 @@ void ConfigWin::onUpdateDb()
 
     if (_hUpdateCount)
         for (unsigned i = 0; i < _hUpdateCount; ++i)
-            CreateLibDatabase(_hWnd, dbs[i], updateDbCB);
+            createLibDatabase(dbs[i], updateDbCB);
 }
 
 
@@ -445,9 +447,74 @@ void ConfigWin::fillLibDb(const CPath& lib)
 /**
  *  \brief
  */
+bool ConfigWin::createLibDatabase(CPath& dbPath, CompletionCB complCB)
+{
+    if (dbPath.IsEmpty())
+    {
+        if (!Tools::BrowseForFolder(_hWnd, dbPath))
+            return false;
+    }
+
+    DbHandle db;
+
+    if (DbManager::Get().DbExistsInFolder(dbPath))
+    {
+        CText msg(_T("Database at\n\""));
+        msg += dbPath;
+        msg += _T("\" exists.\nRe-create?");
+        int choice = MessageBox(_hWnd, msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+        if (choice != IDYES)
+            return false;
+
+        bool success;
+        db = DbManager::Get().GetDb(dbPath, true, &success);
+
+        if (!success)
+        {
+            MessageBox(_hWnd, _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
+            return false;
+        }
+    }
+    else
+    {
+        db = DbManager::Get().RegisterDb(dbPath);
+    }
+
+    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Create Library Database"), db));
+    CmdEngine::Run(cmd, complCB);
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::dbWriteReady(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() != OK)
+        DbManager::Get().UnregisterDb(cmd->Db());
+    else
+        DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == FAILED || cmd->Result())
+    {
+        CText msg(cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void ConfigWin::createDbCB(const CmdPtr_t& cmd)
 {
-    DbWriteCB(cmd);
+    dbWriteReady(cmd);
 
     if (CW == NULL)
         return;
@@ -464,7 +531,7 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
  */
 void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
 {
-    DbWriteCB(cmd);
+    dbWriteReady(cmd);
 
     if (CW == NULL)
         return;
@@ -557,7 +624,7 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                 {
                     CPath libraryPath;
 
-                    if (CreateLibDatabase(hWnd, libraryPath, createDbCB))
+                    if (CW->createLibDatabase(libraryPath, createDbCB))
                         ShowWindow(hWnd, SW_HIDE);
                     else if (!libraryPath.IsEmpty())
                         CW->fillLibDb(libraryPath);

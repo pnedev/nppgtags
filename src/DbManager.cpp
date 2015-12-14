@@ -36,6 +36,35 @@ DbManager DbManager::Instance;
 /**
  *  \brief
  */
+void GTagsDb::ScheduleUpdate(const CPath& file)
+{
+    std::list<CPath>::reverse_iterator iFile;
+    for (iFile = _updateList.rbegin(); iFile != _updateList.rend(); ++iFile)
+        if (*iFile == file)
+            return;
+
+    _updateList.push_back(file);
+}
+
+
+/**
+ *  \brief
+ */
+void GTagsDb::runScheduledUpdate()
+{
+    if (_updateList.empty())
+        return;
+
+    CPath file = *(_updateList.begin());
+    _updateList.erase(_updateList.begin());
+
+    UpdateSingleFile(file);
+}
+
+
+/**
+ *  \brief
+ */
 const DbHandle& DbManager::RegisterDb(const CPath& dbPath)
 {
     bool success;
@@ -58,8 +87,8 @@ bool DbManager::UnregisterDb(const DbHandle& db)
     {
         if (db == *dbi)
         {
-            db->Unlock();
-            if (!db->IsLocked())
+            db->unlock();
+            if (!db->isLocked())
             {
                 ret = deleteDb(db->_path);
                 _dbList.erase(dbi);
@@ -99,29 +128,23 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
 /**
  *  \brief
  */
-bool DbManager::PutDb(const DbHandle& db)
+void DbManager::PutDb(const DbHandle& db)
 {
     if (!db)
-        return false;
+        return;
 
     for (std::list<DbHandle>::iterator dbi = _dbList.begin(); dbi != _dbList.end(); ++dbi)
     {
         if (db == *dbi)
         {
-            db->Unlock();
+            db->unlock();
 
-            bool isLocked = db->IsLocked();
-            if (!isLocked)
-            {
-                runScheduledUpdate(db->_path.C_str());
-                isLocked = db->IsLocked();
-            }
+            if (!db->isLocked())
+                db->runScheduledUpdate();
 
-            return isLocked;
+            break;
         }
     }
-
-    return false;
 }
 
 
@@ -133,20 +156,6 @@ bool DbManager::DbExistsInFolder(const CPath& folder)
     CPath db(folder);
     db += _T("GTAGS");
     return db.FileExists();
-}
-
-
-/**
- *  \brief
- */
-void DbManager::ScheduleUpdate(const CPath& file)
-{
-    std::list<CPath>::reverse_iterator iFile;
-    for (iFile = _updateList.rbegin(); iFile != _updateList.rend(); ++iFile)
-        if (*iFile == file)
-            return;
-
-    _updateList.push_back(file);
 }
 
 
@@ -183,7 +192,7 @@ const DbHandle& DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* succe
     {
         if ((*dbi)->_path == dbPath)
         {
-            *success = (*dbi)->Lock(writeEn);
+            *success = (*dbi)->lock(writeEn);
             return *dbi;
         }
     }
@@ -194,34 +203,6 @@ const DbHandle& DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* succe
     *success = true;
 
     return *(_dbList.rbegin());
-}
-
-
-/**
- *  \brief
- */
-bool DbManager::runScheduledUpdate(const TCHAR* dbPath)
-{
-    CPath file;
-    {
-        if (_updateList.empty())
-            return false;
-
-        std::list<CPath>::iterator iFile;
-        for (iFile = _updateList.begin(); iFile != _updateList.end(); ++iFile)
-            if (iFile->IsSubpathOf(dbPath))
-                break;
-
-        if (iFile == _updateList.end())
-            return false;
-
-        file = *iFile;
-        _updateList.erase(iFile);
-    }
-
-    UpdateSingleFile(file);
-
-    return true;
 }
 
 } // namespace GTags

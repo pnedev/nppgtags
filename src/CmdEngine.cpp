@@ -78,7 +78,7 @@ bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
  */
 CmdEngine::~CmdEngine()
 {
-    SendMessage(MainHwnd, WM_RUN_CMD_CALLBACK, (WPARAM)_complCB, (LPARAM)(&_cmd));
+    SendMessage(MainWndH, WM_RUN_CMD_CALLBACK, (WPARAM)_complCB, (LPARAM)(&_cmd));
 
     if (_hThread)
         CloseHandle(_hThread);
@@ -134,14 +134,14 @@ unsigned CmdEngine::start()
                 header += _cmd->Tag();
             header += _T('\"');
 
-            SendMessage(MainHwnd, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
+            SendMessage(MainWndH, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
 
             HANDLE waitHandles[] = {pi.hProcess, hCancel};
             DWORD handleId = WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE) - WAIT_OBJECT_0;
             if (handleId > 0 && handleId < 2 && waitHandles[handleId] == hCancel)
                 _cmd->_status = CANCELLED;
 
-            SendMessage(MainHwnd, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
+            SendMessage(MainWndH, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
 
             CloseHandle(hCancel);
         }

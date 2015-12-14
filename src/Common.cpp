@@ -23,6 +23,60 @@
 
 
 #include "Common.h"
+#include <shlobj.h>
+
+
+namespace
+{
+
+/**
+ *  \brief
+ */
+int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
+{
+    if (uMsg == BFFM_INITIALIZED)
+        SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
+    return 0;
+}
+
+} // anonymous namespace
+
+
+/**
+ *  \brief
+ */
+bool Tools::BrowseForFolder(HWND hOwnerWin, CPath& path)
+{
+    TCHAR tmp[MAX_PATH];
+
+    BROWSEINFO bi       = {0};
+    bi.hwndOwner        = hOwnerWin;
+    bi.pszDisplayName   = tmp;
+    bi.lpszTitle        = _T("Select the database root (indexed recursively)");
+    bi.ulFlags          = BIF_RETURNONLYFSDIRS;
+    bi.lpfn             = browseFolderCB;
+
+    if (!path.IsEmpty() && path.Exists())
+        bi.lParam = (DWORD)path.C_str();
+
+    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+    if (!pidl)
+        return false;
+
+    SHGetPathFromIDList(pidl, tmp);
+
+    IMalloc* imalloc = NULL;
+    if (SUCCEEDED(SHGetMalloc(&imalloc)))
+    {
+        imalloc->Free(pidl);
+        imalloc->Release();
+    }
+
+    path = tmp;
+    path += _T("\\");
+
+    return true;
+}
 
 
 /**
