@@ -24,6 +24,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <memory>
 #include "Common.h"
 #include "INpp.h"
 #include "Config.h"
@@ -58,6 +59,9 @@ const TCHAR cFindSymbol[]       = _T("Find Symbol");
 const TCHAR cSearch[]           = _T("Search");
 const TCHAR cSearchText[]       = _T("Search in Text Files");
 const TCHAR cVersion[]          = _T("About");
+
+
+std::unique_ptr<CPath> ChangedFile;
 
 
 /**
@@ -740,11 +744,15 @@ void PluginInit()
 
     MainWndH = ResultWin::Register();
     if (MainWndH == NULL)
+    {
         MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
                 MB_OK | MB_ICONERROR);
+    }
     else if (!Config.LoadFromFile())
+    {
         MessageBox(npp.GetHandle(), _T("Bad config file, default settings will be used"), cPluginName,
                 MB_OK | MB_ICONEXCLAMATION);
+    }
 }
 
 
@@ -765,23 +773,87 @@ void PluginDeInit()
 /**
  *  \brief
  */
-bool OnFileChange(const CPath& file)
+void OnFileBeforeChange(const CPath& file)
 {
-    bool success;
-    DbHandle db = DbManager::Get().GetDb(file, true, &success);
-    if (!db)
-        return false;
+    ChangedFile.reset(new CPath(file));
+}
 
-    if (!success)
+
+/**
+ *  \brief
+ */
+void OnFileChangeCancel()
+{
+    ChangedFile.reset();
+}
+
+
+/**
+ *  \brief
+ */
+void OnFileChange(const CPath& file)
+{
+    if (Config._autoUpdate)
     {
-        db->ScheduleUpdate(file);
-        return true;
+        CPath path(file);
+
+        while (path.DirUp())
+        {
+            bool success;
+            DbHandle db = DbManager::Get().GetDb(path, true, &success);
+            if (!db)
+                return;
+
+            if (!success)
+            {
+                db->ScheduleUpdate(file);
+                continue;
+            }
+
+            CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, NULL, file.C_str()));
+            CmdEngine::Run(cmd, dbWriteCB);
+
+            path = db->GetPath();
+        }
     }
+}
 
-    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, NULL, file.C_str()));
-    CmdEngine::Run(cmd, dbWriteCB);
 
-    return true;
+/**
+ *  \brief
+ */
+void OnFileRename(const CPath& file)
+{
+    if (Config._autoUpdate)
+    {
+        OnFileChange(file);
+
+        if (ChangedFile)
+        {
+            OnFileChange(*ChangedFile);
+            ChangedFile.reset();
+        }
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void OnFileDelete(const CPath& file)
+{
+    if (Config._autoUpdate)
+    {
+        if (ChangedFile)
+        {
+            OnFileChange(*ChangedFile);
+            ChangedFile.reset();
+        }
+        else
+        {
+            OnFileChange(file);
+        }
+    }
 }
 
 } // namespace GTags

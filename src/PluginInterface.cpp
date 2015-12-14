@@ -18,7 +18,6 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <memory>
 #include "PluginInterface.h"
 #include "Notepad_plus_msgs.h"
 #include "menuCmdID.h"
@@ -27,14 +26,6 @@
 #include "Config.h"
 #include "ResultWin.h"
 #include "GTags.h"
-
-
-namespace
-{
-
-std::unique_ptr<CPath> ChangedFile;
-
-}
 
 
 BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall, LPVOID lpReserved)
@@ -86,58 +77,41 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     switch (notifyCode->nmhdr.code)
     {
         case NPPN_FILESAVED:
-            if (GTags::Config._autoUpdate)
-            {
-                CPath file;
-                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                GTags::OnFileChange(file);
-            }
+        {
+            CPath file;
+            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
+            GTags::OnFileChange(file);
+        }
         break;
 
         case NPPN_FILEBEFORERENAME:
         case NPPN_FILEBEFOREDELETE:
-            if (GTags::Config._autoUpdate)
-            {
-                ChangedFile.reset(new CPath());
-                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, *ChangedFile);
-            }
+        {
+            CPath file;
+            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
+            GTags::OnFileBeforeChange(file);
+        }
         break;
 
         case NPPN_FILERENAMECANCEL:
         case NPPN_FILEDELETEFAILED:
-            ChangedFile.reset();
+            GTags::OnFileChangeCancel();
         break;
 
         case NPPN_FILERENAMED:
-            if (GTags::Config._autoUpdate)
-            {
-                CPath file;
-                INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                GTags::OnFileChange(file);
-
-                if (ChangedFile)
-                {
-                    GTags::OnFileChange(*ChangedFile);
-                    ChangedFile.reset();
-                }
-            }
+        {
+            CPath file;
+            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
+            GTags::OnFileRename(file);
+        }
         break;
 
         case NPPN_FILEDELETED:
-            if (GTags::Config._autoUpdate)
-            {
-                if (ChangedFile)
-                {
-                    GTags::OnFileChange(*ChangedFile);
-                    ChangedFile.reset();
-                }
-                else
-                {
-                    CPath file;
-                    INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
-                    GTags::OnFileChange(file);
-                }
-            }
+        {
+            CPath file;
+            INpp::Get().GetFilePathFromBufID(notifyCode->nmhdr.idFrom, file);
+            GTags::OnFileDelete(file);
+        }
         break;
 
         case NPPN_WORDSTYLESUPDATED:
