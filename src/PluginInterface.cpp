@@ -23,7 +23,6 @@
 #include "menuCmdID.h"
 #include "Common.h"
 #include "INpp.h"
-#include "Config.h"
 #include "ResultWin.h"
 #include "GTags.h"
 

@@ -49,7 +49,6 @@ using namespace GTags;
 
 
 const TCHAR cCreateDatabase[]   = _T("Create Database");
-const TCHAR cUpdateSingle[]     = _T("Database Single File Update");
 const TCHAR cAutoCompl[]        = _T("AutoComplete");
 const TCHAR cAutoComplFile[]    = _T("AutoComplete File Name");
 const TCHAR cFindFile[]         = _T("Find File");
@@ -282,7 +281,7 @@ void findCB(const CmdPtr_t& cmd)
  */
 void dbWriteCB(const CmdPtr_t& cmd)
 {
-    if (cmd->Status() != OK && cmd->Id() == CREATE_DATABASE)
+    if (cmd->Status() != OK)
         DbManager::Get().UnregisterDb(cmd->Db());
     else
         DbManager::Get().PutDb(cmd->Db());
@@ -802,16 +801,12 @@ void OnFileChange(const CPath& file)
             bool success;
             DbHandle db = DbManager::Get().GetDb(path, true, &success);
             if (!db)
-                return;
+                break;
 
-            if (!success)
-            {
+            if (success)
+                db->Update(file);
+            else
                 db->ScheduleUpdate(file);
-                continue;
-            }
-
-            CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, cUpdateSingle, db, NULL, file.C_str()));
-            CmdEngine::Run(cmd, dbWriteCB);
 
             path = db->GetPath();
         }
@@ -824,15 +819,12 @@ void OnFileChange(const CPath& file)
  */
 void OnFileRename(const CPath& file)
 {
-    if (Config._autoUpdate)
-    {
-        OnFileChange(file);
+    OnFileChange(file);
 
-        if (ChangedFile)
-        {
-            OnFileChange(*ChangedFile);
-            ChangedFile.reset();
-        }
+    if (ChangedFile)
+    {
+        OnFileChange(*ChangedFile);
+        ChangedFile.reset();
     }
 }
 
@@ -842,17 +834,14 @@ void OnFileRename(const CPath& file)
  */
 void OnFileDelete(const CPath& file)
 {
-    if (Config._autoUpdate)
+    if (ChangedFile)
     {
-        if (ChangedFile)
-        {
-            OnFileChange(*ChangedFile);
-            ChangedFile.reset();
-        }
-        else
-        {
-            OnFileChange(file);
-        }
+        OnFileChange(*ChangedFile);
+        ChangedFile.reset();
+    }
+    else
+    {
+        OnFileChange(file);
     }
 }
 

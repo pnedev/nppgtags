@@ -24,13 +24,27 @@
 
 #include <windows.h>
 #include "DbManager.h"
+#include "INpp.h"
 #include "GTags.h"
+#include "Cmd.h"
+#include "CmdEngine.h"
 
 
 namespace GTags
 {
 
 DbManager DbManager::Instance;
+
+
+/**
+ *  \brief
+ */
+void GTagsDb::Update(const CPath& file)
+{
+    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, _T("Database Single File Update"),
+            this->shared_from_this(), NULL, file.C_str()));
+    CmdEngine::Run(cmd, dbUpdateCB);
+}
 
 
 /**
@@ -50,15 +64,80 @@ void GTagsDb::ScheduleUpdate(const CPath& file)
 /**
  *  \brief
  */
+bool GTagsDb::lock(bool writeEn)
+{
+    if (writeEn)
+    {
+        if (_writeLock || _readLocks)
+            return false;
+
+        _writeLock = true;
+    }
+    else
+    {
+        if (_writeLock)
+            return false;
+
+        ++_readLocks;
+    }
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+bool GTagsDb::unlock()
+{
+    if (_writeLock)
+    {
+        _writeLock = false;
+    }
+    else if (_readLocks > 0)
+    {
+        --_readLocks;
+        return !_readLocks;
+    }
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
 void GTagsDb::runScheduledUpdate()
 {
     if (_updateList.empty())
         return;
 
+    lock(true);
+
     CPath file = *(_updateList.begin());
     _updateList.erase(_updateList.begin());
 
-    OnFileChange(file);
+    Update(file);
+}
+
+
+/**
+ *  \brief
+ */
+void GTagsDb::dbUpdateCB(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == FAILED || cmd->Result())
+    {
+        CText msg(cmd->Result());
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+
+    cmd->Db()->unlock();
+    cmd->Db()->runScheduledUpdate();
 }
 
 
@@ -87,12 +166,12 @@ bool DbManager::UnregisterDb(const DbHandle& db)
     {
         if (db == *dbi)
         {
-            db->unlock();
-            if (!db->isLocked())
+            if (db->unlock())
             {
                 ret = deleteDb(db->_path);
                 _dbList.erase(dbi);
             }
+
             break;
         }
     }
@@ -137,9 +216,7 @@ void DbManager::PutDb(const DbHandle& db)
     {
         if (db == *dbi)
         {
-            db->unlock();
-
-            if (!db->isLocked())
+            if (db->unlock())
                 db->runScheduledUpdate();
 
             break;

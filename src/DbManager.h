@@ -30,7 +30,7 @@
 #include <memory>
 #include "Common.h"
 #include "Config.h"
-
+#include "CmdDefines.h"
 
 namespace GTags
 {
@@ -39,7 +39,7 @@ namespace GTags
  *  \class  GTagsDb
  *  \brief
  */
-class GTagsDb
+class GTagsDb : public std::enable_shared_from_this<GTagsDb>
 {
 public:
     ~GTagsDb() {}
@@ -49,6 +49,7 @@ public:
     inline const CConfigPtr_t& GetConfig() const { return _cfg; }
     inline void SetConfig(const CConfigPtr_t& cfg) { _cfg = cfg; }
 
+    void Update(const CPath& file);
     void ScheduleUpdate(const CPath& file);
 
 private:
@@ -59,35 +60,10 @@ private:
         _readLocks = writeEn ? 0 : 1;
     }
 
-    bool isLocked()
-    {
-        return (_writeLock || _readLocks);
-    }
+    static void dbUpdateCB(const CmdPtr_t& cmd);
 
-    bool lock(bool writeEn)
-    {
-        if (writeEn)
-        {
-            if (_writeLock || _readLocks)
-                return false;
-            _writeLock = true;
-        }
-        else
-        {
-            if (_writeLock)
-                return false;
-            ++_readLocks;
-        }
-        return true;
-    }
-
-    void unlock()
-    {
-        if (_writeLock)
-            _writeLock = false;
-        else if (_readLocks > 0)
-            --_readLocks;
-    }
+    bool lock(bool writeEn);
+    bool unlock();
 
     void runScheduledUpdate();
 
