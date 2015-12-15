@@ -29,8 +29,10 @@
 #include <list>
 #include <memory>
 #include "Common.h"
-#include "Config.h"
+#include "DbConfig.h"
 #include "CmdDefines.h"
+#include "GTags.h"
+
 
 namespace GTags
 {
@@ -46,8 +48,8 @@ public:
 
     inline const CPath& GetPath() const { return _path; }
 
-    inline const CConfigPtr_t& GetConfig() const { return _cfg; }
-    inline void SetConfig(const CConfigPtr_t& cfg) { _cfg = cfg; }
+    inline const DbConfigPtr_t& GetConfig() const { return _cfg; }
+    inline void SetConfig(const DbConfigPtr_t& cfg) { _cfg = cfg; }
 
     void Update(const CPath& file);
     void ScheduleUpdate(const CPath& file);
@@ -55,10 +57,7 @@ public:
 private:
     friend class DbManager;
 
-    GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
-    {
-        _readLocks = writeEn ? 0 : 1;
-    }
+    GTagsDb(const CPath& dbPath, bool writeEn);
 
     static void dbUpdateCB(const CmdPtr_t& cmd);
 
@@ -68,7 +67,7 @@ private:
     void runScheduledUpdate();
 
     CPath           _path;
-    CConfigPtr_t    _cfg;
+    DbConfigPtr_t   _cfg;
 
     int     _readLocks;
     bool    _writeLock;

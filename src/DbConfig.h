@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  GTags config class
+ *  \brief  GTags database config class
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -28,7 +28,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
-#include <memory>
 #include "Common.h"
 
 
@@ -36,10 +35,10 @@ namespace GTags
 {
 
 /**
- *  \class  CConfig
+ *  \class  DbConfig
  *  \brief
  */
-class CConfig
+class DbConfig
 {
 public:
     enum
@@ -50,8 +49,8 @@ public:
         PARSER_LIST_END
     };
 
-    CConfig();
-    ~CConfig() {}
+    DbConfig();
+    ~DbConfig() {}
 
     static const TCHAR* Parser(unsigned idx)
     {
@@ -88,8 +87,5 @@ private:
     static const TCHAR cUseLibraryKey[];
     static const TCHAR cLibraryPathKey[];
 };
-
-
-typedef std::shared_ptr<CConfig> CConfigPtr_t;
 
 } // namespace GTags

@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <memory>
 #include "resource.h"
 #include "CmdDefines.h"
 
@@ -59,8 +60,10 @@ extern unsigned     UIFontSize;
 
 extern HWND         MainWndH;
 
-class CConfig;
-extern CConfig      Config;
+class DbConfig;
+typedef std::shared_ptr<DbConfig> DbConfigPtr_t;
+
+extern DbConfigPtr_t DefaultDbCfg;
 
 
 BOOL PluginLoad(HINSTANCE hMod);

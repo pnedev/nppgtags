@@ -27,7 +27,7 @@
 #include <memory>
 #include "Common.h"
 #include "INpp.h"
-#include "Config.h"
+#include "DbConfig.h"
 #include "DbManager.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
@@ -463,16 +463,19 @@ void FindReference()
 {
     SearchWin::Close();
 
-    if (Config._parserIdx == CConfig::CTAGS_PARSER)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Ctags parser doesn't support reference search"), cPluginName,
-                MB_OK | MB_ICONINFORMATION);
-        return;
-    }
-
     DbHandle db = getDatabase();
     if (!db)
         return;
+
+    if (db->GetConfig()->_parserIdx == DbConfig::CTAGS_PARSER)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Ctags parser doesn't support reference search"), cPluginName,
+                MB_OK | MB_ICONINFORMATION);
+
+        DbManager::Get().PutDb(db);
+
+        return;
+    }
 
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser));
@@ -653,7 +656,7 @@ void ToggleResultWinFocus()
  */
 void SettingsCfg()
 {
-    ConfigWin::Show(&Config);
+    ConfigWin::Show(DefaultDbCfg);
 }
 
 
@@ -702,7 +705,7 @@ unsigned UIFontSize;
 
 HWND MainWndH = NULL;
 
-CConfig Config;
+DbConfigPtr_t DefaultDbCfg;
 
 
 /**
@@ -747,10 +750,12 @@ void PluginInit()
         MessageBox(npp.GetHandle(), _T("Results Window init failed, plugin will not be operational"), cPluginName,
                 MB_OK | MB_ICONERROR);
     }
-    else if (!Config.LoadFromFile())
+    else
     {
-        MessageBox(npp.GetHandle(), _T("Bad config file, default settings will be used"), cPluginName,
-                MB_OK | MB_ICONEXCLAMATION);
+        DefaultDbCfg.reset(new DbConfig());
+        if (!DefaultDbCfg->LoadFromFile())
+            MessageBox(npp.GetHandle(), _T("Bad default config file, default settings will be used"), cPluginName,
+                    MB_OK | MB_ICONEXCLAMATION);
     }
 }
 
@@ -792,24 +797,28 @@ void OnFileChangeCancel()
  */
 void OnFileChange(const CPath& file)
 {
-    if (Config._autoUpdate)
+    CPath path(file);
+
+    while (path.DirUp())
     {
-        CPath path(file);
+        bool success;
+        DbHandle db = DbManager::Get().GetDb(path, true, &success);
+        if (!db)
+            break;
 
-        while (path.DirUp())
+        if (db->GetConfig()->_autoUpdate)
         {
-            bool success;
-            DbHandle db = DbManager::Get().GetDb(path, true, &success);
-            if (!db)
-                break;
-
             if (success)
                 db->Update(file);
             else
                 db->ScheduleUpdate(file);
-
-            path = db->GetPath();
         }
+        else if (success)
+        {
+            DbManager::Get().PutDb(db);
+        }
+
+        path = db->GetPath();
     }
 }
 

@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include "CmdDefines.h"
+#include "GTags.h"
 
 
 class CPath;
@@ -36,9 +37,6 @@ class CPath;
 namespace GTags
 {
 
-class CConfig;
-
-
 /**
  *  \class  ConfigWin
  *  \brief
@@ -46,7 +44,7 @@ class CConfig;
 class ConfigWin
 {
 public:
-    static void Show(CConfig* cfg);
+    static void Show(const DbConfigPtr_t& cfg);
 
 private:
     static const TCHAR  cClassName[];
@@ -62,7 +60,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    ConfigWin(CConfig* cfg) : _cfg(cfg), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0) {}
+    ConfigWin(const DbConfigPtr_t& cfg) : _cfg(cfg), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0) {}
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 
@@ -76,19 +74,19 @@ private:
 
     static ConfigWin* CW;
 
-    CConfig*    _cfg;
-    HWND        _hWnd;
-    HWND        _hParser;
-    HWND        _hAutoUpdate;
-    HWND        _hEnLibDb;
-    HWND        _hCreateDb;
-    HWND        _hUpdateDb;
-    HWND        _hLibDb;
-    HWND        _hSave;
-    HWND        _hCancel;
-    HHOOK       _hKeyHook;
-    HFONT       _hFont;
-    unsigned    _hUpdateCount;
+    DbConfigPtr_t   _cfg;
+    HWND            _hWnd;
+    HWND            _hParser;
+    HWND            _hAutoUpdate;
+    HWND            _hEnLibDb;
+    HWND            _hCreateDb;
+    HWND            _hUpdateDb;
+    HWND            _hLibDb;
+    HWND            _hSave;
+    HWND            _hCancel;
+    HHOOK           _hKeyHook;
+    HFONT           _hFont;
+    unsigned        _hUpdateCount;
 };
 
 } // namespace GTags

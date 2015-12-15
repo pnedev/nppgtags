@@ -27,7 +27,7 @@
 #include <process.h>
 #include "Common.h"
 #include "INpp.h"
-#include "Config.h"
+#include "DbConfig.h"
 #include "GTags.h"
 #include "ReadPipe.h"
 #include "CmdEngine.h"
@@ -271,7 +271,7 @@ void CmdEngine::composeCmd(CText& buf) const
             buf += path;
             buf += _T("\"");
             buf += _T(" --gtagslabel=");
-            buf += Config.Parser();
+            buf += _cmd->Db()->GetConfig()->Parser();
         }
     }
     else if (_cmd->_id != VERSION)
@@ -301,18 +301,18 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
 
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
-
-        if (Config._useLibDb && Config._libDbPaths.size())
+        const DbConfigPtr_t& cfg = _cmd->Db()->GetConfig();
+        if (cfg->_useLibDb && cfg->_libDbPaths.size())
         {
-            if (!Config._libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
-                envVars += Config._libDbPaths[0];
+            if (!cfg->_libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
+                envVars += cfg->_libDbPaths[0];
 
-            for (unsigned i = 1; i < Config._libDbPaths.size(); ++i)
+            for (unsigned i = 1; i < cfg->_libDbPaths.size(); ++i)
             {
-                if (!Config._libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
+                if (!cfg->_libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
                 {
                     envVars += _T(';');
-                    envVars += Config._libDbPaths[i];
+                    envVars += cfg->_libDbPaths[i];
                 }
             }
         }

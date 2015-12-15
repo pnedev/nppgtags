@@ -32,7 +32,7 @@
 #include <vector>
 #include "Common.h"
 #include "INpp.h"
-#include "Config.h"
+#include "DbConfig.h"
 #include "GTags.h"
 #include "ConfigWin.h"
 #include "DbManager.h"
@@ -54,7 +54,7 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-void ConfigWin::Show(CConfig* cfg)
+void ConfigWin::Show(const DbConfigPtr_t& cfg)
 {
     if (CW)
     {
@@ -321,8 +321,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ? BST_CHECKED : BST_UNCHECKED);
 
-    for (unsigned i = 0; CConfig::Parser(i); ++i)
-        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)CConfig::Parser(i));
+    for (unsigned i = 0; DbConfig::Parser(i); ++i)
+        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
 
     SendMessage(_hParser, CB_SETCURSEL, _cfg->_parserIdx, 0);
 
@@ -390,7 +390,7 @@ void ConfigWin::onSave()
     if (!_cfg->SaveToFile())
     {
         CPath cfgFile;
-        CConfig::GetDefaultCfgFile(cfgFile);
+        DbConfig::GetDefaultCfgFile(cfgFile);
 
         CText msg(_T("Failed saving config to\n\""));
         msg += cfgFile.C_str();

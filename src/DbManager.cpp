@@ -39,6 +39,16 @@ DbManager DbManager::Instance;
 /**
  *  \brief
  */
+GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
+{
+    _cfg = DefaultDbCfg;
+    _readLocks = writeEn ? 0 : 1;
+}
+
+
+/**
+ *  \brief
+ */
 void GTagsDb::Update(const CPath& file)
 {
     CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, _T("Database Single File Update"),
