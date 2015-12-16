@@ -184,7 +184,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
 {
     _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER | WS_CLIPCHILDREN,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-            INpp::Get().GetHandle(), NULL, HMod, (LPVOID)this);
+            INpp::Get().GetHandle(), NULL, HMod, this);
     if (_hWnd == NULL)
         return NULL;
 

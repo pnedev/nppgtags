@@ -225,7 +225,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(),
             style, win.left, win.top, width, win.bottom - win.top,
-            hOwner, NULL, HMod, (LPVOID) this);
+            hOwner, NULL, HMod, this);
     if (_hWnd == NULL)
         return NULL;
 

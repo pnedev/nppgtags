@@ -519,7 +519,7 @@ HWND ResultWin::composeWindow()
     _hWnd = CreateWindow(cClassName, cPluginName,
             style, win.left, win.top,
             win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HMod, (LPVOID)this);
+            hOwner, NULL, HMod, this);
     if (_hWnd == NULL)
         return NULL;
 

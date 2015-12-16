@@ -257,6 +257,8 @@ void CmdEngine::composeCmd(CText& buf) const
     path.StripFilename();
     path += cBinsDir;
 
+    buf.Resize(2048);
+
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
         _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str());
     else
@@ -290,14 +292,9 @@ void CmdEngine::composeCmd(CText& buf) const
 /**
  *  \brief
  */
-bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe)
+void CmdEngine::prepareEnvironmentVars(CText& buf) const
 {
-    CText buf(2048);
-    composeCmd(buf);
-
-    const DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
-    CText envVars(_T("GTAGSLIBPATH="));
-    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->Db()->GetPath().C_str();
+    buf = _T("GTAGSLIBPATH=");
 
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
@@ -305,20 +302,36 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
         if (cfg->_useLibDb && cfg->_libDbPaths.size())
         {
             if (!cfg->_libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
-                envVars += cfg->_libDbPaths[0];
+                buf += cfg->_libDbPaths[0];
 
             for (unsigned i = 1; i < cfg->_libDbPaths.size(); ++i)
             {
                 if (!cfg->_libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
                 {
-                    envVars += _T(';');
-                    envVars += cfg->_libDbPaths[i];
+                    buf += _T(';');
+                    buf += cfg->_libDbPaths[i];
                 }
             }
         }
     }
 
-    envVars += _T('\0');
+    buf += _T('\0');
+}
+
+
+/**
+ *  \brief
+ */
+bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe)
+{
+    const DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
+    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->Db()->GetPath().C_str();
+
+    CText cmdBuf;
+    composeCmd(cmdBuf);
+
+    CText envBuf;
+    prepareEnvironmentVars(envBuf);
 
     STARTUPINFO si  = {0};
     si.cb           = sizeof(si);
@@ -326,8 +339,7 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     si.hStdError    = errorPipe.GetInputHandle();
     si.hStdOutput   = dataPipe.GetInputHandle();
 
-    if (!CreateProcess(NULL, buf.C_str(), NULL, NULL, TRUE, createFlags, (LPVOID)envVars.C_str(),
-            currentDir, &si, &pi))
+    if (!CreateProcess(NULL, cmdBuf.C_str(), NULL, NULL, TRUE, createFlags, envBuf.C_str(), currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
         return false;
