@@ -72,7 +72,7 @@ private:
     int     _readLocks;
     bool    _writeLock;
 
-    std::list<CPath>    _updateList;
+    std::list<CPath> _updateList;
 };
 
 

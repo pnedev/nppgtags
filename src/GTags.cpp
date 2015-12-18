@@ -69,7 +69,7 @@ std::unique_ptr<CPath> ChangedFile;
 bool checkForGTagsBinaries(CPath& dllPath)
 {
     dllPath.StripFilename();
-    dllPath += cBinsDir;
+    dllPath += cPluginName;
     dllPath += _T("\\global.exe");
 
     bool gtagsBinsFound = dllPath.FileExists();
@@ -91,6 +91,7 @@ bool checkForGTagsBinaries(CPath& dllPath)
         msg += _T(" plugin will not be loaded!");
 
         MessageBox(NULL, msg.C_str(), cPluginName, MB_OK | MB_ICONERROR);
+
         return false;
     }
 
@@ -176,7 +177,7 @@ void autoComplCB(const CmdPtr_t& cmd)
     {
         CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -209,7 +210,7 @@ void halfComplCB(const CmdPtr_t& cmd)
     {
         CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -243,7 +244,7 @@ void showResultCB(const CmdPtr_t& cmd)
     {
         CText msg(cmd->Result());
         msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONERROR);
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
     else if (cmd->Status() == RUN_ERROR)
     {
@@ -656,7 +657,23 @@ void ToggleResultWinFocus()
  */
 void SettingsCfg()
 {
-    ConfigWin::Show(DefaultDbCfg);
+    SearchWin::Close();
+
+    CPath currentFile;
+    INpp::Get().GetFilePath(currentFile);
+
+    bool success;
+    DbHandle db = DbManager::Get().GetDb(currentFile, false, &success);
+    if (db)
+    {
+        ConfigWin::Show(db->GetConfig(), db->GetPath().C_str());
+        if (success)
+            DbManager::Get().PutDb(db);
+    }
+    else
+    {
+        ConfigWin::Show(DefaultDbCfg);
+    }
 }
 
 
@@ -752,8 +769,12 @@ void PluginInit()
     }
     else
     {
+        CPath cfgFolder;
+        npp.GetPluginsConfDir(cfgFolder);
+
         DefaultDbCfg.reset(new DbConfig());
-        if (!DefaultDbCfg->LoadFromFile())
+
+        if (!DefaultDbCfg->LoadFromFolder(cfgFolder))
             MessageBox(npp.GetHandle(), _T("Bad default config file, default settings will be used"), cPluginName,
                     MB_OK | MB_ICONEXCLAMATION);
     }

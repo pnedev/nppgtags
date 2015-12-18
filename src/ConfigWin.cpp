@@ -54,7 +54,7 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-void ConfigWin::Show(const DbConfigPtr_t& cfg)
+void ConfigWin::Show(const DbConfigPtr_t& cfg, const TCHAR* cfgPath)
 {
     if (CW)
     {
@@ -62,7 +62,7 @@ void ConfigWin::Show(const DbConfigPtr_t& cfg)
             SetFocus(CW->_hWnd);
         else
             MessageBox(INpp::Get().GetHandle(),
-                _T("Settings Window is already opened but is currently busy.\n\n")
+                _T("Settings Window is already opened but is currently busy and hidden.\n\n")
                 _T("Please wait all library databases to be created."), cPluginName, MB_OK | MB_ICONINFORMATION);
         return;
     }
@@ -85,7 +85,7 @@ void ConfigWin::Show(const DbConfigPtr_t& cfg)
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    CW = new ConfigWin(cfg);
+    CW = new ConfigWin(cfg, cfgPath);
     if (CW->composeWindow(hOwner) == NULL)
     {
         delete CW;
@@ -156,6 +156,15 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int wi
 /**
  *  \brief
  */
+ConfigWin::ConfigWin(const DbConfigPtr_t& cfg, const TCHAR* cfgPath) :
+    _cfg(cfg), _cfgPath(cfgPath), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0)
+{
+}
+
+
+/**
+ *  \brief
+ */
 ConfigWin::~ConfigWin()
 {
     if (_hKeyHook)
@@ -193,7 +202,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
-    CText header(VER_PLUGIN_NAME);
+    CText header(cPluginName);
     header += _T(" Settings");
 
     _hWnd = CreateWindowEx(styleEx, cClassName, header.C_str(), style,
@@ -372,6 +381,63 @@ void ConfigWin::onUpdateDb()
  */
 void ConfigWin::onSave()
 {
+    CPath cfgFolder;
+
+    if (_cfgPath.IsEmpty())
+    {
+        INpp::Get().GetPluginsConfDir(cfgFolder);
+    }
+    else
+    {
+        bool success;
+        DbHandle db = DbManager::Get().GetDb(_cfgPath, true, &success);
+        if (!db || !(db->GetPath() == _cfgPath))
+        {
+            if (db)
+                DbManager::Get().PutDb(db);
+
+            CText msg(_T("Database at\n\""));
+            msg += _cfgPath.C_str();
+            msg += _T("\"\nis missing, cannot save local config");
+
+            MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
+
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
+
+            return;
+        }
+
+        if (!success)
+        {
+            CText msg(_T("Database at\n\""));
+            msg += _cfgPath.C_str();
+            msg += _T("\"\nis in use.\nPlease wait all operations to finish and try again");
+
+            MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
+
+            return;
+        }
+
+        if (_cfg == DefaultDbCfg)
+        {
+            _cfg.reset(new DbConfig());
+            db->SetConfig(_cfg);
+        }
+
+        DbManager::Get().PutDb(db);
+
+        cfgFolder = _cfgPath;
+    }
+
+    saveConfig(cfgFolder);
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::saveConfig(CPath& cfgFolder)
+{
     _cfg->_libDbPaths.clear();
 
     int len = Edit_GetTextLength(_hLibDb);
@@ -387,15 +453,15 @@ void ConfigWin::onSave()
 
     _cfg->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 
-    if (!_cfg->SaveToFile())
+    if (!_cfg->SaveToFolder(cfgFolder))
     {
-        CPath cfgFile;
-        DbConfig::GetDefaultCfgFile(cfgFile);
+        cfgFolder += DbConfig::cCfgFileName;
 
         CText msg(_T("Failed saving config to\n\""));
-        msg += cfgFile.C_str();
+        msg += cfgFolder.C_str();
         msg += _T("\"\nIs the path read only?");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
+
+        MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
     }
     else
     {
@@ -499,12 +565,14 @@ void ConfigWin::dbWriteReady(const CmdPtr_t& cmd)
 
     if (cmd->Status() == RUN_ERROR)
     {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+        HWND hWnd = (CW == NULL) ? INpp::Get().GetHandle() : CW->_hWnd;
+        MessageBox(hWnd, _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Status() == FAILED || cmd->Result())
     {
         CText msg(cmd->Result());
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+        HWND hWnd = (CW == NULL) ? INpp::Get().GetHandle() : CW->_hWnd;
+        MessageBox(hWnd, msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 }
 

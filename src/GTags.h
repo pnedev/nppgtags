@@ -40,8 +40,7 @@ class CPath;
 namespace GTags
 {
 
-const TCHAR cPluginName[]   = VER_PLUGIN_NAME;
-const TCHAR cBinsDir[]      = VER_PLUGIN_NAME;
+const TCHAR cPluginName[] = PLUGIN_NAME;
 
 enum PluginWinMessages_t
 {

@@ -168,7 +168,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
     CText str(_T("About "));
-    str += VER_PLUGIN_NAME;
+    str += cPluginName;
 
     _hWnd = CreateWindowEx(styleEx, cClassName, str.C_str(), style,
             (win.right + win.left) / 2 - 150, (win.top + win.bottom) / 2 - 100, 300, 200,

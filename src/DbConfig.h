@@ -41,6 +41,8 @@ namespace GTags
 class DbConfig
 {
 public:
+    static const TCHAR cCfgFileName[];
+
     enum
     {
         DEFAULT_PARSER = 0,
@@ -57,13 +59,11 @@ public:
         return (idx < PARSER_LIST_END) ? cParsers[idx] : NULL;
     }
 
-    static void GetDefaultCfgFile(CPath& cfgFile);
-
     const TCHAR* Parser() const { return cParsers[_parserIdx]; }
 
     void SetDefaults();
-    bool LoadFromFile(const TCHAR* file = NULL);
-    bool SaveToFile(const TCHAR* file = NULL) const;
+    bool LoadFromFolder(const CPath& cfgFileFolder);
+    bool SaveToFolder(const CPath& cfgFileFolder) const;
 
     void DbPathsFromBuf(TCHAR* buf, const TCHAR* separators);
     void DbPathsToBuf(CText& buf, TCHAR separator) const;

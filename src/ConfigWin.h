@@ -44,7 +44,7 @@ namespace GTags
 class ConfigWin
 {
 public:
-    static void Show(const DbConfigPtr_t& cfg);
+    static void Show(const DbConfigPtr_t& cfg, const TCHAR* cfgPath = NULL);
 
 private:
     static const TCHAR  cClassName[];
@@ -60,7 +60,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    ConfigWin(const DbConfigPtr_t& cfg) : _cfg(cfg), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0) {}
+    ConfigWin(const DbConfigPtr_t& cfg, const TCHAR* cfgPath);
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 
@@ -68,6 +68,7 @@ private:
 
     void onUpdateDb();
     void onSave();
+    void saveConfig(CPath& cfgFolder);
     void fillLibDb(const CPath& lib);
 
     bool createLibDatabase(CPath& dbPath, CompletionCB complCB);
@@ -75,6 +76,8 @@ private:
     static ConfigWin* CW;
 
     DbConfigPtr_t   _cfg;
+    CPath           _cfgPath;
+
     HWND            _hWnd;
     HWND            _hParser;
     HWND            _hAutoUpdate;

@@ -116,14 +116,14 @@ public:
     {
         path.Resize(MAX_PATH);
         SendMessage(_nppData._nppHandle, NPPM_GETNPPDIRECTORY, (WPARAM)path.Size(), (LPARAM)path.C_str());
-        path.AutoFit();
+        path += _T("\\");
     }
 
     inline void GetPluginsConfDir(CPath& path) const
     {
         path.Resize(MAX_PATH);
         SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, (WPARAM)path.Size(), (LPARAM)path.C_str());
-        path.AutoFit();
+        path += _T("\\");
     }
 
     inline void GetFilePath(CPath& filePath) const

@@ -255,7 +255,7 @@ void CmdEngine::composeCmd(CText& buf) const
 {
     CPath path(DllPath);
     path.StripFilename();
-    path += cBinsDir;
+    path += cPluginName;
 
     buf.Resize(2048);
 

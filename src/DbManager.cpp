@@ -41,7 +41,11 @@ DbManager DbManager::Instance;
  */
 GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
 {
-    _cfg = DefaultDbCfg;
+    _cfg.reset(new DbConfig());
+
+    if (!_cfg->LoadFromFolder(dbPath))
+        _cfg = DefaultDbCfg;
+
     _readLocks = writeEn ? 0 : 1;
 }
 
@@ -264,6 +268,12 @@ bool DbManager::deleteDb(CPath& dbPath)
         dbPath.StripFilename();
         dbPath += _T("GRTAGS");
         ret = DeleteFile(dbPath.C_str());
+    }
+    if (ret)
+    {
+        dbPath.StripFilename();
+        dbPath += DbConfig::cCfgFileName;
+        DeleteFile(dbPath.C_str());
     }
 
     return ret ? true : false;

@@ -6,8 +6,9 @@
 #define VER_AUTHOR          _T("Pavel Nedev\0")
 #define VER_COPYRIGHT       _T("Copyright(C) 2014-2015 Pavel Nedev\0")
 
-#define VER_PLUGIN_NAME     _T("NppGTags\0")
-#define VER_DLLFILENAME     _T("NppGTags.dll\0")
+#define PLUGIN_NAME         _T("NppGTags")
+#define VER_PLUGIN_NAME     PLUGIN_NAME _T("\0")
+#define VER_DLLFILENAME     PLUGIN_NAME _T(".dll\0")
 
 #ifndef DEVELOPMENT
 
