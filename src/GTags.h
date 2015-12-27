@@ -60,9 +60,8 @@ extern unsigned     UIFontSize;
 extern HWND         MainWndH;
 
 class DbConfig;
-typedef std::shared_ptr<DbConfig> DbConfigPtr_t;
 
-extern DbConfigPtr_t DefaultDbCfg;
+extern DbConfig DefaultDbCfg;
 
 
 BOOL PluginLoad(HINSTANCE hMod);

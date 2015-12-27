@@ -41,9 +41,7 @@ DbManager DbManager::Instance;
  */
 GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
 {
-    _cfg.reset(new DbConfig());
-
-    if (!_cfg->LoadFromFolder(dbPath))
+    if (!_cfg.LoadFromFolder(dbPath))
         _cfg = DefaultDbCfg;
 
     _readLocks = writeEn ? 0 : 1;

@@ -468,7 +468,7 @@ void FindReference()
     if (!db)
         return;
 
-    if (db->GetConfig()->_parserIdx == DbConfig::CTAGS_PARSER)
+    if (db->GetConfig()._parserIdx == DbConfig::CTAGS_PARSER)
     {
         MessageBox(INpp::Get().GetHandle(), _T("Ctags parser doesn't support reference search"), cPluginName,
                 MB_OK | MB_ICONINFORMATION);
@@ -722,7 +722,7 @@ unsigned UIFontSize;
 
 HWND MainWndH = NULL;
 
-DbConfigPtr_t DefaultDbCfg;
+DbConfig DefaultDbCfg;
 
 
 /**
@@ -772,9 +772,7 @@ void PluginInit()
         CPath cfgFolder;
         npp.GetPluginsConfDir(cfgFolder);
 
-        DefaultDbCfg.reset(new DbConfig());
-
-        if (!DefaultDbCfg->LoadFromFolder(cfgFolder))
+        if (!DefaultDbCfg.LoadFromFolder(cfgFolder))
             MessageBox(npp.GetHandle(), _T("Bad default config file, default settings will be used"), cPluginName,
                     MB_OK | MB_ICONEXCLAMATION);
     }
@@ -827,7 +825,7 @@ void OnFileChange(const CPath& file)
         if (!db)
             break;
 
-        if (db->GetConfig()->_autoUpdate)
+        if (db->GetConfig()._autoUpdate)
         {
             if (success)
                 db->Update(file);

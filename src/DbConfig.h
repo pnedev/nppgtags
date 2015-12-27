@@ -68,6 +68,9 @@ public:
     void DbPathsFromBuf(TCHAR* buf, const TCHAR* separators);
     void DbPathsToBuf(CText& buf, TCHAR separator) const;
 
+    const DbConfig& operator=(const DbConfig& cfg);
+    bool operator==(const DbConfig& cfg) const;
+
     int                 _parserIdx;
     bool                _autoUpdate;
     bool                _useLibDb;

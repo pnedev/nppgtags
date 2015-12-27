@@ -44,7 +44,7 @@ namespace GTags
 class ConfigWin
 {
 public:
-    static void Show(const DbConfigPtr_t& cfg, const TCHAR* cfgPath = NULL);
+    static void Show(const DbConfig& cfg, const TCHAR* cfgPath = NULL);
 
 private:
     static const TCHAR  cClassName[];
@@ -60,7 +60,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    ConfigWin(const DbConfigPtr_t& cfg, const TCHAR* cfgPath);
+    ConfigWin(const DbConfig& cfg, const TCHAR* cfgPath);
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 
@@ -68,6 +68,7 @@ private:
 
     void onUpdateDb();
     void onSave();
+    void readData();
     void saveConfig(CPath& cfgFolder);
     void fillLibDb(const CPath& lib);
 
@@ -75,21 +76,21 @@ private:
 
     static ConfigWin* CW;
 
-    DbConfigPtr_t   _cfg;
-    CPath           _cfgPath;
+    DbConfig    _cfg;
+    CPath       _cfgPath;
 
-    HWND            _hWnd;
-    HWND            _hParser;
-    HWND            _hAutoUpdate;
-    HWND            _hEnLibDb;
-    HWND            _hCreateDb;
-    HWND            _hUpdateDb;
-    HWND            _hLibDb;
-    HWND            _hSave;
-    HWND            _hCancel;
-    HHOOK           _hKeyHook;
-    HFONT           _hFont;
-    unsigned        _hUpdateCount;
+    HWND        _hWnd;
+    HWND        _hParser;
+    HWND        _hAutoUpdate;
+    HWND        _hEnLibDb;
+    HWND        _hCreateDb;
+    HWND        _hUpdateDb;
+    HWND        _hLibDb;
+    HWND        _hSave;
+    HWND        _hCancel;
+    HHOOK       _hKeyHook;
+    HFONT       _hFont;
+    unsigned    _hUpdateCount;
 };
 
 } // namespace GTags

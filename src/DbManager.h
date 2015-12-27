@@ -48,8 +48,8 @@ public:
 
     inline const CPath& GetPath() const { return _path; }
 
-    inline const DbConfigPtr_t& GetConfig() const { return _cfg; }
-    inline void SetConfig(const DbConfigPtr_t& cfg) { _cfg = cfg; }
+    inline const DbConfig& GetConfig() const { return _cfg; }
+    inline void SetConfig(const DbConfig& cfg) { _cfg = cfg; }
 
     void Update(const CPath& file);
     void ScheduleUpdate(const CPath& file);
@@ -66,8 +66,8 @@ private:
 
     void runScheduledUpdate();
 
-    CPath           _path;
-    DbConfigPtr_t   _cfg;
+    CPath       _path;
+    DbConfig    _cfg;
 
     int     _readLocks;
     bool    _writeLock;

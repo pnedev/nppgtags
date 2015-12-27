@@ -207,6 +207,9 @@ unsigned CmdEngine::start()
         }
     }
 
+    if (_cmd->_id == CREATE_DATABASE)
+        _cmd->Db()->GetConfig().SaveToFolder(_cmd->Db()->GetPath());
+
     return 0;
 }
 
@@ -273,7 +276,7 @@ void CmdEngine::composeCmd(CText& buf) const
             buf += path;
             buf += _T("\"");
             buf += _T(" --gtagslabel=");
-            buf += _cmd->Db()->GetConfig()->Parser();
+            buf += _cmd->Db()->GetConfig().Parser();
         }
     }
     else if (_cmd->_id != VERSION)
@@ -298,18 +301,18 @@ void CmdEngine::prepareEnvironmentVars(CText& buf) const
 
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
-        const DbConfigPtr_t& cfg = _cmd->Db()->GetConfig();
-        if (cfg->_useLibDb && cfg->_libDbPaths.size())
+        const DbConfig& cfg = _cmd->Db()->GetConfig();
+        if (cfg._useLibDb && cfg._libDbPaths.size())
         {
-            if (!cfg->_libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
-                buf += cfg->_libDbPaths[0];
+            if (!cfg._libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
+                buf += cfg._libDbPaths[0];
 
-            for (unsigned i = 1; i < cfg->_libDbPaths.size(); ++i)
+            for (unsigned i = 1; i < cfg._libDbPaths.size(); ++i)
             {
-                if (!cfg->_libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
+                if (!cfg._libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
                 {
                     buf += _T(';');
-                    buf += cfg->_libDbPaths[i];
+                    buf += cfg._libDbPaths[i];
                 }
             }
         }

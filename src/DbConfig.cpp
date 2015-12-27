@@ -212,4 +212,34 @@ void DbConfig::DbPathsToBuf(CText& buf, TCHAR separator) const
     }
 }
 
+
+/**
+ *  \brief
+ */
+const DbConfig& DbConfig::operator=(const DbConfig& cfg)
+{
+    if (this != &cfg)
+    {
+        _parserIdx  = cfg._parserIdx;
+        _autoUpdate = cfg._autoUpdate;
+        _useLibDb   = cfg._useLibDb;
+        _libDbPaths = cfg._libDbPaths;
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+bool DbConfig::operator==(const DbConfig& cfg) const
+{
+    if (this == &cfg)
+        return true;
+
+    return (_parserIdx == cfg._parserIdx && _autoUpdate == cfg._autoUpdate &&
+            _useLibDb == cfg._useLibDb && _libDbPaths == cfg._libDbPaths);
+}
+
 } // namespace GTags

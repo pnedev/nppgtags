@@ -54,7 +54,7 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-void ConfigWin::Show(const DbConfigPtr_t& cfg, const TCHAR* cfgPath)
+void ConfigWin::Show(const DbConfig& cfg, const TCHAR* cfgPath)
 {
     if (CW)
     {
@@ -156,7 +156,7 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int wi
 /**
  *  \brief
  */
-ConfigWin::ConfigWin(const DbConfigPtr_t& cfg, const TCHAR* cfgPath) :
+ConfigWin::ConfigWin(const DbConfig& cfg, const TCHAR* cfgPath) :
     _cfg(cfg), _cfgPath(cfgPath), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0)
 {
 }
@@ -302,13 +302,13 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
 
-    if (!_cfg->_libDbPaths.empty())
+    if (!_cfg._libDbPaths.empty())
     {
         CText libDbPaths;
-        _cfg->DbPathsToBuf(libDbPaths, _T('\n'));
+        _cfg.DbPathsToBuf(libDbPaths, _T('\n'));
         Edit_SetText(_hLibDb, libDbPaths.C_str());
     }
-    if (!_cfg->_useLibDb)
+    if (!_cfg._useLibDb)
     {
         EnableWindow(_hCreateDb, FALSE);
         EnableWindow(_hUpdateDb, FALSE);
@@ -327,13 +327,13 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    Button_SetCheck(_hAutoUpdate, _cfg->_autoUpdate ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hEnLibDb, _cfg->_useLibDb ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hAutoUpdate, _cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hEnLibDb, _cfg._useLibDb ? BST_CHECKED : BST_UNCHECKED);
 
     for (unsigned i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
 
-    SendMessage(_hParser, CB_SETCURSEL, _cfg->_parserIdx, 0);
+    SendMessage(_hParser, CB_SETCURSEL, _cfg._parserIdx, 0);
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
@@ -381,11 +381,17 @@ void ConfigWin::onUpdateDb()
  */
 void ConfigWin::onSave()
 {
-    CPath cfgFolder;
+    readData();
 
     if (_cfgPath.IsEmpty())
     {
+        DefaultDbCfg = _cfg;
+
+        CPath cfgFolder;
+
         INpp::Get().GetPluginsConfDir(cfgFolder);
+
+        saveConfig(cfgFolder);
     }
     else
     {
@@ -418,18 +424,34 @@ void ConfigWin::onSave()
             return;
         }
 
-        if (_cfg == DefaultDbCfg)
-        {
-            _cfg.reset(new DbConfig());
-            db->SetConfig(_cfg);
-        }
+        db->SetConfig(_cfg);
 
         DbManager::Get().PutDb(db);
 
-        cfgFolder = _cfgPath;
+        saveConfig(_cfgPath);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::readData()
+{
+    _cfg._libDbPaths.clear();
+
+    int len = Edit_GetTextLength(_hLibDb);
+    if (len)
+    {
+        CText libDbPaths(len);
+        Edit_GetText(_hLibDb, libDbPaths.C_str(), libDbPaths.Size());
+        _cfg.DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
     }
 
-    saveConfig(cfgFolder);
+    _cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
+    _cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
+
+    _cfg._parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 }
 
 
@@ -438,22 +460,7 @@ void ConfigWin::onSave()
  */
 void ConfigWin::saveConfig(CPath& cfgFolder)
 {
-    _cfg->_libDbPaths.clear();
-
-    int len = Edit_GetTextLength(_hLibDb);
-    if (len)
-    {
-        CText libDbPaths(len);
-        Edit_GetText(_hLibDb, libDbPaths.C_str(), libDbPaths.Size());
-        _cfg->DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
-    }
-
-    _cfg->_autoUpdate   = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
-    _cfg->_useLibDb     = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
-
-    _cfg->_parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
-
-    if (!_cfg->SaveToFolder(cfgFolder))
+    if (!_cfg.SaveToFolder(cfgFolder))
     {
         cfgFolder += DbConfig::cCfgFileName;
 
