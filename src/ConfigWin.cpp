@@ -157,7 +157,7 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int wi
  *  \brief
  */
 ConfigWin::ConfigWin(const DbConfig& cfg, const TCHAR* cfgPath) :
-    _cfg(cfg), _cfgPath(cfgPath), _hKeyHook(NULL), _hFont(NULL) , _hUpdateCount(0)
+    _cfg(cfg), _cfgPath(cfgPath), _hKeyHook(NULL), _hFont(NULL), _updateCount(0)
 {
 }
 
@@ -267,7 +267,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     styleEx = WS_EX_CLIENTEDGE;
     style   = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |
-            ES_NOOLEDRAGDROP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL;// | ES_DISABLENOSCROLL;
+            ES_NOOLEDRAGDROP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL;
 
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hLibDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
@@ -277,9 +277,11 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     yPos += (win.bottom - win.top + 15);
     width = width / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
+            WS_CHILD | WS_VISIBLE | BS_TEXT,
             width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
+
+    EnableWindow(_hSave, FALSE);
 
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
@@ -300,7 +302,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     if (_hFont)
         SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
-    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, 0);
+    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
     if (!_cfg._libDbPaths.empty())
     {
@@ -308,6 +310,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         _cfg.DbPathsToBuf(libDbPaths, _T('\n'));
         Edit_SetText(_hLibDb, libDbPaths.C_str());
     }
+
     if (!_cfg._useLibDb)
     {
         EnableWindow(_hCreateDb, FALSE);
@@ -368,10 +371,10 @@ void ConfigWin::onUpdateDb()
             dbs.push_back(db);
     }
 
-    _hUpdateCount = dbs.size();
+    _updateCount = dbs.size();
 
-    if (_hUpdateCount)
-        for (unsigned i = 0; i < _hUpdateCount; ++i)
+    if (_updateCount)
+        for (unsigned i = 0; i < _updateCount; ++i)
             createLibDatabase(dbs[i], updateDbCB);
 }
 
@@ -597,7 +600,10 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
     ShowWindow(CW->_hWnd, SW_SHOW);
 
     if (cmd->Status() == OK)
+    {
         CW->fillLibDb(cmd->Db()->GetPath());
+        EnableWindow(CW->_hSave, TRUE);
+    }
 }
 
 
@@ -611,7 +617,7 @@ void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
     if (CW == NULL)
         return;
 
-    if (!--CW->_hUpdateCount)
+    if (!--CW->_updateCount)
         SetFocus(CW->_hSave);
 }
 
@@ -692,6 +698,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                     EnableWindow(CW->_hUpdateDb, en);
                     Edit_Enable(CW->_hLibDb, en);
                     SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
+
+                    EnableWindow(CW->_hSave, TRUE);
+
                     return 0;
                 }
 
@@ -707,11 +716,12 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                     return 0;
                 }
 
-                if ((HWND)lParam == CW->_hUpdateDb)
-                {
-                    CW->onUpdateDb();
-                    return 0;
-                }
+                if ((HWND)lParam == CW->_hAutoUpdate)
+                    EnableWindow(CW->_hSave, TRUE);
+            }
+            else if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
+            {
+                EnableWindow(CW->_hSave, TRUE);
             }
         break;
 

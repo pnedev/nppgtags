@@ -90,7 +90,7 @@ private:
     HWND        _hCancel;
     HHOOK       _hKeyHook;
     HFONT       _hFont;
-    unsigned    _hUpdateCount;
+    unsigned    _updateCount;
 };
 
 } // namespace GTags
