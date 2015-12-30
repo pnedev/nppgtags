@@ -90,6 +90,7 @@ public:
 
     inline unsigned Len() const { return (_invalidStrLen) ? wcslen(_buf.data()) : (_buf.size() - 1); }
     inline bool IsEmpty() const { return (Len() == 0); }
+    inline const std::vector<wchar_t>& Vector() const { return _buf; }
     inline const wchar_t* C_str() const { return _buf.data(); }
     inline wchar_t* C_str() { return _buf.data(); }
     inline unsigned Size() const { return _buf.size(); }
@@ -147,6 +148,7 @@ public:
 
     inline unsigned Len() const { return (_invalidStrLen) ? strlen(_buf.data()) : (_buf.size() - 1); }
     inline bool IsEmpty() const { return (Len() == 0); }
+    inline const std::vector<char>& Vector() const { return _buf; }
     inline const char* C_str() const { return _buf.data(); }
     inline char* C_str() { return _buf.data(); }
     inline unsigned Size() const { return _buf.size(); }

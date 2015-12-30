@@ -93,20 +93,14 @@ public:
     inline const char* Result() const { return _result.data(); }
     inline unsigned ResultLen() const { return _result.size() - 1; }
 
+    void AppendToResult(const std::vector<char>& data);
+
 private:
     friend class CmdEngine;
 
     void setResult(const std::vector<char>& data)
     {
         _result.assign(data.begin(), data.end());
-    }
-
-    void appendResult(const std::vector<char>& data)
-    {
-        // remove \0 string termination
-        if (!_result.empty())
-            _result.pop_back();
-        _result.insert(_result.cend(), data.begin(), data.end());
     }
 
     CmdId_t             _id;

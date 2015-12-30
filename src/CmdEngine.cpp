@@ -49,6 +49,7 @@ const TCHAR CmdEngine::cFindSymbolCmd[]     = _T("\"%s\\global.exe\" -s --result
 const TCHAR CmdEngine::cGrepCmd[]           = _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
 const TCHAR CmdEngine::cGrepTxtCmd[]        = _T("\"%s\\global.exe\" -gO --result=grep \"%s\"");
 const TCHAR CmdEngine::cVersionCmd[]        = _T("\"%s\\global.exe\" --version");
+const TCHAR CmdEngine::cCtagsVersionCmd[]   = _T("\"%s\\ctags.exe\" --version");
 
 
 /**
@@ -70,6 +71,15 @@ bool CmdEngine::Run(const CmdPtr_t& cmd, CompletionCB complCB)
     }
 
     return true;
+}
+
+
+/**
+ *  \brief
+ */
+CmdEngine::CmdEngine(const CmdPtr_t& cmd, CompletionCB complCB) :
+    _cmd(cmd), _complCB(complCB), _hThread(NULL)
+{
 }
 
 
@@ -127,12 +137,16 @@ unsigned CmdEngine::start()
         if (hCancel)
         {
             CText header(_cmd->Name());
-            header += _T(" - \"");
-            if (_cmd->_id == CREATE_DATABASE)
-                header += _cmd->Db()->GetPath();
-            else if (_cmd->_id != VERSION)
-                header += _cmd->Tag();
-            header += _T('\"');
+
+            if (_cmd->_id != VERSION && _cmd->_id != CTAGS_VERSION)
+            {
+                header += _T(" - \"");
+                if (_cmd->_id == CREATE_DATABASE)
+                    header += _cmd->Db()->GetPath();
+                else
+                    header += _cmd->Tag();
+                header += _T('\"');
+            }
 
             SendMessage(MainWndH, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
 
@@ -158,7 +172,7 @@ unsigned CmdEngine::start()
 
     if (!dataPipe.GetOutput().empty())
     {
-        _cmd->appendResult(dataPipe.GetOutput());
+        _cmd->AppendToResult(dataPipe.GetOutput());
     }
     else if (!errorPipe.GetOutput().empty())
     {
@@ -245,6 +259,8 @@ const TCHAR* CmdEngine::getCmdLine() const
             return cGrepTxtCmd;
         case VERSION:
             return cVersionCmd;
+        case CTAGS_VERSION:
+            return cCtagsVersionCmd;
     }
 
     return NULL;
@@ -262,7 +278,7 @@ void CmdEngine::composeCmd(CText& buf) const
 
     buf.Resize(2048);
 
-    if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION)
+    if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION || _cmd->_id == CTAGS_VERSION)
         _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str());
     else
         _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag().C_str());
@@ -279,7 +295,7 @@ void CmdEngine::composeCmd(CText& buf) const
             buf += _cmd->Db()->GetConfig().Parser();
         }
     }
-    else if (_cmd->_id != VERSION)
+    else if (_cmd->_id != VERSION && _cmd->_id != CTAGS_VERSION)
     {
         if (_cmd->_matchCase)
             buf += _T(" -M");
@@ -328,7 +344,8 @@ void CmdEngine::prepareEnvironmentVars(CText& buf) const
 bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe)
 {
     const DWORD createFlags = NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
-    const TCHAR* currentDir = (_cmd->_id == VERSION) ? NULL : _cmd->Db()->GetPath().C_str();
+    const TCHAR* currentDir = (_cmd->_id == VERSION || _cmd->_id == CTAGS_VERSION) ?
+            NULL : _cmd->Db()->GetPath().C_str();
 
     CText cmdBuf;
     composeCmd(cmdBuf);

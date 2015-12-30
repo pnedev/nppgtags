@@ -44,7 +44,8 @@ enum CmdId_t
     FIND_SYMBOL,
     GREP,
     GREP_TEXT,
-    VERSION
+    VERSION,
+    CTAGS_VERSION
 };
 
 

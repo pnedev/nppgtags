@@ -59,10 +59,11 @@ private:
     static const TCHAR  cGrepCmd[];
     static const TCHAR  cGrepTxtCmd[];
     static const TCHAR  cVersionCmd[];
+    static const TCHAR  cCtagsVersionCmd[];
 
     static unsigned __stdcall threadFunc(void* data);
 
-    CmdEngine(const CmdPtr_t& cmd, CompletionCB complCB) : _cmd(cmd), _complCB(complCB), _hThread(NULL) {}
+    CmdEngine(const CmdPtr_t& cmd, CompletionCB complCB);
     ~CmdEngine();
 
     unsigned start();

@@ -55,8 +55,8 @@ const TCHAR cFindFile[]         = _T("Find File");
 const TCHAR cFindDefinition[]   = _T("Find Definition");
 const TCHAR cFindReference[]    = _T("Find Reference");
 const TCHAR cFindSymbol[]       = _T("Find Symbol");
-const TCHAR cSearch[]           = _T("Search");
-const TCHAR cSearchText[]       = _T("Search in Text Files");
+const TCHAR cSearchSrc[]        = _T("Search in Source Files");
+const TCHAR cSearchOther[]       = _T("Search in Other Files");
 const TCHAR cVersion[]          = _T("About");
 
 
@@ -300,18 +300,38 @@ void dbWriteCB(const CmdPtr_t& cmd)
 
 
 /**
- *  \brief
- */
+*  \brief
+*/
 void aboutCB(const CmdPtr_t& cmd)
 {
-    CText msg;
+	CText msg;
 
+	if (cmd->Status() == OK)
+		msg = cmd->Result();
+	else
+		msg = _T("VERSION READ FAILED\n");
+
+	AboutWin::Show(msg.C_str());
+}
+
+
+/**
+ *  \brief
+ */
+void halfAboutCB(const CmdPtr_t& cmd)
+{
     if (cmd->Status() == OK)
-        msg = cmd->Result();
+    {
+        CTextA txt("\nCurrent Ctags parser version:\n\n");
+        cmd->AppendToResult(txt.Vector());
+        cmd->Id(CTAGS_VERSION);
+        CmdEngine::Run(cmd, aboutCB);
+    }
     else
-        msg = _T("VERSION READ FAILED\n");
-
-    AboutWin::Show(msg.C_str());
+    {
+        CText msg(_T("VERSION READ FAILED\n"));
+        AboutWin::Show(msg.C_str());
+    }
 }
 
 
@@ -497,7 +517,7 @@ void FindReference()
 /**
  *  \brief
  */
-void Search()
+void SearchSrc()
 {
     SearchWin::Close();
 
@@ -506,7 +526,7 @@ void Search()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP, cSearch, db, parser));
+    CmdPtr_t cmd(new Cmd(GREP, cSearchSrc, db, parser));
 
     CText tag = getSelection();
     if (tag.IsEmpty())
@@ -524,7 +544,7 @@ void Search()
 /**
  *  \brief
  */
-void SearchTextFiles()
+void SearchOther()
 {
     SearchWin::Close();
 
@@ -533,7 +553,7 @@ void SearchTextFiles()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchText, db, parser));
+    CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchOther, db, parser));
 
     CText tag = getSelection();
     if (tag.IsEmpty())
@@ -683,7 +703,7 @@ void SettingsCfg()
 void About()
 {
     CmdPtr_t cmd(new Cmd(VERSION, cVersion));
-    CmdEngine::Run(cmd, aboutCB);
+    CmdEngine::Run(cmd, halfAboutCB);
 }
 
 } // anonymous namespace
@@ -698,8 +718,8 @@ FuncItem Menu[19] = {
     /* 2 */  FuncItem(cFindFile, FindFile),
     /* 3 */  FuncItem(cFindDefinition, FindDefinition),
     /* 4 */  FuncItem(cFindReference, FindReference),
-    /* 5 */  FuncItem(cSearch, Search),
-    /* 6 */  FuncItem(cSearchText, SearchTextFiles),
+    /* 5 */  FuncItem(cSearchSrc, SearchSrc),
+    /* 6 */  FuncItem(cSearchOther, SearchOther),
     /* 7 */  FuncItem(),
     /* 8 */  FuncItem(_T("Go Back"), GoBack),
     /* 9 */  FuncItem(_T("Go Forward"), GoForward),

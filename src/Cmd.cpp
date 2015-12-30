@@ -43,4 +43,13 @@ Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, ParserPtr_t parser,
         _tag = tag;
 }
 
+
+void Cmd::AppendToResult(const std::vector<char>& data)
+{
+    // remove \0 string termination
+    if (!_result.empty())
+        _result.pop_back();
+    _result.insert(_result.cend(), data.begin(), data.end());
+}
+
 } // namespace GTags
