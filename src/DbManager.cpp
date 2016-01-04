@@ -255,24 +255,18 @@ bool DbManager::deleteDb(CPath& dbPath)
 {
     dbPath += _T("GTAGS");
     BOOL ret = DeleteFile(dbPath.C_str());
-    if (ret)
-    {
-        dbPath.StripFilename();
-        dbPath += _T("GPATH");
-        ret = DeleteFile(dbPath.C_str());
-    }
-    if (ret)
-    {
-        dbPath.StripFilename();
-        dbPath += _T("GRTAGS");
-        ret = DeleteFile(dbPath.C_str());
-    }
-    if (ret)
-    {
-        dbPath.StripFilename();
-        dbPath += DbConfig::cCfgFileName;
-        DeleteFile(dbPath.C_str());
-    }
+
+    dbPath.StripFilename();
+    dbPath += _T("GPATH");
+    ret |= DeleteFile(dbPath.C_str());
+
+    dbPath.StripFilename();
+    dbPath += _T("GRTAGS");
+    ret |= DeleteFile(dbPath.C_str());
+
+    dbPath.StripFilename();
+    dbPath += DbConfig::cCfgFileName;
+    ret |= DeleteFile(dbPath.C_str());
 
     return ret ? true : false;
 }
