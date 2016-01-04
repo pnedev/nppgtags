@@ -253,20 +253,26 @@ bool DbManager::DbExistsInFolder(const CPath& folder)
  */
 bool DbManager::deleteDb(CPath& dbPath)
 {
+    BOOL ret = FALSE;
+
     dbPath += _T("GTAGS");
-    BOOL ret = DeleteFile(dbPath.C_str());
+    if (dbPath.FileExists())
+        ret = DeleteFile(dbPath.C_str());
 
     dbPath.StripFilename();
     dbPath += _T("GPATH");
-    ret |= DeleteFile(dbPath.C_str());
+    if (dbPath.FileExists())
+        ret |= DeleteFile(dbPath.C_str());
 
     dbPath.StripFilename();
     dbPath += _T("GRTAGS");
-    ret |= DeleteFile(dbPath.C_str());
+    if (dbPath.FileExists())
+        ret |= DeleteFile(dbPath.C_str());
 
     dbPath.StripFilename();
     dbPath += DbConfig::cCfgFileName;
-    ret |= DeleteFile(dbPath.C_str());
+    if (dbPath.FileExists())
+        ret |= DeleteFile(dbPath.C_str());
 
     return ret ? true : false;
 }
