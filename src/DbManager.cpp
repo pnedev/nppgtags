@@ -142,7 +142,7 @@ void GTagsDb::dbUpdateCB(const CmdPtr_t& cmd)
     {
         MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
-    else if (cmd->Status() == FAILED || cmd->Result())
+    else if (cmd->Result())
     {
         CText msg(cmd->Result());
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);

@@ -178,7 +178,7 @@ unsigned CmdEngine::start()
     {
         _cmd->setResult(errorPipe.GetOutput());
 
-        if (_cmd->_id != CREATE_DATABASE)
+        if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
         {
             _cmd->_status = FAILED;
             return 1;

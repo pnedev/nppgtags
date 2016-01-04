@@ -578,7 +578,7 @@ void ConfigWin::dbWriteReady(const CmdPtr_t& cmd)
         HWND hWnd = (CW == NULL) ? INpp::Get().GetHandle() : CW->_hWnd;
         MessageBox(hWnd, _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
-    else if (cmd->Status() == FAILED || cmd->Result())
+    else if (cmd->Result())
     {
         CText msg(cmd->Result());
         HWND hWnd = (CW == NULL) ? INpp::Get().GetHandle() : CW->_hWnd;
