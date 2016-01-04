@@ -222,8 +222,6 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             10, yPos, win.right - win.left - 20, 30,
             _hWnd, NULL, HMod, NULL);
 
-    // TabCtrl_SetExtendedStyle(_hTab, TCS_EX_FLATSEPARATORS);
-
     {
         TCHAR buf[64] = _T("Default DB config");
 

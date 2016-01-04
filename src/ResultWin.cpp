@@ -543,11 +543,9 @@ HWND ResultWin::composeWindow()
     GetClientRect(_hWnd, &win);
 
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
-            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
+            WS_CHILD | WS_VISIBLE | TCS_TABS | TCS_FOCUSNEVER,
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
-
-    TabCtrl_SetExtendedStyle(_hTab, TCS_EX_FLATSEPARATORS);
 
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
     MoveWindow(_hSci, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
