@@ -198,7 +198,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 130);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 180);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -216,6 +216,29 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     height = win.bottom - win.top;
 
     int yPos = 10;
+
+    _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
+            WS_CHILD | WS_VISIBLE | TCS_TABS | TCS_FOCUSNEVER,
+            10, yPos, win.right - win.left - 20, 30,
+            _hWnd, NULL, HMod, NULL);
+
+    // TabCtrl_SetExtendedStyle(_hTab, TCS_EX_FLATSEPARATORS);
+
+    {
+        TCHAR buf[64] = _T("Default DB config");
+
+        TCITEM tci  = {0};
+        tci.mask    = TCIF_TEXT | TCIF_PARAM;
+        tci.pszText = buf;
+        tci.lParam  = (LPARAM)NULL;
+
+        TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+
+        _tcscpy_s(buf, 64, _T("Local DB"));
+        TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+    }
+
+    yPos += 50;
     HWND hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);

@@ -47,6 +47,18 @@ public:
     static void Show(const DbConfig& cfg, const TCHAR* cfgPath = NULL);
 
 private:
+    /**
+     *  \struct  Tab
+     *  \brief
+     */
+    struct Tab
+    {
+        Tab() {}
+        ~Tab() {}
+
+    };
+
+
     static const TCHAR  cClassName[];
     static const TCHAR  cHeader[];
     static const int    cBackgroundColor;
@@ -80,6 +92,7 @@ private:
     CPath       _cfgPath;
 
     HWND        _hWnd;
+    HWND        _hTab;
     HWND        _hParser;
     HWND        _hAutoUpdate;
     HWND        _hEnLibDb;
