@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -223,8 +223,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     RECT win    = adjustSizeAndPos(hOwner, styleEx, style, cWidth, txtHeight + btnHeight + 17);
     int width   = win.right - win.left;
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(),
-            style, win.left, win.top, width, win.bottom - win.top,
+    _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(), style,
+            win.left, win.top, width, win.bottom - win.top,
             hOwner, NULL, HMod, this);
     if (_hWnd == NULL)
         return NULL;

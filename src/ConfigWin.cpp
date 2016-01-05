@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015 Pavel Nedev
+ *  Copyright(C) 2015-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -198,7 +198,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 180);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 160);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -215,11 +215,9 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     width = win.right - win.left;
     height = win.bottom - win.top;
 
-    int yPos = 10;
-
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | TCS_TABS | TCS_FOCUSNEVER,
-            10, yPos, win.right - win.left - 20, 30,
+            0, 0, width, height,
             _hWnd, NULL, HMod, NULL);
 
     {
@@ -236,55 +234,57 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
     }
 
-    yPos += 50;
-    HWND hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
-            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
-            10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
+    TabCtrl_AdjustRect(_hTab, FALSE, &win);
+    width = win.right - win.left - 20;
+    height = win.bottom - win.top;
 
-    SetWindowText(hStatic, _T("Parser (requires database re-creation on change!)"));
+    int yPos        = win.top + 15;
+    const int xPos  = win.left + 10;
+
+    CreateWindowEx(0, _T("STATIC"), _T("Parser (requires database re-creation on change!)"),
+            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
+            xPos, yPos, width, txtHeight,
+            _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
-            10, yPos, (width / 2) - 20, txtHeight,
+            xPos, yPos, (width / 2) - 10, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
-    _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"),
-            _T("Auto update database"),
+    _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"), _T("Auto update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            (width / 2) + 10, yPos + 5, (width / 2) - 20, txtHeight,
+            xPos + (width / 2) + 10, yPos + 5, (width / 2) - 10, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 35);
-    _hEnLibDb = CreateWindowEx(0, _T("BUTTON"),
-            _T("Enable library databases"),
+    _hEnLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable library databases"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, yPos, (width / 2) - 20, txtHeight,
+            xPos, yPos, (width / 2) - 10, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hCreateDb = CreateWindowEx(0, _T("BUTTON"), _T("Add Library DB"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
-            (width / 2) + 10, yPos, (width / 2) - 20, 25,
+            xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 10);
     _hUpdateDb = CreateWindowEx(0, _T("BUTTON"), _T("Update Library DBs"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
-            (width / 2) + 10, yPos, (width / 2) - 20, 25,
+            xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 10);
-    hStatic = CreateWindowEx(0, _T("STATIC"), NULL,
+    CreateWindowEx(0, _T("STATIC"), _T("Paths to library databases"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
-            10, yPos, width - 20, txtHeight, _hWnd, NULL, HMod, NULL);
-
-    SetWindowText(hStatic, _T("Paths to library databases"));
+            xPos, yPos, width, txtHeight,
+            _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 5);
     win.top     = yPos;
     win.bottom  = win.top + 4 * txtHeight;
-    win.left    = 10;
-    win.right   = width - 10;
+    win.left    = xPos;
+    win.right   = win.left + width;
 
     styleEx = WS_EX_CLIENTEDGE;
     style   = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |

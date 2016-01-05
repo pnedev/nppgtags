@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -516,9 +516,8 @@ HWND ResultWin::composeWindow()
 
     DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX | WS_CLIPCHILDREN;
 
-    _hWnd = CreateWindow(cClassName, cPluginName,
-            style, win.left, win.top,
-            win.right - win.left, win.bottom - win.top,
+    _hWnd = CreateWindow(cClassName, cPluginName, style,
+            win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, this);
     if (_hWnd == NULL)
         return NULL;
@@ -538,8 +537,6 @@ HWND ResultWin::composeWindow()
         return NULL;
     }
 
-    AdjustWindowRect(&win, style, FALSE);
-    MoveWindow(_hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
     GetClientRect(_hWnd, &win);
 
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,

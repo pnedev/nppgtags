@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -205,7 +205,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     WindowList.push_back(this);
     int winNum = WindowList.size();
 
-    HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), NULL,
+    HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), text,
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, _hWnd, NULL, HMod, NULL);
 
@@ -226,8 +226,6 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     int height = win.bottom - win.top;
 
     MoveWindow(hWndTxt, 5, 5, width - 95, textHeight, TRUE);
-
-    SetWindowText(hWndTxt, text);
 
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, NULL,
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
