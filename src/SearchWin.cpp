@@ -218,7 +218,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     ReleaseDC(hOwner, hdc);
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     RECT win    = adjustSizeAndPos(hOwner, styleEx, style, cWidth, txtHeight + btnHeight + 17);
     int width   = win.right - win.left;
@@ -243,7 +243,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             _hWnd, NULL, HMod, NULL);
 
     _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT | BS_DEFPUSHBUTTON,
+            WS_CHILD | WS_VISIBLE | BS_TEXT,
             2 * width + 15, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
 

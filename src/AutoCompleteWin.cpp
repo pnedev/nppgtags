@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -125,7 +125,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     GetWindowRect(hOwner, &win);
 
     _hWnd = CreateWindow(cClassName, NULL,
-            WS_POPUP | WS_BORDER | WS_CLIPCHILDREN,
+            WS_POPUP | WS_BORDER,
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)

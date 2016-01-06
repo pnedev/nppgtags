@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -165,7 +165,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     GetWindowRect(GetDesktopWindow(), &win);
 
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
+    DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     CText str(_T("About "));
     str += cPluginName;

@@ -44,7 +44,8 @@ namespace GTags
 {
 
 const TCHAR ConfigWin::cClassName[]   = _T("ConfigWin");
-const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
+// const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
+const int ConfigWin::cBackgroundColor = COLOR_INFOBK;
 const int ConfigWin::cFontSize        = 10;
 
 
@@ -196,7 +197,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
     RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 160);
     int width = win.right - win.left;
@@ -221,7 +222,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             _hWnd, NULL, HMod, NULL);
 
     {
-        TCHAR buf[64] = _T("Default DB config");
+        TCHAR buf[64] = _T("Default / generic database config");
 
         TCITEM tci  = {0};
         tci.mask    = TCIF_TEXT | TCIF_PARAM;
@@ -230,13 +231,17 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
         TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
 
-        _tcscpy_s(buf, 64, _T("Local DB"));
+        _tcscpy_s(buf, 64, _T("Current database config"));
         TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
     }
 
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
     width = win.right - win.left - 20;
     height = win.bottom - win.top;
+
+    hdc = GetWindowDC(_hTab);
+    FillRect(hdc, &win, (HBRUSH)GetStockObject(WHITE_BRUSH));
+    ReleaseDC(_hTab, hdc);
 
     int yPos        = win.top + 15;
     const int xPos  = win.left + 10;
@@ -299,14 +304,12 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     width = width / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
-            width, yPos, width, 25,
+            xPos + width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
-
-    EnableWindow(_hSave, FALSE);
 
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
-            3 * width, yPos, width, 25,
+            xPos + 3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
     CHARFORMAT fmt  = {0};
@@ -360,6 +363,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     SendMessage(_hParser, CB_SETCURSEL, _cfg._parserIdx, 0);
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
+
+    EnableWindow(_hSave, FALSE);
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -678,6 +683,20 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     {
         case WM_CREATE:
         return 0;
+
+        // case WM_ERASEBKGND:
+        // {
+            // HDC  hdc = (HDC)wParam;
+            // RECT rc;
+
+            // GetClientRect(hWnd, &rc);
+            // TabCtrl_AdjustRect(CW->_hTab, FALSE, &rc);
+            // FillRect(hdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
+
+            // UpdateWindow(hWnd);
+
+            // return TRUE;
+        // }
 
         case WM_COMMAND:
             if (HIWORD(wParam) == EN_KILLFOCUS)

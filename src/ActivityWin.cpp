@@ -182,7 +182,7 @@ void ActivityWin::adjustSizeAndPos(int width, int height, int winNum)
  */
 HWND ActivityWin::composeWindow(const TCHAR* text)
 {
-    _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER | WS_CLIPCHILDREN,
+    _hWnd = CreateWindow(cClassName, NULL, WS_POPUP | WS_BORDER,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             INpp::Get().GetHandle(), NULL, HMod, this);
     if (_hWnd == NULL)
@@ -234,7 +234,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 100);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
-            WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | BS_TEXT,
             width - 85, (height - 25) / 2, 80, 25, _hWnd,
             NULL, HMod, NULL);
 
