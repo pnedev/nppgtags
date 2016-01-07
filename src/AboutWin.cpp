@@ -167,10 +167,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    CText str(_T("About "));
-    str += cPluginName;
-
-    _hWnd = CreateWindowEx(styleEx, cClassName, str.C_str(), style,
+    _hWnd = CreateWindowEx(styleEx, cClassName, _T("About ") PLUGIN_NAME, style,
             (win.right + win.left) / 2 - 150, (win.top + win.bottom) / 2 - 100, 300, 200,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -211,7 +208,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     SendMessage(hEdit, EM_SETEVENTMASK, 0, events);
     SendMessage(hEdit, EM_AUTOURLDETECT, TRUE, 0);
 
-    str = _T("\n");
+    CText str(_T("\n"));
     str += VER_DESCRIPTION;
     str += _T("\n\nVersion: ");
     str += VER_VERSION_STR;

@@ -44,8 +44,7 @@ namespace GTags
 {
 
 const TCHAR ConfigWin::cClassName[]   = _T("ConfigWin");
-// const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
-const int ConfigWin::cBackgroundColor = COLOR_INFOBK;
+const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
 const int ConfigWin::cFontSize        = 10;
 
 
@@ -203,10 +202,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
-    CText header(cPluginName);
-    header += _T(" Settings");
-
-    _hWnd = CreateWindowEx(styleEx, cClassName, header.C_str(), style,
+    _hWnd = CreateWindowEx(styleEx, cClassName, PLUGIN_NAME _T(" Settings"), style,
             win.left, win.top, width, height,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -238,10 +234,6 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
     width = win.right - win.left - 20;
     height = win.bottom - win.top;
-
-    hdc = GetWindowDC(_hTab);
-    FillRect(hdc, &win, (HBRUSH)GetStockObject(WHITE_BRUSH));
-    ReleaseDC(_hTab, hdc);
 
     int yPos        = win.top + 15;
     const int xPos  = win.left + 10;
@@ -684,19 +676,9 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         case WM_CREATE:
         return 0;
 
-        // case WM_ERASEBKGND:
-        // {
-            // HDC  hdc = (HDC)wParam;
-            // RECT rc;
-
-            // GetClientRect(hWnd, &rc);
-            // TabCtrl_AdjustRect(CW->_hTab, FALSE, &rc);
-            // FillRect(hdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
-
-            // UpdateWindow(hWnd);
-
-            // return TRUE;
-        // }
+        case WM_CTLCOLORSTATIC:
+            SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
+        return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
         case WM_COMMAND:
             if (HIWORD(wParam) == EN_KILLFOCUS)
