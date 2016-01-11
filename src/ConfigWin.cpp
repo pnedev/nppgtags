@@ -738,6 +738,12 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                     return 0;
                 }
 
+                if ((HWND)lParam == CW->_hUpdateDb)
+                {
+                    CW->onUpdateDb();
+                    return 0;
+                }
+
                 if ((HWND)lParam == CW->_hAutoUpdate)
                     EnableWindow(CW->_hSave, TRUE);
             }
