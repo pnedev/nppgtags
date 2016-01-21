@@ -59,8 +59,12 @@ public:
         ReadSciHandle();
     }
 
-    inline HWND GetHandle() { return _nppData._nppHandle; }
-    inline HWND GetSciHandle() { return _hSC; }
+    inline HWND GetHandle() const { return _nppData._nppHandle; }
+    inline HWND GetSciHandle() const { return _hSC; }
+    inline HWND GetSciHandle(int sciNum) const
+    {
+        return (sciNum ? _nppData._scintillaSecondHandle : _nppData._scintillaMainHandle);
+    }
 
     inline void SetPluginMenuFlag(int cmdId, bool enable) const
     {
@@ -147,10 +151,12 @@ public:
         fileName.AutoFit();
     }
 
-    inline int OpenFile(const TCHAR* filePath) const
+    inline int OpenFile(const TCHAR* filePath)
     {
         if (!SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)filePath))
             return -1;
+
+        ReadSciHandle();
         return 0;
     }
 

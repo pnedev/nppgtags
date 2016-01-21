@@ -151,7 +151,7 @@ ActivityWin::~ActivityWin()
  */
 void ActivityWin::adjustSizeAndPos(int width, int height, int winNum)
 {
-    HWND hBias = INpp::Get().GetSciHandle();
+    HWND hBias = INpp::Get().GetSciHandle(0);
 
     RECT maxWin;
     GetWindowRect(hBias, &maxWin);
