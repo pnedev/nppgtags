@@ -150,7 +150,11 @@ DbHandle getDatabase(bool writeEn = false)
     }
     else if (!success)
     {
-        MessageBox(npp.GetHandle(), _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
+        CText msg(_T("Database at\n\""));
+        msg += db->GetPath().C_str();
+        msg += _T("\" is currently in use.\nPlease try again later.");
+
+        MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
         db = NULL;
     }
 
@@ -602,15 +606,16 @@ void CreateDatabase()
     DbHandle db = DbManager::Get().GetDb(currentFile, true, &success);
     if (db)
     {
+        CText msg(_T("Database at\n\""));
+        msg += db->GetPath().C_str();
+
         if (!success)
         {
-            MessageBox(npp.GetHandle(), _T("GTags database is currently in use"), cPluginName,
-                    MB_OK | MB_ICONINFORMATION);
+            msg += _T("\" is currently in use.\nPlease try again later.");
+            MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
             return;
         }
 
-        CText msg(_T("Database at\n\""));
-        msg += db->GetPath().C_str();
         msg += _T("\" exists.\nRe-create?");
         int choice = MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
@@ -683,17 +688,23 @@ void SettingsCfg()
     INpp::Get().GetFilePath(currentFile);
 
     bool success;
-    DbHandle db = DbManager::Get().GetDb(currentFile, false, &success);
+    DbHandle db = DbManager::Get().GetDb(currentFile, true, &success);
     if (db)
     {
-        ConfigWin::Show(db->GetConfig(), db->GetPath().C_str());
         if (success)
-            DbManager::Get().PutDb(db);
+        {
+            ConfigWin::Show(db);
+            return;
+        }
+
+        CText msg(_T("Database at\n\""));
+        msg += db->GetPath().C_str();
+        msg += _T("\" is in use.\nIts config cannot be modified at the moment.");
+
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
     }
-    else
-    {
-        ConfigWin::Show(DefaultDbCfg);
-    }
+
+    ConfigWin::Show();
 }
 
 

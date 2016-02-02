@@ -27,6 +27,8 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include "DbManager.h"
+#include "DbConfig.h"
 #include "CmdDefines.h"
 #include "GTags.h"
 
@@ -44,7 +46,8 @@ namespace GTags
 class ConfigWin
 {
 public:
-    static void Show(const DbConfig& cfg, const TCHAR* cfgPath = NULL);
+    static void Show();
+    static void Show(const DbHandle& db);
 
 private:
     /**
@@ -53,9 +56,11 @@ private:
      */
     struct Tab
     {
-        Tab() {}
-        ~Tab() {}
+        Tab(const DbHandle db = DbHandle(NULL));
+        ~Tab();
 
+        DbHandle _db;
+        DbConfig _cfg;
     };
 
 
@@ -63,6 +68,8 @@ private:
     static const TCHAR  cHeader[];
     static const int    cBackgroundColor;
     static const int    cFontSize;
+
+    static bool createWin();
 
     static void dbWriteReady(const CmdPtr_t& cmd);
     static void createDbCB(const CmdPtr_t& cmd);
@@ -72,24 +79,26 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
-    ConfigWin(const DbConfig& cfg, const TCHAR* cfgPath);
+    ConfigWin();
     ConfigWin(const ConfigWin&);
     ~ConfigWin();
 
     HWND composeWindow(HWND hOwner);
 
+    Tab* getTab(int i = -1);
     void onUpdateDb();
+    void onTabChange();
     void onSave();
+    void fillData();
     void readData();
-    void saveConfig(CPath& cfgFolder);
+    bool saveConfig(const Tab* tab);
     void fillLibDb(const CPath& lib);
 
     bool createLibDatabase(CPath& dbPath, CompletionCB complCB);
 
     static ConfigWin* CW;
 
-    DbConfig    _cfg;
-    CPath       _cfgPath;
+    Tab*        _activeTab;
 
     HWND        _hWnd;
     HWND        _hTab;

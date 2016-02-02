@@ -32,10 +32,8 @@
 #include <vector>
 #include "Common.h"
 #include "INpp.h"
-#include "DbConfig.h"
 #include "GTags.h"
 #include "ConfigWin.h"
-#include "DbManager.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
 
@@ -54,7 +52,78 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-void ConfigWin::Show(const DbConfig& cfg, const TCHAR* cfgPath)
+ConfigWin::Tab::Tab(const DbHandle db) : _db(db)
+{
+    if (db)
+        _cfg = db->GetConfig();
+    else
+        _cfg = DefaultDbCfg;
+}
+
+
+/**
+ *  \brief
+ */
+ConfigWin::Tab::~Tab()
+{
+    if (_db)
+        DbManager::Get().PutDb(_db);
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::Show()
+{
+    if (!createWin())
+        return;
+
+    CW->fillData();
+
+    ShowWindow(CW->_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(CW->_hWnd);
+}
+
+
+/**
+ *  \brief
+ */
+void ConfigWin::Show(const DbHandle& db)
+{
+    if (!createWin())
+        return;
+
+    Tab* tab = new Tab(db);
+
+    TCHAR buf[64]   = _T("Current database config");
+    TCITEM tci      = {0};
+    tci.mask        = TCIF_TEXT | TCIF_PARAM;
+    tci.pszText     = buf;
+    tci.lParam      = (LPARAM)tab;
+
+    int i = TabCtrl_InsertItem(CW->_hTab, TabCtrl_GetItemCount(CW->_hTab), &tci);
+    if (i == -1)
+    {
+        delete tab;
+        SendMessage(CW->_hWnd, WM_CLOSE, 0, 0);
+
+        return;
+    }
+
+    TabCtrl_SetCurSel(CW->_hTab, i);
+    CW->_activeTab = tab;
+    CW->fillData();
+
+    ShowWindow(CW->_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(CW->_hWnd);
+}
+
+
+/**
+ *  \brief
+ */
+bool ConfigWin::createWin()
 {
     if (CW)
     {
@@ -64,7 +133,7 @@ void ConfigWin::Show(const DbConfig& cfg, const TCHAR* cfgPath)
             MessageBox(INpp::Get().GetHandle(),
                 _T("Settings Window is already opened but is currently busy and hidden.\n\n")
                 _T("Please wait all library databases to be created."), cPluginName, MB_OK | MB_ICONINFORMATION);
-        return;
+        return false;
     }
 
     WNDCLASS wc         = {0};
@@ -85,12 +154,15 @@ void ConfigWin::Show(const DbConfig& cfg, const TCHAR* cfgPath)
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    CW = new ConfigWin(cfg, cfgPath);
+    CW = new ConfigWin();
     if (CW->composeWindow(hOwner) == NULL)
     {
         delete CW;
         CW = NULL;
+        return false;
     }
+
+    return true;
 }
 
 
@@ -156,8 +228,7 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int wi
 /**
  *  \brief
  */
-ConfigWin::ConfigWin(const DbConfig& cfg, const TCHAR* cfgPath) :
-    _cfg(cfg), _cfgPath(cfgPath), _hKeyHook(NULL), _hFont(NULL), _updateCount(0)
+ConfigWin::ConfigWin() : _hKeyHook(NULL), _hFont(NULL), _updateCount(0)
 {
 }
 
@@ -167,6 +238,13 @@ ConfigWin::ConfigWin(const DbConfig& cfg, const TCHAR* cfgPath) :
  */
 ConfigWin::~ConfigWin()
 {
+    for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
+    {
+        Tab* tab = getTab(i - 1);
+        if (tab)
+            delete tab;
+    }
+
     if (_hKeyHook)
         UnhookWindowsHookEx(_hKeyHook);
 
@@ -217,18 +295,24 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             0, 0, width, height,
             _hWnd, NULL, HMod, NULL);
 
+    _activeTab = new Tab;
     {
-        TCHAR buf[64] = _T("Default / generic database config");
+        TCHAR buf[64]   = _T("Default / generic database config");
+        TCITEM tci      = {0};
+        tci.mask        = TCIF_TEXT | TCIF_PARAM;
+        tci.pszText     = buf;
+        tci.lParam      = (LPARAM)_activeTab;
 
-        TCITEM tci  = {0};
-        tci.mask    = TCIF_TEXT | TCIF_PARAM;
-        tci.pszText = buf;
-        tci.lParam  = (LPARAM)NULL;
+        int i = TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+        if (i == -1)
+        {
+            delete _activeTab;
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
 
-        TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+            return NULL;
+        }
 
-        _tcscpy_s(buf, 64, _T("Current database config"));
-        TabCtrl_InsertItem(_hTab, TabCtrl_GetItemCount(_hTab), &tci);
+        TabCtrl_SetCurSel(_hTab, i);
     }
 
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
@@ -299,6 +383,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             xPos + width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
+    EnableWindow(_hSave, FALSE);
+
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
             xPos + 3 * width, yPos, width, 25,
@@ -320,25 +406,6 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
-    if (!_cfg._libDbPaths.empty())
-    {
-        CText libDbPaths;
-        _cfg.DbPathsToBuf(libDbPaths, _T('\n'));
-        Edit_SetText(_hLibDb, libDbPaths.C_str());
-    }
-
-    if (!_cfg._useLibDb)
-    {
-        EnableWindow(_hCreateDb, FALSE);
-        EnableWindow(_hUpdateDb, FALSE);
-        Edit_Enable(_hLibDb, FALSE);
-        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
-    }
-    else
-    {
-        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
-    }
-
     if (_hFont)
     {
         SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, TRUE);
@@ -346,22 +413,34 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    Button_SetCheck(_hAutoUpdate, _cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hEnLibDb, _cfg._useLibDb ? BST_CHECKED : BST_UNCHECKED);
-
     for (unsigned i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
 
-    SendMessage(_hParser, CB_SETCURSEL, _cfg._parserIdx, 0);
-
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
-    EnableWindow(_hSave, FALSE);
-
-    ShowWindow(_hWnd, SW_SHOWNORMAL);
-    UpdateWindow(_hWnd);
-
     return _hWnd;
+}
+
+
+/**
+ *  \brief
+ */
+ConfigWin::Tab* ConfigWin::getTab(int i)
+{
+    if (i == -1)
+    {
+        i = TabCtrl_GetCurSel(_hTab);
+        if (i == -1)
+            return NULL;
+    }
+
+    TCITEM tci  = {0};
+    tci.mask    = TCIF_PARAM;
+
+    if (!TabCtrl_GetItem(_hTab, i, &tci))
+        return NULL;
+
+    return (Tab*)tci.lParam;
 }
 
 
@@ -400,57 +479,73 @@ void ConfigWin::onUpdateDb()
 /**
  *  \brief
  */
+void ConfigWin::onTabChange()
+{
+    readData();
+    _activeTab = getTab();
+    fillData();
+}
+
+
+/**
+ *  \brief
+ */
 void ConfigWin::onSave()
 {
     readData();
 
-    if (_cfgPath.IsEmpty())
+    bool ret = true;
+
+    for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
-        DefaultDbCfg = _cfg;
+        Tab* tab = getTab(i - 1);
+        ret = ret && saveConfig(tab);
+    }
 
-        CPath cfgFolder;
+    if (ret)
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
+}
 
-        INpp::Get().GetPluginsConfDir(cfgFolder);
 
-        saveConfig(cfgFolder);
+/**
+ *  \brief
+ */
+void ConfigWin::fillData()
+{
+    BOOL isSaveEnabled = IsWindowEnabled(_hSave);
+
+    if (_activeTab->_cfg._libDbPaths.empty())
+    {
+        Edit_SetText(_hLibDb, _T('\0'));
     }
     else
     {
-        bool success;
-        DbHandle db = DbManager::Get().GetDb(_cfgPath, true, &success);
-        if (!db || !(db->GetPath() == _cfgPath))
-        {
-            if (db)
-                DbManager::Get().PutDb(db);
-
-            CText msg(_T("Database at\n\""));
-            msg += _cfgPath.C_str();
-            msg += _T("\"\nis missing, cannot save local config");
-
-            MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
-
-            SendMessage(_hWnd, WM_CLOSE, 0, 0);
-
-            return;
-        }
-
-        if (!success)
-        {
-            CText msg(_T("Database at\n\""));
-            msg += _cfgPath.C_str();
-            msg += _T("\"\nis in use.\nPlease wait all operations to finish and try again");
-
-            MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
-
-            return;
-        }
-
-        db->SetConfig(_cfg);
-
-        DbManager::Get().PutDb(db);
-
-        saveConfig(_cfgPath);
+        CText libDbPaths;
+        _activeTab->_cfg.DbPathsToBuf(libDbPaths, _T('\n'));
+        Edit_SetText(_hLibDb, libDbPaths.C_str());
     }
+
+    EnableWindow(_hSave, isSaveEnabled);
+
+    if (_activeTab->_cfg._useLibDb)
+    {
+        EnableWindow(_hCreateDb, TRUE);
+        EnableWindow(_hUpdateDb, TRUE);
+        Edit_Enable(_hLibDb, TRUE);
+        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
+    }
+    else
+    {
+        EnableWindow(_hCreateDb, FALSE);
+        EnableWindow(_hUpdateDb, FALSE);
+        Edit_Enable(_hLibDb, FALSE);
+        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+    }
+
+    Button_SetCheck(_hAutoUpdate, _activeTab->_cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hEnLibDb, _activeTab->_cfg._useLibDb ? BST_CHECKED : BST_UNCHECKED);
+
+    SendMessage(_hParser, CB_SETCURSEL, _activeTab->_cfg._parserIdx, 0);
 }
 
 
@@ -459,29 +554,36 @@ void ConfigWin::onSave()
  */
 void ConfigWin::readData()
 {
-    _cfg._libDbPaths.clear();
+    _activeTab->_cfg._libDbPaths.clear();
 
     int len = Edit_GetTextLength(_hLibDb);
     if (len)
     {
         CText libDbPaths(len);
         Edit_GetText(_hLibDb, libDbPaths.C_str(), libDbPaths.Size());
-        _cfg.DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
+        _activeTab->_cfg.DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
     }
 
-    _cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
-    _cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
+    _activeTab->_cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
+    _activeTab->_cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
 
-    _cfg._parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
+    _activeTab->_cfg._parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 }
 
 
 /**
  *  \brief
  */
-void ConfigWin::saveConfig(CPath& cfgFolder)
+bool ConfigWin::saveConfig(const ConfigWin::Tab* tab)
 {
-    if (!_cfg.SaveToFolder(cfgFolder))
+    CPath cfgFolder;
+
+    if (tab->_db)
+        cfgFolder = tab->_db->GetPath();
+    else
+        INpp::Get().GetPluginsConfDir(cfgFolder);
+
+    if (!tab->_cfg.SaveToFolder(cfgFolder))
     {
         cfgFolder += DbConfig::cCfgFileName;
 
@@ -490,11 +592,16 @@ void ConfigWin::saveConfig(CPath& cfgFolder)
         msg += _T("\"\nIs the path read only?");
 
         MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
+
+        return false;
     }
+
+    if (tab->_db)
+        tab->_db->SetConfig(tab->_cfg);
     else
-    {
-        SendMessage(_hWnd, WM_CLOSE, 0, 0);
-    }
+        DefaultDbCfg = tab->_cfg;
+
+    return true;
 }
 
 
@@ -750,6 +857,14 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             else if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
             {
                 EnableWindow(CW->_hSave, TRUE);
+            }
+        break;
+
+        case WM_NOTIFY:
+            if (((LPNMHDR)lParam)->code == TCN_SELCHANGE)
+            {
+                CW->onTabChange();
+                return 0;
             }
         break;
 
