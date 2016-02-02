@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 2.8)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
@@ -10,9 +10,9 @@ set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE  ONLY)
 
 set (toolchain_prefix   i686-w64-mingw32)
 
-set (CMAKE_C_COMPILER   ${toolchain_prefix}-gcc)
-set (CMAKE_CXX_COMPILER ${toolchain_prefix}-g++)
-SET (CMAKE_RC_COMPILER  ${toolchain_prefix}-windres)
+set (CMAKE_C_COMPILER   ${CMAKE_SYSROOT}/bin/${toolchain_prefix}-gcc)
+set (CMAKE_CXX_COMPILER ${CMAKE_SYSROOT}/bin/${toolchain_prefix}-g++)
+set (CMAKE_RC_COMPILER  ${CMAKE_SYSROOT}/bin/${toolchain_prefix}-windres)
 
 set (win32_inc_dir /${toolchain_prefix}/include)
 set (win32_lib_dir /${toolchain_prefix}/lib)
