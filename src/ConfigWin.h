@@ -112,7 +112,6 @@ private:
     HWND        _hCancel;
     HHOOK       _hKeyHook;
     HFONT       _hFont;
-    unsigned    _updateCount;
 };
 
 } // namespace GTags

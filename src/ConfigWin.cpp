@@ -126,15 +126,7 @@ void ConfigWin::Show(const DbHandle& db)
 bool ConfigWin::createWin()
 {
     if (CW)
-    {
-        if (IsWindowVisible(CW->_hWnd))
-            SetFocus(CW->_hWnd);
-        else
-            MessageBox(INpp::Get().GetHandle(),
-                _T("Settings Window is already opened but is currently busy and hidden.\n\n")
-                _T("Please wait all library databases to be created."), cPluginName, MB_OK | MB_ICONINFORMATION);
         return false;
-    }
 
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -228,7 +220,7 @@ RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int wi
 /**
  *  \brief
  */
-ConfigWin::ConfigWin() : _hKeyHook(NULL), _hFont(NULL), _updateCount(0)
+ConfigWin::ConfigWin() : _hKeyHook(NULL), _hFont(NULL)
 {
 }
 
@@ -468,10 +460,10 @@ void ConfigWin::onUpdateDb()
             dbs.push_back(db);
     }
 
-    _updateCount = dbs.size();
+    unsigned updateCount = dbs.size();
 
-    if (_updateCount)
-        for (unsigned i = 0; i < _updateCount; ++i)
+    if (updateCount)
+        for (unsigned i = 0; i < updateCount; ++i)
             createLibDatabase(dbs[i], updateDbCB);
 }
 
@@ -635,12 +627,8 @@ void ConfigWin::fillLibDb(const CPath& lib)
 
     if (!found)
     {
-        WORD eventMask = SendMessage(CW->_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
-
         buf += lib;
         Edit_SetText(CW->_hLibDb, buf.C_str());
-
-        SendMessage(CW->_hLibDb, EM_SETEVENTMASK, 0, eventMask);
     }
 
     SetFocus(CW->_hLibDb);
@@ -727,13 +715,10 @@ void ConfigWin::createDbCB(const CmdPtr_t& cmd)
     if (CW == NULL)
         return;
 
-    ShowWindow(CW->_hWnd, SW_SHOW);
+    EnableWindow(CW->_hWnd, TRUE);
 
     if (cmd->Status() == OK)
-    {
         CW->fillLibDb(cmd->Db()->GetPath());
-        EnableWindow(CW->_hSave, TRUE);
-    }
 }
 
 
@@ -746,9 +731,6 @@ void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
 
     if (CW == NULL)
         return;
-
-    if (!--CW->_updateCount)
-        SetFocus(CW->_hSave);
 }
 
 
@@ -843,9 +825,14 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                     CPath libraryPath;
 
                     if (CW->createLibDatabase(libraryPath, createDbCB))
-                        ShowWindow(hWnd, SW_HIDE);
+                    {
+                        EnableWindow(hWnd, FALSE);
+                        SetFocus(INpp::Get().GetSciHandle());
+                    }
                     else if (!libraryPath.IsEmpty())
+                    {
                         CW->fillLibDb(libraryPath);
+                    }
 
                     return 0;
                 }

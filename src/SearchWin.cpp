@@ -256,7 +256,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     if (_hTxtFont)
         SendMessage(_hSearch, WM_SETFONT, (WPARAM)_hTxtFont, TRUE);
 
-    ComboBox_SetMinVisible(_hSearch, 8);
+    ComboBox_SetMinVisible(_hSearch, 7);
 
     if (!_cmd->Tag().IsEmpty())
         ComboBox_SetText(_hSearch, _cmd->Tag().C_str());
