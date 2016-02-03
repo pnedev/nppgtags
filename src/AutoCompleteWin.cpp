@@ -223,16 +223,21 @@ int AutoCompleteWin::filterLV(const CText& filter)
 void AutoCompleteWin::resizeLV()
 {
     bool scroll = false;
-    int rowsCount = ListView_GetItemCount(_hLVWnd) - 1;
+    int rowsCount = ListView_GetItemCount(_hLVWnd);
     if (rowsCount > 7)
     {
         rowsCount = 7;
         scroll = true;
     }
 
-    DWORD rectSize  = ListView_ApproximateViewRect(_hLVWnd, -1, -1, rowsCount);
-    int lvWidth     = LOWORD(rectSize);
-    int lvHeight    = HIWORD(rectSize);
+    RECT win;
+    ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
+    int lvWidth     = win.right - win.left;
+    int lvHeight    = (win.bottom - win.top) * rowsCount;
+
+    HWND hHeader = ListView_GetHeader(_hLVWnd);
+    GetWindowRect(hHeader, &win);
+    lvHeight += win.bottom - win.top;
 
     RECT maxWin;
     INpp& npp = INpp::Get();
@@ -249,7 +254,6 @@ void AutoCompleteWin::resizeLV()
     if (scroll)
         lvWidth += GetSystemMetrics(SM_CXVSCROLL);
 
-    RECT win;
     win.left    = maxWin.left;
     win.top     = maxWin.top;
     win.right   = win.left + lvWidth;
