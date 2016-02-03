@@ -222,8 +222,8 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
             _T("Licensed under GNU GPLv2 as published by the Free Software Foundation.\n\n")
             _T("This plugin is frontend to GNU Global source code tagging system (GTags):\n")
             _T("http://www.gnu.org/software/global/global.html\n")
-            _T("Thanks to:\n\tShigio YAMAGUCHI and all GNU Global developers;\n")
-            _T("\tJason Hood for porting it to Windows.\n")
+            _T("Thanks to:\n\tShigio YAMAGUCHI (the GNU Global developer) and all GTags contributors;\n")
+            _T("\tJason Hood for porting GTags to Windows.\n")
             _T("Thanks also to all Ctags parser developers.\n\n")
             _T("Current GTags version:\n\n");
     str += info;
