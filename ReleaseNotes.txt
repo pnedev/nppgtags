@@ -1,16 +1,32 @@
 What's new in v4.0.0
 =======================
 
+- Made configuration per database.
+    This adds another file to the database ones (GTAGS, etc.) - NppGTags.cfg.
+    The good thing is that each database can now be tuned separately from all the others - has its own defined
+    libraries and parser. The auto-update database feature won't be corrupting the database anymore in case the
+    database is created with one parser that is lately changed in the global settings.
+
+- Add 'Search in Other Files' command that will perform literal or regexp searches in text files, Makefiles or any
+    other text files that are not recognized as sources by the parser during database creation
+
+- Auto-update database feature will now update all databases that have indexed the changed file
+- Add 'Update Library DBs' control in Settings window to easily update all project's libraries
+- Auto-complete now provides completion suggestions not for the whole word under the cursor but for the string from
+    the beginning of the word to the cursor position
+
 - Code re-factored for improved stability and speed
 - Use STL containers instead of custom ones
 - Use single UI thread and dedicated command threads.
     This provides better UI experience, responsiveness and improved speed
 
 - Update Activity windows position when necessary for better user experience
+- Various tweaks, improvements and bug-fixes
+- About window now reports also the Ctags binary version
 
-- Update GTAGS binaries to v6.5.1
-- Use the new feature of v6.5.1 to ignore non parse-able files while creating native database.
-    This does not abort database creation anymore
+- Update GTAGS binaries to v6.5.2
+- Use the new feature of v6.5.2 to ignore non parse-able files while creating native database
+    (using the default parser). This does not abort database creation anymore
 
 
 What's new in v3.1.0
