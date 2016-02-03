@@ -504,7 +504,7 @@ void ConfigWin::onSave()
  */
 void ConfigWin::fillData()
 {
-    WORD eventMask = SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
+	LRESULT eventMask = SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
 
     if (_activeTab->_cfg._libDbPaths.empty())
     {
