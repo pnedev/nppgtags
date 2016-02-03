@@ -512,7 +512,7 @@ void ConfigWin::onSave()
  */
 void ConfigWin::fillData()
 {
-    BOOL isSaveEnabled = IsWindowEnabled(_hSave);
+    WORD eventMask = SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
 
     if (_activeTab->_cfg._libDbPaths.empty())
     {
@@ -525,7 +525,7 @@ void ConfigWin::fillData()
         Edit_SetText(_hLibDb, libDbPaths.C_str());
     }
 
-    EnableWindow(_hSave, isSaveEnabled);
+    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, eventMask);
 
     if (_activeTab->_cfg._useLibDb)
     {
@@ -635,8 +635,12 @@ void ConfigWin::fillLibDb(const CPath& lib)
 
     if (!found)
     {
+        WORD eventMask = SendMessage(CW->_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
+
         buf += lib;
         Edit_SetText(CW->_hLibDb, buf.C_str());
+
+        SendMessage(CW->_hLibDb, EM_SETEVENTMASK, 0, eventMask);
     }
 
     SetFocus(CW->_hLibDb);
@@ -662,7 +666,7 @@ bool ConfigWin::createLibDatabase(CPath& dbPath, CompletionCB complCB)
     {
         CText msg(_T("Database at\n\""));
         msg += dbPath;
-        msg += _T("\" exists.\nRe-create?");
+        msg += _T("\"\nexists.\nRe-create?");
         int choice = MessageBox(_hWnd, msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
         if (choice != IDYES)
             return false;
@@ -672,7 +676,8 @@ bool ConfigWin::createLibDatabase(CPath& dbPath, CompletionCB complCB)
 
         if (!success)
         {
-            MessageBox(_hWnd, _T("GTags database is currently in use"), cPluginName, MB_OK | MB_ICONINFORMATION);
+            MessageBox(_hWnd, _T("GTags database is currently in use.\nPlease try again later."),
+                    cPluginName, MB_OK | MB_ICONINFORMATION);
             return false;
         }
     }

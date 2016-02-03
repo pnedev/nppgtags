@@ -85,7 +85,7 @@ bool checkForGTagsBinaries(CPath& dllPath)
         dllPath.StripFilename();
 
         CText msg(_T("GTags binaries not found in\n\""));
-        msg += dllPath.C_str();
+        msg += dllPath;
         msg += _T("\"\n");
         msg += cPluginName;
         msg += _T(" plugin will not be loaded!");
@@ -151,8 +151,8 @@ DbHandle getDatabase(bool writeEn = false)
     else if (!success)
     {
         CText msg(_T("Database at\n\""));
-        msg += db->GetPath().C_str();
-        msg += _T("\" is currently in use.\nPlease try again later.");
+        msg += db->GetPath();
+        msg += _T("\"\nis currently in use.\nPlease try again later.");
 
         MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
         db = NULL;
@@ -240,7 +240,7 @@ void showResultCB(const CmdPtr_t& cmd)
         {
             CText msg(_T("\""));
             msg += cmd->Tag();
-            msg += _T("\" not found");
+            msg += _T("\" not found.");
             MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
         }
     }
@@ -256,7 +256,7 @@ void showResultCB(const CmdPtr_t& cmd)
     }
     else if (cmd->Status() == PARSE_ERROR)
     {
-        MessageBox(INpp::Get().GetHandle(), _T("Database seems outdated.\nPlease re-create it and redo the search"),
+        MessageBox(INpp::Get().GetHandle(), _T("Database seems outdated.\nPlease re-create it and redo the search."),
                 cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 }
@@ -607,16 +607,16 @@ void CreateDatabase()
     if (db)
     {
         CText msg(_T("Database at\n\""));
-        msg += db->GetPath().C_str();
+        msg += db->GetPath();
 
         if (!success)
         {
-            msg += _T("\" is currently in use.\nPlease try again later.");
+            msg += _T("\"\nis currently in use.\nPlease try again later.");
             MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
             return;
         }
 
-        msg += _T("\" exists.\nRe-create?");
+        msg += _T("\"\nexists.\nRe-create?");
         int choice = MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
         {
@@ -698,8 +698,8 @@ void SettingsCfg()
         }
 
         CText msg(_T("Database at\n\""));
-        msg += db->GetPath().C_str();
-        msg += _T("\" is in use.\nIts config cannot be modified at the moment.");
+        msg += db->GetPath();
+        msg += _T("\"\nis currently in use.\nIts config cannot be modified at the moment.");
 
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
     }
