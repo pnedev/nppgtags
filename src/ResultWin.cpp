@@ -414,8 +414,6 @@ void ResultWin::applyStyle()
 
     sendSci(SCI_SETCARETLINEBACK, caretLineBackColor);
     sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
-    sendSci(SCI_STYLESETUNDERLINE, SCE_GTAGS_HEADER, true);
-    sendSci(SCI_STYLESETUNDERLINE, SCE_GTAGS_PROJECT_PATH, true);
 }
 
 
@@ -540,7 +538,7 @@ HWND ResultWin::composeWindow()
     GetClientRect(_hWnd, &win);
 
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
-            WS_CHILD | WS_VISIBLE | TCS_TABS | TCS_FOCUSNEVER,
+            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -616,8 +614,6 @@ ResultWin::Tab* ResultWin::getTab(int i)
  */
 void ResultWin::loadTab(ResultWin::Tab* tab)
 {
-    sendSci(SCI_SETCURSOR, SC_CURSORWAIT);
-
     // store current view if there is one
     if (_activeTab)
     {
@@ -638,8 +634,6 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
 
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
     sendSci(SCI_GOTOLINE, tab->_currentLine);
-
-    sendSci(SCI_SETCURSOR, SC_CURSORNORMAL);
 }
 
 
@@ -692,7 +686,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     {
         MessageBox(npp.GetHandle(),
                 _T("File not found, present results are outdated.")
-                _T("\nPlease redo the search"),
+                _T("\nPlease redo the search."),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
         return false;
     }
@@ -718,7 +712,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, present results are outdated.")
-                    _T("\nSave all modified files and redo the search"),
+                    _T("\nSave all modified files and redo the search."),
                     cPluginName, MB_OK | MB_ICONEXCLAMATION);
             return false;
         }
