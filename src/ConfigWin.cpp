@@ -235,6 +235,7 @@ ConfigWin::~ConfigWin()
         Tab* tab = getTab(i - 1);
         if (tab)
             delete tab;
+        TabCtrl_DeleteItem(_hTab, i - 1);
     }
 
     if (_hKeyHook)
@@ -256,19 +257,22 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     ncm.cbSize = sizeof(ncm);
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
-    TEXTMETRIC tm;
+    int txtHeight;
+    {
+        TEXTMETRIC tm;
 
-    HDC hdc = GetWindowDC(hOwner);
-    ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-    GetTextMetrics(hdc, &tm);
-    ReleaseDC(hOwner, hdc);
+        HDC hdc = GetWindowDC(hOwner);
+        ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        GetTextMetrics(hdc, &tm);
+        ReleaseDC(hOwner, hdc);
 
-    int txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
+        txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
+    }
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 160);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 155);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -283,9 +287,11 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     height = win.bottom - win.top;
 
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
-            WS_CHILD | WS_VISIBLE | TCS_TABS | TCS_FOCUSNEVER,
-            0, 0, width, height,
+            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
+            3, 5, width - 6, height - 10,
             _hWnd, NULL, HMod, NULL);
+
+    TabCtrl_SetMinTabWidth(_hTab, (width - 30) / 2);
 
     _activeTab = new Tab;
     {
@@ -309,9 +315,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
     width = win.right - win.left - 20;
-    height = win.bottom - win.top;
 
-    int yPos        = win.top + 15;
+    int yPos        = win.top + 20;
     const int xPos  = win.left + 10;
 
     CreateWindowEx(0, _T("STATIC"), _T("Parser (requires database re-creation on change!)"),
@@ -347,10 +352,10 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (txtHeight + 10);
+    yPos += (txtHeight + 5);
     CreateWindowEx(0, _T("STATIC"), _T("Paths to library databases"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
-            xPos, yPos, width, txtHeight,
+            xPos, yPos, width / 2, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 5);
@@ -368,7 +373,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (win.bottom - win.top + 15);
+    yPos += (win.bottom - win.top + 10);
     width = width / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
             WS_CHILD | WS_VISIBLE | BS_TEXT,
@@ -382,14 +387,16 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             xPos + 3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
-    CHARFORMAT fmt  = {0};
-    fmt.cbSize      = sizeof(fmt);
-    fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
-    fmt.dwEffects   = CFE_AUTOCOLOR;
-    fmt.yHeight     = cFontSize * 20;
-    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
+    {
+        CHARFORMAT fmt  = {0};
+        fmt.cbSize      = sizeof(fmt);
+        fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
+        fmt.dwEffects   = CFE_AUTOCOLOR;
+        fmt.yHeight     = cFontSize * 20;
+        _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
-    SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+        SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+    }
 
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
 
