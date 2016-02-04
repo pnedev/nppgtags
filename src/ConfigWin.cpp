@@ -272,7 +272,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 9 * txtHeight + 155);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 11 * txtHeight + 165);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -319,7 +319,14 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     int yPos        = win.top + 20;
     const int xPos  = win.left + 10;
 
-    CreateWindowEx(0, _T("STATIC"), _T("Parser (requires database re-creation on change!)"),
+    _hInfo = CreateWindowEx(0, _T("STATIC"), _T("These settings apply to all new databases"),
+            (WS_CHILD | WS_VISIBLE | BS_TEXT | SS_EDITCONTROL | SS_LEFT | SS_PATHELLIPSIS) &
+            ~(SS_CENTERIMAGE | SS_SIMPLE),
+            xPos, yPos, width, 2 * txtHeight,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (2 * txtHeight + 10);
+    _hParserInfo = CreateWindowEx(0, _T("STATIC"), _T("Code Parser"),
             WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
             xPos, yPos, width, txtHeight,
             _hWnd, NULL, HMod, NULL);
@@ -511,6 +518,20 @@ void ConfigWin::onSave()
  */
 void ConfigWin::fillData()
 {
+    if (_activeTab->_db)
+    {
+        CText txt(_T("These settings apply to database at\n\""));
+        txt += _activeTab->_db->GetPath();
+        txt += _T("\"");
+		SetWindowText(_hInfo, txt.C_str());
+		SetWindowText(_hParserInfo, _T("Code Parser (database will be automatically re-created on change)"));
+    }
+    else
+    {
+		SetWindowText(_hInfo, _T("These settings apply to all new databases"));
+		SetWindowText(_hParserInfo, _T("Code Parser"));
+    }
+
 	LRESULT eventMask = SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
 
     if (_activeTab->_cfg._libDbPaths.empty())

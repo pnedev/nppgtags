@@ -102,6 +102,8 @@ private:
 
     HWND        _hWnd;
     HWND        _hTab;
+    HWND        _hInfo;
+    HWND        _hParserInfo;
     HWND        _hParser;
     HWND        _hAutoUpdate;
     HWND        _hEnLibDb;
