@@ -243,7 +243,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             _hWnd, NULL, HMod, NULL);
 
     _hOK = CreateWindowEx(0, _T("BUTTON"), _T("OK"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             2 * width + 15, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
 

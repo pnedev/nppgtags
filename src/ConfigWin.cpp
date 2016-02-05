@@ -52,7 +52,7 @@ ConfigWin* ConfigWin::CW = NULL;
 /**
  *  \brief
  */
-ConfigWin::Tab::Tab(const DbHandle db) : _db(db)
+ConfigWin::Tab::Tab(const DbHandle db) : _db(db), _updateDb(false)
 {
     if (db)
         _cfg = db->GetConfig();
@@ -67,7 +67,17 @@ ConfigWin::Tab::Tab(const DbHandle db) : _db(db)
 ConfigWin::Tab::~Tab()
 {
     if (_db)
-        DbManager::Get().PutDb(_db);
+    {
+        if (_updateDb)
+        {
+            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Create Database"), _db));
+            CmdEngine::Run(cmd, ConfigWin::dbWriteReady);
+        }
+        else
+        {
+            DbManager::Get().PutDb(_db);
+        }
+    }
 }
 
 
@@ -272,7 +282,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 11 * txtHeight + 165);
+    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 11 * txtHeight + 180);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -291,11 +301,9 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             3, 5, width - 6, height - 10,
             _hWnd, NULL, HMod, NULL);
 
-    TabCtrl_SetMinTabWidth(_hTab, (width - 30) / 2);
-
     _activeTab = new Tab;
     {
-        TCHAR buf[64]   = _T("Default / generic database config");
+        TCHAR buf[64]   = _T("Default database config");
         TCITEM tci      = {0};
         tci.mask        = TCIF_TEXT | TCIF_PARAM;
         tci.pszText     = buf;
@@ -320,48 +328,47 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     const int xPos  = win.left + 10;
 
     _hInfo = CreateWindowEx(0, _T("STATIC"), _T("These settings apply to all new databases"),
-            (WS_CHILD | WS_VISIBLE | BS_TEXT | SS_EDITCONTROL | SS_LEFT | SS_PATHELLIPSIS) &
-            ~(SS_CENTERIMAGE | SS_SIMPLE),
-            xPos, yPos, width, 2 * txtHeight,
+            WS_CHILD | WS_VISIBLE | SS_CENTER | SS_SUNKEN,
+            xPos, yPos, width, 2 * txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (2 * txtHeight + 10);
+    yPos += (2 * txtHeight + 30);
     _hParserInfo = CreateWindowEx(0, _T("STATIC"), _T("Code Parser"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
             xPos, yPos, width, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
-            xPos, yPos, (width / 2) - 10, txtHeight,
+            xPos, yPos, (width / 2) - 10, txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
     _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"), _T("Auto update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + (width / 2) + 10, yPos + 5, (width / 2) - 10, txtHeight,
+            xPos + (width / 2) + 30, yPos, (width / 2) - 50, txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (txtHeight + 35);
+    yPos += (txtHeight + 30);
     _hEnLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable library databases"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos, yPos, (width / 2) - 10, txtHeight,
+            xPos + 20, yPos, (width / 2) - 50, txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
     _hCreateDb = CreateWindowEx(0, _T("BUTTON"), _T("Add Library DB"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 10);
     _hUpdateDb = CreateWindowEx(0, _T("BUTTON"), _T("Update Library DBs"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 5);
     CreateWindowEx(0, _T("STATIC"), _T("Paths to library databases"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT,
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
             xPos, yPos, width / 2, txtHeight,
             _hWnd, NULL, HMod, NULL);
 
@@ -383,14 +390,12 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     yPos += (win.bottom - win.top + 10);
     width = width / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON,
             xPos + width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
-    EnableWindow(_hSave, FALSE);
-
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             xPos + 3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
@@ -405,15 +410,14 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
     }
 
+    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
+
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
 
     if (_hFont)
-        SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
-
-    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
-
-    if (_hFont)
     {
+        SendMessage(_hInfo, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
@@ -490,6 +494,7 @@ void ConfigWin::onTabChange()
     readData();
     _activeTab = getTab();
     fillData();
+    SetFocus(_hInfo);
 }
 
 
@@ -524,7 +529,7 @@ void ConfigWin::fillData()
         txt += _activeTab->_db->GetPath();
         txt += _T("\"");
 		SetWindowText(_hInfo, txt.C_str());
-		SetWindowText(_hParserInfo, _T("Code Parser (database will be automatically re-created on change)"));
+		SetWindowText(_hParserInfo, _T("Code Parser (database will be re-created on change!)"));
     }
     else
     {
@@ -594,7 +599,7 @@ void ConfigWin::readData()
 /**
  *  \brief
  */
-bool ConfigWin::saveConfig(const ConfigWin::Tab* tab)
+bool ConfigWin::saveConfig(ConfigWin::Tab* tab)
 {
     CPath cfgFolder;
 
@@ -617,9 +622,16 @@ bool ConfigWin::saveConfig(const ConfigWin::Tab* tab)
     }
 
     if (tab->_db)
+    {
+        if (tab->_db->GetConfig()._parserIdx != tab->_cfg._parserIdx)
+            tab->_updateDb = true;
+
         tab->_db->SetConfig(tab->_cfg);
+    }
     else
+    {
         DefaultDbCfg = tab->_cfg;
+    }
 
     return true;
 }

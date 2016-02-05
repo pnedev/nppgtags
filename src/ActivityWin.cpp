@@ -206,7 +206,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     int winNum = WindowList.size();
 
     HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), text,
-            WS_CHILD | WS_VISIBLE | BS_TEXT | SS_LEFT | SS_PATHELLIPSIS,
+            WS_CHILD | WS_VISIBLE | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, _hWnd, NULL, HMod, NULL);
 
     if (HFont)
@@ -234,7 +234,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 100);
 
     _hBtn = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
-            WS_CHILD | WS_VISIBLE | BS_TEXT,
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             width - 85, (height - 25) / 2, 80, 25, _hWnd,
             NULL, HMod, NULL);
 

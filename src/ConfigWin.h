@@ -61,6 +61,8 @@ private:
 
         DbHandle _db;
         DbConfig _cfg;
+
+        bool _updateDb;
     };
 
 
@@ -91,7 +93,7 @@ private:
     void onSave();
     void fillData();
     void readData();
-    bool saveConfig(const Tab* tab);
+    bool saveConfig(Tab* tab);
     void fillLibDb(const CPath& lib);
 
     bool createLibDatabase(CPath& dbPath, CompletionCB complCB);
