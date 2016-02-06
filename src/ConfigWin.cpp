@@ -103,7 +103,7 @@ void ConfigWin::Show(const DbHandle& db)
 {
     if (!createWin())
     {
-        DbManager::Get().PutDb(_db);
+        DbManager::Get().PutDb(db);
         return;
     }
 
