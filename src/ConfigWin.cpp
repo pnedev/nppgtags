@@ -102,7 +102,10 @@ void ConfigWin::Show()
 void ConfigWin::Show(const DbHandle& db)
 {
     if (!createWin())
+    {
+        DbManager::Get().PutDb(_db);
         return;
+    }
 
     Tab* tab = new Tab(db);
 
@@ -136,7 +139,10 @@ void ConfigWin::Show(const DbHandle& db)
 bool ConfigWin::createWin()
 {
     if (CW)
+    {
+        SetFocus(CW->_hWnd);
         return false;
+    }
 
     WNDCLASS wc         = {0};
     wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -410,8 +416,6 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
     }
 
-    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
-
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
 
     if (_hFont)
@@ -537,7 +541,7 @@ void ConfigWin::fillData()
 		SetWindowText(_hParserInfo, _T("Code Parser"));
     }
 
-	LRESULT eventMask = SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
+	SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
 
     if (_activeTab->_cfg._libDbPaths.empty())
     {
@@ -550,7 +554,7 @@ void ConfigWin::fillData()
         Edit_SetText(_hLibDb, libDbPaths.C_str());
     }
 
-    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, eventMask);
+    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
     if (_activeTab->_cfg._useLibDb)
     {
