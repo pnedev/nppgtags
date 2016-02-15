@@ -311,9 +311,9 @@ void CmdEngine::composeCmd(CText& buf) const
 /**
  *  \brief
  */
-void CmdEngine::prepareEnvironmentVars(CText& buf) const
+void CmdEngine::setEnvironmentVars() const
 {
-    buf = _T("GTAGSLIBPATH=");
+    CText buf;
 
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
@@ -334,7 +334,7 @@ void CmdEngine::prepareEnvironmentVars(CText& buf) const
         }
     }
 
-    buf += _T('\0');
+    SetEnvironmentVariable(_T("GTAGSLIBPATH"), buf.C_str());
 }
 
 
@@ -350,8 +350,7 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     CText cmdBuf;
     composeCmd(cmdBuf);
 
-    CText envBuf;
-    prepareEnvironmentVars(envBuf);
+    setEnvironmentVars();
 
     STARTUPINFO si  = {0};
     si.cb           = sizeof(si);
@@ -359,7 +358,7 @@ bool CmdEngine::runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe
     si.hStdError    = errorPipe.GetInputHandle();
     si.hStdOutput   = dataPipe.GetInputHandle();
 
-    if (!CreateProcess(NULL, cmdBuf.C_str(), NULL, NULL, TRUE, createFlags, envBuf.C_str(), currentDir, &si, &pi))
+    if (!CreateProcess(NULL, cmdBuf.C_str(), NULL, NULL, TRUE, createFlags, NULL, currentDir, &si, &pi))
     {
         _cmd->_status = RUN_ERROR;
         return false;
