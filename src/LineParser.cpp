@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015 Pavel Nedev
+ *  Copyright(C) 2015-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 
 #include "LineParser.h"
+#include "StrUniquenessChecker.h"
 
 
 namespace GTags
@@ -33,6 +34,10 @@ namespace GTags
  */
 bool LineParser::Parse(const CmdPtr_t& cmd)
 {
+    const bool filterReoccurring = cmd->Db()->GetConfig()._useLibDb;
+
+    StrUniquenessChecker strChecker;
+
     _lines.clear();
     _buf = cmd->Result();
 
@@ -42,7 +47,9 @@ bool LineParser::Parse(const CmdPtr_t& cmd)
     {
         if (cmd->Id() == FIND_FILE || cmd->Id() == AUTOCOMPLETE_FILE)
             ++pToken;
-        _lines.push_back(pToken);
+
+        if ((!filterReoccurring) || strChecker.IsUnique(pToken))
+            _lines.push_back(pToken);
     }
 
     return true;

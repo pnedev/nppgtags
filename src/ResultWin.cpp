@@ -35,6 +35,7 @@
 #include <vector>
 #include "Common.h"
 #include "GTags.h"
+#include "StrUniquenessChecker.h"
 
 
 // Scintilla user defined styles IDs
@@ -83,27 +84,28 @@ bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 
     // parsing command result
     if (cmd->Id() == FIND_FILE)
-        return parseFindFile(cmd->Result());
+        return parseFindFile(cmd);
     else
-        return parseCmd(cmd->Result());
+        return parseCmd(cmd);
 }
 
 
 /**
  *  \brief
  */
-bool ResultWin::TabParser::parseFindFile(const char* src)
+bool ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
 {
+    const char* src = cmd->Result();
     const char* eol;
 
-    for (;;)
+    while (true)
     {
         while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
             ++src;
-        if (*src == 0) break;
+        if (*src == '\0') break;
 
         eol = src;
-        while (*eol != '\n' && *eol != '\r' && *eol != 0)
+        while (*eol != '\n' && *eol != '\r' && *eol != '\0')
             ++eol;
 
         _buf += "\n\t";
@@ -118,53 +120,83 @@ bool ResultWin::TabParser::parseFindFile(const char* src)
 /**
  *  \brief
  */
-bool ResultWin::TabParser::parseCmd(const char* src)
+bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 {
-    const char* pLine;
-    const char* pPreviousFile = NULL;
-    unsigned pPreviousFileLen = 0;
+    bool filterReoccurring = false;
 
-    for (;;)
+    const DbConfig& cfg = cmd->Db()->GetConfig();
+    if (cmd->Id() == FIND_DEFINITION && cfg._useLibDb)
+    {
+        for (unsigned i = 0; i < cfg._libDbPaths.size(); ++i)
+        {
+            if (cfg._libDbPaths[i].IsParentOf(cmd->Db()->GetPath()))
+            {
+                filterReoccurring = true;
+                break;
+            }
+        }
+    }
+
+    StrUniquenessCheckerA strChecker;
+
+    char*       src = cmd->Result();
+    char*       pIdx;
+
+    CTextA      lineBuf;
+    const char* pLine;
+
+    const char* pPreviousFile = NULL;
+    unsigned    pPreviousFileLen = 0;
+
+    while (true)
     {
         while (*src == '\n' || *src == '\r')
             ++src;
-        if (*src == 0) break;
+        if (*src == '\0') break;
 
+        lineBuf.Clear();
         pLine = src;
-        while (*pLine != ':')
-            ++pLine;
+
+        pIdx = src;
+        while (*pIdx != ':')
+            ++pIdx;
 
         // add new file name to the UI buffer only if it is different
         // than the previous one
-        if ((pPreviousFile == NULL) || ((unsigned)(pLine - src) != pPreviousFileLen) ||
+        if ((pPreviousFile == NULL) || ((unsigned)(pIdx - src) != pPreviousFileLen) ||
                 strncmp(src, pPreviousFile, pPreviousFileLen))
         {
             pPreviousFile = src;
-            pPreviousFileLen = pLine - src;
-            _buf += "\n\t";
-            _buf.Append(pPreviousFile, pPreviousFileLen);
+            pPreviousFileLen = pIdx - src;
+            lineBuf += "\n\t";
+            lineBuf.Append(pPreviousFile, pPreviousFileLen);
         }
 
-        src = ++pLine;
+        src = ++pIdx;
         while (*src != ':')
             ++src;
 
-        _buf += "\n\t\tline ";
-        _buf.Append(pLine, src - pLine);
-        _buf += ":\t";
+        lineBuf += "\n\t\tline ";
+        lineBuf.Append(pIdx, src - pIdx);
+        lineBuf += ":\t";
 
-        pLine = ++src;
-        while (*pLine == ' ' || *pLine == '\t')
-            ++pLine;
+        pIdx = ++src;
+        while (*pIdx == ' ' || *pIdx == '\t')
+            ++pIdx;
 
-        src = pLine + 1;
+        src = pIdx + 1;
         while (*src != '\n' && *src != '\r')
             ++src;
 
-        if (src == pLine + 1)
+        if (src == pIdx + 1)
             return false;
 
-        _buf.Append(pLine, src - pLine);
+        lineBuf.Append(pIdx, src - pIdx);
+
+        *src++ = '\0';
+
+        if ((!filterReoccurring) || strChecker.IsUnique(pLine))
+            _buf += lineBuf;
     }
 
     return true;

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -58,8 +58,8 @@ public:
         const CTextA& operator()() const { return _buf; }
 
     private:
-        bool parseCmd(const char* src);
-        bool parseFindFile(const char* src);
+        bool parseCmd(const CmdPtr_t&);
+        bool parseFindFile(const CmdPtr_t&);
 
         CTextA  _buf;
     };

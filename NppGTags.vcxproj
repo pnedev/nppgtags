@@ -22,6 +22,7 @@
     <ClInclude Include="src\ReadPipe.h" />
     <ClCompile Include="src\GTags.cpp" />
     <ClInclude Include="src\GTags.h" />
+    <ClInclude Include="src\StrUniquenessChecker.h" />
     <ClCompile Include="src\LineParser.cpp" />
     <ClInclude Include="src\LineParser.h" />
     <ClInclude Include="src\CmdDefines.h" />
