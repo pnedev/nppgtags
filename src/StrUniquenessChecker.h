@@ -55,7 +55,7 @@ public:
         if (!str)
             return false;
 
-        std::pair<register_t::iterator, bool> ret = _register.insert(elem_t(str, 0));
+        std::pair<map_t::iterator, bool> ret = _map.insert(elem_t(str, 0));
 
         return ret.second;
     }
@@ -93,9 +93,9 @@ private:
     };
 
     typedef std::pair<key_t, char>  elem_t;
-    typedef std::map<key_t, char>   register_t;
+    typedef std::map<key_t, char>   map_t;
 
-    register_t _register;
+    map_t _map;
 };
 
 
@@ -114,7 +114,7 @@ public:
         if (!str)
             return false;
 
-        std::pair<register_t::iterator, bool> ret = _register.insert(elem_t(str, 0));
+        std::pair<map_t::iterator, bool> ret = _map.insert(elem_t(str, 0));
 
         return ret.second;
     }
@@ -152,7 +152,7 @@ private:
     };
 
     typedef std::pair<key_t, char>  elem_t;
-    typedef std::map<key_t, char>   register_t;
+    typedef std::map<key_t, char>   map_t;
 
-    register_t _register;
+    map_t _map;
 };

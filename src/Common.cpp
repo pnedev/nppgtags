@@ -278,9 +278,11 @@ void CTextW::Clear()
  */
 void CTextW::Resize(unsigned size)
 {
+    unsigned len = Len();
+
     _buf.resize(size);
     _buf.push_back(L'\0');
-    _invalidStrLen = true;
+    _invalidStrLen = _invalidStrLen || (size > len);
 }
 
 
@@ -483,9 +485,11 @@ void CTextA::Clear()
  */
 void CTextA::Resize(unsigned size)
 {
+    unsigned len = Len();
+
     _buf.resize(size);
     _buf.push_back('\0');
-    _invalidStrLen = true;
+    _invalidStrLen = _invalidStrLen || (size > len);
 }
 
 

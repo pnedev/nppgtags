@@ -95,22 +95,22 @@ bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
  */
 bool ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
 {
-    const char* src = cmd->Result();
-    const char* eol;
+    const char* pSrc = cmd->Result();
+    const char* pEol;
 
     while (true)
     {
-        while (*src == '\n' || *src == '\r' || *src == ' ' || *src == '\t')
-            ++src;
-        if (*src == '\0') break;
+        while (*pSrc == '\n' || *pSrc == '\r' || *pSrc == ' ' || *pSrc == '\t')
+            ++pSrc;
+        if (*pSrc == '\0') break;
 
-        eol = src;
-        while (*eol != '\n' && *eol != '\r' && *eol != '\0')
-            ++eol;
+        pEol = pSrc;
+        while (*pEol != '\n' && *pEol != '\r' && *pEol != '\0')
+            ++pEol;
 
         _buf += "\n\t";
-        _buf.Append(src, eol - src);
-        src = eol;
+        _buf.Append(pSrc, pEol - pSrc);
+        pSrc = pEol;
     }
 
     return true;
@@ -139,64 +139,64 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 
     StrUniquenessCheckerA strChecker;
 
-    char*       src = cmd->Result();
+    char*       pSrc = cmd->Result();
     char*       pIdx;
 
-    CTextA      lineBuf;
     const char* pLine;
-
     const char* pPreviousFile = NULL;
-    unsigned    pPreviousFileLen = 0;
+    unsigned    previousFileLen = 0;
+
+    unsigned    previousBufLen;
 
     while (true)
     {
-        while (*src == '\n' || *src == '\r')
-            ++src;
-        if (*src == '\0') break;
+        while (*pSrc == '\n' || *pSrc == '\r')
+            ++pSrc;
+        if (*pSrc == '\0') break;
 
-        lineBuf.Clear();
-        pLine = src;
+        previousBufLen = _buf.Len();
+        pLine = pSrc;
 
-        pIdx = src;
+        pIdx = pSrc;
         while (*pIdx != ':')
             ++pIdx;
 
         // add new file name to the UI buffer only if it is different
         // than the previous one
-        if ((pPreviousFile == NULL) || ((unsigned)(pIdx - src) != pPreviousFileLen) ||
-                strncmp(src, pPreviousFile, pPreviousFileLen))
+        if ((pPreviousFile == NULL) || ((unsigned)(pIdx - pSrc) != previousFileLen) ||
+                strncmp(pSrc, pPreviousFile, previousFileLen))
         {
-            pPreviousFile = src;
-            pPreviousFileLen = pIdx - src;
-            lineBuf += "\n\t";
-            lineBuf.Append(pPreviousFile, pPreviousFileLen);
+            pPreviousFile = pSrc;
+            previousFileLen = pIdx - pSrc;
+            _buf += "\n\t";
+            _buf.Append(pPreviousFile, previousFileLen);
         }
 
-        src = ++pIdx;
-        while (*src != ':')
-            ++src;
+        pSrc = ++pIdx;
+        while (*pSrc != ':')
+            ++pSrc;
 
-        lineBuf += "\n\t\tline ";
-        lineBuf.Append(pIdx, src - pIdx);
-        lineBuf += ":\t";
+        _buf += "\n\t\tline ";
+        _buf.Append(pIdx, pSrc - pIdx);
+        _buf += ":\t";
 
-        pIdx = ++src;
+        pIdx = ++pSrc;
         while (*pIdx == ' ' || *pIdx == '\t')
             ++pIdx;
 
-        src = pIdx + 1;
-        while (*src != '\n' && *src != '\r')
-            ++src;
+        pSrc = pIdx + 1;
+        while (*pSrc != '\n' && *pSrc != '\r')
+            ++pSrc;
 
-        if (src == pIdx + 1)
+        if (pSrc == pIdx + 1)
             return false;
 
-        lineBuf.Append(pIdx, src - pIdx);
+        _buf.Append(pIdx, pSrc - pIdx);
 
-        *src++ = '\0';
+        *pSrc++ = '\0';
 
-        if ((!filterReoccurring) || strChecker.IsUnique(pLine))
-            _buf += lineBuf;
+        if (filterReoccurring && !strChecker.IsUnique(pLine))
+            _buf.Resize(previousBufLen);
     }
 
     return true;
