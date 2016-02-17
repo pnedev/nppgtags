@@ -214,6 +214,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     str += VER_VERSION_STR;
     str += _T("\nBuild date: ");
     str += _T(__DATE__);
+    str += _T(',');
     str += _T(' ');
     str += _T(__TIME__);
     str += _T('\n');
