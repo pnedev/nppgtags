@@ -83,11 +83,6 @@ private:
             return (wcscmp(_str, rhs._str) == 0);
         }
 
-        bool operator!=(const key_t& rhs) const
-        {
-            return !(operator==(rhs));
-        }
-
     private:
         const wchar_t* _str;
     };
@@ -140,11 +135,6 @@ private:
         bool operator==(const key_t& rhs) const
         {
             return (strcmp(_str, rhs._str) == 0);
-        }
-
-        bool operator!=(const key_t& rhs) const
-        {
-            return !(operator==(rhs));
         }
 
     private:
