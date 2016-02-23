@@ -50,8 +50,8 @@ protected:
     bool                    _invalidStrLen;
 
 public:
-    CTextW() : _invalidStrLen(false) { _buf.push_back(L'\0'); }
-    CTextW(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, L'\0'); }
+    CTextW() : _invalidStrLen(false) { _buf.push_back(0); }
+    CTextW(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, 0); }
 
     CTextW(const wchar_t* str);
     CTextW(const char* str);
@@ -108,8 +108,8 @@ protected:
     bool                _invalidStrLen;
 
 public:
-    CTextA() : _invalidStrLen(false) { _buf.push_back('\0'); }
-    CTextA(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, '\0'); }
+    CTextA() : _invalidStrLen(false) { _buf.push_back(0); }
+    CTextA(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, 0); }
 
     CTextA(const char* str);
     CTextA(const wchar_t* str);

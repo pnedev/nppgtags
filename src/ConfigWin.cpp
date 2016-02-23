@@ -545,7 +545,7 @@ void ConfigWin::fillData()
 
     if (_activeTab->_cfg._libDbPaths.empty())
     {
-        Edit_SetText(_hLibDb, _T('\0'));
+        Edit_SetText(_hLibDb, _T(""));
     }
     else
     {
@@ -658,7 +658,7 @@ void ConfigWin::fillLibDb(const CPath& lib)
 
         for (TCHAR* ptr = _tcsstr(buf.C_str(), lib.C_str()); ptr; ptr = _tcsstr(ptr, lib.C_str()))
         {
-            if (ptr[libLen] == _T('\0') || ptr[libLen] == _T('\n') || ptr[libLen] == _T('\r'))
+            if (ptr[libLen] == 0 || ptr[libLen] == _T('\n') || ptr[libLen] == _T('\r'))
             {
                 found = true;
                 break;

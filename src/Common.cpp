@@ -87,7 +87,7 @@ CTextW::CTextW(const wchar_t* str) : _invalidStrLen(false)
     if (str)
         _buf.assign(str, str + wcslen(str) + 1);
     else
-        _buf.push_back(L'\0');
+        _buf.push_back(0);
 }
 
 
@@ -98,13 +98,13 @@ CTextW::CTextW(const char* str) : _invalidStrLen(false)
 {
     if (str)
     {
-        _buf.resize(strlen(str) + 1, L'\0');
+        _buf.resize(strlen(str) + 1, 0);
         size_t cnt;
         mbstowcs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
     else
     {
-        _buf.push_back('\0');
+        _buf.push_back(0);
     }
 }
 
@@ -144,7 +144,7 @@ const CTextW& CTextW::operator=(const char* str)
 {
     if (str)
     {
-        _buf.resize(strlen(str) + 1, L'\0');
+        _buf.resize(strlen(str) + 1, 0);
         size_t cnt;
         mbstowcs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
         _invalidStrLen = false;
@@ -200,7 +200,7 @@ void CTextW::operator+=(const char* str)
             _buf.pop_back();
 
             unsigned size = _buf.size();
-            _buf.resize(size + len + 1, L'\0');
+            _buf.resize(size + len + 1, 0);
 
             size_t cnt;
             mbstowcs_s(&cnt, &_buf[size], len + 1, str, _TRUNCATE);
@@ -218,7 +218,7 @@ void CTextW::operator+=(wchar_t letter)
 
     _buf.pop_back();
     _buf.push_back(letter);
-    _buf.push_back(L'\0');
+    _buf.push_back(0);
 }
 
 
@@ -233,7 +233,7 @@ void CTextW::Append(const wchar_t* data, unsigned len)
     {
         _buf.pop_back();
         _buf.insert(_buf.cend(), data, data + len);
-        _buf.push_back(L'\0');
+        _buf.push_back(0);
     }
 }
 
@@ -268,7 +268,7 @@ void CTextW::Insert(unsigned at_pos, const wchar_t* data, unsigned len)
 void CTextW::Clear()
 {
     _buf.clear();
-    _buf.push_back(L'\0');
+    _buf.push_back(0);
     _invalidStrLen = false;
 }
 
@@ -281,7 +281,7 @@ void CTextW::Resize(unsigned size)
     unsigned len = Len();
 
     _buf.resize(size);
-    _buf.push_back(L'\0');
+    _buf.push_back(0);
     _invalidStrLen = _invalidStrLen || (size > len);
 }
 
@@ -294,7 +294,7 @@ CTextA::CTextA(const char* str) : _invalidStrLen(false)
     if (str)
         _buf.assign(str, str + strlen(str) + 1);
     else
-        _buf.push_back('\0');
+        _buf.push_back(0);
 }
 
 
@@ -305,13 +305,13 @@ CTextA::CTextA(const wchar_t* str) : _invalidStrLen(false)
 {
     if (str)
     {
-        _buf.resize(wcslen(str) + 1, '\0');
+        _buf.resize(wcslen(str) + 1, 0);
         size_t cnt;
         wcstombs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
     }
     else
     {
-        _buf.push_back('\0');
+        _buf.push_back(0);
     }
 }
 
@@ -351,7 +351,7 @@ const CTextA& CTextA::operator=(const wchar_t* str)
 {
     if (str)
     {
-        _buf.resize(wcslen(str) + 1, '\0');
+        _buf.resize(wcslen(str) + 1, 0);
         size_t cnt;
         wcstombs_s(&cnt, _buf.data(), _buf.size(), str, _TRUNCATE);
         _invalidStrLen = false;
@@ -407,7 +407,7 @@ void CTextA::operator+=(const wchar_t* str)
             _buf.pop_back();
 
             unsigned size = _buf.size();
-            _buf.resize(size + len + 1, '\0');
+            _buf.resize(size + len + 1, 0);
 
             size_t cnt;
             wcstombs_s(&cnt, &_buf[size], len + 1, str, _TRUNCATE);
@@ -425,7 +425,7 @@ void CTextA::operator+=(char letter)
 
     _buf.pop_back();
     _buf.push_back(letter);
-    _buf.push_back('\0');
+    _buf.push_back(0);
 }
 
 
@@ -440,7 +440,7 @@ void CTextA::Append(const char* data, unsigned len)
     {
         _buf.pop_back();
         _buf.insert(_buf.cend(), data, data + len);
-        _buf.push_back('\0');
+        _buf.push_back(0);
     }
 }
 
@@ -475,7 +475,7 @@ void CTextA::Insert(unsigned at_pos, const char* data, unsigned len)
 void CTextA::Clear()
 {
     _buf.clear();
-    _buf.push_back('\0');
+    _buf.push_back(0);
     _invalidStrLen = false;
 }
 
@@ -488,7 +488,7 @@ void CTextA::Resize(unsigned size)
     unsigned len = Len();
 
     _buf.resize(size);
-    _buf.push_back('\0');
+    _buf.push_back(0);
     _invalidStrLen = _invalidStrLen || (size > len);
 }
 
@@ -508,7 +508,7 @@ unsigned CPath::StripTrailingSpaces()
             break;
 
     _buf.erase(_buf.begin() + len, _buf.end());
-    _buf.push_back(_T('\0'));
+    _buf.push_back(0);
 
     return len;
 }
@@ -528,7 +528,7 @@ unsigned CPath::StripFilename()
             break;
 
     _buf.erase(_buf.begin() + len, _buf.end());
-    _buf.push_back(_T('\0'));
+    _buf.push_back(0);
 
     return len;
 }
@@ -550,7 +550,7 @@ unsigned CPath::DirUp()
             break;
 
     _buf.erase(_buf.begin() + len, _buf.end());
-    _buf.push_back(_T('\0'));
+    _buf.push_back(0);
 
     return len;
 }

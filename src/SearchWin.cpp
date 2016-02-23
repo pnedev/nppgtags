@@ -315,12 +315,9 @@ void SearchWin::startCompletion()
         ComboBox_GetText(_hSearch, tag, _countof(tag));
         tag[cComplAfter] = 0;
 
-        int i = 0;
-        for (; tag[i] != 0; ++i)
-            if (tag[i] != _T(' ') && tag[i] != _T('\t'))
-                break;
-        if (tag[i] == 0)
-            return;
+        for (int i = 0; tag[i] != 0; ++i)
+            if (tag[i] == _T(' ') || tag[i] == _T('\t'))
+                return;
 
         complCB = halfComplete;
     }

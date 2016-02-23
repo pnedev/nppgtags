@@ -102,10 +102,10 @@ bool ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
     {
         while (*pSrc == '\n' || *pSrc == '\r' || *pSrc == ' ' || *pSrc == '\t')
             ++pSrc;
-        if (*pSrc == '\0') break;
+        if (*pSrc == 0) break;
 
         pEol = pSrc;
-        while (*pEol != '\n' && *pEol != '\r' && *pEol != '\0')
+        while (*pEol != '\n' && *pEol != '\r' && *pEol != 0)
             ++pEol;
 
         _buf += "\n\t";
@@ -152,7 +152,7 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
     {
         while (*pSrc == '\n' || *pSrc == '\r')
             ++pSrc;
-        if (*pSrc == '\0') break;
+        if (*pSrc == 0) break;
 
         previousBufLen = _buf.Len();
         pLine = pSrc;
@@ -193,7 +193,7 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 
         _buf.Append(pIdx, pSrc - pIdx);
 
-        *pSrc++ = '\0';
+        *pSrc++ = 0;
 
         if (filterReoccurring && !strChecker.IsUnique(pLine))
             _buf.Resize(previousBufLen);
