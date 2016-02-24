@@ -109,6 +109,9 @@ AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
  */
 AutoCompleteWin::~AutoCompleteWin()
 {
+    INpp::Get().ClearSelection();
+    INpp::Get().EndUndoAction();
+
     if (_hFont)
         DeleteObject(_hFont);
 }
@@ -179,6 +182,8 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
+
+    INpp::Get().BeginUndoAction();
 
     return _hWnd;
 }
@@ -432,7 +437,6 @@ LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
         case WM_DESTROY:
-            INpp::Get().ClearSelection();
             delete ACW;
             ACW = NULL;
         return 0;

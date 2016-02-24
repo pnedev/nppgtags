@@ -292,6 +292,16 @@ public:
         SendMessage(_hSC, SCI_ADDTEXT, len, (LPARAM)txt);
     }
 
+    inline void BeginUndoAction() const
+    {
+        SendMessage(_hSC, SCI_BEGINUNDOACTION, 0, 0);
+    }
+
+    inline void EndUndoAction() const
+    {
+        SendMessage(_hSC, SCI_ENDUNDOACTION, 0, 0);
+    }
+
 private:
     static INpp Instance;
 
