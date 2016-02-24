@@ -590,8 +590,7 @@ HWND ResultWin::composeWindow()
  */
 void ResultWin::showWindow()
 {
-    INpp& npp = INpp::Get();
-    npp.ShowDockingWin(_hWnd);
+    INpp::Get().ShowDockingWin(_hWnd);
 
     ActivityWin::UpdatePositions();
 
@@ -615,7 +614,8 @@ void ResultWin::hideWindow()
 
     ActivityWin::UpdatePositions();
 
-    SetFocus(npp.GetSciHandle());
+    if (GetFocus() != npp.ReadSciHandle())
+        SetFocus(npp.GetSciHandle());
 }
 
 
@@ -710,8 +710,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     lineTxt[i] = 0;
 
     CPath file(_activeTab->_projectPath.C_str());
-    CText str(&lineTxt[1]);
-    file += str.C_str();
+    file += &lineTxt[1];
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())
@@ -725,7 +724,6 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     DocLocation::Get().Push();
     npp.OpenFile(file.C_str());
-    SetFocus(npp.GetSciHandle());
 
     if (_activeTab->_cmdId == FIND_FILE)
         return true;
@@ -1150,8 +1148,13 @@ void ResultWin::onTabChange()
 void ResultWin::onCloseTab()
 {
     int i = TabCtrl_GetCurSel(_hTab);
-    delete _activeTab;
-    _activeTab = NULL;
+
+    if (_activeTab)
+    {
+        delete _activeTab;
+        _activeTab = NULL;
+    }
+
     TabCtrl_DeleteItem(_hTab, i);
 
     if (TabCtrl_GetItemCount(_hTab))
