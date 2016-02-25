@@ -27,8 +27,7 @@ import optparse
 import pygments.lexers
 from pygments.token import Token
 
-# EXUBERANT_CTAGS = "ctags.exe"
-EXUBERANT_CTAGS = ""
+EXUBERANT_CTAGS = "ctags.exe"
 
 # In most cases, lexers can be looked up with lowercase form of formal
 # language names. This dictionary defines exceptions.
@@ -198,9 +197,10 @@ def parse_langmap(string):
 
 def handle_requests(langmap, options):
     if EXUBERANT_CTAGS != '' and EXUBERANT_CTAGS != 'no':
+        ctags_bin = os.path.join(os.path.dirname(__file__), EXUBERANT_CTAGS)
         pygments_parser = PygmentsParser(langmap, options)
         try:
-            ctags_parser = CtagsParser(EXUBERANT_CTAGS, options)
+            ctags_parser = CtagsParser(ctags_bin, options)
             parser = MergingParser(ctags_parser, pygments_parser)
         except Exception as e:
             parser = pygments_parser

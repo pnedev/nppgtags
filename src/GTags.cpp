@@ -56,7 +56,7 @@ const TCHAR cFindDefinition[]   = _T("Find Definition");
 const TCHAR cFindReference[]    = _T("Find Reference");
 const TCHAR cFindSymbol[]       = _T("Find Symbol");
 const TCHAR cSearchSrc[]        = _T("Search in Source Files");
-const TCHAR cSearchOther[]       = _T("Search in Other Files");
+const TCHAR cSearchOther[]      = _T("Search in Other Files");
 const TCHAR cVersion[]          = _T("About");
 
 
