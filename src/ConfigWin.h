@@ -79,7 +79,6 @@ private:
 
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-    static RECT adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
     ConfigWin();
     ConfigWin(const ConfigWin&);

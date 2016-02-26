@@ -87,66 +87,6 @@ void AboutWin::Show(const TCHAR* info)
 /**
  *  \brief
  */
-RECT AboutWin::adjustSizeAndPos(HWND hWnd, int width, int height)
-{
-    RECT maxWin;
-    GetWindowRect(GetDesktopWindow(), &maxWin);
-
-    POINT center;
-    HWND hOwner = GetParent(hWnd);
-    if (hOwner)
-    {
-        RECT biasWin;
-        GetWindowRect(hOwner, &biasWin);
-        center.x = (biasWin.right + biasWin.left) / 2;
-        center.y = (biasWin.bottom + biasWin.top) / 2;
-    }
-    else
-    {
-        center.x = (maxWin.right + maxWin.left) / 2;
-        center.y = (maxWin.bottom + maxWin.top) / 2;
-    }
-
-    RECT win = {0};
-    win.right = width;
-    win.bottom = height;
-
-    AdjustWindowRectEx(&win, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE, GetWindowLongPtr(hWnd, GWL_EXSTYLE));
-
-    width = win.right - win.left;
-    height = win.bottom - win.top;
-
-    if (width < maxWin.right - maxWin.left)
-    {
-        win.left = center.x - width / 2;
-        if (win.left < maxWin.left) win.left = maxWin.left;
-        win.right = win.left + width;
-    }
-    else
-    {
-        win.left = maxWin.left;
-        win.right = maxWin.right;
-    }
-
-    if (height < maxWin.bottom - maxWin.top)
-    {
-        win.top = center.y - height / 2;
-        if (win.top < maxWin.top) win.top = maxWin.top;
-        win.bottom = win.top + height;
-    }
-    else
-    {
-        win.top = maxWin.top;
-        win.bottom = maxWin.bottom;
-    }
-
-    return win;
-}
-
-
-/**
- *  \brief
- */
 AboutWin::~AboutWin()
 {
     if (_hFont)
@@ -161,14 +101,13 @@ AboutWin::~AboutWin()
  */
 HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 {
-    RECT win;
-    GetWindowRect(GetDesktopWindow(), &win);
-
     DWORD styleEx = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 300, 200);
+
     _hWnd = CreateWindowEx(styleEx, cClassName, _T("About ") PLUGIN_NAME, style,
-            (win.right + win.left) / 2 - 150, (win.top + win.bottom) / 2 - 100, 300, 200,
+            win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
@@ -284,7 +223,8 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                     int width   = pReqResize->rc.right - pReqResize->rc.left + 30;
                     int height  = pReqResize->rc.bottom - pReqResize->rc.top;
 
-                    RECT win = adjustSizeAndPos(hWnd, width, height);
+                    RECT win = Tools::GetWinRect(GetParent(hWnd),
+                            GetWindowLongPtr(hWnd, GWL_EXSTYLE), GetWindowLongPtr(hWnd, GWL_STYLE), width, height);
                     MoveWindow(hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
                     GetClientRect(hWnd, &win);
                     MoveWindow(hEdit, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);

@@ -177,65 +177,6 @@ bool ConfigWin::createWin()
 /**
  *  \brief
  */
-RECT ConfigWin::adjustSizeAndPos(HWND hOwner, DWORD styleEx, DWORD style, int width, int height)
-{
-    RECT maxWin;
-    GetWindowRect(GetDesktopWindow(), &maxWin);
-
-    POINT center;
-    if (hOwner)
-    {
-        RECT biasWin;
-        GetWindowRect(hOwner, &biasWin);
-        center.x = (biasWin.right + biasWin.left) / 2;
-        center.y = (biasWin.bottom + biasWin.top) / 2;
-    }
-    else
-    {
-        center.x = (maxWin.right + maxWin.left) / 2;
-        center.y = (maxWin.bottom + maxWin.top) / 2;
-    }
-
-    RECT win = {0};
-    win.right = width;
-    win.bottom = height;
-
-    AdjustWindowRectEx(&win, style, FALSE, styleEx);
-
-    width = win.right - win.left;
-    height = win.bottom - win.top;
-
-    if (width < maxWin.right - maxWin.left)
-    {
-        win.left = center.x - width / 2;
-        if (win.left < maxWin.left) win.left = maxWin.left;
-        win.right = win.left + width;
-    }
-    else
-    {
-        win.left = maxWin.left;
-        win.right = maxWin.right;
-    }
-
-    if (height < maxWin.bottom - maxWin.top)
-    {
-        win.top = center.y - height / 2;
-        if (win.top < maxWin.top) win.top = maxWin.top;
-        win.bottom = win.top + height;
-    }
-    else
-    {
-        win.top = maxWin.top;
-        win.bottom = maxWin.bottom;
-    }
-
-    return win;
-}
-
-
-/**
- *  \brief
- */
 ConfigWin::ConfigWin() : _hKeyHook(NULL), _hFont(NULL)
 {
 }
@@ -288,7 +229,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = adjustSizeAndPos(hOwner, styleEx, style, 500, 11 * txtHeight + 180);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 11 * txtHeight + 180);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 

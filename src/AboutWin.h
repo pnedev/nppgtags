@@ -46,7 +46,6 @@ private:
     static const unsigned   cFontSize;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-    static RECT adjustSizeAndPos(HWND hWnd, int width, int height);
 
     AboutWin() : _hWnd(NULL), _hFont(NULL) {}
     AboutWin(const AboutWin&);

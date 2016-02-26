@@ -197,6 +197,7 @@ namespace Tools
 {
 
 bool BrowseForFolder(HWND hOwnerWin, CPath& path);
+RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
 
 #ifdef DEVELOPMENT
