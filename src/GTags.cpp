@@ -740,9 +740,9 @@ FuncItem Menu[19] = {
     /* 13 */ FuncItem(),
     /* 14 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
     /* 15 */ FuncItem(),
-    /* 16 */ FuncItem(_T("Settings"), SettingsCfg),
+    /* 16 */ FuncItem(_T("Settings..."), SettingsCfg),
     /* 17 */ FuncItem(),
-    /* 18 */ FuncItem(cVersion, About)
+    /* 18 */ FuncItem(_T("About..."), About)
 };
 
 HINSTANCE HMod = NULL;
