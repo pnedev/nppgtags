@@ -32,8 +32,8 @@
     <ClInclude Include="src\CmdEngine.h" />
     <ClCompile Include="src\DbManager.cpp" />
     <ClInclude Include="src\DbManager.h" />
-    <ClCompile Include="src\DbConfig.cpp" />
-    <ClInclude Include="src\DbConfig.h" />
+    <ClCompile Include="src\GTagsConfig.cpp" />
+    <ClInclude Include="src\GTagsConfig.h" />
     <ClCompile Include="src\DocLocation.cpp" />
     <ClInclude Include="src\DocLocation.h" />
     <ClCompile Include="src\ActivityWin.cpp" />

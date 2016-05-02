@@ -30,10 +30,12 @@
 #include <tchar.h>
 #include <commctrl.h>
 #include "INpp.h"
+#include "GTags.h"
 #include "CmdEngine.h"
 #include "SearchWin.h"
 #include "Cmd.h"
 #include "LineParser.h"
+#include "GTagsConfig.h"
 
 
 namespace GTags
@@ -208,13 +210,25 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
         SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
-    Button_SetCheck(_hRE, _cmd->RegExp() ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hMC, _cmd->MatchCase() ? BST_CHECKED : BST_UNCHECKED);
-
-    if (!enMC)
-        EnableWindow(_hMC, FALSE);
-    if (!enRE)
+    if (enRE)
+    {
+        Button_SetCheck(_hRE, DefaultCfg._reCache ? BST_CHECKED : BST_UNCHECKED);
+    }
+    else
+    {
+        Button_SetCheck(_hRE, _cmd->RegExp() ? BST_CHECKED : BST_UNCHECKED);
         EnableWindow(_hRE, FALSE);
+    }
+
+    if (enMC)
+    {
+        Button_SetCheck(_hMC, DefaultCfg._mcCache ? BST_CHECKED : BST_UNCHECKED);
+    }
+    else
+    {
+        Button_SetCheck(_hMC, _cmd->MatchCase() ? BST_CHECKED : BST_UNCHECKED);
+        EnableWindow(_hMC, FALSE);
+    }
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
@@ -449,12 +463,33 @@ void SearchWin::onOK()
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
         bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
 
+        bool saveCfg = false;
+
+        if (IsWindowEnabled(_hRE) && re != DefaultCfg._reCache)
+        {
+            DefaultCfg._reCache = re;
+            saveCfg = true;
+        }
+
+        if (IsWindowEnabled(_hMC) && mc != DefaultCfg._mcCache)
+        {
+            DefaultCfg._mcCache = mc;
+            saveCfg = true;
+        }
+
         _cmd->Tag(tag);
         _cmd->RegExp(re);
         _cmd->MatchCase(mc);
 
         _cancelled = false;
         CmdEngine::Run(_cmd, _complCB);
+
+        if (saveCfg)
+        {
+            CPath cfgFolder;
+            INpp::Get().GetPluginsConfDir(cfgFolder);
+            DefaultCfg.SaveToFolder(cfgFolder, true);
+        }
     }
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);

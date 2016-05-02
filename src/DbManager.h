@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@
 #include <list>
 #include <memory>
 #include "Common.h"
-#include "DbConfig.h"
+#include "GTagsConfig.h"
 #include "CmdDefines.h"
 #include "GTags.h"
 
@@ -48,8 +48,8 @@ public:
 
     inline const CPath& GetPath() const { return _path; }
 
-    inline const DbConfig& GetConfig() const { return _cfg; }
-    inline void SetConfig(const DbConfig& cfg) { _cfg = cfg; }
+    inline const GTagsConfig& GetConfig() const { return _cfg; }
+    inline void SetConfig(const GTagsConfig& cfg) { _cfg = cfg; }
 
     void Update(const CPath& file);
     void ScheduleUpdate(const CPath& file);
@@ -67,7 +67,7 @@ private:
     void runScheduledUpdate();
 
     CPath       _path;
-    DbConfig    _cfg;
+    GTagsConfig _cfg;
 
     int     _readLocks;
     bool    _writeLock;

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ DbManager DbManager::Instance;
 GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
 {
     if (!_cfg.LoadFromFolder(dbPath))
-        _cfg = DefaultDbCfg;
+        _cfg = DefaultCfg;
 
     _readLocks = writeEn ? 0 : 1;
 }
@@ -270,7 +270,7 @@ bool DbManager::deleteDb(CPath& dbPath)
         ret |= DeleteFile(dbPath.C_str());
 
     dbPath.StripFilename();
-    dbPath += DbConfig::cCfgFileName;
+    dbPath += GTagsConfig::cCfgFileName;
     if (dbPath.FileExists())
         ret |= DeleteFile(dbPath.C_str());
 

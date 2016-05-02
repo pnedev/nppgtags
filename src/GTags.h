@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -59,9 +59,9 @@ extern unsigned     UIFontSize;
 
 extern HWND         MainWndH;
 
-class DbConfig;
+class GTagsConfig;
 
-extern DbConfig DefaultDbCfg;
+extern GTagsConfig DefaultCfg;
 
 
 BOOL PluginLoad(HINSTANCE hMod);

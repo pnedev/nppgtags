@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include "DbManager.h"
-#include "DbConfig.h"
+#include "GTagsConfig.h"
 #include "CmdDefines.h"
 #include "GTags.h"
 
@@ -60,7 +60,7 @@ private:
         ~Tab();
 
         DbHandle _db;
-        DbConfig _cfg;
+        GTagsConfig _cfg;
 
         bool _updateDb;
     };

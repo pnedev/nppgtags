@@ -57,7 +57,7 @@ ConfigWin::Tab::Tab(const DbHandle db) : _db(db), _updateDb(false)
     if (db)
         _cfg = db->GetConfig();
     else
-        _cfg = DefaultDbCfg;
+        _cfg = DefaultCfg;
 }
 
 
@@ -368,8 +368,8 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    for (unsigned i = 0; DbConfig::Parser(i); ++i)
-        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
+    for (unsigned i = 0; GTagsConfig::Parser(i); ++i)
+        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)GTagsConfig::Parser(i));
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
@@ -547,15 +547,21 @@ void ConfigWin::readData()
 bool ConfigWin::saveConfig(ConfigWin::Tab* tab)
 {
     CPath cfgFolder;
+    bool isGenericCfg = false;
 
     if (tab->_db)
-        cfgFolder = tab->_db->GetPath();
-    else
-        INpp::Get().GetPluginsConfDir(cfgFolder);
-
-    if (!tab->_cfg.SaveToFolder(cfgFolder))
     {
-        cfgFolder += DbConfig::cCfgFileName;
+        cfgFolder = tab->_db->GetPath();
+    }
+    else
+    {
+        INpp::Get().GetPluginsConfDir(cfgFolder);
+        isGenericCfg = true;
+    }
+
+    if (!tab->_cfg.SaveToFolder(cfgFolder, isGenericCfg))
+    {
+        cfgFolder += GTagsConfig::cCfgFileName;
 
         CText msg(_T("Failed saving config to\n\""));
         msg += cfgFolder.C_str();
@@ -575,7 +581,7 @@ bool ConfigWin::saveConfig(ConfigWin::Tab* tab)
     }
     else
     {
-        DefaultDbCfg = tab->_cfg;
+        DefaultCfg = tab->_cfg;
     }
 
     return true;

@@ -46,7 +46,7 @@ set (project_sources
     src/Cmd.cpp
     src/CmdEngine.cpp
     src/DbManager.cpp
-    src/DbConfig.cpp
+    src/GTagsConfig.cpp
     src/DocLocation.cpp
     src/ActivityWin.cpp
     src/SearchWin.cpp

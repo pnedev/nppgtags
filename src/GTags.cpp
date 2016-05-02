@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2016 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
 #include <memory>
 #include "Common.h"
 #include "INpp.h"
-#include "DbConfig.h"
+#include "GTagsConfig.h"
 #include "DbManager.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
@@ -492,7 +492,7 @@ void FindReference()
     if (!db)
         return;
 
-    if (db->GetConfig()._parserIdx == DbConfig::CTAGS_PARSER)
+    if (db->GetConfig()._parserIdx == GTagsConfig::CTAGS_PARSER)
     {
         MessageBox(INpp::Get().GetHandle(), _T("Ctags parser doesn't support reference search"), cPluginName,
                 MB_OK | MB_ICONINFORMATION);
@@ -753,7 +753,7 @@ unsigned UIFontSize;
 
 HWND MainWndH = NULL;
 
-DbConfig DefaultDbCfg;
+GTagsConfig DefaultCfg;
 
 
 /**
@@ -803,9 +803,8 @@ void PluginInit()
         CPath cfgFolder;
         npp.GetPluginsConfDir(cfgFolder);
 
-        if (!DefaultDbCfg.LoadFromFolder(cfgFolder))
-            MessageBox(npp.GetHandle(), _T("Bad default config file, default settings will be used"), cPluginName,
-                    MB_OK | MB_ICONEXCLAMATION);
+        if (!DefaultCfg.LoadFromFolder(cfgFolder, true))
+            DefaultCfg.SaveToFolder(cfgFolder, true);
     }
 }
 
