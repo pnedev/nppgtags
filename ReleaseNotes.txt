@@ -1,3 +1,16 @@
+What's new in v4.1.0
+=======================
+
+- Ctags and Pygments parsers are fully usable now
+- Save last SearchWin RegExp and MatchCase options state
+- Properly position dialogs on multi-monitor setups
+- Omit reoccurring results (those mainly appeared when library DBs were used)
+- Update to latest N++ plugin API
+- Fix problem with Environment settings
+- Several small fixes
+- Update GTAGS binaries to v6.5.3
+
+
 What's new in v4.0.0
 =======================
 
