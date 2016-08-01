@@ -40,7 +40,8 @@ class CPath;
 namespace GTags
 {
 
-const TCHAR cPluginName[] = PLUGIN_NAME;
+const TCHAR cPluginName[]           = PLUGIN_NAME;
+const TCHAR cPluginCfgFileName[]    = PLUGIN_NAME _T(".cfg");
 
 enum PluginWinMessages_t
 {
@@ -59,9 +60,9 @@ extern unsigned     UIFontSize;
 
 extern HWND         MainWndH;
 
-class GTagsConfig;
+class Settings;
 
-extern GTagsConfig DefaultCfg;
+extern Settings GTagsSettings;
 
 
 BOOL PluginLoad(HINSTANCE hMod);

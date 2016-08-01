@@ -46,11 +46,11 @@ set (project_sources
     src/Cmd.cpp
     src/CmdEngine.cpp
     src/DbManager.cpp
-    src/GTagsConfig.cpp
+    src/Config.cpp
     src/DocLocation.cpp
     src/ActivityWin.cpp
     src/SearchWin.cpp
-    src/ConfigWin.cpp
+    src/SettingsWin.cpp
     src/AboutWin.cpp
     src/AutoCompleteWin.cpp
     src/ResultWin.cpp

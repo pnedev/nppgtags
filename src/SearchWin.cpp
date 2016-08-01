@@ -35,7 +35,7 @@
 #include "SearchWin.h"
 #include "Cmd.h"
 #include "LineParser.h"
-#include "GTagsConfig.h"
+#include "Config.h"
 
 
 namespace GTags
@@ -212,7 +212,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     if (enRE)
     {
-        Button_SetCheck(_hRE, DefaultCfg._reCache ? BST_CHECKED : BST_UNCHECKED);
+        Button_SetCheck(_hRE, GTagsSettings._re ? BST_CHECKED : BST_UNCHECKED);
     }
     else
     {
@@ -222,7 +222,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     if (enMC)
     {
-        Button_SetCheck(_hMC, DefaultCfg._mcCache ? BST_CHECKED : BST_UNCHECKED);
+        Button_SetCheck(_hMC, GTagsSettings._mc ? BST_CHECKED : BST_UNCHECKED);
     }
     else
     {
@@ -425,6 +425,33 @@ void SearchWin::filterComplList()
 /**
  *  \brief
  */
+void SearchWin::saveSearchOptions()
+{
+    bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
+    bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
+
+    bool saveCfg = false;
+
+    if (IsWindowEnabled(_hRE) && re != GTagsSettings._re)
+    {
+        GTagsSettings._re = re;
+        saveCfg = true;
+    }
+
+    if (IsWindowEnabled(_hMC) && mc != GTagsSettings._mc)
+    {
+        GTagsSettings._mc = mc;
+        saveCfg = true;
+    }
+
+    if (saveCfg)
+        GTagsSettings.Save();
+}
+
+
+/**
+ *  \brief
+ */
 void SearchWin::onEditChange()
 {
     if (_completionStarted)
@@ -463,33 +490,12 @@ void SearchWin::onOK()
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
         bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
 
-        bool saveCfg = false;
-
-        if (IsWindowEnabled(_hRE) && re != DefaultCfg._reCache)
-        {
-            DefaultCfg._reCache = re;
-            saveCfg = true;
-        }
-
-        if (IsWindowEnabled(_hMC) && mc != DefaultCfg._mcCache)
-        {
-            DefaultCfg._mcCache = mc;
-            saveCfg = true;
-        }
-
         _cmd->Tag(tag);
         _cmd->RegExp(re);
         _cmd->MatchCase(mc);
 
         _cancelled = false;
         CmdEngine::Run(_cmd, _complCB);
-
-        if (saveCfg)
-        {
-            CPath cfgFolder;
-            INpp::Get().GetPluginsConfDir(cfgFolder);
-            DefaultCfg.SaveToFolder(cfgFolder, true);
-        }
     }
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
@@ -565,6 +571,8 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         break;
 
         case WM_DESTROY:
+            SW->saveSearchOptions();
+
             delete SW;
             SW = NULL;
         return 0;

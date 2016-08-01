@@ -124,7 +124,7 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 {
     bool filterReoccurring = false;
 
-    const GTagsConfig& cfg = cmd->Db()->GetConfig();
+    const DbConfig& cfg = cmd->Db()->GetConfig();
     if (cmd->Id() == FIND_DEFINITION && cfg._useLibDb)
     {
         for (unsigned i = 0; i < cfg._libDbPaths.size(); ++i)

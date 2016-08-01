@@ -70,6 +70,7 @@ private:
     void clearCompletion();
     void filterComplList();
 
+    void saveSearchOptions();
     void onEditChange();
     void onOK();
 

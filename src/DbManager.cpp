@@ -42,7 +42,7 @@ DbManager DbManager::Instance;
 GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(writeEn)
 {
     if (!_cfg.LoadFromFolder(dbPath))
-        _cfg = DefaultCfg;
+        _cfg = GTagsSettings._genericDbCfg;
 
     _readLocks = writeEn ? 0 : 1;
 }
@@ -219,6 +219,23 @@ DbHandle DbManager::GetDb(const CPath& filePath, bool writeEn, bool* success)
 /**
  *  \brief
  */
+DbHandle DbManager::GetDbAt(const CPath& dbPath, bool writeEn, bool* success)
+{
+    if (!success)
+        return NULL;
+
+    *success = false;
+
+    if (!DbExistsInFolder(dbPath))
+        return NULL;
+
+    return lockDb(dbPath, writeEn, success);
+}
+
+
+/**
+ *  \brief
+ */
 void DbManager::PutDb(const DbHandle& db)
 {
     if (!db)
@@ -270,7 +287,7 @@ bool DbManager::deleteDb(CPath& dbPath)
         ret |= DeleteFile(dbPath.C_str());
 
     dbPath.StripFilename();
-    dbPath += GTagsConfig::cCfgFileName;
+    dbPath += cPluginCfgFileName;
     if (dbPath.FileExists())
         ret |= DeleteFile(dbPath.C_str());
 

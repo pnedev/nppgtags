@@ -27,7 +27,7 @@
 #include <memory>
 #include "Common.h"
 #include "INpp.h"
-#include "GTagsConfig.h"
+#include "Config.h"
 #include "DbManager.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
@@ -36,7 +36,7 @@
 #include "ActivityWin.h"
 #include "AutoCompleteWin.h"
 #include "ResultWin.h"
-#include "ConfigWin.h"
+#include "SettingsWin.h"
 #include "AboutWin.h"
 #include "GTags.h"
 #include "LineParser.h"
@@ -144,6 +144,11 @@ DbHandle getDatabase(bool writeEn = false)
     npp.GetFilePath(currentFile);
 
     DbHandle db = DbManager::Get().GetDb(currentFile, writeEn, &success);
+
+    // Search default database for read operations (if no local DB found and default is configured to be used)
+    if (!db && !writeEn && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
+        db = DbManager::Get().GetDb(GTagsSettings._defDbPath, writeEn, &success);
+
     if (!db)
     {
         MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
@@ -492,7 +497,7 @@ void FindReference()
     if (!db)
         return;
 
-    if (db->GetConfig()._parserIdx == GTagsConfig::CTAGS_PARSER)
+    if (db->GetConfig()._parserIdx == DbConfig::CTAGS_PARSER)
     {
         MessageBox(INpp::Get().GetHandle(), _T("Ctags parser doesn't support reference search"), cPluginName,
                 MB_OK | MB_ICONINFORMATION);
@@ -693,7 +698,7 @@ void SettingsCfg()
     {
         if (success)
         {
-            ConfigWin::Show(db);
+            SettingsWin::Show(db);
             return;
         }
 
@@ -704,7 +709,7 @@ void SettingsCfg()
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
     }
 
-    ConfigWin::Show();
+    SettingsWin::Show();
 }
 
 
@@ -753,7 +758,7 @@ unsigned UIFontSize;
 
 HWND MainWndH = NULL;
 
-GTagsConfig DefaultCfg;
+Settings GTagsSettings;
 
 
 /**
@@ -800,11 +805,8 @@ void PluginInit()
     }
     else
     {
-        CPath cfgFolder;
-        npp.GetPluginsConfDir(cfgFolder);
-
-        if (!DefaultCfg.LoadFromFolder(cfgFolder, true))
-            DefaultCfg.SaveToFolder(cfgFolder, true);
+        if (!GTagsSettings.Load())
+            GTagsSettings.Save();
     }
 }
 

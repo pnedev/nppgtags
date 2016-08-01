@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include "DbManager.h"
-#include "GTagsConfig.h"
+#include "Config.h"
 #include "CmdDefines.h"
 #include "GTags.h"
 
@@ -40,10 +40,10 @@ namespace GTags
 {
 
 /**
- *  \class  ConfigWin
+ *  \class  SettingsWin
  *  \brief
  */
-class ConfigWin
+class SettingsWin
 {
 public:
     static void Show();
@@ -60,7 +60,7 @@ private:
         ~Tab();
 
         DbHandle _db;
-        GTagsConfig _cfg;
+        DbConfig _cfg;
 
         bool _updateDb;
     };
@@ -74,47 +74,58 @@ private:
     static bool createWin();
 
     static void dbWriteReady(const CmdPtr_t& cmd);
-    static void createDbCB(const CmdPtr_t& cmd);
+    static void createDefDbCB(const CmdPtr_t& cmd);
+    static void createLibDbCB(const CmdPtr_t& cmd);
     static void updateDbCB(const CmdPtr_t& cmd);
 
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ConfigWin();
-    ConfigWin(const ConfigWin&);
-    ~ConfigWin();
+    SettingsWin();
+    SettingsWin(const SettingsWin&);
+    ~SettingsWin();
 
     HWND composeWindow(HWND hOwner);
 
     Tab* getTab(int i = -1);
-    void onUpdateDb();
+    bool isDbConfigured(const CPath& dbPath);
+    void onUpdateDefDb();
+    void onUpdateLibDb();
     void onTabChange();
     void onSave();
-    void fillData();
-    void readData();
+    void fillTabData();
+    void readTabData();
     bool saveConfig(Tab* tab);
+    void fillDefDb(const CPath& defDb);
     void fillLibDb(const CPath& lib);
 
-    bool createLibDatabase(CPath& dbPath, CompletionCB complCB);
+    bool createDatabase(CPath& dbPath, CompletionCB complCB);
 
-    static ConfigWin* CW;
+    static SettingsWin* SW;
 
     Tab*        _activeTab;
 
     HWND        _hWnd;
+    HWND        _hEnDefDb;
+    HWND        _hSetDefDb;
+    HWND        _hUpdDefDb;
+    HWND        _hDefDb;
     HWND        _hTab;
     HWND        _hInfo;
     HWND        _hParserInfo;
     HWND        _hParser;
-    HWND        _hAutoUpdate;
+    HWND        _hAutoUpdDb;
     HWND        _hEnLibDb;
-    HWND        _hCreateDb;
-    HWND        _hUpdateDb;
-    HWND        _hLibDb;
+    HWND        _hAddLibDb;
+    HWND        _hUpdLibDbs;
+    HWND        _hLibDbs;
     HWND        _hSave;
     HWND        _hCancel;
+
     HHOOK       _hKeyHook;
+
     HFONT       _hFont;
+    HFONT       _hFontInfo;
 };
 
 } // namespace GTags

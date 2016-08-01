@@ -27,7 +27,7 @@
 #include <process.h>
 #include "Common.h"
 #include "INpp.h"
-#include "GTagsConfig.h"
+#include "Config.h"
 #include "GTags.h"
 #include "ReadPipe.h"
 #include "CmdEngine.h"
@@ -317,7 +317,7 @@ void CmdEngine::setEnvironmentVars() const
 
     if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
     {
-        const GTagsConfig& cfg = _cmd->Db()->GetConfig();
+        const DbConfig& cfg = _cmd->Db()->GetConfig();
         if (cfg._useLibDb && cfg._libDbPaths.size())
         {
             if (!cfg._libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
@@ -333,6 +333,9 @@ void CmdEngine::setEnvironmentVars() const
             }
         }
     }
+
+    if (_cmd->Db())
+        SetEnvironmentVariable(_T("GTAGSDBPATH"), _cmd->Db()->GetPath().C_str());
 
     SetEnvironmentVariable(_T("GTAGSLIBPATH"), buf.C_str());
 }

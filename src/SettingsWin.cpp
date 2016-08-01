@@ -33,7 +33,7 @@
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
-#include "ConfigWin.h"
+#include "SettingsWin.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
 
@@ -41,37 +41,37 @@
 namespace GTags
 {
 
-const TCHAR ConfigWin::cClassName[]   = _T("ConfigWin");
-const int ConfigWin::cBackgroundColor = COLOR_BTNFACE;
-const int ConfigWin::cFontSize        = 10;
+const TCHAR SettingsWin::cClassName[]   = _T("SettingsWin");
+const int SettingsWin::cBackgroundColor = COLOR_BTNFACE;
+const int SettingsWin::cFontSize        = 10;
 
 
-ConfigWin* ConfigWin::CW = NULL;
+SettingsWin* SettingsWin::SW = NULL;
 
 
 /**
  *  \brief
  */
-ConfigWin::Tab::Tab(const DbHandle db) : _db(db), _updateDb(false)
+SettingsWin::Tab::Tab(const DbHandle db) : _db(db), _updateDb(false)
 {
     if (db)
         _cfg = db->GetConfig();
     else
-        _cfg = DefaultCfg;
+        _cfg = GTagsSettings._genericDbCfg;
 }
 
 
 /**
  *  \brief
  */
-ConfigWin::Tab::~Tab()
+SettingsWin::Tab::~Tab()
 {
     if (_db)
     {
         if (_updateDb)
         {
             CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Create Database"), _db));
-            CmdEngine::Run(cmd, ConfigWin::dbWriteReady);
+            CmdEngine::Run(cmd, SettingsWin::dbWriteReady);
         }
         else
         {
@@ -84,22 +84,22 @@ ConfigWin::Tab::~Tab()
 /**
  *  \brief
  */
-void ConfigWin::Show()
+void SettingsWin::Show()
 {
     if (!createWin())
         return;
 
-    CW->fillData();
+    SW->fillTabData();
 
-    ShowWindow(CW->_hWnd, SW_SHOWNORMAL);
-    UpdateWindow(CW->_hWnd);
+    ShowWindow(SW->_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(SW->_hWnd);
 }
 
 
 /**
  *  \brief
  */
-void ConfigWin::Show(const DbHandle& db)
+void SettingsWin::Show(const DbHandle& db)
 {
     if (!createWin())
     {
@@ -115,32 +115,32 @@ void ConfigWin::Show(const DbHandle& db)
     tci.pszText     = buf;
     tci.lParam      = (LPARAM)tab;
 
-    int i = TabCtrl_InsertItem(CW->_hTab, TabCtrl_GetItemCount(CW->_hTab), &tci);
+    int i = TabCtrl_InsertItem(SW->_hTab, TabCtrl_GetItemCount(SW->_hTab), &tci);
     if (i == -1)
     {
         delete tab;
-        SendMessage(CW->_hWnd, WM_CLOSE, 0, 0);
+        SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
 
         return;
     }
 
-    TabCtrl_SetCurSel(CW->_hTab, i);
-    CW->_activeTab = tab;
-    CW->fillData();
+    TabCtrl_SetCurSel(SW->_hTab, i);
+    SW->_activeTab = tab;
+    SW->fillTabData();
 
-    ShowWindow(CW->_hWnd, SW_SHOWNORMAL);
-    UpdateWindow(CW->_hWnd);
+    ShowWindow(SW->_hWnd, SW_SHOWNORMAL);
+    UpdateWindow(SW->_hWnd);
 }
 
 
 /**
  *  \brief
  */
-bool ConfigWin::createWin()
+bool SettingsWin::createWin()
 {
-    if (CW)
+    if (SW)
     {
-        SetFocus(CW->_hWnd);
+        SetFocus(SW->_hWnd);
         return false;
     }
 
@@ -162,11 +162,11 @@ bool ConfigWin::createWin()
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    CW = new ConfigWin();
-    if (CW->composeWindow(hOwner) == NULL)
+    SW = new SettingsWin();
+    if (SW->composeWindow(hOwner) == NULL)
     {
-        delete CW;
-        CW = NULL;
+        delete SW;
+        SW = NULL;
         return false;
     }
 
@@ -177,7 +177,7 @@ bool ConfigWin::createWin()
 /**
  *  \brief
  */
-ConfigWin::ConfigWin() : _hKeyHook(NULL), _hFont(NULL)
+SettingsWin::SettingsWin() : _hKeyHook(NULL), _hFont(NULL), _hFontInfo(NULL)
 {
 }
 
@@ -185,7 +185,7 @@ ConfigWin::ConfigWin() : _hKeyHook(NULL), _hFont(NULL)
 /**
  *  \brief
  */
-ConfigWin::~ConfigWin()
+SettingsWin::~SettingsWin()
 {
     for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
@@ -201,6 +201,9 @@ ConfigWin::~ConfigWin()
     if (_hFont)
         DeleteObject(_hFont);
 
+    if (_hFontInfo)
+        DeleteObject(_hFontInfo);
+
     UnregisterClass(cClassName, HMod);
 }
 
@@ -208,28 +211,40 @@ ConfigWin::~ConfigWin()
 /**
  *  \brief
  */
-HWND ConfigWin::composeWindow(HWND hOwner)
+HWND SettingsWin::composeWindow(HWND hOwner)
 {
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(ncm);
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
-    int txtHeight;
-    {
-        TEXTMETRIC tm;
+    NONCLIENTMETRICS ncmInfo;
+    ncmInfo.cbSize = sizeof(ncmInfo);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncmInfo.cbSize, &ncmInfo, 0);
 
+    int txtHeight;
+    int txtInfoHeight;
+    {
+        const int fontInfoSize = 8;
+
+        TEXTMETRIC tm;
         HDC hdc = GetWindowDC(hOwner);
+
         ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        ncmInfo.lfMessageFont.lfHeight = -MulDiv(fontInfoSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        ncmInfo.lfMessageFont.lfWeight = FW_EXTRABOLD;
+
         GetTextMetrics(hdc, &tm);
+
         ReleaseDC(hOwner, hdc);
 
         txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
+        txtInfoHeight = tm.tmInternalLeading - ncmInfo.lfMessageFont.lfHeight;
     }
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 11 * txtHeight + 180);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 9 * txtHeight + txtInfoHeight + 210);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -240,17 +255,50 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         return NULL;
 
     GetClientRect(_hWnd, &win);
-    width = win.right - win.left;
-    height = win.bottom - win.top;
+    width   = win.right - win.left - 20;
+    height  = win.bottom - win.top - 20;
 
+    int xPos = win.left + 10;
+    int yPos = win.top + 10;
+
+    _hEnDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable default database"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos, yPos, (width / 2), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    _hSetDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Set DB"),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            xPos + (width / 2) + 5, yPos, (width / 4) - 5, 25,
+            _hWnd, NULL, HMod, NULL);
+
+    _hUpdDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Update DB"),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            xPos + (width / 2) + (width / 4) + 5, yPos, (width / 4) - 5, 25,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
+    win.top     = yPos;
+    win.bottom  = win.top + txtHeight;
+    win.left    = xPos;
+    win.right   = win.left + width;
+
+    styleEx = WS_EX_CLIENTEDGE;
+    style   = WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL;
+
+    AdjustWindowRectEx(&win, style, FALSE, styleEx);
+    _hDefDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+            win.left, win.top, win.right - win.left, win.bottom - win.top,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (win.bottom - win.top + 15);
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
-            3, 5, width - 6, height - 10,
+            xPos, yPos, width, height - yPos - 40,
             _hWnd, NULL, HMod, NULL);
 
     _activeTab = new Tab;
     {
-        TCHAR buf[64]   = _T("Default database config");
+        TCHAR buf[64]   = _T("Generic database config");
         TCITEM tci      = {0};
         tci.mask        = TCIF_TEXT | TCIF_PARAM;
         tci.pszText     = buf;
@@ -268,13 +316,18 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         TabCtrl_SetCurSel(_hTab, i);
     }
 
+    GetClientRect(_hWnd, &win);
+    win.top     = yPos;
+    win.bottom  = win.top + height - yPos - 40;
+    win.left    = xPos;
+    win.right   = win.left + width;
+
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
-    width = win.right - win.left - 20;
+    width = win.right - win.left;
+    xPos = win.left;
+    yPos = win.top + 10;
 
-    int yPos        = win.top + 20;
-    const int xPos  = win.left + 10;
-
-    _hInfo = CreateWindowEx(0, _T("STATIC"), _T("These settings apply to all new databases"),
+    _hInfo = CreateWindowEx(0, _T("STATIC"), _T("Below settings apply to all new databases"),
             WS_CHILD | WS_VISIBLE | SS_CENTER | SS_SUNKEN,
             xPos, yPos, width, 2 * txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
@@ -282,16 +335,16 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     yPos += (2 * txtHeight + 30);
     _hParserInfo = CreateWindowEx(0, _T("STATIC"), _T("Code Parser"),
             WS_CHILD | WS_VISIBLE | SS_LEFT,
-            xPos, yPos, width, txtHeight,
+            xPos, yPos, width, txtInfoHeight,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (txtHeight + 5);
+    yPos += (txtInfoHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
             xPos, yPos, (width / 2) - 10, txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
-    _hAutoUpdate = CreateWindowEx(0, _T("BUTTON"), _T("Auto update database"),
+    _hAutoUpdDb = CreateWindowEx(0, _T("BUTTON"), _T("Auto-update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             xPos + (width / 2) + 30, yPos, (width / 2) - 50, txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
@@ -299,29 +352,22 @@ HWND ConfigWin::composeWindow(HWND hOwner)
     yPos += (txtHeight + 30);
     _hEnLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable library databases"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + 20, yPos, (width / 2) - 50, txtHeight + 10,
+            xPos, yPos, (width / 2), txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
-    _hCreateDb = CreateWindowEx(0, _T("BUTTON"), _T("Add Library DB"),
+    _hAddLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Add DB"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
+            xPos + (width / 2) + 5, yPos, (width / 4) - 5, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (txtHeight + 10);
-    _hUpdateDb = CreateWindowEx(0, _T("BUTTON"), _T("Update Library DBs"),
+    _hUpdLibDbs = CreateWindowEx(0, _T("BUTTON"), _T("Update DBs"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            xPos + (width / 2) + 10, yPos, (width / 2) - 10, 25,
+            xPos + (width / 2) + (width / 4) + 5, yPos, (width / 4) - 5, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (txtHeight + 5);
-    CreateWindowEx(0, _T("STATIC"), _T("Paths to library databases"),
-            WS_CHILD | WS_VISIBLE | SS_LEFT,
-            xPos, yPos, width / 2, txtHeight,
-            _hWnd, NULL, HMod, NULL);
-
-    yPos += (txtHeight + 5);
+    yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
     win.top     = yPos;
-    win.bottom  = win.top + 4 * txtHeight;
+    win.bottom  = win.top + 3 * txtHeight;
     win.left    = xPos;
     win.right   = win.left + width;
 
@@ -330,7 +376,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
             ES_NOOLEDRAGDROP | ES_MULTILINE | ES_WANTRETURN | ES_AUTOHSCROLL | ES_AUTOVSCROLL;
 
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
-    _hLibDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+    _hLibDbs = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -354,22 +400,51 @@ HWND ConfigWin::composeWindow(HWND hOwner)
         fmt.yHeight     = cFontSize * 20;
         _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
-        SendMessage(_hLibDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+        SendMessage(_hDefDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+        SendMessage(_hLibDbs, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
     }
 
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
 
     if (_hFont)
     {
+        SendMessage(_hEnDefDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hDefDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hInfo, WM_SETFONT, (WPARAM)_hFont, TRUE);
-        SendMessage(_hLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
-        SendMessage(_hAutoUpdate, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hAutoUpdDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hLibDbs, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    for (unsigned i = 0; GTagsConfig::Parser(i); ++i)
-        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)GTagsConfig::Parser(i));
+    _hFontInfo = CreateFontIndirect(&ncmInfo.lfMessageFont);
+
+    if (_hFontInfo)
+        SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+
+    for (unsigned i = 0; DbConfig::Parser(i); ++i)
+        SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
+
+	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
+    Edit_SetText(_hDefDb, GTagsSettings._defDbPath.C_str());
+    SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
+
+    if (GTagsSettings._useDefDb)
+    {
+        EnableWindow(_hSetDefDb, TRUE);
+        EnableWindow(_hUpdDefDb, TRUE);
+        Edit_Enable(_hDefDb, TRUE);
+        SendMessage(_hDefDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
+    }
+    else
+    {
+        EnableWindow(_hSetDefDb, FALSE);
+        EnableWindow(_hUpdDefDb, FALSE);
+        Edit_Enable(_hDefDb, FALSE);
+        SendMessage(_hDefDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+    }
+
+    Button_SetCheck(_hEnDefDb, GTagsSettings._useDefDb ? BST_CHECKED : BST_UNCHECKED);
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
 
@@ -380,7 +455,7 @@ HWND ConfigWin::composeWindow(HWND hOwner)
 /**
  *  \brief
  */
-ConfigWin::Tab* ConfigWin::getTab(int i)
+SettingsWin::Tab* SettingsWin::getTab(int i)
 {
     if (i == -1)
     {
@@ -402,15 +477,51 @@ ConfigWin::Tab* ConfigWin::getTab(int i)
 /**
  *  \brief
  */
-void ConfigWin::onUpdateDb()
+bool SettingsWin::isDbConfigured(const CPath& dbPath)
 {
-    int len = Edit_GetTextLength(_hLibDb);
+    for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
+    {
+        Tab* tab = getTab(i - 1);
+
+        if (tab->_db && tab->_db->GetPath() == dbPath)
+            return true;
+    }
+
+    return false;
+}
+
+
+/**
+ *  \brief
+ */
+void SettingsWin::onUpdateDefDb()
+{
+    int len = Edit_GetTextLength(_hDefDb);
+    if (!len)
+        return;
+
+    CPath defDb(len);
+
+    Edit_GetText(_hDefDb, defDb.C_str(), defDb.Size());
+
+    defDb.StripTrailingSpaces();
+    if (defDb.Exists())
+        createDatabase(defDb, updateDbCB);
+}
+
+
+/**
+ *  \brief
+ */
+void SettingsWin::onUpdateLibDb()
+{
+    int len = Edit_GetTextLength(_hLibDbs);
     if (!len)
         return;
 
     CText buf(len);
 
-    Edit_GetText(_hLibDb, buf.C_str(), buf.Size());
+    Edit_GetText(_hLibDbs, buf.C_str(), buf.Size());
 
     std::vector<CPath> dbs;
 
@@ -427,18 +538,18 @@ void ConfigWin::onUpdateDb()
 
     if (updateCount)
         for (unsigned i = 0; i < updateCount; ++i)
-            createLibDatabase(dbs[i], updateDbCB);
+            createDatabase(dbs[i], updateDbCB);
 }
 
 
 /**
  *  \brief
  */
-void ConfigWin::onTabChange()
+void SettingsWin::onTabChange()
 {
-    readData();
+    readTabData();
     _activeTab = getTab();
-    fillData();
+    fillTabData();
     SetFocus(_hInfo);
 }
 
@@ -446,9 +557,9 @@ void ConfigWin::onTabChange()
 /**
  *  \brief
  */
-void ConfigWin::onSave()
+void SettingsWin::onSave()
 {
-    readData();
+    readTabData();
 
     bool ret = true;
 
@@ -466,11 +577,11 @@ void ConfigWin::onSave()
 /**
  *  \brief
  */
-void ConfigWin::fillData()
+void SettingsWin::fillTabData()
 {
     if (_activeTab->_db)
     {
-        CText txt(_T("These settings apply to database at\n\""));
+        CText txt(_T("Below settings apply to database at\n\""));
         txt += _activeTab->_db->GetPath();
         txt += _T("\"");
 		SetWindowText(_hInfo, txt.C_str());
@@ -478,41 +589,41 @@ void ConfigWin::fillData()
     }
     else
     {
-		SetWindowText(_hInfo, _T("These settings apply to all new databases"));
+		SetWindowText(_hInfo, _T("Below settings apply to all new databases"));
 		SetWindowText(_hParserInfo, _T("Code Parser"));
     }
 
-	SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_NONE);
+	SendMessage(_hLibDbs, EM_SETEVENTMASK, 0, ENM_NONE);
 
     if (_activeTab->_cfg._libDbPaths.empty())
     {
-        Edit_SetText(_hLibDb, _T(""));
+        Edit_SetText(_hLibDbs, _T(""));
     }
     else
     {
         CText libDbPaths;
         _activeTab->_cfg.DbPathsToBuf(libDbPaths, _T('\n'));
-        Edit_SetText(_hLibDb, libDbPaths.C_str());
+        Edit_SetText(_hLibDbs, libDbPaths.C_str());
     }
 
-    SendMessage(_hLibDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
+    SendMessage(_hLibDbs, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
     if (_activeTab->_cfg._useLibDb)
     {
-        EnableWindow(_hCreateDb, TRUE);
-        EnableWindow(_hUpdateDb, TRUE);
-        Edit_Enable(_hLibDb, TRUE);
-        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
+        EnableWindow(_hAddLibDb, TRUE);
+        EnableWindow(_hUpdLibDbs, TRUE);
+        Edit_Enable(_hLibDbs, TRUE);
+        SendMessage(_hLibDbs, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
     }
     else
     {
-        EnableWindow(_hCreateDb, FALSE);
-        EnableWindow(_hUpdateDb, FALSE);
-        Edit_Enable(_hLibDb, FALSE);
-        SendMessage(_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+        EnableWindow(_hAddLibDb, FALSE);
+        EnableWindow(_hUpdLibDbs, FALSE);
+        Edit_Enable(_hLibDbs, FALSE);
+        SendMessage(_hLibDbs, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
     }
 
-    Button_SetCheck(_hAutoUpdate, _activeTab->_cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hAutoUpdDb, _activeTab->_cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hEnLibDb, _activeTab->_cfg._useLibDb ? BST_CHECKED : BST_UNCHECKED);
 
     SendMessage(_hParser, CB_SETCURSEL, _activeTab->_cfg._parserIdx, 0);
@@ -522,19 +633,19 @@ void ConfigWin::fillData()
 /**
  *  \brief
  */
-void ConfigWin::readData()
+void SettingsWin::readTabData()
 {
     _activeTab->_cfg._libDbPaths.clear();
 
-    int len = Edit_GetTextLength(_hLibDb);
+    const int len = Edit_GetTextLength(_hLibDbs);
     if (len)
     {
         CText libDbPaths(len);
-        Edit_GetText(_hLibDb, libDbPaths.C_str(), libDbPaths.Size());
+        Edit_GetText(_hLibDbs, libDbPaths.C_str(), libDbPaths.Size());
         _activeTab->_cfg.DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
     }
 
-    _activeTab->_cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdate) == BST_CHECKED) ? true : false;
+    _activeTab->_cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdDb) == BST_CHECKED) ? true : false;
     _activeTab->_cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
 
     _activeTab->_cfg._parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
@@ -544,24 +655,40 @@ void ConfigWin::readData()
 /**
  *  \brief
  */
-bool ConfigWin::saveConfig(ConfigWin::Tab* tab)
+bool SettingsWin::saveConfig(SettingsWin::Tab* tab)
 {
     CPath cfgFolder;
-    bool isGenericCfg = false;
+    bool saved = false;
 
     if (tab->_db)
     {
         cfgFolder = tab->_db->GetPath();
+        saved = tab->_cfg.SaveToFolder(cfgFolder);
     }
     else
     {
+        GTagsSettings._useDefDb = (Button_GetCheck(_hEnDefDb) == BST_CHECKED) ? true : false;
+
+        GTagsSettings._defDbPath.Clear();
+
+        const int len = Edit_GetTextLength(_hDefDb);
+        if (len)
+        {
+            GTagsSettings._defDbPath.Resize(len);
+            Edit_GetText(_hDefDb, GTagsSettings._defDbPath.C_str(), GTagsSettings._defDbPath.Size());
+
+            GTagsSettings._defDbPath.StripTrailingSpaces();
+            if (!GTagsSettings._defDbPath.Exists())
+                GTagsSettings._defDbPath.Clear();
+        }
+
         INpp::Get().GetPluginsConfDir(cfgFolder);
-        isGenericCfg = true;
+        saved = GTagsSettings.Save();
     }
 
-    if (!tab->_cfg.SaveToFolder(cfgFolder, isGenericCfg))
+    if (!saved)
     {
-        cfgFolder += GTagsConfig::cCfgFileName;
+        cfgFolder += cPluginCfgFileName;
 
         CText msg(_T("Failed saving config to\n\""));
         msg += cfgFolder.C_str();
@@ -581,7 +708,7 @@ bool ConfigWin::saveConfig(ConfigWin::Tab* tab)
     }
     else
     {
-        DefaultCfg = tab->_cfg;
+        GTagsSettings._genericDbCfg = tab->_cfg;
     }
 
     return true;
@@ -591,15 +718,28 @@ bool ConfigWin::saveConfig(ConfigWin::Tab* tab)
 /**
  *  \brief
  */
-void ConfigWin::fillLibDb(const CPath& lib)
+void SettingsWin::fillDefDb(const CPath& defDb)
 {
-    int len = Edit_GetTextLength(CW->_hLibDb);
+    Edit_SetText(SW->_hDefDb, defDb.C_str());
+
+    SetFocus(SW->_hDefDb);
+    Edit_SetSel(SW->_hDefDb, defDb.Len(), defDb.Len());
+    Edit_ScrollCaret(SW->_hDefDb);
+}
+
+
+/**
+ *  \brief
+ */
+void SettingsWin::fillLibDb(const CPath& lib)
+{
+    int len = Edit_GetTextLength(SW->_hLibDbs);
     CText buf(len);
     bool found = false;
 
     if (len)
     {
-        Edit_GetText(CW->_hLibDb, buf.C_str(), buf.Size());
+        Edit_GetText(SW->_hLibDbs, buf.C_str(), buf.Size());
 
         int libLen = lib.Len();
 
@@ -619,25 +759,28 @@ void ConfigWin::fillLibDb(const CPath& lib)
     if (!found)
     {
         buf += lib;
-        Edit_SetText(CW->_hLibDb, buf.C_str());
+        Edit_SetText(SW->_hLibDbs, buf.C_str());
     }
 
-    SetFocus(CW->_hLibDb);
-    Edit_SetSel(CW->_hLibDb, buf.Len(), buf.Len());
-    Edit_ScrollCaret(CW->_hLibDb);
+    SetFocus(SW->_hLibDbs);
+    Edit_SetSel(SW->_hLibDbs, buf.Len(), buf.Len());
+    Edit_ScrollCaret(SW->_hLibDbs);
 }
 
 
 /**
  *  \brief
  */
-bool ConfigWin::createLibDatabase(CPath& dbPath, CompletionCB complCB)
+bool SettingsWin::createDatabase(CPath& dbPath, CompletionCB complCB)
 {
     if (dbPath.IsEmpty())
     {
         if (!Tools::BrowseForFolder(_hWnd, dbPath))
             return false;
     }
+
+    if (isDbConfigured(dbPath))
+        return false;
 
     DbHandle db;
 
@@ -665,7 +808,7 @@ bool ConfigWin::createLibDatabase(CPath& dbPath, CompletionCB complCB)
         db = DbManager::Get().RegisterDb(dbPath);
     }
 
-    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Create Library Database"), db));
+    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Creating Database"), db));
     CmdEngine::Run(cmd, complCB);
 
     return true;
@@ -675,7 +818,7 @@ bool ConfigWin::createLibDatabase(CPath& dbPath, CompletionCB complCB)
 /**
  *  \brief
  */
-void ConfigWin::dbWriteReady(const CmdPtr_t& cmd)
+void SettingsWin::dbWriteReady(const CmdPtr_t& cmd)
 {
     if (cmd->Status() != OK)
         DbManager::Get().UnregisterDb(cmd->Db());
@@ -684,13 +827,13 @@ void ConfigWin::dbWriteReady(const CmdPtr_t& cmd)
 
     if (cmd->Status() == RUN_ERROR)
     {
-        HWND hWnd = (CW == NULL) ? INpp::Get().GetHandle() : CW->_hWnd;
+        HWND hWnd = (SW == NULL) ? INpp::Get().GetHandle() : SW->_hWnd;
         MessageBox(hWnd, _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Result())
     {
         CText msg(cmd->Result());
-        HWND hWnd = (CW == NULL) ? INpp::Get().GetHandle() : CW->_hWnd;
+        HWND hWnd = (SW == NULL) ? INpp::Get().GetHandle() : SW->_hWnd;
         MessageBox(hWnd, msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 }
@@ -699,28 +842,45 @@ void ConfigWin::dbWriteReady(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void ConfigWin::createDbCB(const CmdPtr_t& cmd)
+void SettingsWin::createDefDbCB(const CmdPtr_t& cmd)
 {
     dbWriteReady(cmd);
 
-    if (CW == NULL)
+    if (SW == NULL)
         return;
 
-    EnableWindow(CW->_hWnd, TRUE);
+    EnableWindow(SW->_hWnd, TRUE);
 
     if (cmd->Status() == OK)
-        CW->fillLibDb(cmd->Db()->GetPath());
+        SW->fillDefDb(cmd->Db()->GetPath());
 }
 
 
 /**
  *  \brief
  */
-void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
+void SettingsWin::createLibDbCB(const CmdPtr_t& cmd)
 {
     dbWriteReady(cmd);
 
-    if (CW == NULL)
+    if (SW == NULL)
+        return;
+
+    EnableWindow(SW->_hWnd, TRUE);
+
+    if (cmd->Status() == OK)
+        SW->fillLibDb(cmd->Db()->GetPath());
+}
+
+
+/**
+ *  \brief
+ */
+void SettingsWin::updateDbCB(const CmdPtr_t& cmd)
+{
+    dbWriteReady(cmd);
+
+    if (SW == NULL)
         return;
 }
 
@@ -728,19 +888,19 @@ void ConfigWin::updateDbCB(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-LRESULT CALLBACK ConfigWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SettingsWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
     if (code >= 0)
     {
         HWND hWnd = GetFocus();
-        if ((CW->_hWnd == hWnd) || IsChild(CW->_hWnd, hWnd))
+        if ((SW->_hWnd == hWnd) || IsChild(SW->_hWnd, hWnd))
         {
             // Key is pressed
             if (!(lParam & (1 << 31)))
             {
                 if (wParam == VK_ESCAPE)
                 {
-                    SendMessage(CW->_hWnd, WM_CLOSE, 0, 0);
+                    SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
                     return 1;
                 }
             }
@@ -754,7 +914,7 @@ LRESULT CALLBACK ConfigWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 /**
  *  \brief
  */
-LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -773,24 +933,24 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             }
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                if ((HWND)lParam == CW->_hSave)
+                if ((HWND)lParam == SW->_hSave)
                 {
-                    CW->onSave();
+                    SW->onSave();
                     return 0;
                 }
 
-                if ((HWND)lParam == CW->_hCancel)
+                if ((HWND)lParam == SW->_hCancel)
                 {
                     SendMessage(hWnd, WM_CLOSE, 0, 0);
                     return 0;
                 }
 
-                if ((HWND)lParam == CW->_hEnLibDb)
+                if ((HWND)lParam == SW->_hEnDefDb)
                 {
                     BOOL en;
                     int color;
 
-                    if (Button_GetCheck(CW->_hEnLibDb) == BST_CHECKED)
+                    if (Button_GetCheck(SW->_hEnDefDb) == BST_CHECKED)
                     {
                         en = TRUE;
                         color = COLOR_WINDOW;
@@ -801,60 +961,109 @@ LRESULT APIENTRY ConfigWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                         color = COLOR_BTNFACE;
                     }
 
-                    EnableWindow(CW->_hCreateDb, en);
-                    EnableWindow(CW->_hUpdateDb, en);
-                    Edit_Enable(CW->_hLibDb, en);
-                    SendMessage(CW->_hLibDb, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
+                    EnableWindow(SW->_hSetDefDb, en);
+                    EnableWindow(SW->_hUpdDefDb, en);
+                    Edit_Enable(SW->_hDefDb, en);
+                    SendMessage(SW->_hDefDb, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
 
-                    EnableWindow(CW->_hSave, TRUE);
+                    EnableWindow(SW->_hSave, TRUE);
 
                     return 0;
                 }
 
-                if ((HWND)lParam == CW->_hCreateDb)
+                if ((HWND)lParam == SW->_hEnLibDb)
+                {
+                    BOOL en;
+                    int color;
+
+                    if (Button_GetCheck(SW->_hEnLibDb) == BST_CHECKED)
+                    {
+                        en = TRUE;
+                        color = COLOR_WINDOW;
+                    }
+                    else
+                    {
+                        en = FALSE;
+                        color = COLOR_BTNFACE;
+                    }
+
+                    EnableWindow(SW->_hAddLibDb, en);
+                    EnableWindow(SW->_hUpdLibDbs, en);
+                    Edit_Enable(SW->_hLibDbs, en);
+                    SendMessage(SW->_hLibDbs, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
+
+                    EnableWindow(SW->_hSave, TRUE);
+
+                    return 0;
+                }
+
+                if ((HWND)lParam == SW->_hSetDefDb)
+                {
+                    CPath defDbPath;
+
+                    if (SW->createDatabase(defDbPath, createDefDbCB))
+                    {
+                        EnableWindow(hWnd, FALSE);
+                        SetFocus(INpp::Get().GetSciHandle());
+                    }
+                    else if (!defDbPath.IsEmpty())
+                    {
+                        SW->fillDefDb(defDbPath);
+                    }
+
+                    return 0;
+                }
+
+                if ((HWND)lParam == SW->_hUpdDefDb)
+                {
+                    SW->onUpdateDefDb();
+                    return 0;
+                }
+
+                if ((HWND)lParam == SW->_hAddLibDb)
                 {
                     CPath libraryPath;
 
-                    if (CW->createLibDatabase(libraryPath, createDbCB))
+                    if (SW->createDatabase(libraryPath, createLibDbCB))
                     {
                         EnableWindow(hWnd, FALSE);
                         SetFocus(INpp::Get().GetSciHandle());
                     }
                     else if (!libraryPath.IsEmpty())
                     {
-                        CW->fillLibDb(libraryPath);
+                        SW->fillLibDb(libraryPath);
                     }
 
                     return 0;
                 }
 
-                if ((HWND)lParam == CW->_hUpdateDb)
+                if ((HWND)lParam == SW->_hUpdLibDbs)
                 {
-                    CW->onUpdateDb();
+                    SW->onUpdateLibDb();
                     return 0;
                 }
 
-                if ((HWND)lParam == CW->_hAutoUpdate)
-                    EnableWindow(CW->_hSave, TRUE);
+                if ((HWND)lParam == SW->_hAutoUpdDb)
+                    EnableWindow(SW->_hSave, TRUE);
             }
             else if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
             {
-                EnableWindow(CW->_hSave, TRUE);
+                EnableWindow(SW->_hSave, TRUE);
             }
         break;
 
         case WM_NOTIFY:
             if (((LPNMHDR)lParam)->code == TCN_SELCHANGE)
             {
-                CW->onTabChange();
+                SW->onTabChange();
                 return 0;
             }
         break;
 
         case WM_DESTROY:
             DestroyCaret();
-            delete CW;
-            CW = NULL;
+            delete SW;
+            SW = NULL;
         return 0;
     }
 
