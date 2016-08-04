@@ -158,8 +158,10 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     str += _T(__TIME__);
     str += _T('\n');
     str += VER_COPYRIGHT;
-    str += _T(" <pg.nedev@gmail.com>\n\n")
-            _T("Licensed under GNU GPLv2 as published by the Free Software Foundation.\n\n")
+    str += _T(" <pg.nedev@gmail.com>");
+    str += _T("\nURL: ");
+    str += VER_URL;
+    str += _T("\n\nLicensed under GNU GPLv2 as published by the Free Software Foundation.\n\n")
             _T("This plugin is frontend to GNU Global source code tagging system (GTags):\n")
             _T("http://www.gnu.org/software/global/global.html\n")
             _T("Thanks to:\n\tShigio YAMAGUCHI (the GNU Global developer) and all GTags contributors;\n")
