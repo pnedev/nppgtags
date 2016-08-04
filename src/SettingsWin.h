@@ -95,7 +95,9 @@ private:
     void onSave();
     void fillTabData();
     void readTabData();
-    bool saveConfig(Tab* tab);
+    bool saveDbConfig(Tab* tab);
+    bool saveSettings(const Settings& newSettings);
+    bool saveTab(Tab* tab);
     void fillDefDb(const CPath& defDb);
     void fillLibDb(const CPath& lib);
 

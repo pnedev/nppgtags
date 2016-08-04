@@ -566,7 +566,7 @@ void SettingsWin::onSave()
     for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
         Tab* tab = getTab(i - 1);
-        ret = ret && saveConfig(tab);
+        ret = ret && saveTab(tab);
     }
 
     if (ret)
@@ -655,38 +655,11 @@ void SettingsWin::readTabData()
 /**
  *  \brief
  */
-bool SettingsWin::saveConfig(SettingsWin::Tab* tab)
+bool SettingsWin::saveDbConfig(SettingsWin::Tab* tab)
 {
-    CPath cfgFolder;
-    bool saved = false;
+    CPath cfgFolder(tab->_db->GetPath());
 
-    if (tab->_db)
-    {
-        cfgFolder = tab->_db->GetPath();
-        saved = tab->_cfg.SaveToFolder(cfgFolder);
-    }
-    else
-    {
-        GTagsSettings._useDefDb = (Button_GetCheck(_hEnDefDb) == BST_CHECKED) ? true : false;
-
-        GTagsSettings._defDbPath.Clear();
-
-        const int len = Edit_GetTextLength(_hDefDb);
-        if (len)
-        {
-            GTagsSettings._defDbPath.Resize(len);
-            Edit_GetText(_hDefDb, GTagsSettings._defDbPath.C_str(), GTagsSettings._defDbPath.Size());
-
-            GTagsSettings._defDbPath.StripTrailingSpaces();
-            if (!GTagsSettings._defDbPath.Exists())
-                GTagsSettings._defDbPath.Clear();
-        }
-
-        INpp::Get().GetPluginsConfDir(cfgFolder);
-        saved = GTagsSettings.Save();
-    }
-
-    if (!saved)
+    if (!tab->_cfg.SaveToFolder(cfgFolder))
     {
         cfgFolder += cPluginCfgFileName;
 
@@ -699,19 +672,84 @@ bool SettingsWin::saveConfig(SettingsWin::Tab* tab)
         return false;
     }
 
-    if (tab->_db)
-    {
-        if (tab->_db->GetConfig()._parserIdx != tab->_cfg._parserIdx)
-            tab->_updateDb = true;
+    if (tab->_db->GetConfig()._parserIdx != tab->_cfg._parserIdx)
+        tab->_updateDb = true;
 
-        tab->_db->SetConfig(tab->_cfg);
-    }
-    else
-    {
-        GTagsSettings._genericDbCfg = tab->_cfg;
-    }
+    tab->_db->SetConfig(tab->_cfg);
 
     return true;
+}
+
+
+/**
+ *  \brief
+ */
+bool SettingsWin::saveSettings(const Settings& newSettings)
+{
+    if (!newSettings.Save())
+    {
+        CPath cfgFile;
+        INpp::Get().GetPluginsConfDir(cfgFile);
+        cfgFile += cPluginCfgFileName;
+
+        CText msg(_T("Failed saving config to\n\""));
+        msg += cfgFile.C_str();
+        msg += _T("\"\nIs the path read only?");
+
+        MessageBox(_hWnd, msg.C_str(), cPluginName, MB_OK | MB_ICONEXCLAMATION);
+
+        return false;
+    }
+
+    GTagsSettings = newSettings;
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
+bool SettingsWin::saveTab(SettingsWin::Tab* tab)
+{
+    if (tab->_db)
+    {
+        CPath cfgFile(tab->_db->GetPath());
+        cfgFile += cPluginCfgFileName;
+
+        if (cfgFile.FileExists() && tab->_db->GetConfig() == tab->_cfg)
+            return true;
+
+        return saveDbConfig(tab);
+    }
+
+    Settings newSettings;
+
+    newSettings._genericDbCfg = tab->_cfg;
+    newSettings._useDefDb = (Button_GetCheck(_hEnDefDb) == BST_CHECKED) ? true : false;
+
+    const int len = Edit_GetTextLength(_hDefDb);
+    if (len)
+    {
+        newSettings._defDbPath.Resize(len);
+        Edit_GetText(_hDefDb, newSettings._defDbPath.C_str(), newSettings._defDbPath.Size());
+
+        newSettings._defDbPath.StripTrailingSpaces();
+        if (!newSettings._defDbPath.Exists())
+            newSettings._defDbPath.Clear();
+    }
+
+    newSettings._re = GTagsSettings._re;
+    newSettings._mc = GTagsSettings._mc;
+
+    CPath cfgFile;
+    INpp::Get().GetPluginsConfDir(cfgFile);
+    cfgFile += cPluginCfgFileName;
+
+    if (cfgFile.FileExists() && GTagsSettings == newSettings)
+        return true;
+
+    return saveSettings(newSettings);
 }
 
 

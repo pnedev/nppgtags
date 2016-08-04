@@ -109,7 +109,7 @@ bool DbConfig::LoadFromFolder(const CPath& cfgFileFolder)
     CPath cfgFile(cfgFileFolder);
     cfgFile += cPluginCfgFileName;
 
-    if (!cfgFile.Exists())
+    if (!cfgFile.FileExists())
         return false;
 
     FILE* fp;
@@ -253,14 +253,14 @@ void DbConfig::DbPathsToBuf(CText& buf, TCHAR separator) const
 /**
  *  \brief
  */
-const DbConfig& DbConfig::operator=(const DbConfig& cfg)
+const DbConfig& DbConfig::operator=(const DbConfig& rhs)
 {
-    if (this != &cfg)
+    if (this != &rhs)
     {
-        _parserIdx  = cfg._parserIdx;
-        _autoUpdate = cfg._autoUpdate;
-        _useLibDb   = cfg._useLibDb;
-        _libDbPaths = cfg._libDbPaths;
+        _parserIdx  = rhs._parserIdx;
+        _autoUpdate = rhs._autoUpdate;
+        _useLibDb   = rhs._useLibDb;
+        _libDbPaths = rhs._libDbPaths;
     }
 
     return *this;
@@ -270,13 +270,13 @@ const DbConfig& DbConfig::operator=(const DbConfig& cfg)
 /**
  *  \brief
  */
-bool DbConfig::operator==(const DbConfig& cfg) const
+bool DbConfig::operator==(const DbConfig& rhs) const
 {
-    if (this == &cfg)
+    if (this == &rhs)
         return true;
 
-    return (_parserIdx == cfg._parserIdx && _autoUpdate == cfg._autoUpdate &&
-            _useLibDb == cfg._useLibDb && _libDbPaths == cfg._libDbPaths);
+    return (_parserIdx == rhs._parserIdx && _autoUpdate == rhs._autoUpdate &&
+            _useLibDb == rhs._useLibDb && _libDbPaths == rhs._libDbPaths);
 }
 
 
@@ -329,7 +329,7 @@ bool Settings::Load()
     INpp::Get().GetPluginsConfDir(cfgFile);
     cfgFile += cPluginCfgFileName;
 
-    if (!cfgFile.Exists())
+    if (!cfgFile.FileExists())
         return false;
 
     FILE* fp;
@@ -422,6 +422,37 @@ bool Settings::Save() const
     fclose(fp);
 
     return success;
+}
+
+
+/**
+ *  \brief
+ */
+const Settings& Settings::operator=(const Settings& rhs)
+{
+    if (this != &rhs)
+    {
+        _useDefDb       = rhs._useDefDb;
+        _defDbPath      = rhs._defDbPath;
+        _re             = rhs._re;
+        _mc             = rhs._mc;
+        _genericDbCfg   = rhs._genericDbCfg;
+    }
+
+    return *this;
+}
+
+
+/**
+ *  \brief
+ */
+bool Settings::operator==(const Settings& rhs) const
+{
+    if (this == &rhs)
+        return true;
+
+    return (_useDefDb == rhs._useDefDb && _defDbPath == rhs._defDbPath &&
+            _re == rhs._re && _mc == rhs._mc && _genericDbCfg == rhs._genericDbCfg);
 }
 
 } // namespace GTags

@@ -54,6 +54,11 @@ public:
     void Update(const CPath& file);
     void ScheduleUpdate(const CPath& file);
 
+    inline void SaveCfg()
+    {
+        _cfg.SaveToFolder(_path);
+    }
+
 private:
     friend class DbManager;
 

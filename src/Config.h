@@ -68,8 +68,8 @@ public:
     void DbPathsFromBuf(TCHAR* buf, const TCHAR* separators);
     void DbPathsToBuf(CText& buf, TCHAR separator) const;
 
-    const DbConfig& operator=(const DbConfig& cfg);
-    bool operator==(const DbConfig& cfg) const;
+    const DbConfig& operator=(const DbConfig&);
+    bool operator==(const DbConfig&) const;
 
     int                 _parserIdx;
     bool                _autoUpdate;
@@ -112,6 +112,9 @@ public:
     void SetDefaults();
     bool Load();
     bool Save() const;
+
+    const Settings& operator=(const Settings&);
+    bool operator==(const Settings&) const;
 
     bool    _useDefDb;
     CPath   _defDbPath;

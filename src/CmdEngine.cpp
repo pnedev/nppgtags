@@ -222,7 +222,7 @@ unsigned CmdEngine::start()
     }
 
     if (_cmd->_id == CREATE_DATABASE)
-        _cmd->Db()->GetConfig().SaveToFolder(_cmd->Db()->GetPath());
+        _cmd->Db()->SaveCfg();
 
     return 0;
 }
