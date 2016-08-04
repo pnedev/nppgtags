@@ -1,3 +1,11 @@
+What's new in v4.2.0
+=======================
+
+- Default database search implemented
+    The default database (if enabled) will be used for searches
+    if no other database is detected for the active file.
+
+
 What's new in v4.1.0
 =======================
 
