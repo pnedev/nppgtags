@@ -171,13 +171,17 @@ public:
 
     inline bool Exists() const
     {
+        if (IsEmpty())
+            return false;
         DWORD dwAttrib = GetFileAttributes(C_str());
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES);
     }
 
     inline bool FileExists() const
     {
-		DWORD dwAttrib = GetFileAttributes(C_str());
+        if (IsEmpty())
+            return false;
+        DWORD dwAttrib = GetFileAttributes(C_str());
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 

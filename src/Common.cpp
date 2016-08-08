@@ -585,7 +585,7 @@ void CPath::AsFolder()
 
     _buf.erase(_buf.begin() + len, _buf.end());
 
-    if (_buf[len - 1] != _T('\\') && _buf[len - 1] != _T('/'))
+    if (len > 0 && _buf[len - 1] != _T('\\') && _buf[len - 1] != _T('/'))
         _buf.push_back(_T('\\'));
 
     _buf.push_back(0);
