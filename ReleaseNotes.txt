@@ -1,3 +1,11 @@
+What's new in v4.2.1
+=======================
+
+- This is a bug-fix release
+    Fix generic database settings not read bug.
+    Fix error case when DB path set does not end with '\'.
+
+
 What's new in v4.2.0
 =======================
 
