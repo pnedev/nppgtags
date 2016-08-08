@@ -572,7 +572,7 @@ void CTextA::Resize(unsigned size)
 /**
  *  \brief
  */
-unsigned CPath::StripTrailingSpaces()
+void CPath::AsFolder()
 {
     AutoFit();
 
@@ -584,9 +584,11 @@ unsigned CPath::StripTrailingSpaces()
             break;
 
     _buf.erase(_buf.begin() + len, _buf.end());
-    _buf.push_back(0);
 
-    return len;
+    if (_buf[len - 1] != _T('\\') && _buf[len - 1] != _T('/'))
+        _buf.push_back(_T('\\'));
+
+    _buf.push_back(0);
 }
 
 

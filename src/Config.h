@@ -52,8 +52,6 @@ public:
     DbConfig();
     ~DbConfig() {}
 
-    static bool IsOptionRecognized(const TCHAR* option);
-
     static const TCHAR* Parser(unsigned idx)
     {
         return (idx < PARSER_LIST_END) ? cParsers[idx] : NULL;
@@ -77,6 +75,7 @@ public:
     std::vector<CPath>  _libDbPaths;
 
 protected:
+    bool ReadOption(TCHAR* line);
     bool Write(FILE* fp) const;
 
 private:
@@ -106,8 +105,6 @@ class Settings
 public:
     Settings();
     ~Settings() {}
-
-    static bool IsOptionRecognized(const TCHAR* option);
 
     void SetDefaults();
     bool Load();

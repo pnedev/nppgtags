@@ -477,7 +477,7 @@ SettingsWin::Tab* SettingsWin::getTab(int i)
 /**
  *  \brief
  */
-bool SettingsWin::isDbConfigured(const CPath& dbPath)
+bool SettingsWin::isDbOpen(const CPath& dbPath)
 {
     for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
@@ -504,7 +504,7 @@ void SettingsWin::onUpdateDefDb()
 
     Edit_GetText(_hDefDb, defDb.C_str(), defDb.Size());
 
-    defDb.StripTrailingSpaces();
+    defDb.AsFolder();
     if (defDb.Exists())
         createDatabase(defDb, updateDbCB);
 }
@@ -529,7 +529,7 @@ void SettingsWin::onUpdateLibDb()
     for (TCHAR* ptr = _tcstok_s(buf.C_str(), _T("\n\r"), &pTmp); ptr; ptr = _tcstok_s(NULL, _T("\n\r"), &pTmp))
     {
         CPath db(ptr);
-        db.StripTrailingSpaces();
+        db.AsFolder();
         if (db.Exists())
             dbs.push_back(db);
     }
@@ -734,7 +734,7 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
         newSettings._defDbPath.Resize(len);
         Edit_GetText(_hDefDb, newSettings._defDbPath.C_str(), newSettings._defDbPath.Size());
 
-        newSettings._defDbPath.StripTrailingSpaces();
+        newSettings._defDbPath.AsFolder();
         if (!newSettings._defDbPath.Exists())
             newSettings._defDbPath.Clear();
     }
@@ -817,7 +817,7 @@ bool SettingsWin::createDatabase(CPath& dbPath, CompletionCB complCB)
             return false;
     }
 
-    if (isDbConfigured(dbPath))
+    if (isDbOpen(dbPath))
         return false;
 
     DbHandle db;
@@ -832,7 +832,7 @@ bool SettingsWin::createDatabase(CPath& dbPath, CompletionCB complCB)
             return false;
 
         bool success;
-        db = DbManager::Get().GetDb(dbPath, true, &success);
+        db = DbManager::Get().GetDbAt(dbPath, true, &success);
 
         if (!success)
         {

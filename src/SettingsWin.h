@@ -88,7 +88,7 @@ private:
     HWND composeWindow(HWND hOwner);
 
     Tab* getTab(int i = -1);
-    bool isDbConfigured(const CPath& dbPath);
+    bool isDbOpen(const CPath& dbPath);
     void onUpdateDefDb();
     void onUpdateLibDb();
     void onTabChange();

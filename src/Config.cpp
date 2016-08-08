@@ -75,21 +75,6 @@ DbConfig::DbConfig()
 /**
  *  \brief
  */
-bool DbConfig::IsOptionRecognized(const TCHAR* option)
-{
-    if (!_tcsncmp(option, cParserKey, _countof(cParserKey) - 1) ||
-        !_tcsncmp(option, cAutoUpdateKey, _countof(cAutoUpdateKey) - 1) ||
-        !_tcsncmp(option, cUseLibDbKey, _countof(cUseLibDbKey) - 1) ||
-        !_tcsncmp(option, cLibDbPathsKey, _countof(cLibDbPathsKey) - 1))
-        return true;
-
-    return false;
-}
-
-
-/**
- *  \brief
- */
 void DbConfig::SetDefaults()
 {
     _parserIdx = DEFAULT_PARSER;
@@ -102,74 +87,43 @@ void DbConfig::SetDefaults()
 /**
  *  \brief
  */
-bool DbConfig::LoadFromFolder(const CPath& cfgFileFolder)
+bool DbConfig::ReadOption(TCHAR* line)
 {
-    SetDefaults();
-
-    CPath cfgFile(cfgFileFolder);
-    cfgFile += cPluginCfgFileName;
-
-    if (!cfgFile.FileExists())
-        return false;
-
-    FILE* fp;
-    _tfopen_s(&fp, cfgFile.C_str(), _T("rt"));
-    if (fp == NULL)
-        return false;
-
-    TCHAR line[8192];
-    while (_fgetts(line, _countof(line), fp))
+    if (!_tcsncmp(line, cParserKey, _countof(cParserKey) - 1))
     {
-        // Comment or empty line
-        if (line[0] == _T('#') || line[0] == _T('\n'))
-            continue;
-
-        // Strip newline from the end of the line
-        line[_tcslen(line) - 1] = 0;
-
-        if (Settings::IsOptionRecognized(line))
-            continue;
-
-        if (!_tcsncmp(line, cParserKey, _countof(cParserKey) - 1))
-        {
-            unsigned pos = _countof(cParserKey) - 1;
-            if (!_tcsncmp(&line[pos], cCtagsParser, _countof(cCtagsParser) - 1))
-                _parserIdx = CTAGS_PARSER;
-            else if (!_tcsncmp(&line[pos], cPygmentsParser, _countof(cPygmentsParser) - 1))
-                _parserIdx = PYGMENTS_PARSER;
-            else
-                _parserIdx = DEFAULT_PARSER;
-        }
-        else if (!_tcsncmp(line, cAutoUpdateKey, _countof(cAutoUpdateKey) - 1))
-        {
-            unsigned pos = _countof(cAutoUpdateKey) - 1;
-            if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
-                _autoUpdate = true;
-            else
-                _autoUpdate = false;
-        }
-        else if (!_tcsncmp(line, cUseLibDbKey, _countof(cUseLibDbKey) - 1))
-        {
-            unsigned pos = _countof(cUseLibDbKey) - 1;
-            if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
-                _useLibDb = true;
-            else
-                _useLibDb = false;
-        }
-        else if (!_tcsncmp(line, cLibDbPathsKey, _countof(cLibDbPathsKey) - 1))
-        {
-            unsigned pos = _countof(cLibDbPathsKey) - 1;
-            DbPathsFromBuf(&line[pos], _T(";"));
-        }
+        const unsigned pos = _countof(cParserKey) - 1;
+        if (!_tcsncmp(&line[pos], cCtagsParser, _countof(cCtagsParser) - 1))
+            _parserIdx = CTAGS_PARSER;
+        else if (!_tcsncmp(&line[pos], cPygmentsParser, _countof(cPygmentsParser) - 1))
+            _parserIdx = PYGMENTS_PARSER;
         else
-        {
-            SetDefaults();
-            fclose(fp);
-            return false;
-        }
+            _parserIdx = DEFAULT_PARSER;
     }
-
-    fclose(fp);
+    else if (!_tcsncmp(line, cAutoUpdateKey, _countof(cAutoUpdateKey) - 1))
+    {
+        const unsigned pos = _countof(cAutoUpdateKey) - 1;
+        if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
+            _autoUpdate = true;
+        else
+            _autoUpdate = false;
+    }
+    else if (!_tcsncmp(line, cUseLibDbKey, _countof(cUseLibDbKey) - 1))
+    {
+        const unsigned pos = _countof(cUseLibDbKey) - 1;
+        if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
+            _useLibDb = true;
+        else
+            _useLibDb = false;
+    }
+    else if (!_tcsncmp(line, cLibDbPathsKey, _countof(cLibDbPathsKey) - 1))
+    {
+        const unsigned pos = _countof(cLibDbPathsKey) - 1;
+        DbPathsFromBuf(&line[pos], _T(";"));
+    }
+    else
+    {
+        return false;
+    }
 
     return true;
 }
@@ -191,6 +145,50 @@ bool DbConfig::Write(FILE* fp) const
     if (_ftprintf_s(fp, _T("%s%s\n"), cUseLibDbKey, (_useLibDb ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cLibDbPathsKey, libDbPaths.C_str()) > 0)
         success = true;
+
+    return success;
+}
+
+
+/**
+ *  \brief
+ */
+bool DbConfig::LoadFromFolder(const CPath& cfgFileFolder)
+{
+    SetDefaults();
+
+    CPath cfgFile(cfgFileFolder);
+    cfgFile += cPluginCfgFileName;
+
+    if (!cfgFile.FileExists())
+        return false;
+
+    FILE* fp;
+    _tfopen_s(&fp, cfgFile.C_str(), _T("rt"));
+    if (fp == NULL)
+        return false;
+
+    bool success = true;
+
+    TCHAR line[8192];
+    while (_fgetts(line, _countof(line), fp))
+    {
+        // Comment or empty line
+        if (line[0] == _T('#') || line[0] == _T('\n'))
+            continue;
+
+        // Strip newline from the end of the line
+        line[_tcslen(line) - 1] = 0;
+
+        if (!ReadOption(line))
+        {
+            success = false;
+            SetDefaults();
+            break;
+        }
+    }
+
+    fclose(fp);
 
     return success;
 }
@@ -225,7 +223,7 @@ void DbConfig::DbPathsFromBuf(TCHAR* buf, const TCHAR* separators)
     for (TCHAR* ptr = _tcstok_s(buf, separators, &pTmp); ptr; ptr = _tcstok_s(NULL, separators, &pTmp))
     {
         CPath db(ptr);
-        db.StripTrailingSpaces();
+        db.AsFolder();
         if (db.Exists())
             _libDbPaths.push_back(db);
     }
@@ -292,21 +290,6 @@ Settings::Settings()
 /**
  *  \brief
  */
-bool Settings::IsOptionRecognized(const TCHAR* option)
-{
-    if (!_tcsncmp(option, cUseDefDbKey, _countof(cUseDefDbKey) - 1) ||
-        !_tcsncmp(option, cDefDbPathKey, _countof(cDefDbPathKey) - 1) ||
-        !_tcsncmp(option, cREOptionKey, _countof(cREOptionKey) - 1) ||
-        !_tcsncmp(option, cMCOptionKey, _countof(cMCOptionKey) - 1))
-        return true;
-
-    return false;
-}
-
-
-/**
- *  \brief
- */
 void Settings::SetDefaults()
 {
     _useDefDb = false;
@@ -337,6 +320,8 @@ bool Settings::Load()
     if (fp == NULL)
         return false;
 
+    bool success = true;
+
     TCHAR line[8192];
     while (_fgetts(line, _countof(line), fp))
     {
@@ -347,12 +332,9 @@ bool Settings::Load()
         // Strip newline from the end of the line
         line[_tcslen(line) - 1] = 0;
 
-        if (DbConfig::IsOptionRecognized(line))
-            continue;
-
         if (!_tcsncmp(line, cUseDefDbKey, _countof(cUseDefDbKey) - 1))
         {
-            unsigned pos = _countof(cUseDefDbKey) - 1;
+            const unsigned pos = _countof(cUseDefDbKey) - 1;
             if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
                 _useDefDb = true;
             else
@@ -360,15 +342,15 @@ bool Settings::Load()
         }
         else if (!_tcsncmp(line, cDefDbPathKey, _countof(cDefDbPathKey) - 1))
         {
-            unsigned pos = _countof(cDefDbPathKey) - 1;
+            const unsigned pos = _countof(cDefDbPathKey) - 1;
             _defDbPath = &line[pos];
-            _defDbPath.StripTrailingSpaces();
+            _defDbPath.AsFolder();
             if (!_defDbPath.Exists())
                 _defDbPath.Clear();
         }
         else if (!_tcsncmp(line, cREOptionKey, _countof(cREOptionKey) - 1))
         {
-            unsigned pos = _countof(cREOptionKey) - 1;
+            const unsigned pos = _countof(cREOptionKey) - 1;
             if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
                 _re = true;
             else
@@ -376,23 +358,23 @@ bool Settings::Load()
         }
         else if (!_tcsncmp(line, cMCOptionKey, _countof(cMCOptionKey) - 1))
         {
-            unsigned pos = _countof(cMCOptionKey) - 1;
+            const unsigned pos = _countof(cMCOptionKey) - 1;
             if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
                 _mc = true;
             else
                 _mc = false;
         }
-        else
+        else if (!_genericDbCfg.ReadOption(line))
         {
+            success = false;
             SetDefaults();
-            fclose(fp);
-            return false;
+            break;
         }
     }
 
     fclose(fp);
 
-    return true;
+    return success;
 }
 
 

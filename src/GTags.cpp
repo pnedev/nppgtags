@@ -147,7 +147,7 @@ DbHandle getDatabase(bool writeEn = false)
 
     // Search default database for read operations (if no local DB found and default is configured to be used)
     if (!db && !writeEn && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
-        db = DbManager::Get().GetDb(GTagsSettings._defDbPath, writeEn, &success);
+        db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, writeEn, &success);
 
     if (!db)
     {

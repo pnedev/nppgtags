@@ -181,7 +181,7 @@ public:
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
-    unsigned StripTrailingSpaces();
+    void AsFolder();
     unsigned StripFilename();
     unsigned DirUp();
 
