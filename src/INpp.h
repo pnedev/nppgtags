@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <vector>
 #include "Common.h"
 #include "Notepad_plus_msgs.h"
 #include "Docking.h"
@@ -60,7 +61,16 @@ public:
     }
 
     inline HWND GetHandle() const { return _nppData._nppHandle; }
+
+    inline void SetSciHandle(HWND hSciWnd)
+    {
+        if (hSciWnd == _nppData._scintillaMainHandle || hSciWnd == _nppData._scintillaSecondHandle ||
+                isSciWndRegistered(hSciWnd))
+            _hSC = hSciWnd;
+    }
+
     inline HWND GetSciHandle() const { return _hSC; }
+
     inline HWND GetSciHandle(int sciNum) const
     {
         return (sciNum ? _nppData._scintillaSecondHandle : _nppData._scintillaMainHandle);
@@ -106,14 +116,20 @@ public:
         SendMessage(_nppData._nppHandle, NPPM_DMMUPDATEDISPINFO, 0, (LPARAM)hWnd);
     }
 
-    inline HWND CreateSciHandle(const HWND hParentWnd) const
+    inline HWND CreateSciHandle(const HWND hParentWnd)
     {
-        return (HWND)SendMessage(_nppData._nppHandle, NPPM_CREATESCINTILLAHANDLE, 0, (LPARAM)hParentWnd);
+        HWND hSciWnd = (HWND)SendMessage(_nppData._nppHandle, NPPM_CREATESCINTILLAHANDLE, 0, (LPARAM)hParentWnd);
+
+        if (hSciWnd)
+            _hSciWndList.push_back(hSciWnd);
+
+        return hSciWnd;
     }
 
-    inline void DestroySciHandle(const HWND hSciWnd) const
+    inline void DestroySciHandle(const HWND hSciWnd)
     {
-        SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE, 0, (LPARAM)hSciWnd);
+        if (isSciWndRegistered(hSciWnd, true))
+            SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE, 0, (LPARAM)hSciWnd);
     }
 
     inline void GetMainDir(CPath& path) const
@@ -309,6 +325,9 @@ private:
     INpp(const INpp&);
     ~INpp() {}
 
-    NppData _nppData;
-    HWND    _hSC;
+    bool isSciWndRegistered(HWND hSciWnd, bool remove = false);
+
+    NppData             _nppData;
+    HWND                _hSC;
+    std::vector<HWND>   _hSciWndList;
 };

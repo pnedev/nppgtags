@@ -170,3 +170,22 @@ bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord, bool reg
 
     return isFound;
 }
+
+
+/**
+ *  \brief
+ */
+bool INpp::isSciWndRegistered(HWND hSciWnd, bool remove)
+{
+    for (std::vector<HWND>::iterator iSci = _hSciWndList.begin(); iSci != _hSciWndList.end(); ++iSci)
+    {
+        if (*iSci == hSciWnd)
+        {
+            if (remove)
+                _hSciWndList.erase(iSci);
+            return true;
+        }
+    }
+
+    return false;
+}

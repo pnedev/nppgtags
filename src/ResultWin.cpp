@@ -1222,8 +1222,14 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
         HWND hWnd = GetFocus();
         if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
         {
-            // Key is pressed
-            if (!(lParam & (1 << 31)))
+            const SHORT keyDownMask = (1 << (sizeof(SHORT) * 8 - 1));
+
+            const bool ctrl     = (GetKeyState(VK_CONTROL) & keyDownMask);
+            const bool alt      = (GetKeyState(VK_MENU) & keyDownMask);
+            const bool shift    = (GetKeyState(VK_SHIFT) & keyDownMask);
+
+            // Key is pressed and no CTRL, ALT or SHIFT
+            if (!(lParam & (1 << 31)) && !ctrl && !alt && !shift)
             {
                 if (wParam == VK_ESCAPE)
                 {

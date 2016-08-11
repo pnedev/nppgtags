@@ -86,6 +86,14 @@ public:
             RW->applyStyle();
     }
 
+    static HWND GetSciHandle()
+    {
+        if (RW && GetFocus() == RW->_hSci)
+            return RW->_hSci;
+
+        return NULL;
+    }
+
 private:
     /**
      *  \struct  Tab

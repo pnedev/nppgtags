@@ -110,13 +110,24 @@ enum WordSelection_t
 /**
  *  \brief
  */
-CText getSelection(bool skipPreSelect = false, WordSelection_t selectWord = FULL_SELECT, bool highlightWord = true)
+CText getSelection(bool fromResultWin = true, bool skipPreSelect = false,
+        WordSelection_t selectWord = FULL_SELECT, bool highlightWord = true)
 {
     INpp& npp = INpp::Get();
 
-    npp.ReadSciHandle();
+    HWND nppHSci = npp.ReadSciHandle();
+
     if (npp.IsSelectionVertical())
         return CText();
+
+    if (fromResultWin)
+    {
+        HWND rwHSci = ResultWin::GetSciHandle();
+        if (rwHSci)
+            npp.SetSciHandle(rwHSci);
+        else
+            fromResultWin = false;
+    }
 
     CTextA tagA;
 
@@ -125,6 +136,9 @@ CText getSelection(bool skipPreSelect = false, WordSelection_t selectWord = FULL
 
     if (skipPreSelect || (tagA.IsEmpty() && selectWord != DONT_SELECT))
         npp.GetWord(tagA, selectWord == PARTIAL_SELECT, highlightWord);
+
+    if (fromResultWin)
+        npp.SetSciHandle(nppHSci);
 
     if (tagA.IsEmpty())
         return CText();
@@ -393,7 +407,7 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
  */
 void AutoComplete()
 {
-    CText tag = getSelection(true, PARTIAL_SELECT, false);
+    CText tag = getSelection(false, true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
 
@@ -412,7 +426,7 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
-    CText tag = getSelection(true, PARTIAL_SELECT, false);
+    CText tag = getSelection(false, true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
 
@@ -443,7 +457,7 @@ void FindFile()
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser));
 
-    CText tag = getSelection(false, DONT_SELECT);
+    CText tag = getSelection(true, false, DONT_SELECT);
     if (tag.IsEmpty())
     {
         CPath fileName;
