@@ -1,7 +1,15 @@
 #include <tchar.h>
 
-#define VER_VERSION         4,2,1,0
-#define VER_VERSION_STR     _T("4.2.1\0")
+#define VER_VERSION         4,3,0,0
+#define VER_VERSION_STR     _T("4.3.0\0")
+
+#define IS_PRERELEASE       1
+
+#if (IS_PRERELEASE)
+#define VER_PRERELEASE      VS_FF_PRERELEASE
+#else
+#define VER_PRERELEASE      0
+#endif
 
 #define VER_AUTHOR          _T("Pavel Nedev\0")
 #define VER_COPYRIGHT       _T("Copyright (C) 2014-2016 Pavel Nedev\0")
