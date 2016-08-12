@@ -110,7 +110,7 @@ enum WordSelection_t
 /**
  *  \brief
  */
-CText getSelection(bool fromResultWin = true, bool skipPreSelect = false,
+CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
         WordSelection_t selectWord = FULL_SELECT, bool highlightWord = true)
 {
     INpp& npp = INpp::Get();
@@ -120,14 +120,8 @@ CText getSelection(bool fromResultWin = true, bool skipPreSelect = false,
     if (npp.IsSelectionVertical())
         return CText();
 
-    if (fromResultWin)
-    {
-        HWND rwHSci = ResultWin::GetSciHandle();
-        if (rwHSci)
-            npp.SetSciHandle(rwHSci);
-        else
-            fromResultWin = false;
-    }
+    if (hSci)
+        npp.SetSciHandle(hSci);
 
     CTextA tagA;
 
@@ -137,7 +131,7 @@ CText getSelection(bool fromResultWin = true, bool skipPreSelect = false,
     if (skipPreSelect || (tagA.IsEmpty() && selectWord != DONT_SELECT))
         npp.GetWord(tagA, selectWord == PARTIAL_SELECT, highlightWord);
 
-    if (fromResultWin)
+    if (hSci)
         npp.SetSciHandle(nppHSci);
 
     if (tagA.IsEmpty())
@@ -174,6 +168,37 @@ DbHandle getDatabase(bool writeEn = false)
         msg += _T("\"\nis currently in use.\nPlease try again later.");
 
         MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
+        db = NULL;
+    }
+
+    return db;
+}
+
+
+/**
+ *  \brief
+ */
+DbHandle getDatabaseAt(const CPath& dbPath)
+{
+    bool success;
+
+    DbHandle db = DbManager::Get().GetDbAt(dbPath, false, &success);
+
+    if (!db)
+    {
+        CText msg(_T("Database at\n\""));
+        msg += dbPath;
+        msg += _T("\"\ndoes not exist.");
+
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
+    }
+    else if (!success)
+    {
+        CText msg(_T("Database at\n\""));
+        msg += db->GetPath();
+        msg += _T("\"\nis currently in use.\nPlease try again later.");
+
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
         db = NULL;
     }
 
@@ -407,7 +432,7 @@ void EnablePluginMenuItem(int itemIdx, bool enable)
  */
 void AutoComplete()
 {
-    CText tag = getSelection(false, true, PARTIAL_SELECT, false);
+    CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
 
@@ -426,7 +451,7 @@ void AutoComplete()
  */
 void AutoCompleteFile()
 {
-    CText tag = getSelection(false, true, PARTIAL_SELECT, false);
+    CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
 
@@ -450,14 +475,21 @@ void FindFile()
 {
     SearchWin::Close();
 
-    DbHandle db = getDatabase();
+    DbHandle db;
+    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    if (rwHSci)
+        db = getDatabaseAt(ResultWin::GetDbPath());
+    else
+        db = getDatabase();
+
     if (!db)
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser));
 
-    CText tag = getSelection(true, false, DONT_SELECT);
+    CText tag = getSelection(rwHSci, false, DONT_SELECT);
     if (tag.IsEmpty())
     {
         CPath fileName;
@@ -480,14 +512,21 @@ void FindDefinition()
 {
     SearchWin::Close();
 
-    DbHandle db = getDatabase();
+    DbHandle db;
+    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    if (rwHSci)
+        db = getDatabaseAt(ResultWin::GetDbPath());
+    else
+        db = getDatabase();
+
     if (!db)
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db, parser));
 
-    CText tag = getSelection();
+    CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, findCB, false);
@@ -507,7 +546,14 @@ void FindReference()
 {
     SearchWin::Close();
 
-    DbHandle db = getDatabase();
+    DbHandle db;
+    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    if (rwHSci)
+        db = getDatabaseAt(ResultWin::GetDbPath());
+    else
+        db = getDatabase();
+
     if (!db)
         return;
 
@@ -524,7 +570,7 @@ void FindReference()
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser));
 
-    CText tag = getSelection();
+    CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, findCB, false);
@@ -544,14 +590,21 @@ void SearchSrc()
 {
     SearchWin::Close();
 
-    DbHandle db = getDatabase();
+    DbHandle db;
+    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    if (rwHSci)
+        db = getDatabaseAt(ResultWin::GetDbPath());
+    else
+        db = getDatabase();
+
     if (!db)
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(GREP, cSearchSrc, db, parser));
 
-    CText tag = getSelection();
+    CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, showResultCB);
@@ -571,14 +624,21 @@ void SearchOther()
 {
     SearchWin::Close();
 
-    DbHandle db = getDatabase();
+    DbHandle db;
+    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    if (rwHSci)
+        db = getDatabaseAt(ResultWin::GetDbPath());
+    else
+        db = getDatabase();
+
     if (!db)
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
     CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchOther, db, parser));
 
-    CText tag = getSelection();
+    CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
     {
         SearchWin::Show(cmd, showResultCB);

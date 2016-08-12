@@ -86,12 +86,20 @@ public:
             RW->applyStyle();
     }
 
-    static HWND GetSciHandle()
+    static HWND GetSciHandleIfFocused()
     {
         if (RW && GetFocus() == RW->_hSci)
             return RW->_hSci;
 
         return NULL;
+    }
+
+    static CPath GetDbPath()
+    {
+        if (RW && RW->_activeTab)
+            return CPath(RW->_activeTab->_projectPath.C_str());
+
+        return CPath();
     }
 
 private:
