@@ -1007,9 +1007,8 @@ void ResultWin::onMarginClick(SCNotification* notify)
 /**
  *  \brief
  */
-bool ResultWin::onKeyPress(WORD keyCode)
+bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 {
-    bool handled = true;
     int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
 
     switch (keyCode)
@@ -1026,7 +1025,7 @@ bool ResultWin::onKeyPress(WORD keyCode)
 
                 sendSci(SCI_GOTOLINE, lineNum);
             }
-        break;
+        return true;
 
         case VK_DOWN:
             if (++lineNum < sendSci(SCI_GETLINECOUNT))
@@ -1043,38 +1042,44 @@ bool ResultWin::onKeyPress(WORD keyCode)
 
                 sendSci(SCI_GOTOLINE, lineNum);
             }
-        break;
+        return true;
 
         case VK_LEFT:
-        {
-            int i = TabCtrl_GetCurSel(_hTab);
-
-            if (i > 0)
+            if (alt)
             {
-                Tab* tab = getTab(--i);
-                if (tab)
+                int i = TabCtrl_GetCurSel(_hTab);
+
+                if (i > 0)
                 {
-                    TabCtrl_SetCurSel(_hTab, i);
-                    loadTab(tab);
+                    Tab* tab = getTab(--i);
+                    if (tab)
+                    {
+                        TabCtrl_SetCurSel(_hTab, i);
+                        loadTab(tab);
+                    }
                 }
+
+                return true;
             }
-        }
         break;
 
         case VK_RIGHT:
-        {
-            int i = TabCtrl_GetCurSel(_hTab);
-
-            if (i < TabCtrl_GetItemCount(_hTab) - 1)
+            if (alt)
             {
-                Tab* tab = getTab(++i);
-                if (tab)
+                int i = TabCtrl_GetCurSel(_hTab);
+
+                if (i < TabCtrl_GetItemCount(_hTab) - 1)
                 {
-                    TabCtrl_SetCurSel(_hTab, i);
-                    loadTab(tab);
+                    Tab* tab = getTab(++i);
+                    if (tab)
+                    {
+                        TabCtrl_SetCurSel(_hTab, i);
+                        loadTab(tab);
+                    }
                 }
+
+                return true;
             }
-        }
         break;
 
         case VK_PRIOR:
@@ -1084,7 +1089,7 @@ bool ResultWin::onKeyPress(WORD keyCode)
             lineNum = sendSci(SCI_DOCLINEFROMVISIBLE, sendSci(SCI_GETFIRSTVISIBLELINE));
             sendSci(SCI_GOTOLINE, lineNum);
         }
-        break;
+        return true;
 
         case VK_NEXT:
         {
@@ -1107,27 +1112,26 @@ bool ResultWin::onKeyPress(WORD keyCode)
 
             sendSci(SCI_GOTOLINE, lineNum);
         }
-        break;
+        return true;
 
         case VK_ADD:
             if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
             if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
                 toggleFolding(lineNum);
-        break;
+        return true;
 
         case VK_SUBTRACT:
             if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
             if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
                 toggleFolding(lineNum);
-        break;
+        return true;
 
-        default:
-            handled = false;
+        default:;
     }
 
-    return handled;
+    return false;
 }
 
 
@@ -1222,26 +1226,30 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
         HWND hWnd = GetFocus();
         if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
         {
-            constexpr SHORT keyDownMask = (1 << (sizeof(SHORT) * 8 - 1));
+            const SHORT keyDownMask = (SHORT)(1 << (sizeof(SHORT) * 8 - 1));
 
             const bool ctrl     = ((GetKeyState(VK_CONTROL) & keyDownMask) != 0);
             const bool alt      = ((GetKeyState(VK_MENU) & keyDownMask) != 0);
             const bool shift    = ((GetKeyState(VK_SHIFT) & keyDownMask) != 0);
 
-            // Key is pressed and no CTRL, ALT or SHIFT
-            if (!(lParam & (1 << 31)) && !ctrl && !alt && !shift)
+            // Key is pressed and no CTRL or SHIFT
+            if (!(lParam & (1 << 31)) && !ctrl && !shift)
             {
-                if (wParam == VK_ESCAPE)
+                if (!alt)
                 {
-                    RW->onCloseTab();
-                    return 1;
+                    if (wParam == VK_ESCAPE)
+                    {
+                        RW->onCloseTab();
+                        return 1;
+                    }
+                    if (wParam == VK_RETURN || wParam == VK_SPACE)
+                    {
+                        RW->onDoubleClick(0);
+                        return 1;
+                    }
                 }
-                if (wParam == VK_RETURN || wParam == VK_SPACE)
-                {
-                    RW->onDoubleClick(0);
-                    return 1;
-                }
-                if (RW->onKeyPress(wParam))
+
+                if (RW->onKeyPress(wParam, alt))
                 {
                     return 1;
                 }

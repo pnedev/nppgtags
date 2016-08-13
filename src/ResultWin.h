@@ -180,7 +180,7 @@ private:
     void onHotspotClick(SCNotification* notify);
     void onDoubleClick(int pos);
     void onMarginClick(SCNotification* notify);
-    bool onKeyPress(WORD keyCode);
+    bool onKeyPress(WORD keyCode, bool alt);
     void onTabChange();
     void onCloseTab();
     void closeAllTabs();
