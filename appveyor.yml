@@ -6,7 +6,7 @@ environment:
   matrix:
     - PlatformToolset: v140_xp
     - PlatformToolset: v120_xp
-    #- PlatformToolset: mingw-w64
+    - PlatformToolset: mingw-w64
 
 
 platform:
@@ -25,6 +25,7 @@ install:
     - ps: |
         if ($env:PLATFORMTOOLSET -match "mingw-w64") {
           $env:Path += ";C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin"
+          $env:Path += ";C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\i686-w64-mingw32\lib"
           $env:Path = $env:Path.Replace('C:\Program Files\Git\usr\bin;','')
           g++ --version
           mingw32-make --version

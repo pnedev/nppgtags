@@ -57,7 +57,7 @@ bool Tools::BrowseForFolder(HWND hOwnerWin, CPath& path)
     bi.lpfn             = browseFolderCB;
 
     if (!path.IsEmpty() && path.Exists())
-        bi.lParam = (DWORD)path.C_str();
+        bi.lParam = (LPARAM)path.C_str();
 
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
     if (!pidl)

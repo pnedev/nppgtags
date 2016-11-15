@@ -27,7 +27,7 @@
 #include "GTags.h"
 
 
-BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD reasonForCall, LPVOID )
 {
     switch (reasonForCall)
     {
@@ -132,7 +132,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
 }
 
 
-extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam)
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT , WPARAM , LPARAM )
 {
     return TRUE;
 }
