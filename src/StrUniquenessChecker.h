@@ -1,7 +1,6 @@
 /**
  *  \file
  *  \brief  String uniqueness checker class - checks if a string passes through the class for the first time.
- *          The strings are C-type char arrays that must remain intact for the whole lifetime of the class!!!
  *
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
@@ -26,123 +25,41 @@
 #pragma once
 
 
-#include <windows.h>
-#include <tchar.h>
-#include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <map>
-
-
-#ifdef UNICODE
-#define StrUniquenessChecker    StrUniquenessCheckerW
-#else
-#define StrUniquenessChecker    StrUniquenessCheckerA
-#endif
+#include <functional>
 
 
 /**
- *  \class  StrUniquenessCheckerW
+ *  \class  StrUniquenessChecker
  *  \brief
  */
-class StrUniquenessCheckerW
+template<typename CharType>
+class StrUniquenessChecker
 {
 public:
-    StrUniquenessCheckerW() {}
-    ~StrUniquenessCheckerW() {}
+    StrUniquenessChecker() {}
+    ~StrUniquenessChecker() {}
 
-    bool IsUnique(const wchar_t* str)
+    bool IsUnique(const CharType* ptr)
     {
-        if (!str)
+        if (!ptr)
             return false;
 
-        std::pair<map_t::iterator, bool> ret = _map.insert(elem_t(str, 0));
+        std::basic_string<CharType> str(ptr);
+        std::hash<std::basic_string<CharType>> hash;
+
+        std::pair<map_t::iterator, bool> ret = _map.insert(elem_t(hash(str), 0));
 
         return ret.second;
     }
 
 private:
-    StrUniquenessCheckerW(const StrUniquenessCheckerW&);
-    const StrUniquenessCheckerW& operator=(const StrUniquenessCheckerW&);
+    StrUniquenessChecker(const StrUniquenessChecker&) = delete;
+    const StrUniquenessChecker& operator=(const StrUniquenessChecker&) = delete;
 
-    /**
-     *  \class  key_t
-     *  \brief
-     */
-    class key_t
-    {
-    public:
-        key_t(const wchar_t* str) : _str(str) {}
-
-        bool operator<(const key_t& rhs) const
-        {
-            return (wcscmp(_str, rhs._str) < 0);
-        }
-
-        bool operator==(const key_t& rhs) const
-        {
-            return (wcscmp(_str, rhs._str) == 0);
-        }
-
-    private:
-        const wchar_t* _str;
-    };
-
-    typedef std::pair<key_t, char>  elem_t;
-    typedef std::map<key_t, char>   map_t;
-
-    map_t _map;
-};
-
-
-/**
- *  \class  StrUniquenessCheckerA
- *  \brief
- */
-class StrUniquenessCheckerA
-{
-public:
-    StrUniquenessCheckerA() {}
-    ~StrUniquenessCheckerA() {}
-
-    bool IsUnique(const char* str)
-    {
-        if (!str)
-            return false;
-
-        std::pair<map_t::iterator, bool> ret = _map.insert(elem_t(str, 0));
-
-        return ret.second;
-    }
-
-private:
-    StrUniquenessCheckerA(const StrUniquenessCheckerA&);
-    const StrUniquenessCheckerA& operator=(const StrUniquenessCheckerA&);
-
-    /**
-     *  \class  key_t
-     *  \brief
-     */
-    class key_t
-    {
-    public:
-        key_t(const char* str) : _str(str) {}
-
-        bool operator<(const key_t& rhs) const
-        {
-            return (strcmp(_str, rhs._str) < 0);
-        }
-
-        bool operator==(const key_t& rhs) const
-        {
-            return (strcmp(_str, rhs._str) == 0);
-        }
-
-    private:
-        const char* _str;
-    };
-
-    typedef std::pair<key_t, char>  elem_t;
-    typedef std::map<key_t, char>   map_t;
+    typedef std::pair<std::size_t, char>  elem_t;
+    typedef std::map<std::size_t, char>   map_t;
 
     map_t _map;
 };

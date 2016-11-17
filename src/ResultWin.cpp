@@ -137,7 +137,7 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         }
     }
 
-    StrUniquenessCheckerA strChecker;
+    StrUniquenessChecker<char> strChecker;
 
     char*       pSrc = cmd->Result();
     char*       pIdx;

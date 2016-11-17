@@ -36,7 +36,7 @@ bool LineParser::Parse(const CmdPtr_t& cmd)
 {
     const bool filterReoccurring = cmd->Db()->GetConfig()._useLibDb;
 
-    StrUniquenessChecker strChecker;
+    StrUniquenessChecker<TCHAR> strChecker;
 
     _lines.clear();
     _buf = cmd->Result();
