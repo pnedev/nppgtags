@@ -56,6 +56,7 @@ private:
     AutoCompleteWin(const CmdPtr_t& cmd);
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();
+    AutoCompleteWin& operator=(const AutoCompleteWin&) = delete;
 
     HWND composeWindow(const TCHAR* header);
     int filterLV(const CText& filter);

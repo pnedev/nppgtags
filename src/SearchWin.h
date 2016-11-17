@@ -64,6 +64,7 @@ private:
         _completionStarted(false), _completionDone(false) {}
     SearchWin(const SearchWin&);
     ~SearchWin();
+    SearchWin& operator=(const SearchWin&) = delete;
 
     HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
     void startCompletion();

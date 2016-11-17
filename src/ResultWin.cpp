@@ -98,7 +98,7 @@ bool ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
     const char* pSrc = cmd->Result();
     const char* pEol;
 
-    while (true)
+    for(;;)
     {
         while (*pSrc == '\n' || *pSrc == '\r' || *pSrc == ' ' || *pSrc == '\t')
             ++pSrc;
@@ -148,7 +148,7 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 
     unsigned    previousBufLen;
 
-    while (true)
+    for(;;)
     {
         while (*pSrc == '\n' || *pSrc == '\r')
             ++pSrc;
@@ -1226,7 +1226,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
         HWND hWnd = GetFocus();
         if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
         {
-            const SHORT keyDownMask = (SHORT)(1 << (sizeof(SHORT) * 8 - 1));
+            const SHORT keyDownMask = (const SHORT)(1 << (sizeof(SHORT) * 8 - 1));
 
             const bool ctrl     = ((GetKeyState(VK_CONTROL) & keyDownMask) != 0);
             const bool alt      = ((GetKeyState(VK_MENU) & keyDownMask) != 0);

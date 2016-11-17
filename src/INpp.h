@@ -153,7 +153,7 @@ public:
         filePath.AutoFit();
     }
 
-    inline void GetFilePathFromBufID(int bufId, CPath& filePath) const
+    inline void GetFilePathFromBufID(LRESULT bufId, CPath& filePath) const
     {
         filePath.Resize(MAX_PATH);
         SendMessage(_nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, bufId, (LPARAM)filePath.C_str());

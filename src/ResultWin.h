@@ -111,6 +111,7 @@ private:
     {
         Tab(const CmdPtr_t& cmd);
         ~Tab() {}
+        Tab& operator=(const Tab&) = delete;
 
         inline bool operator==(const Tab& tab) const
         {

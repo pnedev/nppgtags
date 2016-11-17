@@ -65,6 +65,7 @@ private:
 
     CmdEngine(const CmdPtr_t& cmd, CompletionCB complCB);
     ~CmdEngine();
+    CmdEngine& operator=(const CmdEngine&) = delete;
 
     unsigned start();
     const TCHAR* getCmdLine() const;

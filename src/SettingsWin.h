@@ -58,6 +58,7 @@ private:
     {
         Tab(const DbHandle db = DbHandle(NULL));
         ~Tab();
+        Tab& operator=(const Tab&) = delete;
 
         DbHandle _db;
         DbConfig _cfg;
