@@ -8,6 +8,13 @@ You'll need GTags binaries for Win32 to use this plugin. Those are supplied with
 You can also download them from [GNU Global official website](http://www.gnu.org/software/global/global.html) - look for the Win32 port. Put GTags Win32 binaries in folder named *NppGTags*.
 
 
+**Build Status**
+======================
+
+AppVeyor `VS2013` and `VS2015`  [![Build status](https://ci.appveyor.com/api/projects/status/github/pnedev/nppgtags?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
+
+
+
 **Installation**
 ======================
 
