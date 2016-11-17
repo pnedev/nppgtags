@@ -1,11 +1,12 @@
 #include <windows.h>
 #include "resource.h"
 
+
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION    	VER_VERSION
 PRODUCTVERSION 	VER_VERSION
 FILEFLAGSMASK  	VS_FFI_FILEFLAGSMASK
-FILEFLAGS      	VER_PRERELEASE
+FILEFLAGS      	(VER_PRERELEASE | VER_DEBUG)
 FILEOS         	VOS_NT_WINDOWS32
 FILETYPE       	VFT_DLL
 FILESUBTYPE    	VFT2_UNKNOWN
@@ -20,7 +21,7 @@ BEGIN
             VALUE "InternalName",     VER_DLLFILENAME
             VALUE "LegalCopyright",   VER_COPYRIGHT
             VALUE "OriginalFilename", VER_DLLFILENAME
-            VALUE "ProductName",      VER_PLUGIN_NAME
+            VALUE "ProductName",      VER_PRODUCT_NAME
             VALUE "ProductVersion",   VER_VERSION_STR
         END
     END

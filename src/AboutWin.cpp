@@ -151,7 +151,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     str += VER_DESCRIPTION;
     str += _T("\n\nVersion: ");
     str += VER_VERSION_STR;
-#if (IS_PRERELEASE)
+#ifdef _PRERELEASE
     str += _T(" pre-release");
 #endif
     str += _T("\nBuild date: ");
