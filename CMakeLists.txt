@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 2.8)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
@@ -35,20 +35,21 @@ if (UNIX OR MINGW)
         "-s"
     )
 else (UNIX OR MINGW)
-    set (defs
-        -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
-        -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM
-    )
+    if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
+        set (defs
+            -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
+            -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM -D_WIN64
+        )
+    else ()
+        set (defs
+            -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
+            -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM
+        )
+    endif ()
 
     set (CMAKE_CXX_FLAGS
         "/EHsc /MP /W4"
     )
-
-    if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
-        set (CMAKE_RC_FLAGS
-            "/D_WIN64"
-        )
-    endif()
 endif (UNIX OR MINGW)
 
 set (project_rc_files
