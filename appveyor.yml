@@ -84,12 +84,12 @@ after_build:
     if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release Unicode") {
         Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    else if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug Unicode") {
+    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug Unicode") {
         Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    else if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release Unicode") {
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release Unicode") {
         Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    else if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug Unicode") {
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug Unicode") {
         Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
