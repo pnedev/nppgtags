@@ -1,8 +1,8 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.1)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
-if (MINGW)
+if (UNIX OR MINGW)
     set (CMAKE_SYSROOT "$ENV{HOME}/bin/cross")
 
     set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM  NEVER)
@@ -17,13 +17,13 @@ if (MINGW)
 
     set (win32_inc_dir ${CMAKE_SYSROOT}/${toolchain_prefix}/include)
     set (win32_lib_dir ${CMAKE_SYSROOT}/${toolchain_prefix}/lib)
-endif (MINGW)
+endif (UNIX OR MINGW)
 
 project (NppGTags)
 
-if (MINGW)
+if (UNIX OR MINGW)
     set (defs
-        -DDEVELOPMENT -DUNICODE -D_UNICODE -DMINGW_HAS_SECURE_API=1 -D_WIN32 -DWIN32
+        -DUNICODE -D_UNICODE -DMINGW_HAS_SECURE_API=1 -D_WIN32 -DWIN32
         -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
     )
 
@@ -34,7 +34,7 @@ if (MINGW)
     set (CMAKE_MODULE_LINKER_FLAGS
         "-s"
     )
-else (MINGW)
+else (UNIX OR MINGW)
     set (defs
         -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
         -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM
@@ -43,7 +43,13 @@ else (MINGW)
     set (CMAKE_CXX_FLAGS
         "/EHsc /MP /W4"
     )
-endif (MINGW)
+
+    if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
+        set (CMAKE_RC_FLAGS
+            "D_WIN64"
+        )
+    endif()
+endif (UNIX OR MINGW)
 
 set (project_rc_files
     src/nppgtags.rc
@@ -73,7 +79,7 @@ add_definitions (${defs})
 
 add_library (NppGTags MODULE ${project_rc_files} ${project_sources})
 
-if (MINGW)
+if (UNIX OR MINGW)
 
     include_directories (${win32_inc_dir})
 
@@ -88,6 +94,6 @@ if (MINGW)
         DESTINATION "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins"
         RENAME NppGTags.dll
     )
-else (MINGW)
+else (UNIX OR MINGW)
     target_link_libraries (NppGTags comctl32)
-endif (MINGW)
+endif (UNIX OR MINGW)
