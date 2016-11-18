@@ -11,8 +11,7 @@ You can also download them from [GNU Global official website](http://www.gnu.org
 **Build Status**
 ======================
 
-AppVeyor `VS2013` and `VS2015`  [![Build status](https://ci.appveyor.com/api/projects/status/github/pnedev/nppgtags?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
-
+AppVeyor `VS2013` and `VS2015`  [![Build status](https://ci.appveyor.com/api/projects/status/b4aam50a4q2vacd7?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
 
 
 **Installation**
@@ -83,9 +82,11 @@ Double-clicking or pressing *Enter*, *Tab* or *Space* will insert the selected a
 
 All **Find** commands will show Notepad++ docking window with the results.
 Each such command will place its results in a separate tab that will automatically become active.
-Clicking on another tab will show that command's results. You can also use the *Left* and *Right* arrow keys to switch between tabs.
+Clicking on another tab will show that command's results. You can also use the *Ctrl* + *Left* and *Ctrl* + *Right* arrow keys to switch between tabs.
 
 Double-clicking, hitting *Space* or *Enter* on search result line will take you to the source location. You can also do that by left-clicking on the highlighted searched word in the result line. Your currently edited document location will be saved - use **Go Back** command to visit it again. You can 'undo' the **Go Back** action by using **Go Forward** command.
+By using the mouse or the arrow keys you can move around result lines and you can trigger new searches directly from the results window
+(same rules about the searched string apply).
 
 Right clicking or hitting *ESC* will close the currently active search results tab.
 
