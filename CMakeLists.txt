@@ -46,7 +46,7 @@ else (UNIX OR MINGW)
 
     if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
         set (CMAKE_RC_FLAGS
-            "/D _WIN64"
+            "-D_WIN64"
         )
     endif()
 endif (UNIX OR MINGW)

@@ -62,6 +62,7 @@ before_build:
     }
     Write-Output "build_type: $build_type"
     Write-Output "build_config: $build_config"
+
 build_script:
 - ps: |
     cd c:\projects\nppgtags\
@@ -74,4 +75,25 @@ build_script:
     & cmake --build . --config $env:CONFIGURATION
     if ($LastExitCode -ne 0) {
         throw "Exec: $ErrorMessage"
+    }
+
+after_build:
+- ps: |
+    cd c:\projects\nppgtags\
+    $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
+
+    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release Unicode") {
+        Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
+    }
+
+    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug Unicode") {
+        Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
+    }
+
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release Unicode") {
+        Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
+    }
+
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug Unicode") {
+        Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
