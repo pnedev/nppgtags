@@ -81,15 +81,15 @@ after_build:
 - ps: |
     cd c:\projects\nppgtags\
     $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
-    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release Unicode") {
+    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release") {
         Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug Unicode") {
+    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug") {
         Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release Unicode") {
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release") {
         Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug Unicode") {
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug") {
         Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
