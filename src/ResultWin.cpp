@@ -797,6 +797,15 @@ void ResultWin::toggleFolding(int lineNum)
 /**
  *  \brief
  */
+void ResultWin::foldAll(int foldAction)
+{
+    sendSci(SCI_FOLDALL, foldAction);
+}
+
+
+/**
+ *  \brief
+ */
 void ResultWin::onStyleNeeded(SCNotification* notify)
 {
     if (_activeTab == NULL)
@@ -989,17 +998,24 @@ void ResultWin::onMarginClick(SCNotification* notify)
 {
     int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
 
-    if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-        lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-
-    if (lineNum > 0)
+    if (lineNum == 0)
     {
-        toggleFolding(lineNum);
+        foldAll(SC_FOLDACTION_TOGGLE);
     }
     else
     {
-        lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
-        sendSci(SCI_GOTOLINE, lineNum);
+        if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+            lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+
+        if (lineNum > 0)
+        {
+            toggleFolding(lineNum);
+        }
+        else
+        {
+            lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+            sendSci(SCI_GOTOLINE, lineNum);
+        }
     }
 }
 
@@ -1115,17 +1131,31 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
         return true;
 
         case VK_ADD:
-            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-            if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
-                toggleFolding(lineNum);
+            if (alt)
+            {
+                foldAll(SC_FOLDACTION_EXPAND);
+            }
+            else
+            {
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+                    lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+                if (lineNum > 0 && !sendSci(SCI_GETFOLDEXPANDED, lineNum))
+                    toggleFolding(lineNum);
+            }
         return true;
 
         case VK_SUBTRACT:
-            if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
-                lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
-            if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
-                toggleFolding(lineNum);
+            if (alt)
+            {
+                foldAll(SC_FOLDACTION_CONTRACT);
+            }
+            else
+            {
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
+                    lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
+                if (lineNum > 0 && sendSci(SCI_GETFOLDEXPANDED, lineNum))
+                    toggleFolding(lineNum);
+            }
         return true;
 
         default:;

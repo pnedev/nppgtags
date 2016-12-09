@@ -177,6 +177,7 @@ private:
 
     bool findString(const char* str, int* startPos, int* endPos, bool matchCase, bool wholeWord, bool regExp);
     void toggleFolding(int lineNum);
+    void foldAll(int foldAction);
     void onStyleNeeded(SCNotification* notify);
     void onHotspotClick(SCNotification* notify);
     void onDoubleClick(int pos);
