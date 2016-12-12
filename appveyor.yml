@@ -12,7 +12,7 @@ environment:
 
 platform:
     - x64
-    - Win32
+    - x86
 
 configuration:
     - Release
@@ -20,7 +20,7 @@ configuration:
 
 install:
     - if "%platform%"=="x64" set archi=amd64
-    - if "%platform%"=="Win32" set archi=x86
+    - if "%platform%"=="x86" set archi=x86
     - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
 
     - ps: |
@@ -32,7 +32,7 @@ install:
           mingw32-make --version
         }
 build:
-    parallel: true                  # enable MSBuild parallel builds
+    parallel: true      # enable MSBuild parallel builds
     verbosity: minimal
 
 before_build:
