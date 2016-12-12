@@ -43,7 +43,7 @@ before_build:
     {
         "v140_xp" {"Visual Studio 14 2015"}
         "v120_xp" {"Visual Studio 12 2013"}
-        "mingw-w64" { "MinGW Makefiles"}
+        "mingw-w64" {"MinGW Makefiles"}
     }
     #not applicable with MinGW Makefiles generator
     if ($env:PLATFORM -eq "x64" -and $env:PLATFORMTOOLSET -notmatch "mingw-w64")
@@ -83,41 +83,19 @@ after_build:
 - ps: |
     cd c:\projects\nppgtags\
 
-    $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
+    if ($env:PLATFORMTOOLSET -ne "mingw-w64")
+    {
+        $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
+        Push-AppveyorArtifact "_build\$env:CONFIGURATION\NppGTags.dll" -FileName "$NppGTagsFileName"
 
-    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug") {
-        Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
-    }
-
-    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug") {
-        Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
-    }
-
-    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release") {
-        if ($env:PLATFORMTOOLSET -eq "v120_xp" -and $env:APPVEYOR_REPO_TAG_NAME -ne "") {
-            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName NppGTags.dll
-            $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_x64.zip"
-            Remove-Item .\_build\Release\*.pdb
-            Copy-Item .\bin\NppGTags .\_build\Release\
-            7z a $ZipFileName .\_build\Release\*
-            Remove-Item .\_build\Release\NppGTags
-        }
-        else {
-            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
-        }
-    }
-
-    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release") {
-        if ($env:PLATFORMTOOLSET -eq "v120_xp" -and $env:APPVEYOR_REPO_TAG_NAME -ne "") {
-            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName NppGTags.dll
-            $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_x86.zip"
-            Remove-Item .\_build\Release\*.pdb
-            Copy-Item .\bin\NppGTags .\_build\Release\
-            7z a $ZipFileName .\_build\Release\*
-            Remove-Item .\_build\Release\NppGTags
-        }
-        else {
-            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
+        if ($env:CONFIGURATION -eq "Release" -and $env:APPVEYOR_REPO_TAG)
+        {
+            $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM.zip"
+            md deploy -Force | Out-Null
+            md deploy\NppGTags -Force | Out-Null
+            Copy-Item $NppGTagsFileName deploy\NppGTags.dll
+            Copy-Item bin\NppGTags\*.* deploy\NppGTags\
+            7z a $ZipFileName .\deploy\*
         }
     }
 

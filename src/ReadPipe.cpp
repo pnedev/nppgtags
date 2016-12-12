@@ -137,7 +137,7 @@ unsigned ReadPipe::thread()
     unsigned totalBytesRead = 0;
     unsigned chunkRemainingSize = 0;
 
-    while (1)
+    for (;;)
     {
         if (!chunkRemainingSize)
         {
