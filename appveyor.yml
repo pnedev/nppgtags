@@ -80,16 +80,56 @@ build_script:
 after_build:
 - ps: |
     cd c:\projects\nppgtags\
+
     $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
-    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release") {
-        Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
-    }
+
     if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Debug") {
         Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
-    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release") {
-        Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
-    }
+
     if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Debug") {
         Push-AppveyorArtifact "_build\Debug\NppGTags.dll" -FileName "$NppGTagsFileName"
     }
+
+    if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release") {
+        if ($env:PLATFORMTOOLSET -eq "v120_xp") {
+            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName NppGTags.dll
+            $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_x64.zip"
+            Remove-Item .\_build\Release\*.pdb
+            cp .\bin\NppGTags .\_build\Release\
+            7z a $ZipFileName .\_build\Release\*
+            Remove-Item .\_build\Release\NppGTags
+        }
+        else {
+            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
+        }
+    }
+
+    if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release") {
+        if ($env:PLATFORMTOOLSET -eq "v120_xp") {
+            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName NppGTags.dll
+            $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_x86.zip"
+            Remove-Item .\_build\Release\*.pdb
+            cp .\bin\NppGTags .\_build\Release\
+            7z a $ZipFileName .\_build\Release\*
+            Remove-Item .\_build\Release\NppGTags
+        }
+        else {
+            Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName "$NppGTagsFileName"
+        }
+    }
+
+artifacts:
+  - path: NppGTags_*.zip
+    name: releases
+
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: b9E1qivB5Vn1wX4kAT+TFE7JdNjx1CWznNFc1nylaBZxFguRRpe2WV908G8XRfw4 # your encrypted token from GitHub
+  artifact: /.NppGTags_*\.zip/ # upload all zip packages to release assets
+  draft: false
+  prerelease: false
+  on:
+    branch: master                 # release from master branch only
+    appveyor_repo_tag: true        # deploy on tag push only
