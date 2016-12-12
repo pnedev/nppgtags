@@ -1255,7 +1255,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
         HWND hWnd = GetFocus();
         if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
         {
-            SHORT keyDownMask = (1 << (sizeof(SHORT) * 8 - 1));
+            const unsigned keyDownMask = (1 << (sizeof(SHORT) * 8 - 1));
 
             const bool ctrl     = ((GetKeyState(VK_CONTROL) & keyDownMask) != 0);
             const bool alt      = ((GetKeyState(VK_MENU) & keyDownMask) != 0);
