@@ -496,7 +496,6 @@ void ResultWin::configScintilla()
     sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
     sendSci(SCI_USEPOPUP, false);
     sendSci(SCI_SETUNDOCOLLECTION, false);
-    sendSci(SCI_SETCURSOR, SC_CURSORNORMAL);
     sendSci(SCI_SETCARETSTYLE, CARETSTYLE_LINE);
     sendSci(SCI_SETCARETLINEVISIBLE, true);
     sendSci(SCI_SETCARETLINEVISIBLEALWAYS, true);
@@ -1256,7 +1255,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
         HWND hWnd = GetFocus();
         if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
         {
-            const SHORT keyDownMask = (const SHORT)(1 << (sizeof(SHORT) * 8 - 1));
+            const SHORT keyDownMask = static_cast<SHORT>(1 << (sizeof(SHORT) * 8 - 1));
 
             const bool ctrl     = ((GetKeyState(VK_CONTROL) & keyDownMask) != 0);
             const bool alt      = ((GetKeyState(VK_MENU) & keyDownMask) != 0);
@@ -1279,7 +1278,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                     }
                 }
 
-                if (RW->onKeyPress(wParam, alt))
+                if (RW->onKeyPress(static_cast<WORD>(wParam), alt))
                 {
                     return 1;
                 }
