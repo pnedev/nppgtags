@@ -1,6 +1,7 @@
 version: 4.2.1.{build}
 image: Visual Studio 2015
 
+clone_depth: 1
 
 environment:
   matrix:
@@ -31,6 +32,7 @@ install:
           mingw32-make --version
         }
 build:
+    parallel: true                  # enable MSBuild parallel builds
     verbosity: minimal
 
 before_build:
@@ -92,11 +94,11 @@ after_build:
     }
 
     if ($env:PLATFORM -eq "x64" -and $env:CONFIGURATION -eq "Release") {
-        if ($env:PLATFORMTOOLSET -eq "v120_xp") {
+        if ($env:PLATFORMTOOLSET -eq "v120_xp" -and $env:APPVEYOR_REPO_TAG_NAME -ne "") {
             Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName NppGTags.dll
             $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_x64.zip"
             Remove-Item .\_build\Release\*.pdb
-            cp .\bin\NppGTags .\_build\Release\
+            Copy-Item .\bin\NppGTags .\_build\Release\
             7z a $ZipFileName .\_build\Release\*
             Remove-Item .\_build\Release\NppGTags
         }
@@ -106,11 +108,11 @@ after_build:
     }
 
     if ($env:PLATFORM -eq "Win32" -and $env:CONFIGURATION -eq "Release") {
-        if ($env:PLATFORMTOOLSET -eq "v120_xp") {
+        if ($env:PLATFORMTOOLSET -eq "v120_xp" -and $env:APPVEYOR_REPO_TAG_NAME -ne "") {
             Push-AppveyorArtifact "_build\Release\NppGTags.dll" -FileName NppGTags.dll
             $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_x86.zip"
             Remove-Item .\_build\Release\*.pdb
-            cp .\bin\NppGTags .\_build\Release\
+            Copy-Item .\bin\NppGTags .\_build\Release\
             7z a $ZipFileName .\_build\Release\*
             Remove-Item .\_build\Release\NppGTags
         }
