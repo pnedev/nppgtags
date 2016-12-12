@@ -88,7 +88,7 @@ after_build:
         $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
         Push-AppveyorArtifact "_build\$env:CONFIGURATION\NppGTags.dll" -FileName "$NppGTagsFileName"
 
-        if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v120_xp" -and $env:CONFIGURATION -eq "Release")
+        if ($($env:APPVEYOR_REPO_TAG) -eq "false" -and $env:PLATFORMTOOLSET -eq "v120_xp" -and $env:CONFIGURATION -eq "Release")
         {
             $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM.zip"
             md deploy -Force | Out-Null
