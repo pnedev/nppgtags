@@ -82,7 +82,7 @@ Double-clicking or pressing *Enter*, *Tab* or *Space* will insert the selected a
 
 All **Find** commands will show Notepad++ docking window with the results.
 Each such command will place its results in a separate tab that will automatically become active.
-Clicking on another tab will show that command's results. You can also use the *Ctrl* + *Left* and *Ctrl* + *Right* arrow keys to switch between tabs.
+Clicking on another tab will show that command's results. You can also use the *Alt* + *Left* and *Alt* + *Right* arrow keys to switch between tabs.
 
 Double-clicking, hitting *Space* or *Enter* on search result line will take you to the source location. You can also do that by left-clicking on the highlighted searched word in the result line. Your currently edited document location will be saved - use **Go Back** command to visit it again. You can 'undo' the **Go Back** action by using **Go Forward** command.
 By using the mouse or the arrow keys you can move around result lines and you can trigger new searches directly from the results window
@@ -90,7 +90,9 @@ By using the mouse or the arrow keys you can move around result lines and you ca
 
 Right clicking or hitting *ESC* will close the currently active search results tab.
 
-Left-clicking in the margin area ([+] / [-] signs) or pressing *'+'* / *'-'* keys will unfold / fold lines. To fold a line it is not necessary to click exactly the [-] sign in the margin - clicking in any sub-line's margin will do.
+Left-clicking in the margin area ([+] / [-] signs) or pressing *'+'* / *'-'* keys will unfold / fold lines. To fold a line it is not necessary to click exactly the [-] sign in the margin - clicking in any sub-line's margin will do. Pressing *Alt* + *'+'* / *'-'* keys will unfold / fold all lines.
+You can accomplish that also by double-clicking or hitting *Space* or *Enter* on the search results head line - this will toggle all lines fold / unfold state.
+Clicking in head line margin or pressing *'+'* / *'-'* keys while head line is the active one will do the same.
 
 The results window is Scintilla window actually (same as Notepad++). This means that you can use *Ctrl* + mouse scroll to zoom in / out or you can select text and copy it (*Ctrl* + *'C'*).
 
