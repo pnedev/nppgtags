@@ -1,6 +1,7 @@
 What's new in v4.3.0
 =======================
 
+- Updated for 64-bit Notepad++ support (please note that GTags binaries are still only 32-bit).
 - Triggering new search is now also possible directly from previous search results window tab -
     move the cursor in the results window using the arrow keys (use Shift to select) or using the mouse.
 - Fold / Unfold all result lines implemented - use result head line margin click (or Enter / Space in the head line) or
