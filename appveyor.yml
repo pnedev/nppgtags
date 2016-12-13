@@ -1,4 +1,4 @@
-version: 4.3.0.{build}
+version: 4.3.0
 image: Visual Studio 2015
 
 clone_depth: 1
@@ -105,8 +105,6 @@ artifacts:
     name: releases
 
 deploy:
-    tag: v$(appveyor_build_version)
-    release: NppGTags v$(appveyor_build_version)
     provider: GitHub
     description: ''
     auth_token:
