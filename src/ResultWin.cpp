@@ -1016,7 +1016,12 @@ void ResultWin::onDoubleClick(int pos)
         }
     }
 
-    if (lineNum > 0)
+    if (lineNum == 0)
+    {
+        sendSci(SCI_GOTOLINE, 0); // Clear double click selection
+        foldAll(SC_FOLDACTION_TOGGLE);
+    }
+    else if (lineNum > 0)
     {
         if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
             toggleFolding(lineNum);
@@ -1167,7 +1172,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
         return true;
 
         case VK_ADD:
-            if (alt)
+            if (alt || lineNum == 0)
             {
                 foldAll(SC_FOLDACTION_EXPAND);
             }
@@ -1181,8 +1186,10 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
         return true;
 
         case VK_SUBTRACT:
-            if (alt)
+            if (alt || lineNum == 0)
             {
+                if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG) && lineNum)
+                    sendSci(SCI_GOTOLINE, sendSci(SCI_GETFOLDPARENT, lineNum));
                 foldAll(SC_FOLDACTION_CONTRACT);
             }
             else
