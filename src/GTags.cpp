@@ -117,11 +117,15 @@ CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
 
     HWND nppHSci = npp.ReadSciHandle();
 
-    if (npp.IsSelectionVertical())
-        return CText();
-
     if (hSci)
         npp.SetSciHandle(hSci);
+
+    if (npp.IsSelectionVertical())
+    {
+        if (hSci)
+            npp.SetSciHandle(nppHSci);
+        return CText();
+    }
 
     CTextA tagA;
 

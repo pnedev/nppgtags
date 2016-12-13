@@ -180,6 +180,7 @@ private:
     void toggleFolding(int lineNum);
     void foldAll(int foldAction);
     void onStyleNeeded(SCNotification* notify);
+    void onNewPosition();
     void onHotspotClick(SCNotification* notify);
     void onDoubleClick(int pos);
     void onMarginClick(SCNotification* notify);

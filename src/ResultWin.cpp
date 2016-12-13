@@ -943,6 +943,22 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
 /**
  *  \brief
  */
+void ResultWin::onNewPosition()
+{
+    const int pos = sendSci(SCI_GETCURRENTPOS);
+
+    if (pos == sendSci(SCI_POSITIONAFTER, pos)) // end of document
+    {
+        const int foldLine = sendSci(SCI_GETFOLDPARENT, sendSci(SCI_LINEFROMPOSITION, pos));
+        if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
+            sendSci(SCI_GOTOLINE, foldLine);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void ResultWin::onHotspotClick(SCNotification* notify)
 {
     const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
@@ -1331,6 +1347,11 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             {
                 case SCN_STYLENEEDED:
                     RW->onStyleNeeded((SCNotification*)lParam);
+                return 0;
+
+                case SCN_UPDATEUI:
+                    if (((SCNotification*)lParam)->updated & SC_UPDATE_SELECTION)
+                        RW->onNewPosition();
                 return 0;
 
                 case SCN_HOTSPOTRELEASECLICK:
