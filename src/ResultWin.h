@@ -27,7 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include <vector>
+#include <unordered_set>
 #include "Scintilla.h"
 #include "Common.h"
 #include "Cmd.h"
@@ -127,12 +127,13 @@ private:
         int             _firstVisibleLine;
         ParserPtr_t     _parser;
 
-        void SetFolded(int lineNum);
-        void ClearFolded(int lineNum);
-        bool IsFolded(int lineNum);
+        inline void SetFolded(int lineNum);
+        inline void SetAllFolded();
+        inline void ClearFolded(int lineNum);
+        inline bool IsFolded(int lineNum);
 
     private:
-        std::vector<int> _expandedLines;
+        std::unordered_set<int> _expandedLines;
     };
 
 

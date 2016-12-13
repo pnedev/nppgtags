@@ -26,7 +26,7 @@
 
 
 #include <string>
-#include <map>
+#include <unordered_set>
 #include <functional>
 
 
@@ -49,17 +49,12 @@ public:
         std::basic_string<CharType> str(ptr);
         std::hash<std::basic_string<CharType>> hash;
 
-        std::pair<map_t::iterator, bool> ret = _map.insert(elem_t(hash(str), 0));
-
-        return ret.second;
+        return _set.insert(hash(str)).second;
     }
 
 private:
     StrUniquenessChecker(const StrUniquenessChecker&) = delete;
     const StrUniquenessChecker& operator=(const StrUniquenessChecker&) = delete;
 
-    typedef std::pair<std::size_t, char>  elem_t;
-    typedef std::map<std::size_t, char>   map_t;
-
-    map_t _map;
+    std::unordered_set<std::size_t> _set;
 };

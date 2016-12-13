@@ -217,40 +217,36 @@ ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
 /**
  *  \brief
  */
-void ResultWin::Tab::SetFolded(int lineNum)
+inline void ResultWin::Tab::SetFolded(int lineNum)
 {
-    for (std::vector<int>::iterator i = _expandedLines.begin(); i != _expandedLines.end(); ++i)
-    {
-        if (*i == lineNum)
-        {
-            _expandedLines.erase(i);
-            break;
-        }
-    }
+    _expandedLines.erase(lineNum);
 }
 
 
 /**
  *  \brief
  */
-void ResultWin::Tab::ClearFolded(int lineNum)
+inline void ResultWin::Tab::SetAllFolded()
 {
-    _expandedLines.push_back(lineNum);
+    _expandedLines.clear();
 }
 
 
 /**
  *  \brief
  */
-bool ResultWin::Tab::IsFolded(int lineNum)
+inline void ResultWin::Tab::ClearFolded(int lineNum)
 {
-    const int size = _expandedLines.size();
+    _expandedLines.insert(lineNum);
+}
 
-    for (int i = 0; i < size; ++i)
-        if (_expandedLines[i] == lineNum)
-            return false;
 
-    return true;
+/**
+ *  \brief
+ */
+inline bool ResultWin::Tab::IsFolded(int lineNum)
+{
+    return (_expandedLines.find(lineNum) == _expandedLines.end());
 }
 
 
@@ -786,6 +782,7 @@ void ResultWin::toggleFolding(int lineNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
     sendSci(SCI_TOGGLEFOLD, lineNum);
+
     if (sendSci(SCI_GETFOLDEXPANDED, lineNum))
         _activeTab->ClearFolded(lineNum);
     else
@@ -799,6 +796,29 @@ void ResultWin::toggleFolding(int lineNum)
 void ResultWin::foldAll(int foldAction)
 {
     sendSci(SCI_FOLDALL, foldAction);
+
+    const int linesCount = sendSci(SCI_GETLINECOUNT);
+
+    int lineNum = 1;
+    for (; lineNum < linesCount && !(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG); ++lineNum);
+
+    if (lineNum == linesCount)
+        return;
+
+    if (sendSci(SCI_GETFOLDEXPANDED, lineNum))
+    {
+        for (; lineNum < linesCount; ++lineNum)
+        {
+            if (sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG)
+            {
+                _activeTab->ClearFolded(lineNum);
+            }
+        }
+    }
+    else
+    {
+        _activeTab->SetAllFolded();
+    }
 }
 
 
@@ -967,7 +987,7 @@ void ResultWin::onDoubleClick(int pos)
         if (pos == sendSci(SCI_POSITIONAFTER, pos)) // end of document
         {
             lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
-            int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+            const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
             if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
             {
                 lineNum = foldLine;
@@ -1033,7 +1053,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 {
-                    int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                         lineNum = foldLine;
                 }
@@ -1047,10 +1067,11 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 {
-                    int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                     {
-                        int nextFold = sendSci(SCI_GETLASTCHILD, foldLine, sendSci(SCI_GETFOLDLEVEL, foldLine)) + 1;
+                        const int nextFold =
+                                sendSci(SCI_GETLASTCHILD, foldLine, sendSci(SCI_GETFOLDLEVEL, foldLine)) + 1;
                         lineNum = (nextFold < sendSci(SCI_GETLINECOUNT)) ? nextFold : foldLine;
                     }
                 }
@@ -1099,7 +1120,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 
         case VK_PRIOR:
         {
-            int linesOnScreen = sendSci(SCI_LINESONSCREEN);
+            const int linesOnScreen = sendSci(SCI_LINESONSCREEN);
             sendSci(SCI_LINESCROLL, 0, -linesOnScreen);
             lineNum = sendSci(SCI_DOCLINEFROMVISIBLE, sendSci(SCI_GETFIRSTVISIBLELINE));
             sendSci(SCI_GOTOLINE, lineNum);
@@ -1108,10 +1129,10 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 
         case VK_NEXT:
         {
-            int linesOnScreen       = sendSci(SCI_LINESONSCREEN);
-            int firstVisibleLine    = sendSci(SCI_GETFIRSTVISIBLELINE);
+            const int linesOnScreen     = sendSci(SCI_LINESONSCREEN);
+            const int firstVisibleLine  = sendSci(SCI_GETFIRSTVISIBLELINE);
             sendSci(SCI_LINESCROLL, 0, linesOnScreen);
-            int newFirstVisible     = sendSci(SCI_GETFIRSTVISIBLELINE);
+            const int newFirstVisible   = sendSci(SCI_GETFIRSTVISIBLELINE);
 
             if (newFirstVisible - firstVisibleLine >= linesOnScreen)
             {
@@ -1120,7 +1141,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
             else
             {
                 lineNum = sendSci(SCI_GETLINECOUNT) - 1;
-                int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                 if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                     lineNum = foldLine;
             }
