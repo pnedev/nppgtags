@@ -1,4 +1,4 @@
-version: 4.2.1.{build}
+version: Build {build}
 image: Visual Studio 2015
 
 clone_depth: 1
@@ -8,7 +8,6 @@ environment:
     - PlatformToolset: v140_xp
     - PlatformToolset: v120_xp
     - PlatformToolset: mingw-w64
-
 
 platform:
     - x64
@@ -106,12 +105,15 @@ artifacts:
     name: releases
 
 deploy:
-  provider: GitHub
-  auth_token:
-    secure: b9E1qivB5Vn1wX4kAT+TFE7JdNjx1CWznNFc1nylaBZxFguRRpe2WV908G8XRfw4 # your encrypted token from GitHub
-  artifact: /.NppGTags_*\.zip/ # upload all zip packages to release assets
-  draft: false
-  prerelease: false
-  on:
-    branch: master                 # release from master branch only
-    appveyor_repo_tag: true        # deploy on tag push only
+    tag: $($env:APPVEYOR_REPO_TAG_NAME)
+    release: NppGTags $($env:APPVEYOR_REPO_TAG_NAME)
+    provider: GitHub
+    description: ''
+    auth_token:
+        secure: b9E1qivB5Vn1wX4kAT+TFE7JdNjx1CWznNFc1nylaBZxFguRRpe2WV908G8XRfw4 # your encrypted token from GitHub
+    artifact: /.NppGTags_*\.zip/ # upload all zip packages to release assets
+    draft: false
+    prerelease: false
+    on:
+        branch: master                 # release from master branch only
+        appveyor_repo_tag: true        # deploy on tag push only
