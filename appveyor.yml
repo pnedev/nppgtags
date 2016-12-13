@@ -1,4 +1,4 @@
-version: 4.3.0
+version: 4.3.0.{Build}
 image: Visual Studio 2015
 
 clone_depth: 1
