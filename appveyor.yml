@@ -1,13 +1,13 @@
-version: Build {build}
+version: 4.3.0.{build}
 image: Visual Studio 2015
 
 clone_depth: 1
 
 environment:
-  matrix:
-    - PlatformToolset: v140_xp
-    - PlatformToolset: v120_xp
-    - PlatformToolset: mingw-w64
+    matrix:
+        - PlatformToolset: v140_xp
+        - PlatformToolset: v120_xp
+        - PlatformToolset: mingw-w64
 
 platform:
     - x64
@@ -24,11 +24,11 @@ install:
 
     - ps: |
         if ($env:PLATFORMTOOLSET -match "mingw-w64") {
-          $env:Path += ";C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin"
-          $env:Path += ";C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\i686-w64-mingw32\lib"
-          $env:Path = $env:Path.Replace('C:\Program Files\Git\usr\bin;','')
-          g++ --version
-          mingw32-make --version
+            $env:Path += ";C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin"
+            $env:Path += ";C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\i686-w64-mingw32\lib"
+            $env:Path = $env:Path.Replace('C:\Program Files\Git\usr\bin;','')
+            g++ --version
+            mingw32-make --version
         }
 build:
     parallel: true      # enable MSBuild parallel builds
@@ -105,8 +105,8 @@ artifacts:
     name: releases
 
 deploy:
-    tag: $($env:APPVEYOR_REPO_TAG_NAME)
-    release: NppGTags $($env:APPVEYOR_REPO_TAG_NAME)
+    tag: v$(appveyor_build_version)
+    release: NppGTags v$(appveyor_build_version)
     provider: GitHub
     description: ''
     auth_token:
@@ -114,6 +114,8 @@ deploy:
     artifact: /.NppGTags_*\.zip/ # upload all zip packages to release assets
     draft: false
     prerelease: false
+    force_update: true
     on:
-        branch: master                 # release from master branch only
-        appveyor_repo_tag: true        # deploy on tag push only
+        appveyor_repo_tag: true     # deploy on tag push only
+        PlatformToolset: v120_xp
+        configuration: Release
