@@ -1189,7 +1189,11 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
             if (alt || lineNum == 0)
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG) && lineNum)
-                    sendSci(SCI_GOTOLINE, sendSci(SCI_GETFOLDPARENT, lineNum));
+                {
+                    const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    if (foldLine > 0)
+                        sendSci(SCI_GOTOLINE, foldLine);
+                }
                 foldAll(SC_FOLDACTION_CONTRACT);
             }
             else
