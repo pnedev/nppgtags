@@ -1,8 +1,6 @@
 version: Build {Build}
 image: Visual Studio 2015
 
-clone_depth: 1
-
 environment:
     matrix:
         - PlatformToolset: v140_xp
@@ -31,7 +29,7 @@ install:
             mingw32-make --version
         }
 build:
-    parallel: true      # enable MSBuild parallel builds
+    parallel: true
     verbosity: minimal
 
 before_build:
@@ -44,12 +42,12 @@ before_build:
         "v120_xp" {"Visual Studio 12 2013"}
         "mingw-w64" {"MinGW Makefiles"}
     }
-    #not applicable with MinGW Makefiles generator
+    # not applicable with MinGW Makefiles generator
     if ($env:PLATFORM -eq "x64" -and $env:PLATFORMTOOLSET -notmatch "mingw-w64")
     {
         $generator = "$generator Win64"
     }
-    #cmake build type, depended on the used generator, see https://cmake.org/cmake/help/v3.6/variable/CMAKE_BUILD_TYPE.html#variable:CMAKE_BUILD_TYPE
+    # cmake build type, depended on the used generator, see https://cmake.org/cmake/help/v3.6/variable/CMAKE_BUILD_TYPE.html#variable:CMAKE_BUILD_TYPE
     if ($env:PLATFORMTOOLSET -match "mingw-w64")
     {
         $build_type = "-DCMAKE_BUILD_TYPE=$env:CONFIGURATION"
@@ -57,7 +55,7 @@ before_build:
     }
     else
     {
-        #seems vs build always needs also the debug config, choose via the config option to the build command
+        # seems vs build always needs also the debug config, choose via the config option to the build command
         $build_type = "-DCMAKE_CONFIGURATION_TYPES=""Debug;Release"" "
         $build_config = "--config $env:CONFIGURATION"
     }
@@ -108,12 +106,12 @@ deploy:
     provider: GitHub
     description: ''
     auth_token:
-        secure: b9E1qivB5Vn1wX4kAT+TFE7JdNjx1CWznNFc1nylaBZxFguRRpe2WV908G8XRfw4 # your encrypted token from GitHub
-    artifact: NppGTags_*.zip # upload all zip packages to release assets
+        secure: b9E1qivB5Vn1wX4kAT+TFE7JdNjx1CWznNFc1nylaBZxFguRRpe2WV908G8XRfw4
+    artifact: releases
     draft: false
     prerelease: false
     force_update: true
     on:
-        appveyor_repo_tag: true     # deploy on tag push only
+        appveyor_repo_tag: true
         PlatformToolset: v120_xp
         configuration: Release
