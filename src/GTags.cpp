@@ -24,6 +24,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <objbase.h>
 #include <memory>
 #include "Common.h"
 #include "INpp.h"
@@ -60,7 +61,8 @@ const TCHAR cSearchOther[]      = _T("Search in Other Files");
 const TCHAR cVersion[]          = _T("About");
 
 
-std::unique_ptr<CPath> ChangedFile;
+std::unique_ptr<CPath>  ChangedFile;
+bool                    DeInitCOM = false;
 
 
 /**
@@ -871,6 +873,9 @@ void PluginInit()
     UIFontName = font;
     UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
 
+    const HRESULT coInitRes = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    DeInitCOM = (coInitRes == S_OK || coInitRes == S_FALSE) ? true : false;
+
     ActivityWin::Register();
     SearchWin::Register();
     AutoCompleteWin::Register();
@@ -898,6 +903,12 @@ void PluginDeInit()
     SearchWin::Unregister();
     AutoCompleteWin::Unregister();
     ResultWin::Unregister();
+
+    if (DeInitCOM)
+    {
+        DeInitCOM = false;
+        CoUninitialize();
+    }
 
     HMod = NULL;
 }

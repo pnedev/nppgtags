@@ -24,6 +24,7 @@
 
 #include "Common.h"
 #include <shlobj.h>
+#include <objbase.h>
 
 
 namespace
@@ -53,7 +54,7 @@ bool Tools::BrowseForFolder(HWND hOwnerWin, CPath& path)
     bi.hwndOwner        = hOwnerWin;
     bi.pszDisplayName   = tmp;
     bi.lpszTitle        = _T("Select the database root (indexed recursively)");
-    bi.ulFlags          = BIF_RETURNONLYFSDIRS;
+    bi.ulFlags          = BIF_RETURNONLYFSDIRS | BIF_USENEWUI | BIF_NONEWFOLDERBUTTON;
     bi.lpfn             = browseFolderCB;
 
     if (!path.IsEmpty() && path.Exists())
@@ -64,13 +65,7 @@ bool Tools::BrowseForFolder(HWND hOwnerWin, CPath& path)
         return false;
 
     SHGetPathFromIDList(pidl, tmp);
-
-    IMalloc* imalloc = NULL;
-    if (SUCCEEDED(SHGetMalloc(&imalloc)))
-    {
-        imalloc->Free(pidl);
-        imalloc->Release();
-    }
+    CoTaskMemFree(pidl);
 
     path = tmp;
     path += _T("\\");
