@@ -12,7 +12,7 @@
 #define VER_DESCRIPTION     _T("GTags plugin for Notepad++\0")
 
 #define VER_AUTHOR          _T("Pavel Nedev\0")
-#define VER_COPYRIGHT       _T("Copyright (C) 2014-2016 Pavel Nedev\0")
+#define VER_COPYRIGHT       _T("Copyright (C) 2014-2017 Pavel Nedev\0")
 #define VER_URL             _T("https://github.com/pnedev/nppgtags\0")
 
 #define VER_DLLFILENAME     PLUGIN_NAME _T(".dll\0")
