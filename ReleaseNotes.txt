@@ -1,3 +1,9 @@
+What's new in v4.3.1
+=======================
+
+- This is a bug fix release - Fixes possible problems on DB creation when the user selects his project's folder.
+
+
 What's new in v4.3.0
 =======================
 
