@@ -488,6 +488,8 @@ void ResultWin::setStyle(int style, COLORREF fore, COLORREF back, bool bold, boo
  */
 void ResultWin::configScintilla()
 {
+    sendSci(SCI_SETBUFFEREDDRAW, false);
+
     sendSci(SCI_SETCODEPAGE, SC_CP_UTF8);
     sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
     sendSci(SCI_USEPOPUP, false);
