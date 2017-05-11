@@ -31,6 +31,8 @@
 #include "DocLocation.h"
 #include "ActivityWin.h"
 #include "Cmd.h"
+#include <windowsx.h>
+#include <richedit.h>
 #include <commctrl.h>
 #include <vector>
 #include "Common.h"
@@ -60,7 +62,11 @@ enum SciFoldLevels_t
 namespace GTags
 {
 
-const TCHAR ResultWin::cClassName[]   = _T("ResultWin");
+const TCHAR ResultWin::cClassName[]         = _T("ResultWin");
+const TCHAR ResultWin::cSearchClassName[]   = _T("ResultSearchWin");
+const int ResultWin::cSearchBkgndColor      = COLOR_INFOBK;
+const unsigned ResultWin::cSearchFontSize   = 10;
+const int ResultWin::cSearchWidth           = 510;
 
 
 ResultWin* ResultWin::RW = NULL;
@@ -268,6 +274,12 @@ HWND ResultWin::Register()
 
     RegisterClass(&wc);
 
+    wc.lpfnWndProc      = searchWndProc;
+    wc.hbrBackground    = GetSysColorBrush(COLOR_BTNFACE);
+    wc.lpszClassName    = cSearchClassName;
+
+    RegisterClass(&wc);
+
     INITCOMMONCONTROLSEX icex   = {0};
     icex.dwSize                 = sizeof(icex);
     icex.dwICC                  = ICC_STANDARD_CLASSES;
@@ -313,6 +325,7 @@ void ResultWin::Unregister()
     }
 
     UnregisterClass(cClassName, HMod);
+    UnregisterClass(cSearchClassName, HMod);
 }
 
 
@@ -536,14 +549,11 @@ HWND ResultWin::composeWindow()
 {
     INpp& npp = INpp::Get();
     HWND hOwner = npp.GetHandle();
-    RECT win;
-    GetWindowRect(hOwner, &win);
 
     DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX | WS_CLIPCHILDREN;
 
     _hWnd = CreateWindow(cClassName, cPluginName, style,
-            win.left, win.top, win.right - win.left, win.bottom - win.top,
-            hOwner, NULL, HMod, this);
+            0, 0, 10, 10, hOwner, NULL, HMod, this);
     if (_hWnd == NULL)
         return NULL;
 
@@ -562,21 +572,152 @@ HWND ResultWin::composeWindow()
         return NULL;
     }
 
-    GetClientRect(_hWnd, &win);
-
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
-            0, 0, win.right - win.left, win.bottom - win.top,
-            _hWnd, NULL, HMod, NULL);
-
-    TabCtrl_AdjustRect(_hTab, FALSE, &win);
-    MoveWindow(_hSci, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
+            0, 0, 10, 10, _hWnd, NULL, HMod, NULL);
 
     configScintilla();
 
     ShowWindow(_hSci, SW_SHOWNORMAL);
 
     return _hWnd;
+}
+
+
+/**
+ *  \brief
+ */
+HWND ResultWin::createSearchWindow()
+{
+    if (_hSearch)
+    {
+        Edit_SetSel(_hSearchTxt, 0, -1);
+        return _hSearch;
+    }
+
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
+    HDC hdc = GetWindowDC(_hWnd);
+
+    ncm.lfMessageFont.lfHeight = -MulDiv(cSearchFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    ncm.lfMenuFont.lfHeight = -MulDiv(cSearchFontSize - 2, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+
+    _hSearchFont = CreateFontIndirect(&ncm.lfMessageFont);
+    _hBtnFont = CreateFontIndirect(&ncm.lfMenuFont);
+
+    TEXTMETRIC tm;
+    GetTextMetrics(hdc, &tm);
+
+    int searchHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
+    const int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 2;
+
+    ReleaseDC(_hWnd, hdc);
+
+    DWORD styleTxtEx    = WS_EX_CLIENTEDGE;
+    DWORD styleTxt      = WS_CHILD | WS_VISIBLE;
+
+    RECT win { 0, 0, cSearchWidth, searchHeight };
+
+    AdjustWindowRectEx(&win, styleTxt, FALSE, styleTxtEx);
+
+    searchHeight = win.bottom - win.top;
+
+    DWORD style = WS_POPUP | WS_BORDER;
+
+    win = Tools::GetWinRect(_hWnd, 0, style, win.right - win.left + 1, searchHeight + btnHeight);
+
+    RECT ownerWin;
+    GetWindowRect(_hWnd, &ownerWin);
+
+    _hSearch = CreateWindow(cSearchClassName, cPluginName, style,
+            ownerWin.right - (win.right - win.left) -
+            GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CXFIXEDFRAME) - GetSystemMetrics(SM_CXVSCROLL),
+            ownerWin.top +
+            GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYFIXEDFRAME) + GetSystemMetrics(SM_CYSIZE),
+            win.right - win.left, win.bottom - win.top,
+            _hWnd, NULL, HMod, this);
+    if (_hSearch == NULL)
+        return NULL;
+
+    GetClientRect(_hSearch, &win);
+
+    int btnWidth = (win.right - win.left - 110) / 4;
+
+    _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            1, 0, btnWidth, btnHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    _hMC = CreateWindowEx(0, _T("BUTTON"), _T("MatchCase"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            btnWidth + 1, 0, btnWidth, btnHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    _hWW = CreateWindowEx(0, _T("BUTTON"), _T("WholeWord"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            2 * btnWidth + 1, 0, btnWidth, btnHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    _hUp = CreateWindowEx(0, _T("BUTTON"), _T("Up"),
+            WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
+            3 * btnWidth + 1, 0, 50, btnHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    _hDown = CreateWindowEx(0, _T("BUTTON"), _T("Down"),
+            WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
+            3 * btnWidth + 51, 0, 50, btnHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    _hFind = CreateWindowEx(0, _T("BUTTON"), _T("Find"),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            win.right - btnWidth, 0, btnWidth, btnHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    if (_hBtnFont)
+    {
+        SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hWW, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hUp, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hDown, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hFind, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+    }
+
+    Button_SetCheck(_hRE, _lastRE ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hMC, _lastMC ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hWW, _lastWW ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hUp, _searchUp ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hDown, !_searchUp ? BST_CHECKED : BST_UNCHECKED);
+
+    _hSearchTxt = CreateWindowEx(styleTxtEx, RICHEDIT_CLASS, NULL, styleTxt,
+            0, btnHeight, win.right - win.left, searchHeight,
+            _hSearch, NULL, HMod, NULL);
+
+    SendMessage(_hSearchTxt, EM_SETBKGNDCOLOR, 0, GetSysColor(cSearchBkgndColor));
+
+    if (_hSearchFont)
+        SendMessage(_hSearchTxt, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+
+    CHARFORMAT fmt  = {0};
+    fmt.cbSize      = sizeof(fmt);
+    fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
+    fmt.dwEffects   = CFE_AUTOCOLOR;
+    fmt.yHeight     = cSearchFontSize * 20;
+    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
+
+    SendMessage(_hSearchTxt, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+
+    if (_lastSearchTxt.Len())
+    {
+        Edit_SetText(_hSearchTxt, _lastSearchTxt.C_str());
+        Edit_SetSel(_hSearchTxt, 0, -1);
+    }
+
+    ShowWindow(_hSearch, SW_SHOWNORMAL);
+
+    return _hSearch;
 }
 
 
@@ -598,6 +739,9 @@ void ResultWin::showWindow()
  */
 void ResultWin::hideWindow()
 {
+    if (_hSearch)
+        SendMessage(_hSearch, WM_CLOSE, 0, 0);
+
     if (_hKeyHook)
     {
         UnhookWindowsHookEx(_hKeyHook);
@@ -1290,6 +1434,104 @@ void ResultWin::onResize(int width, int height)
     MoveWindow(_hTab, 0, 0, width, height, TRUE);
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
     MoveWindow(_hSci, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
+
+    onMove();
+}
+
+
+/**
+ *  \brief
+ */
+void ResultWin::onMove()
+{
+    if (_hSearch)
+    {
+        RECT win;
+        GetWindowRect(_hSearch, &win);
+
+        RECT ownerWin;
+        GetWindowRect(_hWnd, &ownerWin);
+
+        MoveWindow(_hSearch,
+                ownerWin.right - (win.right - win.left) -
+                GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CXFIXEDFRAME) - GetSystemMetrics(SM_CXVSCROLL),
+                ownerWin.top +
+                GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYFIXEDFRAME) + GetSystemMetrics(SM_CYSIZE),
+                win.right - win.left, win.bottom - win.top, TRUE);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void ResultWin::onSearch(bool reverseDir, bool keepFocus)
+{
+    if (_hSearch)
+    {
+        _lastRE = (Button_GetCheck(_hRE) == BST_CHECKED);
+        _lastMC = (Button_GetCheck(_hMC) == BST_CHECKED);
+        _lastWW = (Button_GetCheck(_hWW) == BST_CHECKED);
+        _searchUp = (Button_GetCheck(_hUp) == BST_CHECKED);
+
+        int txtLen = Edit_GetTextLength(_hSearchTxt);
+        if (txtLen == 0)
+        {
+            SendMessage(_hSearch, WM_CLOSE, 0, 0);
+            SetFocus(_hSci);
+            return;
+        }
+
+        _lastSearchTxt.Resize(txtLen);
+        Edit_GetText(_hSearchTxt, _lastSearchTxt.C_str(), _lastSearchTxt.Size());
+
+        if (!keepFocus)
+            SetFocus(_hSci);
+    }
+    else if (_lastSearchTxt.Len() == 0)
+    {
+        return;
+    }
+
+    const bool searchUp = reverseDir ? !_searchUp : _searchUp;
+
+    CTextA txt(_lastSearchTxt.C_str());
+
+    const int docEnd = sendSci(SCI_GETLENGTH);
+
+    int startPos = sendSci(SCI_GETCURRENTPOS);
+    int endPos = docEnd;
+
+    if (searchUp)
+    {
+        if (startPos)
+            startPos -= 1;
+        else
+            startPos = docEnd;
+
+        endPos = 0;
+    }
+
+    if (!findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE) &&
+        ((!searchUp && startPos) || (searchUp && startPos != docEnd)))
+    {
+        startPos = searchUp ? docEnd : 0;
+
+        if (!findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE))
+            return;
+
+        FLASHWINFO fi {0};
+        fi.cbSize       = sizeof(fi);
+        fi.hwnd         = INpp::Get().GetHandle();
+        fi.dwFlags      = FLASHW_ALL;
+        fi.uCount       = 3;
+        fi.dwTimeout    = 100;
+
+        FlashWindowEx(&fi);
+    }
+
+    sendSci(SCI_SETSEL, startPos, endPos);
+    sendSci(SCI_ENSUREVISIBLEENFORCEPOLICY, sendSci(SCI_LINEFROMPOSITION, startPos));
 }
 
 
@@ -1301,6 +1543,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
     if (code >= 0)
     {
         HWND hWnd = GetFocus();
+
         if (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd))
         {
             const unsigned keyDownMask = (1 << (sizeof(SHORT) * 8 - 1));
@@ -1309,25 +1552,77 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
             const bool alt      = ((GetKeyState(VK_MENU) & keyDownMask) != 0);
             const bool shift    = ((GetKeyState(VK_SHIFT) & keyDownMask) != 0);
 
-            // Key is pressed and no CTRL or SHIFT
-            if (!(lParam & (1 << 31)) && !ctrl && !shift)
+            // Key is pressed
+            if (!(lParam & (1 << 31)))
             {
-                if (!alt)
+                if (!ctrl)
                 {
-                    if (wParam == VK_ESCAPE)
+                    if (!alt)
                     {
-                        RW->onCloseTab();
-                        return 1;
+                        if ((wParam == VK_RETURN && RW->_hSearch) || wParam == VK_F3)
+                        {
+                            RW->onSearch(shift);
+                            return 1;
+                        }
+
+                        if (!shift)
+                        {
+                            if (wParam == VK_ESCAPE)
+                            {
+                                if (RW->_hSearch)
+                                {
+                                    SendMessage(RW->_hSearch, WM_CLOSE, 0, 0);
+                                    SetFocus(RW->_hSci);
+                                }
+                                else
+                                {
+                                    RW->onCloseTab();
+                                }
+
+                                return 1;
+                            }
+                            if (wParam == VK_RETURN || wParam == VK_SPACE)
+                            {
+                                RW->onDoubleClick(0);
+                                return 1;
+                            }
+                        }
                     }
-                    if (wParam == VK_RETURN || wParam == VK_SPACE)
+
+                    if (!shift && RW->onKeyPress(static_cast<WORD>(wParam), alt))
                     {
-                        RW->onDoubleClick(0);
                         return 1;
                     }
                 }
-
-                if (RW->onKeyPress(static_cast<WORD>(wParam), alt))
+                else if (wParam == 0x46 && !alt && !shift) // 'F'
                 {
+                    if (RW->createSearchWindow())
+                        SetFocus(RW->_hSearchTxt);
+
+                    return 1;
+                }
+            }
+        }
+        else if (RW->_hSearch && (RW->_hSearch == hWnd || IsChild(RW->_hSearch, hWnd)))
+        {
+            const unsigned keyDownMask = (1 << (sizeof(SHORT) * 8 - 1));
+
+            const bool ctrl     = ((GetKeyState(VK_CONTROL) & keyDownMask) != 0);
+            const bool alt      = ((GetKeyState(VK_MENU) & keyDownMask) != 0);
+            const bool shift    = ((GetKeyState(VK_SHIFT) & keyDownMask) != 0);
+
+            // Key is pressed and no CTRL or ALT
+            if (!(lParam & (1 << 31)) && !ctrl && !alt)
+            {
+                if (wParam == VK_RETURN || wParam == VK_F3)
+                {
+                    RW->onSearch(shift);
+                    return 1;
+                }
+                if (wParam == VK_ESCAPE && !shift)
+                {
+                    SendMessage(RW->_hSearch, WM_CLOSE, 0, 0);
+                    SetFocus(RW->_hSci);
                     return 1;
                 }
             }
@@ -1391,6 +1686,10 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             RW->onResize(LOWORD(lParam), HIWORD(lParam));
         return 0;
 
+        case WM_MOVE:
+            RW->onMove();
+        return 0;
+
         case WM_DESTROY:
         return 0;
 
@@ -1430,6 +1729,48 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                     SendMessage(hActivityWin, WM_CLOSE, 0, 0);
             }
         }
+        return 0;
+    }
+
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+
+/**
+ *  \brief
+ */
+LRESULT APIENTRY ResultWin::searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_CREATE:
+        return 0;
+
+        case WM_COMMAND:
+            if (HIWORD(wParam) == BN_CLICKED)
+            {
+                if ((HWND)lParam == RW->_hFind)
+                {
+                    RW->onSearch(false, true);
+                    return 0;
+                }
+            }
+        break;
+
+        case WM_DESTROY:
+            if (RW->_hSearchFont)
+            {
+                DeleteObject(RW->_hSearchFont);
+                RW->_hSearchFont = NULL;
+            }
+
+            if (RW->_hBtnFont)
+            {
+                DeleteObject(RW->_hBtnFont);
+                RW->_hBtnFont = NULL;
+            }
+
+            RW->_hSearch = NULL;
         return 0;
     }
 

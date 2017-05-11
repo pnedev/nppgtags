@@ -141,11 +141,19 @@ private:
     static const COLORREF   cWhite = RGB(255,255,255);
 
     static const TCHAR      cClassName[];
+    static const TCHAR      cSearchClassName[];
+
+    static const int        cSearchBkgndColor;
+    static const unsigned   cSearchFontSize;
+    static const int        cSearchWidth;
 
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT APIENTRY searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ResultWin() : _hWnd(NULL), _hSci(NULL), _hKeyHook(NULL), _sciFunc(NULL), _sciPtr(0), _activeTab(NULL) {}
+    ResultWin() : _hWnd(NULL), _hSci(NULL), _hKeyHook(NULL), _sciFunc(NULL), _sciPtr(0), _activeTab(NULL),
+            _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
+            _lastRE(false), _lastMC(true), _lastWW(true), _searchUp(false) {}
     ResultWin(const ResultWin&);
     ~ResultWin();
 
@@ -164,6 +172,7 @@ private:
 
     void configScintilla();
     HWND composeWindow();
+    HWND createSearchWindow();
     void showWindow();
     void hideWindow();
 
@@ -189,6 +198,8 @@ private:
     void onCloseTab();
     void closeAllTabs();
     void onResize(int width, int height);
+    void onMove();
+    void onSearch(bool reverseDir = false, bool keepFocus = false);
 
     static ResultWin* RW;
 
@@ -199,6 +210,23 @@ private:
     SciFnDirect _sciFunc;
     sptr_t      _sciPtr;
     Tab*        _activeTab;
+
+    HWND        _hSearch;
+    HWND        _hSearchTxt;
+    HWND        _hRE;
+    HWND        _hMC;
+    HWND        _hWW;
+    HWND        _hUp;
+    HWND        _hDown;
+    HWND        _hFind;
+    HFONT       _hSearchFont;
+    HFONT       _hBtnFont;
+
+    bool        _lastRE;
+    bool        _lastMC;
+    bool        _lastWW;
+    bool        _searchUp;
+    CText       _lastSearchTxt;
 };
 
 } // namespace GTags

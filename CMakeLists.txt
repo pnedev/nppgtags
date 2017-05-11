@@ -27,6 +27,10 @@ if (UNIX OR MINGW)
         -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
     )
 
+	if (DEVELOPMENT)
+		set (defs ${defs} -DDEVELOPMENT)
+	endif ()
+
     set (CMAKE_CXX_FLAGS
         "-std=c++11 -O3 -mwindows -mthreads -municode -Wall -Wno-unknown-pragmas"
     )
