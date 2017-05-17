@@ -37,6 +37,7 @@
 #include <vector>
 #include "Common.h"
 #include "GTags.h"
+#include "dockingResource.h"
 #include "StrUniquenessChecker.h"
 
 
@@ -1674,6 +1675,11 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
                 case TCN_SELCHANGE:
                     RW->onTabChange();
+                return 0;
+
+                case DMN_CLOSE:
+                    if (RW->_hSearch)
+                        SendMessage(RW->_hSearch, WM_CLOSE, 0, 0);
                 return 0;
             }
         break;
