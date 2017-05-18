@@ -46,7 +46,7 @@ public:
     LineParser() {}
     virtual ~LineParser() {}
 
-    virtual bool Parse(const CmdPtr_t&);
+    virtual int Parse(const CmdPtr_t&);
 
     const std::vector<TCHAR*>& operator()() const { return _lines; }
 

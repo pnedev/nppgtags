@@ -48,7 +48,7 @@ class ResultParser
 public:
     virtual ~ResultParser() {}
 
-    virtual bool Parse(const CmdPtr_t&) = 0;
+    virtual int Parse(const CmdPtr_t&) = 0;
 };
 
 

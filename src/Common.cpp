@@ -46,19 +46,27 @@ int CALLBACK browseFolderCB(HWND hWnd, UINT uMsg, LPARAM, LPARAM lpData)
 /**
  *  \brief
  */
-bool Tools::BrowseForFolder(HWND hOwnerWin, CPath& path)
+bool Tools::BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info, bool onlySubFolders)
 {
     TCHAR tmp[MAX_PATH];
 
     BROWSEINFO bi       = {0};
     bi.hwndOwner        = hOwnerWin;
     bi.pszDisplayName   = tmp;
-    bi.lpszTitle        = _T("Select the database root (indexed recursively)");
+    bi.lpszTitle        = info ? info : _T("Select the database root (indexed recursively)");
     bi.ulFlags          = BIF_RETURNONLYFSDIRS | BIF_USENEWUI | BIF_NONEWFOLDERBUTTON;
     bi.lpfn             = browseFolderCB;
 
     if (!path.IsEmpty() && path.Exists())
         bi.lParam = (LPARAM)path.C_str();
+
+    if (onlySubFolders)
+    {
+        LPITEMIDLIST rootPidl;
+
+        if (SHParseDisplayName(path.C_str(), NULL, &rootPidl, 0, NULL) == S_OK)
+            bi.pidlRoot = rootPidl;
+    }
 
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
     if (!pidl)
@@ -312,6 +320,23 @@ void CTextW::Append(const wchar_t* data, unsigned len)
 /**
  *  \brief
  */
+void CTextW::Append(const char* data, unsigned len)
+{
+    AutoFit();
+
+    if (data && len)
+    {
+        const unsigned currentLen = Len();
+        _buf.resize(currentLen + len + 1, 0);
+        size_t cnt;
+        mbstowcs_s(&cnt, _buf.data() + currentLen, len + 1, data, _TRUNCATE);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void CTextW::Insert(unsigned at_pos, wchar_t letter)
 {
     AutoFit();
@@ -336,6 +361,23 @@ void CTextW::Insert(unsigned at_pos, const wchar_t* data, unsigned len)
 /**
  *  \brief
  */
+void CTextW::Erase(unsigned from_pos, unsigned len)
+{
+    AutoFit();
+
+    if ((from_pos < _buf.size()) && len)
+    {
+        if (len > _buf.size())
+            len = _buf.size();
+
+        _buf.erase(_buf.cbegin() + from_pos, _buf.cbegin() + from_pos + len);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void CTextW::Clear()
 {
     _buf.clear();
@@ -349,7 +391,7 @@ void CTextW::Clear()
  */
 void CTextW::Resize(unsigned size)
 {
-    unsigned len = Len();
+    const unsigned len = Len();
 
     _buf.resize(size);
     _buf.push_back(0);
@@ -519,6 +561,23 @@ void CTextA::Append(const char* data, unsigned len)
 /**
  *  \brief
  */
+void CTextA::Append(const wchar_t* data, unsigned len)
+{
+    AutoFit();
+
+    if (data && len)
+    {
+        const unsigned currentLen = Len();
+        _buf.resize(currentLen + len + 1, 0);
+        size_t cnt;
+        wcstombs_s(&cnt, _buf.data() + currentLen, len + 1, data, _TRUNCATE);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void CTextA::Insert(unsigned at_pos, char letter)
 {
     AutoFit();
@@ -543,6 +602,23 @@ void CTextA::Insert(unsigned at_pos, const char* data, unsigned len)
 /**
  *  \brief
  */
+void CTextA::Erase(unsigned from_pos, unsigned len)
+{
+    AutoFit();
+
+    if ((from_pos < _buf.size()) && len)
+    {
+        if (len > _buf.size())
+            len = _buf.size();
+
+        _buf.erase(_buf.cbegin() + from_pos, _buf.cbegin() + from_pos + len);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void CTextA::Clear()
 {
     _buf.clear();
@@ -556,7 +632,7 @@ void CTextA::Clear()
  */
 void CTextA::Resize(unsigned size)
 {
-    unsigned len = Len();
+    const unsigned len = Len();
 
     _buf.resize(size);
     _buf.push_back(0);
@@ -650,13 +726,32 @@ const TCHAR* CPath::GetFilename() const
 /**
  *  \brief
  */
+bool CPath::pathMatches(const TCHAR* pathStr, unsigned len) const
+{
+    if (len > Len())
+        return false;
+
+    for (int i = (int)len - 1; i >= 0; --i)
+    {
+        if ((_buf[i] != pathStr[i]) &&
+            !(_buf[i] == _T('\\') && pathStr[i] == _T('/')) && !(_buf[i] == _T('/') && pathStr[i] == _T('\\')))
+        return false;
+    }
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
 bool CPath::IsParentOf(const CPath& path) const
 {
     unsigned len = Len();
     if (len > path.Len())
         return false;
 
-    return !_tcsncmp(_buf.data(), path._buf.data(), len);
+    return pathMatches(path._buf.data(), len);
 }
 
 
@@ -669,7 +764,7 @@ bool CPath::IsParentOf(const TCHAR* pathStr) const
     if (len > _tcslen(pathStr))
         return false;
 
-    return !_tcsncmp(_buf.data(), pathStr, len);
+    return pathMatches(pathStr, len);
 }
 
 
@@ -682,7 +777,7 @@ bool CPath::IsSubpathOf(const CPath& path) const
     if (len > Len())
         return false;
 
-    return !_tcsncmp(_buf.data(), path._buf.data(), len);
+    return pathMatches(path._buf.data(), len);
 }
 
 
@@ -695,5 +790,5 @@ bool CPath::IsSubpathOf(const TCHAR* pathStr) const
     if (len > Len())
         return false;
 
-    return !_tcsncmp(_buf.data(), pathStr, len);
+    return pathMatches(pathStr, len);
 }

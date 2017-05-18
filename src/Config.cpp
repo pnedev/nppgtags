@@ -47,10 +47,12 @@ const TCHAR Settings::cMCOptionKey[]     = _T("MatchCaseOptionOn = ");
 const TCHAR DbConfig::cInfo[] =
         _T("# ") PLUGIN_NAME _T(" database config\n");
 
-const TCHAR DbConfig::cParserKey[]       = _T("Parser = ");
-const TCHAR DbConfig::cAutoUpdateKey[]   = _T("AutoUpdate = ");
-const TCHAR DbConfig::cUseLibDbKey[]     = _T("UseLibraryDBs = ");
-const TCHAR DbConfig::cLibDbPathsKey[]   = _T("LibraryDBPaths = ");
+const TCHAR DbConfig::cParserKey[]          = _T("Parser = ");
+const TCHAR DbConfig::cAutoUpdateKey[]      = _T("AutoUpdate = ");
+const TCHAR DbConfig::cUseLibDbKey[]        = _T("UseLibraryDBs = ");
+const TCHAR DbConfig::cLibDbPathsKey[]      = _T("LibraryDBPaths = ");
+const TCHAR DbConfig::cUsePathFilterKey[]   = _T("UsePathFilters = ");
+const TCHAR DbConfig::cPathFiltersKey[]     = _T("PathFilters = ");
 
 const TCHAR DbConfig::cDefaultParser[]   = _T("default");
 const TCHAR DbConfig::cCtagsParser[]     = _T("ctags");
@@ -81,6 +83,8 @@ void DbConfig::SetDefaults()
     _autoUpdate = true;
     _useLibDb = false;
     _libDbPaths.clear();
+    _usePathFilter = false;
+    _pathFilters.clear();
 }
 
 
@@ -120,6 +124,19 @@ bool DbConfig::ReadOption(TCHAR* line)
         const unsigned pos = _countof(cLibDbPathsKey) - 1;
         DbPathsFromBuf(&line[pos], _T(";"));
     }
+    else if (!_tcsncmp(line, cUsePathFilterKey, _countof(cUsePathFilterKey) - 1))
+    {
+        const unsigned pos = _countof(cUsePathFilterKey) - 1;
+        if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
+            _usePathFilter = true;
+        else
+            _usePathFilter = false;
+    }
+    else if (!_tcsncmp(line, cPathFiltersKey, _countof(cPathFiltersKey) - 1))
+    {
+        const unsigned pos = _countof(cPathFiltersKey) - 1;
+        FiltersFromBuf(&line[pos], _T(";"));
+    }
     else
     {
         return false;
@@ -139,11 +156,16 @@ bool DbConfig::Write(FILE* fp) const
     CText libDbPaths;
     DbPathsToBuf(libDbPaths, _T(';'));
 
+    CText pathFilters;
+    FiltersToBuf(pathFilters, _T(';'));
+
     if (_ftprintf_s(fp, _T("%s\n"), cInfo) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cParserKey, Parser()) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cAutoUpdateKey, (_autoUpdate ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cUseLibDbKey, (_useLibDb ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cLibDbPathsKey, libDbPaths.C_str()) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n"), cUsePathFilterKey, (_usePathFilter ? _T("yes") : _T("no"))) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n"), cPathFiltersKey, pathFilters.C_str()) > 0)
         success = true;
 
     return success;
@@ -235,16 +257,27 @@ void DbConfig::DbPathsFromBuf(TCHAR* buf, const TCHAR* separators)
  */
 void DbConfig::DbPathsToBuf(CText& buf, TCHAR separator) const
 {
-    if (!_libDbPaths.size())
-        return;
+    vectorToBuf(_libDbPaths, buf, separator);
+}
 
-    buf += _libDbPaths[0];
 
-    for (unsigned i = 1; i < _libDbPaths.size(); ++i)
-    {
-        buf += separator;
-        buf += _libDbPaths[i];
-    }
+/**
+ *  \brief
+ */
+void DbConfig::FiltersFromBuf(TCHAR* buf, const TCHAR* separators)
+{
+    TCHAR* pTmp = NULL;
+    for (TCHAR* ptr = _tcstok_s(buf, separators, &pTmp); ptr; ptr = _tcstok_s(NULL, separators, &pTmp))
+        _pathFilters.push_back(CPath(ptr));
+}
+
+
+/**
+ *  \brief
+ */
+void DbConfig::FiltersToBuf(CText& buf, TCHAR separator) const
+{
+    vectorToBuf(_pathFilters, buf, separator);
 }
 
 
@@ -255,10 +288,12 @@ const DbConfig& DbConfig::operator=(const DbConfig& rhs)
 {
     if (this != &rhs)
     {
-        _parserIdx  = rhs._parserIdx;
-        _autoUpdate = rhs._autoUpdate;
-        _useLibDb   = rhs._useLibDb;
-        _libDbPaths = rhs._libDbPaths;
+        _parserIdx      = rhs._parserIdx;
+        _autoUpdate     = rhs._autoUpdate;
+        _useLibDb       = rhs._useLibDb;
+        _libDbPaths     = rhs._libDbPaths;
+        _usePathFilter  = rhs._usePathFilter;
+        _pathFilters    = rhs._pathFilters;
     }
 
     return *this;
@@ -274,7 +309,26 @@ bool DbConfig::operator==(const DbConfig& rhs) const
         return true;
 
     return (_parserIdx == rhs._parserIdx && _autoUpdate == rhs._autoUpdate &&
-            _useLibDb == rhs._useLibDb && _libDbPaths == rhs._libDbPaths);
+            _useLibDb == rhs._useLibDb && _libDbPaths == rhs._libDbPaths &&
+            _usePathFilter == rhs._usePathFilter && _pathFilters == rhs._pathFilters);
+}
+
+
+/**
+ *  \brief
+ */
+void DbConfig::vectorToBuf(const std::vector<CPath>& vect, CText& buf, TCHAR separator)
+{
+    if (!vect.size())
+        return;
+
+    buf += vect[0];
+
+    for (unsigned i = 1; i < vect.size(); ++i)
+    {
+        buf += separator;
+        buf += vect[i];
+    }
 }
 
 

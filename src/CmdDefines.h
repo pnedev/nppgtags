@@ -55,6 +55,7 @@ enum CmdStatus_t
     RUN_ERROR,
     FAILED,
     PARSE_ERROR,
+    PARSE_EMPTY,
     OK
 };
 

@@ -191,9 +191,16 @@ unsigned CmdEngine::start()
     {
         if (_cmd->Result())
         {
-            if (!_cmd->_parser->Parse(_cmd))
+            const int parsedEntries = _cmd->_parser->Parse(_cmd);
+
+            if (parsedEntries < 0)
             {
                 _cmd->_status = PARSE_ERROR;
+                return 1;
+            }
+            else if (parsedEntries == 0)
+            {
+                _cmd->_status = PARSE_EMPTY; // No results to display actually (due to some filtering)
                 return 1;
             }
         }

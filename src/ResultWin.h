@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2016 Pavel Nedev
+ *  Copyright(C) 2014-2017 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -53,13 +53,15 @@ public:
         TabParser() {}
         virtual ~TabParser() {}
 
-        virtual bool Parse(const CmdPtr_t&);
+        virtual int Parse(const CmdPtr_t&);
 
         const CTextA& operator()() const { return _buf; }
 
     private:
-        bool parseCmd(const CmdPtr_t&);
-        bool parseFindFile(const CmdPtr_t&);
+        static bool filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len);
+
+        int parseCmd(const CmdPtr_t&);
+        int parseFindFile(const CmdPtr_t&);
 
         CTextA  _buf;
     };

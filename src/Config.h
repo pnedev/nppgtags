@@ -66,6 +66,9 @@ public:
     void DbPathsFromBuf(TCHAR* buf, const TCHAR* separators);
     void DbPathsToBuf(CText& buf, TCHAR separator) const;
 
+    void FiltersFromBuf(TCHAR* buf, const TCHAR* separators);
+    void FiltersToBuf(CText& buf, TCHAR separator) const;
+
     const DbConfig& operator=(const DbConfig&);
     bool operator==(const DbConfig&) const;
 
@@ -73,18 +76,21 @@ public:
     bool                _autoUpdate;
     bool                _useLibDb;
     std::vector<CPath>  _libDbPaths;
+    bool                _usePathFilter;
+    std::vector<CPath>  _pathFilters;
 
-protected:
+private:
     bool ReadOption(TCHAR* line);
     bool Write(FILE* fp) const;
 
-private:
     static const TCHAR cInfo[];
 
     static const TCHAR cParserKey[];
     static const TCHAR cAutoUpdateKey[];
     static const TCHAR cUseLibDbKey[];
     static const TCHAR cLibDbPathsKey[];
+    static const TCHAR cUsePathFilterKey[];
+    static const TCHAR cPathFiltersKey[];
 
     static const TCHAR cDefaultParser[];
     static const TCHAR cCtagsParser[];
@@ -93,6 +99,8 @@ private:
     static const TCHAR* cParsers[PARSER_LIST_END];
 
     friend class Settings;
+
+    static void vectorToBuf(const std::vector<CPath>& vect, CText& buf, TCHAR separator);
 };
 
 

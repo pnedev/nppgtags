@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2016 Pavel Nedev
+ *  Copyright(C) 2014-2017 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ ResultWin* ResultWin::RW = NULL;
 /**
  *  \brief
  */
-bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
+int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 {
     // Add the search header - cmd name + search word + project path
     _buf = cmd->Name();
@@ -100,12 +100,37 @@ bool ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-bool ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
+bool ResultWin::TabParser::filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len)
 {
+    if (cfg._usePathFilter)
+    {
+        CPath currentEntry;
+        currentEntry.Append(pEntry, len);
+
+        for (const auto& filter : cfg._pathFilters)
+        {
+            if (filter.IsParentOf(currentEntry))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
+ *  \brief
+ */
+int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
+{
+    int result = 0;
+
     const char* pSrc = cmd->Result();
     const char* pEol;
 
-    for(;;)
+    const DbConfig& cfg = cmd->Db()->GetConfig();
+
+    for (;;)
     {
         while (*pSrc == '\n' || *pSrc == '\r' || *pSrc == ' ' || *pSrc == '\t')
             ++pSrc;
@@ -115,28 +140,36 @@ bool ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
         while (*pEol != '\n' && *pEol != '\r' && *pEol != 0)
             ++pEol;
 
-        _buf += "\n\t";
-        _buf.Append(pSrc, pEol - pSrc);
+        if (!filterEntry(cfg, pSrc, pEol - pSrc))
+        {
+            _buf += "\n\t";
+            _buf.Append(pSrc, pEol - pSrc);
+
+            ++result;
+        }
+
         pSrc = pEol;
     }
 
-    return true;
+    return result;
 }
 
 
 /**
  *  \brief
  */
-bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
+int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 {
+    int result = 0;
+
     bool filterReoccurring = false;
 
     const DbConfig& cfg = cmd->Db()->GetConfig();
     if (cmd->Id() == FIND_DEFINITION && cfg._useLibDb)
     {
-        for (unsigned i = 0; i < cfg._libDbPaths.size(); ++i)
+        for (const auto& libPath : cfg._libDbPaths)
         {
-            if (cfg._libDbPaths[i].IsParentOf(cmd->Db()->GetPath()))
+            if (libPath.IsParentOf(cmd->Db()->GetPath()))
             {
                 filterReoccurring = true;
                 break;
@@ -152,10 +185,11 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
     const char* pLine;
     const char* pPreviousFile = NULL;
     unsigned    previousFileLen = 0;
+    bool        previousFileFiltered = false;
 
     unsigned    previousBufLen;
 
-    for(;;)
+    for (;;)
     {
         while (*pSrc == '\n' || *pSrc == '\r')
             ++pSrc;
@@ -171,12 +205,29 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         // add new file name to the UI buffer only if it is different
         // than the previous one
         if ((pPreviousFile == NULL) || ((unsigned)(pIdx - pSrc) != previousFileLen) ||
-                strncmp(pSrc, pPreviousFile, previousFileLen))
+            strncmp(pSrc, pPreviousFile, previousFileLen))
         {
             pPreviousFile = pSrc;
             previousFileLen = pIdx - pSrc;
-            _buf += "\n\t";
-            _buf.Append(pPreviousFile, previousFileLen);
+
+            if (filterEntry(cfg, pPreviousFile, previousFileLen))
+            {
+                previousFileFiltered = true;
+            }
+            else
+            {
+                _buf += "\n\t";
+                _buf.Append(pPreviousFile, previousFileLen);
+
+                previousFileFiltered = false;
+            }
+        }
+
+        if (previousFileFiltered)
+        {
+            while (*pSrc != '\n' && *pSrc != '\r')
+                ++pSrc;
+            continue;
         }
 
         pSrc = ++pIdx;
@@ -196,7 +247,7 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
             ++pSrc;
 
         if (pSrc == pIdx + 1)
-            return false;
+            return -1;
 
         _buf.Append(pIdx, pSrc - pIdx);
 
@@ -204,9 +255,11 @@ bool ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 
         if (filterReoccurring && !strChecker.IsUnique(pLine))
             _buf.Resize(previousBufLen);
+        else
+            ++result;
     }
 
-    return true;
+    return result;
 }
 
 
@@ -710,7 +763,7 @@ HWND ResultWin::createSearchWindow()
 
     SendMessage(_hSearchTxt, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
 
-    if (_lastSearchTxt.Len())
+    if (!_lastSearchTxt.IsEmpty())
     {
         Edit_SetText(_hSearchTxt, _lastSearchTxt.C_str());
         Edit_SetSel(_hSearchTxt, 0, -1);
@@ -1489,7 +1542,7 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         if (!keepFocus)
             SetFocus(_hSci);
     }
-    else if (_lastSearchTxt.Len() == 0)
+    else if (_lastSearchTxt.IsEmpty())
     {
         return;
     }
@@ -1526,7 +1579,7 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         fi.hwnd         = INpp::Get().GetHandle();
         fi.dwFlags      = FLASHW_ALL;
         fi.uCount       = 3;
-        fi.dwTimeout    = 100;
+        fi.dwTimeout    = 80;
 
         FlashWindowEx(&fi);
     }

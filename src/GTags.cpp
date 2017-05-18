@@ -280,9 +280,9 @@ void showResultCB(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
 
-    if (cmd->Status() == OK)
+    if (cmd->Status() == OK || cmd->Status() == PARSE_EMPTY)
     {
-        if (cmd->Result())
+        if (cmd->Result() && cmd->Status() == OK)
         {
             ResultWin::Show(cmd);
         }
@@ -387,50 +387,6 @@ void halfAboutCB(const CmdPtr_t& cmd)
         AboutWin::Show(msg.C_str());
     }
 }
-
-
-/**
- *  \brief
- */
-/*
-void EnablePluginMenuItem(int itemIdx, bool enable)
-{
-    static HMENU HMenu = NULL;
-
-    if (HMenu == NULL)
-    {
-        TCHAR buf[PLUGIN_ITEM_SIZE];
-        HMENU hMenu = INpp::Get().GetPluginMenu();
-
-        MENUITEMINFO mi = {0};
-        mi.cbSize       = sizeof(mi);
-        mi.fMask        = MIIM_STRING;
-
-        int idx;
-        int itemsCount = GetMenuItemCount(hMenu);
-        for (idx = 0; idx < itemsCount; ++idx)
-        {
-            mi.dwTypeData = NULL;
-            GetMenuItemInfo(hMenu, idx, TRUE, &mi);
-            mi.dwTypeData = buf;
-            ++mi.cch;
-            GetMenuItemInfo(hMenu, idx, TRUE, &mi);
-            mi.dwTypeData[mi.cch - 1] = 0;
-            if (!_tcscmp(cPluginName, mi.dwTypeData))
-                break;
-        }
-        if (idx == itemsCount)
-            return;
-
-        HMenu = GetSubMenu(hMenu, idx);
-    }
-
-    UINT flags = MF_BYPOSITION;
-    flags |= enable ? MF_ENABLED : MF_GRAYED;
-
-    EnableMenuItem(HMenu, itemIdx, flags);
-}
-*/
 
 
 /**

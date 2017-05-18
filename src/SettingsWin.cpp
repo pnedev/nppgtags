@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2016 Pavel Nedev
+ *  Copyright(C) 2015-2017 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -115,7 +115,9 @@ void SettingsWin::Show(const DbHandle& db)
     tci.pszText     = buf;
     tci.lParam      = (LPARAM)tab;
 
-    int i = TabCtrl_InsertItem(SW->_hTab, TabCtrl_GetItemCount(SW->_hTab), &tci);
+    int tabsCount = TabCtrl_GetItemCount(SW->_hTab);
+
+    int i = TabCtrl_InsertItem(SW->_hTab, tabsCount, &tci);
     if (i == -1)
     {
         delete tab;
@@ -123,6 +125,17 @@ void SettingsWin::Show(const DbHandle& db)
 
         return;
     }
+
+    ++tabsCount;
+
+    RECT tabRC;
+    TabCtrl_GetItemRect(SW->_hTab, 0, &tabRC);
+
+    RECT tabWin;
+    GetWindowRect(SW->_hTab, &tabWin);
+
+    TabCtrl_SetItemSize(SW->_hTab, (tabWin.right - tabWin.left - 3 - (5 * tabsCount)) / tabsCount,
+            tabRC.bottom - tabRC.top);
 
     TabCtrl_SetCurSel(SW->_hTab, i);
     SW->_activeTab = tab;
@@ -217,34 +230,27 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     ncm.cbSize = sizeof(ncm);
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
-    NONCLIENTMETRICS ncmInfo;
-    ncmInfo.cbSize = sizeof(ncmInfo);
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncmInfo.cbSize, &ncmInfo, 0);
-
     int txtHeight;
     int txtInfoHeight;
     {
-        const int fontInfoSize = 8;
-
         TEXTMETRIC tm;
         HDC hdc = GetWindowDC(hOwner);
 
         ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-        ncmInfo.lfMessageFont.lfHeight = -MulDiv(fontInfoSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-        ncmInfo.lfMessageFont.lfWeight = FW_EXTRABOLD;
+        ncm.lfMenuFont.lfHeight = -MulDiv(cFontSize - 2, GetDeviceCaps(hdc, LOGPIXELSY), 72);
 
         GetTextMetrics(hdc, &tm);
 
         ReleaseDC(hOwner, hdc);
 
         txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
-        txtInfoHeight = tm.tmInternalLeading - ncmInfo.lfMessageFont.lfHeight;
+        txtInfoHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 1;
     }
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 9 * txtHeight + txtInfoHeight + 210);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 13 * txtHeight + txtInfoHeight + 265);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -255,11 +261,13 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         return NULL;
 
     GetClientRect(_hWnd, &win);
-    width   = win.right - win.left - 20;
-    height  = win.bottom - win.top - 20;
+    const int totalWidth = win.right - win.left;
 
-    int xPos = win.left + 10;
-    int yPos = win.top + 10;
+    width   = win.right - win.left - 30;
+    height  = win.bottom - win.top;
+
+    int xPos = win.left + 15;
+    int yPos = win.top + 15;
 
     _hEnDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable default database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
@@ -287,13 +295,13 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hDefDb = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
-            win.left, win.top, win.right - win.left, win.bottom - win.top,
+            win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (win.bottom - win.top + 15);
+    yPos += (win.bottom - win.top + 25);
     _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
-            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FOCUSNEVER,
-            xPos, yPos, width, height - yPos - 40,
+            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FIXEDWIDTH | TCS_FOCUSNEVER,
+            xPos, yPos, width, height - yPos - 45,
             _hWnd, NULL, HMod, NULL);
 
     _activeTab = new Tab;
@@ -316,16 +324,21 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         TabCtrl_SetCurSel(_hTab, i);
     }
 
+    RECT tabRC;
+    TabCtrl_GetItemRect(_hTab, 0, &tabRC);
+
     GetClientRect(_hWnd, &win);
     win.top     = yPos;
-    win.bottom  = win.top + height - yPos - 40;
+    win.bottom  = win.top + height - yPos - 45;
     win.left    = xPos;
     win.right   = win.left + width;
 
+    TabCtrl_SetItemSize(_hTab, width - 3, tabRC.bottom - tabRC.top);
+
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
-    width = win.right - win.left;
-    xPos = win.left;
-    yPos = win.top + 10;
+    width = win.right - win.left - 10;
+    xPos = win.left + 5;
+    yPos = win.top + 15;
 
     _hInfo = CreateWindowEx(0, _T("STATIC"), _T("Below settings apply to all new databases"),
             WS_CHILD | WS_VISIBLE | SS_CENTER | SS_SUNKEN,
@@ -377,19 +390,41 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hLibDbs = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
-            win.left, win.top, win.right - win.left, win.bottom - win.top,
+            win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (win.bottom - win.top + 10);
-    width = width / 5;
+    _hEnPathFilter = CreateWindowEx(0, _T("BUTTON"), _T("Ignore sub-folders"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos, yPos, (width / 2), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    _hAddPathFilter = CreateWindowEx(0, _T("BUTTON"), _T("Add sub-folder"),
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            xPos + (width / 2) + (width / 4) + 5, yPos, (width / 4) - 5, 25,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
+    win.top     = yPos;
+    win.bottom  = win.top + 3 * txtHeight;
+    win.left    = xPos;
+    win.right   = win.left + width;
+
+    AdjustWindowRectEx(&win, style, FALSE, styleEx);
+    _hPathFilters = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+            win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (win.bottom - win.top + 20);
+    width = totalWidth / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
             WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON,
-            xPos + width, yPos, width, 25,
+            width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            xPos + 3 * width, yPos, width, 25,
+            3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
     {
@@ -402,22 +437,21 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
         SendMessage(_hDefDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
         SendMessage(_hLibDbs, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+        SendMessage(_hPathFilters, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
     }
 
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
 
     if (_hFont)
     {
-        SendMessage(_hEnDefDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hDefDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hInfo, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, TRUE);
-        SendMessage(_hAutoUpdDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
-        SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hLibDbs, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hPathFilters, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    _hFontInfo = CreateFontIndirect(&ncmInfo.lfMessageFont);
+    _hFontInfo = CreateFontIndirect(&ncm.lfMenuFont);
 
     if (_hFontInfo)
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
@@ -608,6 +642,19 @@ void SettingsWin::fillTabData()
 
     SendMessage(_hLibDbs, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
+    if (_activeTab->_cfg._pathFilters.empty())
+    {
+        Edit_SetText(_hPathFilters, _T(""));
+    }
+    else
+    {
+        CText pathFilters;
+        _activeTab->_cfg.FiltersToBuf(pathFilters, _T('\n'));
+        Edit_SetText(_hPathFilters, pathFilters.C_str());
+    }
+
+    SendMessage(_hPathFilters, EM_SETEVENTMASK, 0, ENM_CHANGE);
+
     if (_activeTab->_cfg._useLibDb)
     {
         EnableWindow(_hAddLibDb, TRUE);
@@ -623,8 +670,22 @@ void SettingsWin::fillTabData()
         SendMessage(_hLibDbs, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
     }
 
+    if (_activeTab->_cfg._usePathFilter)
+    {
+        EnableWindow(_hAddPathFilter, _activeTab->_db ? TRUE : FALSE);
+        Edit_Enable(_hPathFilters, TRUE);
+        SendMessage(_hPathFilters, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
+    }
+    else
+    {
+        EnableWindow(_hAddPathFilter, FALSE);
+        Edit_Enable(_hPathFilters, FALSE);
+        SendMessage(_hPathFilters, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+    }
+
     Button_SetCheck(_hAutoUpdDb, _activeTab->_cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hEnLibDb, _activeTab->_cfg._useLibDb ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hEnPathFilter, _activeTab->_cfg._usePathFilter ? BST_CHECKED : BST_UNCHECKED);
 
     SendMessage(_hParser, CB_SETCURSEL, _activeTab->_cfg._parserIdx, 0);
 }
@@ -637,7 +698,7 @@ void SettingsWin::readTabData()
 {
     _activeTab->_cfg._libDbPaths.clear();
 
-    const int len = Edit_GetTextLength(_hLibDbs);
+    int len = Edit_GetTextLength(_hLibDbs);
     if (len)
     {
         CText libDbPaths(len);
@@ -645,8 +706,19 @@ void SettingsWin::readTabData()
         _activeTab->_cfg.DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
     }
 
+    _activeTab->_cfg._pathFilters.clear();
+
+    len = Edit_GetTextLength(_hPathFilters);
+    if (len)
+    {
+        CText pathFilters(len);
+        Edit_GetText(_hPathFilters, pathFilters.C_str(), pathFilters.Size());
+        _activeTab->_cfg.FiltersFromBuf(pathFilters.C_str(), _T("\n\r"));
+    }
+
     _activeTab->_cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdDb) == BST_CHECKED) ? true : false;
     _activeTab->_cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
+    _activeTab->_cfg._usePathFilter = (Button_GetCheck(_hEnPathFilter) == BST_CHECKED) ? true : false;
 
     _activeTab->_cfg._parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 }
@@ -758,32 +830,32 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
  */
 void SettingsWin::fillDefDb(const CPath& defDb)
 {
-    Edit_SetText(SW->_hDefDb, defDb.C_str());
+    Edit_SetText(_hDefDb, defDb.C_str());
 
-    SetFocus(SW->_hDefDb);
-    Edit_SetSel(SW->_hDefDb, defDb.Len(), defDb.Len());
-    Edit_ScrollCaret(SW->_hDefDb);
+    SetFocus(_hDefDb);
+    Edit_SetSel(_hDefDb, defDb.Len(), defDb.Len());
+    Edit_ScrollCaret(_hDefDb);
 }
 
 
 /**
  *  \brief
  */
-void SettingsWin::fillLibDb(const CPath& lib)
+void SettingsWin::fillMissing(HWND SettingsWin::*editCtrl, const CText& entry)
 {
-    int len = Edit_GetTextLength(SW->_hLibDbs);
+    int len = Edit_GetTextLength(this->*editCtrl);
     CText buf(len);
     bool found = false;
 
     if (len)
     {
-        Edit_GetText(SW->_hLibDbs, buf.C_str(), buf.Size());
+        Edit_GetText(this->*editCtrl, buf.C_str(), buf.Size());
 
-        int libLen = lib.Len();
+        int entryLen = entry.Len();
 
-        for (TCHAR* ptr = _tcsstr(buf.C_str(), lib.C_str()); ptr; ptr = _tcsstr(ptr, lib.C_str()))
+        for (TCHAR* ptr = _tcsstr(buf.C_str(), entry.C_str()); ptr; ptr = _tcsstr(ptr, entry.C_str()))
         {
-            if (ptr[libLen] == 0 || ptr[libLen] == _T('\n') || ptr[libLen] == _T('\r'))
+            if (ptr[entryLen] == 0 || ptr[entryLen] == _T('\n') || ptr[entryLen] == _T('\r'))
             {
                 found = true;
                 break;
@@ -796,13 +868,31 @@ void SettingsWin::fillLibDb(const CPath& lib)
 
     if (!found)
     {
-        buf += lib;
-        Edit_SetText(SW->_hLibDbs, buf.C_str());
+        buf += entry;
+        Edit_SetText(this->*editCtrl, buf.C_str());
     }
 
-    SetFocus(SW->_hLibDbs);
-    Edit_SetSel(SW->_hLibDbs, buf.Len(), buf.Len());
-    Edit_ScrollCaret(SW->_hLibDbs);
+    SetFocus(this->*editCtrl);
+    Edit_SetSel(this->*editCtrl, buf.Len(), buf.Len());
+    Edit_ScrollCaret(this->*editCtrl);
+}
+
+
+/**
+ *  \brief
+ */
+inline void SettingsWin::fillLibDb(const CPath& lib)
+{
+    fillMissing(&SettingsWin::_hLibDbs, lib);
+}
+
+
+/**
+ *  \brief
+ */
+inline void SettingsWin::fillPathFilter(const CPath& filter)
+{
+    fillMissing(&SettingsWin::_hPathFilters, filter);
 }
 
 
@@ -1035,6 +1125,31 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     return 0;
                 }
 
+                if ((HWND)lParam == SW->_hEnPathFilter)
+                {
+                    BOOL en;
+                    int color;
+
+                    if (Button_GetCheck(SW->_hEnPathFilter) == BST_CHECKED)
+                    {
+                        en = TRUE;
+                        color = COLOR_WINDOW;
+                    }
+                    else
+                    {
+                        en = FALSE;
+                        color = COLOR_BTNFACE;
+                    }
+
+                    EnableWindow(SW->_hAddPathFilter, (en && SW->_activeTab->_db) ? TRUE : FALSE);
+                    Edit_Enable(SW->_hPathFilters, en);
+                    SendMessage(SW->_hPathFilters, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
+
+                    EnableWindow(SW->_hSave, TRUE);
+
+                    return 0;
+                }
+
                 if ((HWND)lParam == SW->_hSetDefDb)
                 {
                     CPath defDbPath;
@@ -1078,6 +1193,26 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                 if ((HWND)lParam == SW->_hUpdLibDbs)
                 {
                     SW->onUpdateLibDb();
+                    return 0;
+                }
+
+                if ((HWND)lParam == SW->_hAddPathFilter)
+                {
+                    if (SW->_activeTab->_db)
+                    {
+                        CPath filterPath = SW->_activeTab->_db->GetPath();
+
+                        if (Tools::BrowseForFolder(SW->_hWnd, filterPath,
+                            _T("Select database sub-folder to ignore"), true))
+                        {
+                            if (filterPath.IsSubpathOf(SW->_activeTab->_db->GetPath()))
+                            {
+                                filterPath.Erase(0, SW->_activeTab->_db->GetPath().Len());
+                                SW->fillPathFilter(filterPath);
+                            }
+                        }
+                    }
+
                     return 0;
                 }
 

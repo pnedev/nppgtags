@@ -82,8 +82,10 @@ public:
     void operator+=(wchar_t letter);
 
     void Append(const wchar_t* data, unsigned len);
+    void Append(const char* data, unsigned len);
     void Insert(unsigned at_pos, wchar_t letter);
     void Insert(unsigned at_pos, const wchar_t* data, unsigned len);
+    void Erase(unsigned from_pos, unsigned len);
 
     void Clear();
     void Resize(unsigned size);
@@ -140,8 +142,10 @@ public:
     void operator+=(char letter);
 
     void Append(const char* data, unsigned len);
+    void Append(const wchar_t* data, unsigned len);
     void Insert(unsigned at_pos, char letter);
     void Insert(unsigned at_pos, const char* data, unsigned len);
+    void Erase(unsigned from_pos, unsigned len);
 
     void Clear();
     void Resize(unsigned size);
@@ -194,13 +198,16 @@ public:
     bool IsParentOf(const TCHAR* pathStr) const;
     bool IsSubpathOf(const CPath& path) const;
     bool IsSubpathOf(const TCHAR* pathStr) const;
+
+private:
+    bool pathMatches(const TCHAR* pathStr, unsigned len) const;
 };
 
 
 namespace Tools
 {
 
-bool BrowseForFolder(HWND hOwnerWin, CPath& path);
+bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);
 RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 
 

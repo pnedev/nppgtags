@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2016 Pavel Nedev
+ *  Copyright(C) 2015-2017 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -100,7 +100,9 @@ private:
     bool saveSettings(const Settings& newSettings);
     bool saveTab(Tab* tab);
     void fillDefDb(const CPath& defDb);
-    void fillLibDb(const CPath& lib);
+    void fillMissing(HWND SettingsWin::*editCtrl, const CText& entry);
+    inline void fillLibDb(const CPath& lib);
+    inline void fillPathFilter(const CPath& filter);
 
     bool createDatabase(CPath& dbPath, CompletionCB complCB);
 
@@ -122,6 +124,9 @@ private:
     HWND        _hAddLibDb;
     HWND        _hUpdLibDbs;
     HWND        _hLibDbs;
+    HWND        _hEnPathFilter;
+    HWND        _hAddPathFilter;
+    HWND        _hPathFilters;
     HWND        _hSave;
     HWND        _hCancel;
 

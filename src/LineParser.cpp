@@ -32,8 +32,10 @@ namespace GTags
 /**
  *  \brief
  */
-bool LineParser::Parse(const CmdPtr_t& cmd)
+int LineParser::Parse(const CmdPtr_t& cmd)
 {
+    int result = 0;
+
     const bool filterReoccurring = cmd->Db()->GetConfig()._useLibDb;
 
     StrUniquenessChecker<TCHAR> strChecker;
@@ -49,10 +51,13 @@ bool LineParser::Parse(const CmdPtr_t& cmd)
             ++pToken;
 
         if ((!filterReoccurring) || strChecker.IsUnique(pToken))
+        {
             _lines.push_back(pToken);
+            ++result;
+        }
     }
 
-    return true;
+    return result;
 }
 
 } // namespace GTags

@@ -397,14 +397,14 @@ void SearchWin::filterComplList()
     const LineParser& completion = *(const LineParser*)_completion.get();
     if (filter.Len() == cComplAfter)
     {
-        for (unsigned i = 0; i < completion().size(); ++i)
-            ComboBox_AddString(_hSearch, completion()[i]);
+        for (const auto& complEntry : completion())
+            ComboBox_AddString(_hSearch, complEntry);
     }
     else
     {
-        for (unsigned i = 0; i < completion().size(); ++i)
-            if (!pCompare(completion()[i], filter.C_str(), filter.Len()))
-                ComboBox_AddString(_hSearch, completion()[i]);
+        for (const auto& complEntry : completion())
+            if (!pCompare(complEntry, filter.C_str(), filter.Len()))
+                ComboBox_AddString(_hSearch, complEntry);
     }
 
     if (ComboBox_GetCount(_hSearch))
