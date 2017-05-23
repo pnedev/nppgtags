@@ -6,8 +6,8 @@
 
 #define PLUGIN_NAME         _T("NppGTags")
 
-#define VER_VERSION         4,3,1,0
-#define VER_VERSION_STR     _T("4.3.1\0")
+#define VER_VERSION         4,4,0,0
+#define VER_VERSION_STR     _T("4.4.0\0")
 
 #define VER_DESCRIPTION     _T("GTags plugin for Notepad++\0")
 

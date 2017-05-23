@@ -32,12 +32,14 @@ The default is the built-in *GTags* parser but it supports only C, C++, Java, PH
 *Ctags* supports considerably more languages and is continuously evolving but does not allow reference search at the moment.
 *Pygments* also supports lots of languages + reference search but requires external Python library (*Pygments*) that is not supplied with the plugin.
 
-From **Settings** you can also set the auto-update database behavior and the linked libraries databases (if any). The linked libraries are completely manageable from the settings window.
+From **Settings** you can also set the auto-update database behavior, the linked libraries databases (if any) and the ignored sub-paths. The linked libraries are completely manageable from the settings window. The ignored sub-paths setting is used for results filtering - the configured database sub-paths will be excluded from the search results.
 
 There are two copies of the above-mentioned settings that are identical:
 
-1. The global (default) ones. Those are used whenever the project / library database is created for the first time. You can access those at any time - just open the **Settings** window.
-2. Per database settings. Those are related to the specific database. You can access those when you open **Settings** window while you are editing a project file.
+1. The global (default) ones: Those are used whenever the project / library database is created for the first time. You can access those at any time - just open the **Settings** window.
+2. Per database settings: Those are related to the specific database. You can access those when you open **Settings** window while you are editing a project file.
+
+You can also set a default database that will be used when performing searches from files without their own database (unparsed files). This setting is only global.
 
 
 To start using the plugin first you need to create GTags database for your project - **Create Database**.
@@ -82,7 +84,7 @@ Double-clicking or pressing *Enter*, *Tab* or *Space* will insert the selected a
 
 All **Find** commands will show Notepad++ docking window with the results.
 Each such command will place its results in a separate tab that will automatically become active.
-Clicking on another tab will show that command's results. You can also use the *Alt* + *Left* and *Alt* + *Right* arrow keys to switch between tabs.
+Clicking on another tab will show that command's results. You can also use the *ALT* + *Left* and *ALT* + *Right* arrow keys to switch between tabs.
 
 Double-clicking, hitting *Space* or *Enter* on search result line will take you to the source location. You can also do that by left-clicking on the highlighted searched word in the result line. Your currently edited document location will be saved - use **Go Back** command to visit it again. You can 'undo' the **Go Back** action by using **Go Forward** command.
 By using the mouse or the arrow keys you can move around result lines and you can trigger new searches directly from the results window
@@ -90,11 +92,13 @@ By using the mouse or the arrow keys you can move around result lines and you ca
 
 Right clicking or hitting *ESC* will close the currently active search results tab.
 
-Left-clicking in the margin area ([+] / [-] signs) or pressing *'+'* / *'-'* keys will unfold / fold lines. To fold a line it is not necessary to click exactly the [-] sign in the margin - clicking in any sub-line's margin will do. Pressing *Alt* + *'+'* / *'-'* keys will unfold / fold all lines.
+Left-clicking in the margin area ([+] / [-] signs) or pressing *'+'* / *'-'* keys will unfold / fold lines. To fold a line it is not necessary to click exactly the [-] sign in the margin - clicking in any sub-line's margin will do. Pressing *ALT* + *'+'* / *'-'* keys will unfold / fold all lines.
 You can accomplish that also by double-clicking or hitting *Space* or *Enter* on the search results head line - this will toggle all lines fold / unfold state.
 Clicking in head line margin or pressing *'+'* / *'-'* keys while head line is the active one will do the same.
 
-The results window is Scintilla window actually (same as Notepad++). This means that you can use *Ctrl* + mouse scroll to zoom in / out or you can select text and copy it (*Ctrl* + *'C'*).
+The results window is Scintilla window actually (same as Notepad++). This means that you can use *CTRL* + mouse scroll to zoom in / out or you can select text and copy it (*CTRL* + *'C'*).
+
+When the focus is on the results window pressing *CTRL* + *'F'* will open a search dialog. Fill-in what you are looking for and press *Enter*. The search dialog will remain open until you press *ESC*. While it is open you can continue searching by pressing *Enter* again. *Shift* + *Enter* searches backwards. If you close the search dialog you can continue searching for the same thing using *F3* and *Shift* + *F3* (forward or backward respectively). *F3* works while the search dialog is open as well. The search always wraps around when it reaches the results end - the Notepad++ window will blink to notify you in that case.
 
 **Toggle Results Window Focus** command is added for convenience. It switches the focus back and forth between the edited document and the results window. It's meant to be used with a shortcut so you can use the plugin through the keyboard entirely.
 

@@ -1,3 +1,16 @@
+What's new in v4.4.0
+=======================
+
+- Added search functionality in result window.
+- Added per-database config setting for excluding sub-paths from results.
+- Improve UI view and DPI awareness.
+- Fix bug for library DBs on different drive when the returned paths are absolute and were not correctly parsed
+    (thanks to zavla - z.malinovskiy).
+- Fix bug in Activity window for the 64-bit version (thanks to YoungJoon Ahn).
+- Various optimizations.
+- GTags binaries updated to v6.5.6.
+
+
 What's new in v4.3.1
 =======================
 
