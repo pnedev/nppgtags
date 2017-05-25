@@ -1263,11 +1263,15 @@ void ResultWin::onMarginClick(SCNotification* notify)
  */
 bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 {
-    int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
+    const int currentPos = sendSci(SCI_GETCURRENTPOS);
+    int lineNum = sendSci(SCI_LINEFROMPOSITION, currentPos);
 
     switch (keyCode)
     {
         case VK_UP:
+        {
+            int linePosOffset = currentPos - sendSci(SCI_POSITIONFROMLINE, lineNum);
+
             if (--lineNum >= 0)
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
@@ -1277,11 +1281,21 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
                         lineNum = foldLine;
                 }
 
-                sendSci(SCI_GOTOLINE, lineNum);
+                const int lineStart = sendSci(SCI_POSITIONFROMLINE, lineNum);
+                const int lineEnd = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+
+                if (linePosOffset > lineEnd - lineStart)
+                    linePosOffset = lineEnd - lineStart;
+
+                sendSci(SCI_GOTOPOS, lineStart + linePosOffset);
             }
+        }
         return true;
 
         case VK_DOWN:
+        {
+            int linePosOffset = currentPos - sendSci(SCI_POSITIONFROMLINE, lineNum);
+
             if (++lineNum < sendSci(SCI_GETLINECOUNT))
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
@@ -1295,8 +1309,15 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
                     }
                 }
 
-                sendSci(SCI_GOTOLINE, lineNum);
+                const int lineStart = sendSci(SCI_POSITIONFROMLINE, lineNum);
+                const int lineEnd = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+
+                if (linePosOffset > lineEnd - lineStart)
+                    linePosOffset = lineEnd - lineStart;
+
+                sendSci(SCI_GOTOPOS, lineStart + linePosOffset);
             }
+        }
         return true;
 
         case VK_LEFT:
