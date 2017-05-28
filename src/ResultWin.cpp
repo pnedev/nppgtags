@@ -67,7 +67,7 @@ const TCHAR ResultWin::cClassName[]         = _T("ResultWin");
 const TCHAR ResultWin::cSearchClassName[]   = _T("ResultSearchWin");
 const int ResultWin::cSearchBkgndColor      = COLOR_INFOBK;
 const unsigned ResultWin::cSearchFontSize   = 10;
-const int ResultWin::cSearchWidth           = 510;
+const int ResultWin::cSearchWidth           = 420;
 
 
 ResultWin* ResultWin::RW = NULL;
@@ -664,7 +664,7 @@ HWND ResultWin::createSearchWindow()
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
 
-    int searchHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
+    int searchHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight + 1;
     const int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 2;
 
     ReleaseDC(_hWnd, hdc);
@@ -697,7 +697,7 @@ HWND ResultWin::createSearchWindow()
 
     GetClientRect(_hSearch, &win);
 
-    int btnWidth = (win.right - win.left - 110) / 4;
+    int btnWidth = (win.right - win.left - 120) / 3;
 
     _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
@@ -715,18 +715,13 @@ HWND ResultWin::createSearchWindow()
             _hSearch, NULL, HMod, NULL);
 
     _hUp = CreateWindowEx(0, _T("BUTTON"), _T("Up"),
-            WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-            3 * btnWidth + 1, 0, 50, btnHeight,
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            3 * btnWidth + 1, 0, 60, btnHeight,
             _hSearch, NULL, HMod, NULL);
 
     _hDown = CreateWindowEx(0, _T("BUTTON"), _T("Down"),
-            WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
-            3 * btnWidth + 51, 0, 50, btnHeight,
-            _hSearch, NULL, HMod, NULL);
-
-    _hFind = CreateWindowEx(0, _T("BUTTON"), _T("Find"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            win.right - btnWidth, 0, btnWidth, btnHeight,
+            3 * btnWidth + 61, 0, 60, btnHeight,
             _hSearch, NULL, HMod, NULL);
 
     if (_hBtnFont)
@@ -736,14 +731,11 @@ HWND ResultWin::createSearchWindow()
         SendMessage(_hWW, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hUp, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hDown, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hFind, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
     Button_SetCheck(_hRE, _lastRE ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hMC, _lastMC ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hWW, _lastWW ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hUp, _searchUp ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hDown, !_searchUp ? BST_CHECKED : BST_UNCHECKED);
 
     _hSearchTxt = CreateWindowEx(styleTxtEx, RICHEDIT_CLASS, NULL, styleTxt,
             0, btnHeight, win.right - win.left, searchHeight,
@@ -1547,7 +1539,6 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         _lastRE = (Button_GetCheck(_hRE) == BST_CHECKED);
         _lastMC = (Button_GetCheck(_hMC) == BST_CHECKED);
         _lastWW = (Button_GetCheck(_hWW) == BST_CHECKED);
-        _searchUp = (Button_GetCheck(_hUp) == BST_CHECKED);
 
         int txtLen = Edit_GetTextLength(_hSearchTxt);
         if (txtLen == 0)
@@ -1568,8 +1559,6 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         return;
     }
 
-    const bool searchUp = reverseDir ? !_searchUp : _searchUp;
-
     CTextA txt(_lastSearchTxt.C_str());
 
     const int docEnd = sendSci(SCI_GETLENGTH);
@@ -1577,7 +1566,7 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
     int startPos = sendSci(SCI_GETCURRENTPOS);
     int endPos = docEnd;
 
-    if (searchUp)
+    if (reverseDir)
     {
         if (startPos)
             startPos -= 1;
@@ -1588,9 +1577,9 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
     }
 
     if (!findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE) &&
-        ((!searchUp && startPos) || (searchUp && startPos != docEnd)))
+        ((!reverseDir && startPos) || (reverseDir && startPos != docEnd)))
     {
-        startPos = searchUp ? docEnd : 0;
+        startPos = reverseDir ? docEnd : 0;
 
         if (!findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE))
             return;
@@ -1829,9 +1818,14 @@ LRESULT APIENTRY ResultWin::searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                if ((HWND)lParam == RW->_hFind)
+                if ((HWND)lParam == RW->_hDown)
                 {
                     RW->onSearch(false, true);
+                    return 0;
+                }
+                else if ((HWND)lParam == RW->_hUp)
+                {
+                    RW->onSearch(true, true);
                     return 0;
                 }
             }

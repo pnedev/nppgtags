@@ -122,7 +122,7 @@ void SettingsWin::Show(const DbHandle& db)
     {
         delete tab;
         SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
-
+        DbManager::Get().PutDb(db);
         return;
     }
 
@@ -243,7 +243,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
         ReleaseDC(hOwner, hdc);
 
-        txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight;
+        txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight + 1;
         txtInfoHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 1;
     }
 

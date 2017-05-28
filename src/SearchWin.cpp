@@ -156,7 +156,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     GetTextMetrics(hdc, &tm);
 
     int txtHeight = MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading + 1;
-    int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight;
+    int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 2;
 
     ReleaseDC(hOwner, hdc);
 

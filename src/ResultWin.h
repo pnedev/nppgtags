@@ -155,7 +155,7 @@ private:
 
     ResultWin() : _hWnd(NULL), _hSci(NULL), _hKeyHook(NULL), _sciFunc(NULL), _sciPtr(0), _activeTab(NULL),
             _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
-            _lastRE(false), _lastMC(true), _lastWW(true), _searchUp(false) {}
+            _lastRE(false), _lastMC(true), _lastWW(true) {}
     ResultWin(const ResultWin&);
     ~ResultWin();
 
@@ -220,14 +220,12 @@ private:
     HWND        _hWW;
     HWND        _hUp;
     HWND        _hDown;
-    HWND        _hFind;
     HFONT       _hSearchFont;
     HFONT       _hBtnFont;
 
     bool        _lastRE;
     bool        _lastMC;
     bool        _lastWW;
-    bool        _searchUp;
     CText       _lastSearchTxt;
 };
 
