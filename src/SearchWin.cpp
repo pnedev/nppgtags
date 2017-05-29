@@ -37,6 +37,10 @@
 #include "LineParser.h"
 #include "Config.h"
 
+#if (WINVER >= 0x0600)
+    #include <VersionHelpers.h>
+#endif
+
 
 namespace GTags
 {
@@ -138,6 +142,12 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 {
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(ncm);
+
+#if (WINVER >= 0x0600)
+    if (!IsWindowsVistaOrGreater())
+        ncm.cbSize -= sizeof(int);
+#endif
+
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
     HDC hdc = GetWindowDC(hOwner);

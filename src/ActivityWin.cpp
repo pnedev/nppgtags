@@ -32,6 +32,10 @@
 #include "GTags.h"
 #include "ActivityWin.h"
 
+#if (WINVER >= 0x0600)
+    #include <VersionHelpers.h>
+#endif
+
 
 namespace GTags
 {
@@ -192,6 +196,12 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     {
         NONCLIENTMETRICS ncm;
         ncm.cbSize = sizeof(ncm);
+
+#if (WINVER >= 0x0600)
+        if (!IsWindowsVistaOrGreater())
+            ncm.cbSize -= sizeof(int);
+#endif
+
         SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
         HWND hParent = INpp::Get().GetHandle();

@@ -40,6 +40,10 @@
 #include "dockingResource.h"
 #include "StrUniquenessChecker.h"
 
+#if (WINVER >= 0x0600)
+    #include <VersionHelpers.h>
+#endif
+
 
 // Scintilla user defined styles IDs
 enum SciStyles_t
@@ -651,6 +655,12 @@ HWND ResultWin::createSearchWindow()
 
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(ncm);
+
+#if (WINVER >= 0x0600)
+    if (!IsWindowsVistaOrGreater())
+        ncm.cbSize -= sizeof(int);
+#endif
+
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
     HDC hdc = GetWindowDC(_hWnd);
