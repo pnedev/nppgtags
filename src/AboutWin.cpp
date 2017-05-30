@@ -35,10 +35,6 @@
 #include "GTags.h"
 #include "AboutWin.h"
 
-#if (WINVER >= 0x0600)
-    #include <VersionHelpers.h>
-#endif
-
 
 namespace GTags
 {
@@ -130,7 +126,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     ncm.cbSize = sizeof(ncm);
 
 #if (WINVER >= 0x0600)
-    if (!IsWindowsVistaOrGreater())
+    if (Tools::GetWindowsVersion() <= 0x0502)
         ncm.cbSize -= sizeof(int);
 #endif
 

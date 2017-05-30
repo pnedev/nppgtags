@@ -28,13 +28,10 @@
 #include <windows.h>
 #include <tchar.h>
 #include <commctrl.h>
+#include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
 #include "ActivityWin.h"
-
-#if (WINVER >= 0x0600)
-    #include <VersionHelpers.h>
-#endif
 
 
 namespace GTags
@@ -198,7 +195,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
         ncm.cbSize = sizeof(ncm);
 
 #if (WINVER >= 0x0600)
-        if (!IsWindowsVistaOrGreater())
+        if (Tools::GetWindowsVersion() <= 0x0502)
             ncm.cbSize -= sizeof(int);
 #endif
 

@@ -37,10 +37,6 @@
 #include "Cmd.h"
 #include "CmdEngine.h"
 
-#if (WINVER >= 0x0600)
-    #include <VersionHelpers.h>
-#endif
-
 
 namespace GTags
 {
@@ -234,7 +230,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     ncm.cbSize = sizeof(ncm);
 
 #if (WINVER >= 0x0600)
-    if (!IsWindowsVistaOrGreater())
+    if (Tools::GetWindowsVersion() <= 0x0502)
         ncm.cbSize -= sizeof(int);
 #endif
 
@@ -651,6 +647,8 @@ void SettingsWin::fillTabData()
     }
 
     SendMessage(_hLibDbs, EM_SETEVENTMASK, 0, ENM_CHANGE);
+
+	SendMessage(_hPathFilters, EM_SETEVENTMASK, 0, ENM_NONE);
 
     if (_activeTab->_cfg._pathFilters.empty())
     {

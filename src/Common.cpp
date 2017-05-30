@@ -161,6 +161,20 @@ RECT Tools::GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int h
 /**
  *  \brief
  */
+unsigned Tools::GetWindowsVersion()
+{
+    OSVERSIONINFO osvi = {0};
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+    GetVersionEx(&osvi);
+
+    return ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion);
+}
+
+
+/**
+ *  \brief
+ */
 CTextW::CTextW(const wchar_t* str) : _invalidStrLen(false)
 {
     if (str)

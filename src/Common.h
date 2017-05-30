@@ -209,6 +209,7 @@ namespace Tools
 
 bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);
 RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
+unsigned GetWindowsVersion();
 
 
 #ifdef DEVELOPMENT
