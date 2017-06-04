@@ -274,7 +274,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
     {
         case WM_CREATE:
             aw = (ActivityWin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-            SetWindowLongPtr(hWnd, GWLP_USERDATA, PtrToUlong(aw));
+			SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(aw));
         return 0;
 
         case WM_SETFOCUS:
