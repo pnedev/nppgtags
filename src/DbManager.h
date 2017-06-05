@@ -91,7 +91,11 @@ typedef std::shared_ptr<GTagsDb> DbHandle;
 class DbManager
 {
 public:
-    static DbManager& Get() { return Instance; }
+    static DbManager& Get()
+    {
+        static DbManager Instance;
+        return Instance;
+    }
 
     const DbHandle& RegisterDb(const CPath& dbPath);
     bool UnregisterDb(const DbHandle& db);
@@ -101,8 +105,6 @@ public:
     bool DbExistsInFolder(const CPath& folder);
 
 private:
-    static DbManager Instance;
-
     DbManager() {}
     DbManager(const DbManager&);
     ~DbManager() {}

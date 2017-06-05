@@ -41,7 +41,11 @@
 class INpp
 {
 public:
-    static inline INpp& Get() { return Instance; }
+    static inline INpp& Get()
+    {
+        static INpp Instance;
+        return Instance;
+    }
 
     inline HWND ReadSciHandle()
     {
@@ -319,8 +323,6 @@ public:
     }
 
 private:
-    static INpp Instance;
-
     INpp() : _hSC(NULL) {}
     INpp(const INpp&);
     ~INpp() {}

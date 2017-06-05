@@ -33,8 +33,6 @@
 namespace GTags
 {
 
-DbManager DbManager::Instance;
-
 
 /**
  *  \brief

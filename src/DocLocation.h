@@ -37,7 +37,11 @@
 class DocLocation
 {
 public:
-    static DocLocation& Get() { return Instance; }
+    static DocLocation& Get()
+    {
+        static DocLocation Instance;
+        return Instance;
+    }
 
     unsigned GetDepth() const { return _maxDepth; }
     void SetDepth(unsigned depth);
@@ -69,8 +73,6 @@ private:
     };
 
     static const unsigned cInitialDepth;
-
-    static DocLocation Instance;
 
     DocLocation() : _maxDepth(cInitialDepth), _backLocIdx(-1) {}
     DocLocation(const DocLocation&);

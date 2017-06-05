@@ -28,7 +28,6 @@
 
 
 const unsigned DocLocation::cInitialDepth = 10;
-DocLocation DocLocation::Instance;
 
 
 /**

@@ -25,9 +25,6 @@
 #include "INpp.h"
 
 
-INpp INpp::Instance;
-
-
 /**
  *  \brief
  */
