@@ -1558,9 +1558,6 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
 
         _lastSearchTxt.Resize(txtLen);
         Edit_GetText(_hSearchTxt, _lastSearchTxt.C_str(), _lastSearchTxt.Size());
-
-        if (!keepFocus)
-            SetFocus(_hSci);
     }
     else if (_lastSearchTxt.IsEmpty())
     {
@@ -1584,13 +1581,13 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         endPos = 0;
     }
 
-    if (!findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE) &&
-        ((!reverseDir && startPos) || (reverseDir && startPos != docEnd)))
+    bool found = findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE);
+
+    if (!found && ((!reverseDir && startPos) || (reverseDir && startPos != docEnd)))
     {
         startPos = reverseDir ? docEnd : 0;
 
-        if (!findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE))
-            return;
+        found = findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE);
 
         FLASHWINFO fi {0};
         fi.cbSize       = sizeof(fi);
@@ -1602,8 +1599,18 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         FlashWindowEx(&fi);
     }
 
-    sendSci(SCI_SETSEL, startPos, endPos);
-    sendSci(SCI_ENSUREVISIBLEENFORCEPOLICY, sendSci(SCI_LINEFROMPOSITION, startPos));
+    if (found)
+    {
+        if (!keepFocus)
+            SetFocus(_hSci);
+
+        sendSci(SCI_SETSEL, startPos, endPos);
+        sendSci(SCI_ENSUREVISIBLEENFORCEPOLICY, sendSci(SCI_LINEFROMPOSITION, startPos));
+    }
+    else
+    {
+        Edit_SetSel(_hSearchTxt, 0, -1);
+    }
 }
 
 
