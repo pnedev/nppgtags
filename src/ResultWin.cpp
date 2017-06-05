@@ -1830,6 +1830,10 @@ LRESULT APIENTRY ResultWin::searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         case WM_CREATE:
         return 0;
 
+        case WM_SETFOCUS:
+            SetFocus(RW->_hSearchTxt);
+        return 0;
+
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
