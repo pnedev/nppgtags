@@ -684,14 +684,15 @@ HWND ResultWin::createSearchWindow()
 
     searchHeight = win.bottom - win.top;
 
-    DWORD style = WS_POPUP | WS_BORDER;
+    DWORD styleEx   = WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW;
+    DWORD style     = WS_POPUP | WS_CAPTION;
 
-    win = Tools::GetWinRect(_hWnd, 0, style, win.right - win.left + 1, searchHeight + btnHeight);
+    win = Tools::GetWinRect(_hWnd, styleEx, style, win.right - win.left + 1, searchHeight + btnHeight);
 
     RECT ownerWin;
     GetWindowRect(_hWnd, &ownerWin);
 
-    _hSearch = CreateWindow(cSearchClassName, cPluginName, style,
+    _hSearch = CreateWindowEx(styleEx, cSearchClassName, _T("Search in results"), style,
             ownerWin.right - (win.right - win.left) -
             GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CXFIXEDFRAME) - GetSystemMetrics(SM_CXVSCROLL),
             ownerWin.top +
@@ -754,9 +755,10 @@ HWND ResultWin::createSearchWindow()
 
     CHARFORMAT fmt  = {0};
     fmt.cbSize      = sizeof(fmt);
-    fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE;
+    fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_CHARSET | CFM_COLOR;
     fmt.dwEffects   = CFE_AUTOCOLOR;
     fmt.yHeight     = cSearchFontSize * 20;
+    fmt.bCharSet    = ncm.lfMessageFont.lfCharSet;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
     SendMessage(_hSearchTxt, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
