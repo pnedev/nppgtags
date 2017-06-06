@@ -736,8 +736,6 @@ HWND ResultWin::createSearchWindow()
         SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hWW, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hUp, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hDown, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
     Button_SetCheck(_hRE, _lastRE ? BST_CHECKED : BST_UNCHECKED);
