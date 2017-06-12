@@ -493,9 +493,21 @@ void ResultWin::applyStyle()
     COLORREF findForeColor =
             RGB(GetRValue(backColor) ^ 0x1C, GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
 
-    HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-    if (hFont)
-        SendMessage(_hTab, WM_SETFONT, (WPARAM)hFont, TRUE);
+    {
+        NONCLIENTMETRICS ncm;
+        ncm.cbSize = sizeof(ncm);
+
+#if (WINVER >= 0x0600)
+        if (Tools::GetWindowsVersion() <= 0x0502)
+            ncm.cbSize -= sizeof(int);
+#endif
+
+        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
+        HFONT hFont = CreateFontIndirect(&ncm.lfMenuFont);
+        if (hFont)
+            SendMessage(_hTab, WM_SETFONT, (WPARAM)hFont, TRUE);
+    }
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);
@@ -662,7 +674,7 @@ HWND ResultWin::createSearchWindow()
     HDC hdc = GetWindowDC(_hWnd);
 
     ncm.lfMessageFont.lfHeight = -MulDiv(cSearchFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-    ncm.lfMenuFont.lfHeight = -MulDiv(cSearchFontSize - 2, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    ncm.lfMenuFont.lfHeight = -MulDiv(cSearchFontSize - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72);
 
     _hSearchFont = CreateFontIndirect(&ncm.lfMessageFont);
     _hBtnFont = CreateFontIndirect(&ncm.lfMenuFont);
@@ -687,7 +699,7 @@ HWND ResultWin::createSearchWindow()
     DWORD styleEx   = WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION;
 
-    win = Tools::GetWinRect(_hWnd, styleEx, style, win.right - win.left + 1, searchHeight + btnHeight);
+    win = Tools::GetWinRect(_hWnd, styleEx, style, win.right - win.left + 1, searchHeight + btnHeight + 1);
 
     RECT ownerWin;
     GetWindowRect(_hWnd, &ownerWin);
@@ -743,28 +755,32 @@ HWND ResultWin::createSearchWindow()
     Button_SetCheck(_hWW, _lastWW ? BST_CHECKED : BST_UNCHECKED);
 
     _hSearchTxt = CreateWindowEx(styleTxtEx, RICHEDIT_CLASS, NULL, styleTxt,
-            0, btnHeight, win.right - win.left, searchHeight,
+            0, btnHeight + 1, win.right - win.left, searchHeight,
             _hSearch, NULL, HMod, NULL);
 
     SendMessage(_hSearchTxt, EM_SETBKGNDCOLOR, 0, GetSysColor(cSearchBkgndColor));
-
-    if (_hSearchFont)
-        SendMessage(_hSearchTxt, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
 
     CHARFORMAT fmt  = {0};
     fmt.cbSize      = sizeof(fmt);
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_CHARSET | CFM_COLOR;
     fmt.dwEffects   = CFE_AUTOCOLOR;
-    fmt.yHeight     = cSearchFontSize * 20;
+    fmt.yHeight     = ncm.lfMessageFont.lfHeight;
     fmt.bCharSet    = ncm.lfMessageFont.lfCharSet;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
     SendMessage(_hSearchTxt, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
 
+    if (_hSearchFont)
+        SendMessage(_hSearchTxt, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+
     if (!_lastSearchTxt.IsEmpty())
     {
         Edit_SetText(_hSearchTxt, _lastSearchTxt.C_str());
         Edit_SetSel(_hSearchTxt, 0, -1);
+    }
+    else
+    {
+        Edit_SetText(_hSearchTxt, _T(""));
     }
 
     ShowWindow(_hSearch, SW_SHOWNORMAL);

@@ -94,14 +94,13 @@ public:
     inline unsigned ResultLen() const { return _result.size() - 1; }
 
     void AppendToResult(const std::vector<char>& data);
-
-private:
-    friend class CmdEngine;
-
-    void setResult(const std::vector<char>& data)
+    void SetResult(const std::vector<char>& data)
     {
         _result.assign(data.begin(), data.end());
     }
+
+private:
+    friend class CmdEngine;
 
     CmdId_t             _id;
     CText               _name;

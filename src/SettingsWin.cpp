@@ -438,7 +438,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         fmt.cbSize      = sizeof(fmt);
         fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_CHARSET | CFM_COLOR;
         fmt.dwEffects   = CFE_AUTOCOLOR;
-        fmt.yHeight     = cFontSize * 20;
+        fmt.yHeight     = ncm.lfMessageFont.lfHeight;
         fmt.bCharSet    = ncm.lfMessageFont.lfCharSet;
         _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
@@ -448,7 +448,6 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     }
 
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
-
     if (_hFont)
     {
         SendMessage(_hDefDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
@@ -459,7 +458,6 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     }
 
     _hFontInfo = CreateFontIndirect(&ncm.lfMenuFont);
-
     if (_hFontInfo)
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
 

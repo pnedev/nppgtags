@@ -358,12 +358,13 @@ void dbWriteCB(const CmdPtr_t& cmd)
 */
 void aboutCB(const CmdPtr_t& cmd)
 {
-	CText msg;
+    if (cmd->Status() != OK)
+    {
+        const CTextA txt("\nVERSION READ FAILED\n\n");
+        cmd->AppendToResult(txt.Vector());
+    }
 
-	if (cmd->Status() == OK)
-		msg = cmd->Result();
-	else
-		msg = _T("VERSION READ FAILED\n");
+	const CText msg = cmd->Result();
 
 	AboutWin::Show(msg.C_str());
 }
@@ -374,18 +375,17 @@ void aboutCB(const CmdPtr_t& cmd)
  */
 void halfAboutCB(const CmdPtr_t& cmd)
 {
-    if (cmd->Status() == OK)
+    if (cmd->Status() != OK)
     {
-        CTextA txt("\nCurrent Ctags parser version:\n\n");
-        cmd->AppendToResult(txt.Vector());
-        cmd->Id(CTAGS_VERSION);
-        CmdEngine::Run(cmd, aboutCB);
+        const CTextA txt("VERSION READ FAILED\n");
+        cmd->SetResult(txt.Vector());
     }
-    else
-    {
-        CText msg(_T("VERSION READ FAILED\n"));
-        AboutWin::Show(msg.C_str());
-    }
+
+    const CTextA txt("\nCurrent Ctags parser version:\n\n");
+    cmd->AppendToResult(txt.Vector());
+
+    cmd->Id(CTAGS_VERSION);
+    CmdEngine::Run(cmd, aboutCB);
 }
 
 

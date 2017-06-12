@@ -176,7 +176,7 @@ unsigned CmdEngine::start()
     }
     else if (!errorPipe.GetOutput().empty())
     {
-        _cmd->setResult(errorPipe.GetOutput());
+        _cmd->SetResult(errorPipe.GetOutput());
 
         if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
         {

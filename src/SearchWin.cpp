@@ -149,10 +149,10 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     HDC hdc = GetWindowDC(hOwner);
 
-    ncm.lfMenuFont.lfHeight = -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    ncm.lfMenuFont.lfHeight = -MulDiv(UIFontSize - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72);
 
     _hTxtFont = CreateFont(
-            -MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+            -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName.C_str());
@@ -162,7 +162,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     TEXTMETRIC tm;
     GetTextMetrics(hdc, &tm);
 
-    int txtHeight = MulDiv(UIFontSize + 1, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading + 1;
+    int txtHeight = MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72) + tm.tmInternalLeading + 1;
     int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 2;
 
     ReleaseDC(hOwner, hdc);

@@ -136,19 +136,19 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
     ReleaseDC(hEdit, hdc);
 
-    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
-    if (_hFont)
-        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, TRUE);
-
     CHARFORMAT fmt  = {0};
     fmt.cbSize      = sizeof(fmt);
     fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_CHARSET | CFM_COLOR;
     fmt.dwEffects   = CFE_AUTOCOLOR;
-    fmt.yHeight     = cFontSize * 20;
+    fmt.yHeight     = ncm.lfMessageFont.lfHeight;
     fmt.bCharSet    = ncm.lfMessageFont.lfCharSet;
     _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
 
     SendMessage(hEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
+
+    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
+    if (_hFont)
+        SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     DWORD events = ENM_KEYEVENTS | ENM_MOUSEEVENTS | ENM_REQUESTRESIZE | ENM_LINK;
     SendMessage(hEdit, EM_SETEVENTMASK, 0, events);
