@@ -760,16 +760,6 @@ HWND ResultWin::createSearchWindow()
 
     SendMessage(_hSearchTxt, EM_SETBKGNDCOLOR, 0, GetSysColor(cSearchBkgndColor));
 
-    CHARFORMAT fmt  = {0};
-    fmt.cbSize      = sizeof(fmt);
-    fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_CHARSET | CFM_COLOR;
-    fmt.dwEffects   = CFE_AUTOCOLOR;
-    fmt.yHeight     = ncm.lfMessageFont.lfHeight;
-    fmt.bCharSet    = ncm.lfMessageFont.lfCharSet;
-    _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
-
-    SendMessage(_hSearchTxt, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
-
     if (_hSearchFont)
         SendMessage(_hSearchTxt, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
 

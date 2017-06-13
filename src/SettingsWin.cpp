@@ -433,20 +433,6 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
-    {
-        CHARFORMAT fmt  = {0};
-        fmt.cbSize      = sizeof(fmt);
-        fmt.dwMask      = CFM_FACE | CFM_BOLD | CFM_ITALIC | CFM_SIZE | CFM_CHARSET | CFM_COLOR;
-        fmt.dwEffects   = CFE_AUTOCOLOR;
-        fmt.yHeight     = ncm.lfMessageFont.lfHeight;
-        fmt.bCharSet    = ncm.lfMessageFont.lfCharSet;
-        _tcscpy_s(fmt.szFaceName, _countof(fmt.szFaceName), ncm.lfMessageFont.lfFaceName);
-
-        SendMessage(_hDefDb, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
-        SendMessage(_hLibDbs, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
-        SendMessage(_hPathFilters, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&fmt);
-    }
-
     _hFont = CreateFontIndirect(&ncm.lfMessageFont);
     if (_hFont)
     {
