@@ -56,6 +56,7 @@ private:
 
     static std::list<ActivityWin*>  WindowList;
     static HFONT                    HFont;
+    static unsigned                 TxtHeight;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

@@ -174,7 +174,8 @@ private:
 
     void configScintilla();
     HWND composeWindow();
-    HWND createSearchWindow();
+    void createSearchWindow();
+    void onSearchWindowCreate(HWND hWnd);
     void showWindow();
     void hideWindow();
 

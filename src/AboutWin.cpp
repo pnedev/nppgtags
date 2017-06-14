@@ -122,21 +122,10 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 
     SendMessage(hEdit, EM_SETBKGNDCOLOR, 0, GetSysColor(cBackgroundColor));
 
-    NONCLIENTMETRICS ncm;
-    ncm.cbSize = sizeof(ncm);
-
-#if (WINVER >= 0x0600)
-    if (Tools::GetWindowsVersion() <= 0x0502)
-        ncm.cbSize -= sizeof(int);
-#endif
-
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-
     HDC hdc = GetWindowDC(hEdit);
-    ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    _hFont = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
     ReleaseDC(hEdit, hdc);
 
-    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
     if (_hFont)
         SendMessage(hEdit, WM_SETFONT, (WPARAM)_hFont, TRUE);
 

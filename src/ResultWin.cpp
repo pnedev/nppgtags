@@ -493,21 +493,9 @@ void ResultWin::applyStyle()
     COLORREF findForeColor =
             RGB(GetRValue(backColor) ^ 0x1C, GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
 
-    {
-        NONCLIENTMETRICS ncm;
-        ncm.cbSize = sizeof(ncm);
-
-#if (WINVER >= 0x0600)
-        if (Tools::GetWindowsVersion() <= 0x0502)
-            ncm.cbSize -= sizeof(int);
-#endif
-
-        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-
-        HFONT hFont = CreateFontIndirect(&ncm.lfMenuFont);
-        if (hFont)
-            SendMessage(_hTab, WM_SETFONT, (WPARAM)hFont, TRUE);
-    }
+    HFONT hFont = Tools::CreateFromSystemMenuFont();
+    if (hFont)
+        SendMessage(_hTab, WM_SETFONT, (WPARAM)hFont, TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);
@@ -619,7 +607,7 @@ HWND ResultWin::composeWindow()
     DWORD style = WS_POPUP | WS_CAPTION | WS_SIZEBOX | WS_CLIPCHILDREN;
 
     _hWnd = CreateWindow(cClassName, cPluginName, style,
-            0, 0, 10, 10, hOwner, NULL, HMod, this);
+            0, 0, 10, 10, hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
@@ -653,66 +641,66 @@ HWND ResultWin::composeWindow()
 /**
  *  \brief
  */
-HWND ResultWin::createSearchWindow()
+void ResultWin::createSearchWindow()
 {
     if (_hSearch)
     {
+        SetFocus(_hSearchTxt);
         Edit_SetSel(_hSearchTxt, 0, -1);
-        return _hSearch;
+        return;
     }
 
-    NONCLIENTMETRICS ncm;
-    ncm.cbSize = sizeof(ncm);
+    const DWORD styleEx = WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW;
+    const DWORD style   = WS_POPUP | WS_CAPTION;
 
-#if (WINVER >= 0x0600)
-    if (Tools::GetWindowsVersion() <= 0x0502)
-        ncm.cbSize -= sizeof(int);
-#endif
+    CreateWindowEx(styleEx, cSearchClassName, _T("Search in results"), style, 0, 0, 10, 10, _hWnd, NULL, HMod, NULL);
+}
 
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
-    HDC hdc = GetWindowDC(_hWnd);
+/**
+ *  \brief
+ */
+void ResultWin::onSearchWindowCreate(HWND hWnd)
+{
+    _hSearch = hWnd;
 
-    ncm.lfMessageFont.lfHeight = -MulDiv(cSearchFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-    ncm.lfMenuFont.lfHeight = -MulDiv(cSearchFontSize - 1, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    HDC hdc = GetWindowDC(_hSearch);
 
-    _hSearchFont = CreateFontIndirect(&ncm.lfMessageFont);
-    _hBtnFont = CreateFontIndirect(&ncm.lfMenuFont);
+    _hSearchFont    = Tools::CreateFromSystemMessageFont(hdc, cSearchFontSize);
+    _hBtnFont       = Tools::CreateFromSystemMenuFont(hdc, cSearchFontSize - 1);
 
-    TEXTMETRIC tm;
-    GetTextMetrics(hdc, &tm);
+    int searchHeight    = Tools::GetFontHeight(hdc, _hSearchFont) + 1;
+    int btnHeight       = Tools::GetFontHeight(hdc, _hBtnFont) + 2;
 
-    int searchHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight + 1;
-    const int btnHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 2;
+    ReleaseDC(_hSearch, hdc);
 
-    ReleaseDC(_hWnd, hdc);
+    const DWORD styleTxtEx  = WS_EX_CLIENTEDGE;
+    const DWORD styleTxt    = WS_CHILD | WS_VISIBLE;
 
-    DWORD styleTxtEx    = WS_EX_CLIENTEDGE;
-    DWORD styleTxt      = WS_CHILD | WS_VISIBLE;
+    {
+        RECT win { 0, 0, cSearchWidth, searchHeight };
+        AdjustWindowRectEx(&win, styleTxt, FALSE, styleTxtEx);
+        searchHeight = win.bottom - win.top;
+    }
 
-    RECT win { 0, 0, cSearchWidth, searchHeight };
+    {
+        RECT win { 0, 0, 50, btnHeight };
+        AdjustWindowRectEx(&win, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, FALSE, 0);
+        btnHeight = win.bottom - win.top;
+    }
 
-    AdjustWindowRectEx(&win, styleTxt, FALSE, styleTxtEx);
-
-    searchHeight = win.bottom - win.top;
-
-    DWORD styleEx   = WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW;
-    DWORD style     = WS_POPUP | WS_CAPTION;
-
-    win = Tools::GetWinRect(_hWnd, styleEx, style, win.right - win.left + 1, searchHeight + btnHeight + 1);
-
+    RECT win = Tools::GetWinRect(_hWnd,
+            GetWindowLongPtr(_hSearch, GWL_EXSTYLE), GetWindowLongPtr(_hSearch, GWL_STYLE),
+            cSearchWidth + 1, searchHeight + btnHeight + 1);
     RECT ownerWin;
     GetWindowRect(_hWnd, &ownerWin);
 
-    _hSearch = CreateWindowEx(styleEx, cSearchClassName, _T("Search in results"), style,
+    MoveWindow(_hSearch,
             ownerWin.right - (win.right - win.left) -
             GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CXFIXEDFRAME) - GetSystemMetrics(SM_CXVSCROLL),
             ownerWin.top +
             GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYFIXEDFRAME) + GetSystemMetrics(SM_CYSIZE),
-            win.right - win.left, win.bottom - win.top,
-            _hWnd, NULL, HMod, this);
-    if (_hSearch == NULL)
-        return NULL;
+            win.right - win.left, win.bottom - win.top, TRUE);
 
     GetClientRect(_hSearch, &win);
 
@@ -774,8 +762,7 @@ HWND ResultWin::createSearchWindow()
     }
 
     ShowWindow(_hSearch, SW_SHOWNORMAL);
-
-    return _hSearch;
+    SetFocus(_hSearchTxt);
 }
 
 
@@ -1679,9 +1666,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                 }
                 else if (wParam == 0x46 && !alt && !shift) // 'F'
                 {
-                    if (RW->createSearchWindow())
-                        SetFocus(RW->_hSearchTxt);
-
+                    RW->createSearchWindow();
                     return 1;
                 }
             }
@@ -1832,6 +1817,7 @@ LRESULT APIENTRY ResultWin::searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     switch (uMsg)
     {
         case WM_CREATE:
+            RW->onSearchWindowCreate(hWnd);
         return 0;
 
         case WM_SETFOCUS:

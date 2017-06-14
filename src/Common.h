@@ -209,7 +209,10 @@ namespace Tools
 
 bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);
 RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
+unsigned GetFontHeight(HDC hdc, HFONT font);
 unsigned GetWindowsVersion();
+HFONT CreateFromSystemMessageFont(HDC hdc = NULL, unsigned fontHeight = 0);
+HFONT CreateFromSystemMenuFont(HDC hdc = NULL, unsigned fontHeight = 0);
 
 
 #ifdef DEVELOPMENT

@@ -161,6 +161,21 @@ RECT Tools::GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int h
 /**
  *  \brief
  */
+unsigned Tools::GetFontHeight(HDC hdc, HFONT font)
+{
+    SIZE fontSize;
+    HGDIOBJ oldObj = SelectObject(hdc, font);
+
+    GetTextExtentPoint32(hdc, _T("A"), 1, &fontSize);
+    SelectObject(hdc, oldObj);
+
+    return fontSize.cy;
+}
+
+
+/**
+ *  \brief
+ */
 unsigned Tools::GetWindowsVersion()
 {
     OSVERSIONINFO osvi = {0};
@@ -169,6 +184,50 @@ unsigned Tools::GetWindowsVersion()
     GetVersionEx(&osvi);
 
     return ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion);
+}
+
+
+/**
+ *  \brief
+ */
+HFONT Tools::CreateFromSystemMessageFont(HDC hdc, unsigned fontHeight)
+{
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+
+#if (WINVER >= 0x0600)
+    if (GetWindowsVersion() <= 0x0502)
+        ncm.cbSize -= sizeof(int);
+#endif
+
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
+    if (hdc && fontHeight)
+        ncm.lfMessageFont.lfHeight = -MulDiv(fontHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+
+    return CreateFontIndirect(&ncm.lfMessageFont);
+}
+
+
+/**
+ *  \brief
+ */
+HFONT Tools::CreateFromSystemMenuFont(HDC hdc, unsigned fontHeight)
+{
+    NONCLIENTMETRICS ncm;
+    ncm.cbSize = sizeof(ncm);
+
+#if (WINVER >= 0x0600)
+    if (GetWindowsVersion() <= 0x0502)
+        ncm.cbSize -= sizeof(int);
+#endif
+
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
+    if (hdc && fontHeight)
+        ncm.lfMenuFont.lfHeight = -MulDiv(fontHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+
+    return CreateFontIndirect(&ncm.lfMenuFont);
 }
 
 

@@ -45,6 +45,7 @@ const int ActivityWin::cWidth           = 600;
 
 std::list<ActivityWin*> ActivityWin::WindowList;
 HFONT                   ActivityWin::HFont = NULL;
+unsigned                ActivityWin::TxtHeight = 0;
 
 
 /**
@@ -191,22 +192,11 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
 
     if (WindowList.empty())
     {
-        NONCLIENTMETRICS ncm;
-        ncm.cbSize = sizeof(ncm);
-
-#if (WINVER >= 0x0600)
-        if (Tools::GetWindowsVersion() <= 0x0502)
-            ncm.cbSize -= sizeof(int);
-#endif
-
-        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-
         HWND hParent = INpp::Get().GetHandle();
         HDC hdc = GetWindowDC(hParent);
-        ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        HFont = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
+        TxtHeight = Tools::GetFontHeight(hdc, HFont);
         ReleaseDC(hParent, hdc);
-
-        HFont = CreateFontIndirect(&ncm.lfMessageFont);
     }
 
     WindowList.push_back(this);
@@ -219,24 +209,18 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     if (HFont)
         SendMessage(hWndTxt, WM_SETFONT, (WPARAM)HFont, TRUE);
 
-    HDC hdc = GetWindowDC(hWndTxt);
-    TEXTMETRIC tm;
-    GetTextMetrics(hdc, &tm);
-    ReleaseDC(hWndTxt, hdc);
-
-    int textHeight = tm.tmHeight;
-    adjustSizeAndPos(cWidth, textHeight + 25, winNum);
+    adjustSizeAndPos(cWidth, TxtHeight + 25, winNum);
 
     RECT win;
     GetClientRect(_hWnd, &win);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
-    MoveWindow(hWndTxt, 5, 5, width - 95, textHeight, TRUE);
+    MoveWindow(hWndTxt, 5, 5, width - 95, TxtHeight, TRUE);
 
     HWND hPBar = CreateWindowEx(0, PROGRESS_CLASS, NULL,
             WS_CHILD | WS_VISIBLE | PBS_MARQUEE,
-            5, textHeight + 10, width - 95, 10,
+            5, TxtHeight + 10, width - 95, 10,
             _hWnd, NULL, HMod, NULL);
     SendMessage(hPBar, PBM_SETMARQUEE, TRUE, 100);
 

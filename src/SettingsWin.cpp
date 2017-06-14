@@ -226,31 +226,18 @@ SettingsWin::~SettingsWin()
  */
 HWND SettingsWin::composeWindow(HWND hOwner)
 {
-    NONCLIENTMETRICS ncm;
-    ncm.cbSize = sizeof(ncm);
-
-#if (WINVER >= 0x0600)
-    if (Tools::GetWindowsVersion() <= 0x0502)
-        ncm.cbSize -= sizeof(int);
-#endif
-
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-
     int txtHeight;
     int txtInfoHeight;
     {
-        TEXTMETRIC tm;
         HDC hdc = GetWindowDC(hOwner);
 
-        ncm.lfMessageFont.lfHeight = -MulDiv(cFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-        ncm.lfMenuFont.lfHeight = -MulDiv(cFontSize - 2, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        _hFont      = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
+        _hFontInfo  = Tools::CreateFromSystemMenuFont(hdc, cFontSize - 2);
 
-        GetTextMetrics(hdc, &tm);
+        txtHeight       = Tools::GetFontHeight(hdc, _hFont) + 1;
+        txtInfoHeight   = Tools::GetFontHeight(hdc, _hFontInfo) + 1;
 
         ReleaseDC(hOwner, hdc);
-
-        txtHeight = tm.tmInternalLeading - ncm.lfMessageFont.lfHeight + 1;
-        txtInfoHeight = tm.tmInternalLeading - ncm.lfMenuFont.lfHeight + 1;
     }
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
@@ -433,7 +420,6 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             3 * width, yPos, width, 25,
             _hWnd, NULL, HMod, NULL);
 
-    _hFont = CreateFontIndirect(&ncm.lfMessageFont);
     if (_hFont)
     {
         SendMessage(_hDefDb, WM_SETFONT, (WPARAM)_hFont, TRUE);
@@ -443,7 +429,6 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         SendMessage(_hPathFilters, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
-    _hFontInfo = CreateFontIndirect(&ncm.lfMenuFont);
     if (_hFontInfo)
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
 
