@@ -430,7 +430,21 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     }
 
     if (_hFontInfo)
+    {
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hEnDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSetDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hUpdDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hTab, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hAutoUpdDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hEnLibDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hAddLibDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hUpdLibDbs, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hEnPathFilter, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hAddPathFilter, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSave, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hCancel, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+    }
 
     for (unsigned i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));

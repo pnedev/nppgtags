@@ -159,7 +159,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
 
     _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(), style,
             win.left, win.top, width, win.bottom - win.top,
-            hOwner, NULL, HMod, this);
+            hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
 
@@ -199,6 +199,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     {
         SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hOK, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
     if (enRE)

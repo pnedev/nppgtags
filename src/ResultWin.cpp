@@ -683,12 +683,6 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
         searchHeight = win.bottom - win.top;
     }
 
-    {
-        RECT win { 0, 0, 50, btnHeight };
-        AdjustWindowRectEx(&win, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, FALSE, 0);
-        btnHeight = win.bottom - win.top;
-    }
-
     RECT win = Tools::GetWinRect(_hWnd,
             GetWindowLongPtr(_hSearch, GWL_EXSTYLE), GetWindowLongPtr(_hSearch, GWL_STYLE),
             cSearchWidth + 1, searchHeight + btnHeight + 1);
@@ -736,6 +730,8 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
         SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hWW, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hUp, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hDown, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
     Button_SetCheck(_hRE, _lastRE ? BST_CHECKED : BST_UNCHECKED);
@@ -1745,8 +1741,7 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
                 return 0;
 
                 case DMN_CLOSE:
-                    if (RW->_hSearch)
-                        SendMessage(RW->_hSearch, WM_CLOSE, 0, 0);
+                    RW->closeAllTabs();
                 return 0;
             }
         break;

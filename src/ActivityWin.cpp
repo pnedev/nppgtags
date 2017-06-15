@@ -206,9 +206,6 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
             WS_CHILD | WS_VISIBLE | SS_LEFT | SS_PATHELLIPSIS,
             0, 0, 0, 0, _hWnd, NULL, HMod, NULL);
 
-    if (HFont)
-        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)HFont, TRUE);
-
     adjustSizeAndPos(cWidth, TxtHeight + 25, winNum);
 
     RECT win;
@@ -228,6 +225,12 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             width - 85, (height - 25) / 2, 80, 25, _hWnd,
             NULL, HMod, NULL);
+
+    if (HFont)
+    {
+        SendMessage(hWndTxt, WM_SETFONT, (WPARAM)HFont, TRUE);
+        SendMessage(_hBtn, WM_SETFONT, (WPARAM)HFont, TRUE);
+    }
 
     ShowWindow(_hWnd, SW_SHOWNOACTIVATE);
     UpdateWindow(_hWnd);
