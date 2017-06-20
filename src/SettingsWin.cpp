@@ -1211,7 +1211,12 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                 if ((HWND)lParam == SW->_hAutoUpdDb)
                     EnableWindow(SW->_hSave, TRUE);
             }
-            else if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
+            else if (HIWORD(wParam) == EN_CHANGE)
+            {
+                RedrawWindow((HWND)lParam, NULL, NULL, RDW_UPDATENOW);
+                EnableWindow(SW->_hSave, TRUE);
+            }
+            else if (HIWORD(wParam) == CBN_SELCHANGE)
             {
                 EnableWindow(SW->_hSave, TRUE);
             }
