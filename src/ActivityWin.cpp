@@ -255,18 +255,21 @@ void ActivityWin::onResize(int winNum)
  */
 LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    ActivityWin* aw;
-
     switch (uMsg)
     {
         case WM_CREATE:
-            aw = (ActivityWin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+        {
+            ActivityWin* aw = (ActivityWin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
             SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(aw));
+        }
         return 0;
 
         case WM_SETFOCUS:
-            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+        {
+            ActivityWin* aw =
+                    reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             SetFocus(aw->_hBtn);
+        }
         return 0;
 
         case WM_CTLCOLORSTATIC:
@@ -276,7 +279,8 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+                ActivityWin* aw =
+                        reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
                 EnableWindow(aw->_hBtn, FALSE);
                 SetEvent(aw->_hCancel);
                 return 0;
@@ -285,7 +289,8 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
         case WM_DESTROY:
         {
-            aw = reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            ActivityWin* aw =
+                    reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
             delete aw;
         }
         return 0;
