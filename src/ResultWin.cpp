@@ -201,6 +201,17 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         pIdx = pSrc;
         while (*pIdx != ':')
             ++pIdx;
+#pragma region Zavla1
+		//***Zavla, there are absolute paths in results from global.exe for files from GTAGSLIBs
+		//global.exe  -aT  --result=grep NOATOM
+		//c:/Program Files/Windows Kits/10/Include/10.0.10586.0/um/Windows.h:87:#define NOATOM
+		//
+		ptrdiff_t	mayBeDriveLetter = pIdx - pSrc;
+		if ( mayBeDriveLetter == 1 )
+		{ //this is an absolute path for "lib folders" in result from global.exe
+			while ( *++pIdx != ':' ) ; //search for the begining of line number
+		}
+#pragma endregion
 
         // add new file name to the UI buffer only if it is different
         // than the previous one
@@ -239,10 +250,6 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         _buf += ":\t";
 
         pIdx = ++pSrc;
-        while (*pIdx == ' ' || *pIdx == '\t')
-            ++pIdx;
-
-        pSrc = pIdx + 1;
         while (*pSrc != '\n' && *pSrc != '\r')
             ++pSrc;
 
@@ -888,9 +895,18 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     for (i = 1; (i <= lineLen) && (lineTxt[i] != '\r') && (lineTxt[i] != '\n'); ++i);
     lineTxt[i] = 0;
+#pragma region Zavla2
+	//***Zavla   if file path is from GTAGSLIBs
+	//global.exe returns "lib paths" as absolute paths.
+	CPath file ( lineLen + 1);
+	if ( lineTxt [ 2 ] == ':' ) {
+		file = &lineTxt[1];
 
-    CPath file(_activeTab->_projectPath.C_str());
-    file += &lineTxt[1];
+	} else{
+		file = _activeTab->_projectPath.C_str ( ) ;
+		file += &lineTxt[1];
+	}
+#pragma endregion
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())
