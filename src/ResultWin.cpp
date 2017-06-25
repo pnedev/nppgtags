@@ -202,6 +202,10 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         while (*pIdx != ':')
             ++pIdx;
 
+        // Path is absolute (starts with drive letter)
+        if ((pIdx - pSrc == 1) && ((*(pIdx + 1) == '\\') || (*(pIdx + 1) == '/')))
+            while (*++pIdx != ':');
+
         // add new file name to the UI buffer only if it is different
         // than the previous one
         if ((pPreviousFile == NULL) || ((unsigned)(pIdx - pSrc) != previousFileLen) ||
@@ -889,8 +893,18 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     for (i = 1; (i <= lineLen) && (lineTxt[i] != '\r') && (lineTxt[i] != '\n'); ++i);
     lineTxt[i] = 0;
 
-    CPath file(_activeTab->_projectPath.C_str());
-    file += &lineTxt[1];
+    CPath file;
+
+    // Path is absolute (starts with drive letter)
+    if ((lineLen > 3) && (lineTxt[2] == ':') && ((lineTxt[3] == '\\') || (lineTxt[3] == '/')))
+    {
+        file = &lineTxt[1];
+    }
+    else
+    {
+        file = _activeTab->_projectPath.C_str();
+        file += &lineTxt[1];
+    }
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())
