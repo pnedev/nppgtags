@@ -241,7 +241,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     }
 
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
-    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+    DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
     RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 13 * txtHeight + txtInfoHeight + 265);
     int width = win.right - win.left;
@@ -1211,12 +1211,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                 if ((HWND)lParam == SW->_hAutoUpdDb)
                     EnableWindow(SW->_hSave, TRUE);
             }
-            else if (HIWORD(wParam) == EN_CHANGE)
-            {
-                RedrawWindow((HWND)lParam, NULL, NULL, RDW_UPDATENOW);
-                EnableWindow(SW->_hSave, TRUE);
-            }
-            else if (HIWORD(wParam) == CBN_SELCHANGE)
+            else if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == CBN_SELCHANGE)
             {
                 EnableWindow(SW->_hSave, TRUE);
             }
