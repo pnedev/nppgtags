@@ -69,9 +69,9 @@ public:
         }
     }
 
-    const CTextW& operator=(const CTextW& txt);
-    const CTextW& operator=(const wchar_t* str);
-    const CTextW& operator=(const char* str);
+    CTextW& operator=(const CTextW& txt);
+    CTextW& operator=(const wchar_t* str);
+    CTextW& operator=(const char* str);
 
     inline bool operator==(const CTextW& txt) const { return (_buf == txt._buf); }
     inline bool operator==(const wchar_t* str) const { return !wcscmp(_buf.data(), str); }
@@ -129,9 +129,9 @@ public:
         }
     }
 
-    const CTextA& operator=(const CTextA& txt);
-    const CTextA& operator=(const char* str);
-    const CTextA& operator=(const wchar_t* str);
+    CTextA& operator=(const CTextA& txt);
+    CTextA& operator=(const char* str);
+    CTextA& operator=(const wchar_t* str);
 
     inline bool operator==(const CTextA& txt) const { return (_buf == txt._buf); }
     inline bool operator==(const char* str) const { return !strcmp(_buf.data(), str); }

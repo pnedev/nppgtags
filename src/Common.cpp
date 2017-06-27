@@ -264,7 +264,7 @@ CTextW::CTextW(const char* str) : _invalidStrLen(false)
 /**
  *  \brief
  */
-const CTextW& CTextW::operator=(const CTextW& txt)
+CTextW& CTextW::operator=(const CTextW& txt)
 {
     if (this != &txt)
     {
@@ -278,7 +278,7 @@ const CTextW& CTextW::operator=(const CTextW& txt)
 /**
  *  \brief
  */
-const CTextW& CTextW::operator=(const wchar_t* str)
+CTextW& CTextW::operator=(const wchar_t* str)
 {
     if (str)
     {
@@ -292,7 +292,7 @@ const CTextW& CTextW::operator=(const wchar_t* str)
 /**
  *  \brief
  */
-const CTextW& CTextW::operator=(const char* str)
+CTextW& CTextW::operator=(const char* str)
 {
     if (str)
     {
@@ -505,7 +505,7 @@ CTextA::CTextA(const wchar_t* str) : _invalidStrLen(false)
 /**
  *  \brief
  */
-const CTextA& CTextA::operator=(const CTextA& txt)
+CTextA& CTextA::operator=(const CTextA& txt)
 {
     if (this != &txt)
     {
@@ -519,7 +519,7 @@ const CTextA& CTextA::operator=(const CTextA& txt)
 /**
  *  \brief
  */
-const CTextA& CTextA::operator=(const char* str)
+CTextA& CTextA::operator=(const char* str)
 {
     if (str)
     {
@@ -533,7 +533,7 @@ const CTextA& CTextA::operator=(const char* str)
 /**
  *  \brief
  */
-const CTextA& CTextA::operator=(const wchar_t* str)
+CTextA& CTextA::operator=(const wchar_t* str)
 {
     if (str)
     {

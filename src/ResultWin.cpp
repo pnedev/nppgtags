@@ -895,16 +895,11 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     CPath file;
 
-    // Path is absolute (starts with drive letter)
-    if ((lineLen > 3) && (lineTxt[2] == ':') && ((lineTxt[3] == '\\') || (lineTxt[3] == '/')))
-    {
-        file = &lineTxt[1];
-    }
-    else
-    {
+    // Path is not absolute (does not start with drive letter)
+    if ((lineLen < 5) || (lineTxt[2] != ':'))
         file = _activeTab->_projectPath.C_str();
-        file += &lineTxt[1];
-    }
+
+    file += &lineTxt[1];
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())
