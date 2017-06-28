@@ -386,7 +386,7 @@ void SearchWin::filterComplList()
 
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
-    const LineParser& completion = *(const LineParser*)_completion.get();
+    const LineParser& completion = *static_cast<const LineParser*>(_completion.get());
     if (filter.Len() == cComplAfter)
     {
         for (const auto& complEntry : completion())

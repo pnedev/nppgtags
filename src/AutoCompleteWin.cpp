@@ -201,7 +201,7 @@ int AutoCompleteWin::filterLV(const CText& filter)
 
     ListView_DeleteAllItems(_hLVWnd);
 
-    const LineParser& completion = *(const LineParser*)_completion.get();
+    const LineParser& completion = *static_cast<const LineParser*>(_completion.get());
     for (unsigned i = 0; i < completion().size(); ++i)
     {
         if (!len || !_tcsncmp(completion()[i], filter.C_str(), len))
