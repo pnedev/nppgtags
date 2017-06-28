@@ -292,8 +292,8 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             _hWnd, NULL, HMod, NULL);
 
     yPos += (win.bottom - win.top + 25);
-    _hTab = CreateWindowEx(0, WC_TABCONTROL, NULL,
-            WS_CHILD | WS_VISIBLE | TCS_BUTTONS | TCS_FIXEDWIDTH | TCS_FOCUSNEVER,
+    _hTab = CreateWindowEx(WS_EX_TRANSPARENT, WC_TABCONTROL, NULL,
+            WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | TCS_BUTTONS | TCS_FIXEDWIDTH | TCS_FOCUSNEVER,
             xPos, yPos, width, height - yPos - 45,
             _hWnd, NULL, HMod, NULL);
 
