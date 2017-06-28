@@ -1774,8 +1774,8 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         case WM_RUN_CMD_CALLBACK:
         {
-            CompletionCB    complCB = reinterpret_cast<CompletionCB>(static_cast<LONG_PTR>(wParam));
-            CmdPtr_t        cmd(*(reinterpret_cast<CmdPtr_t*>(static_cast<LONG_PTR>(lParam))));
+            CompletionCB    complCB = reinterpret_cast<CompletionCB>(wParam);
+            CmdPtr_t        cmd(*(reinterpret_cast<CmdPtr_t*>(lParam)));
 
             ReplyMessage(0);
 
@@ -1786,8 +1786,8 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         case WM_OPEN_ACTIVITY_WIN:
         {
-            TCHAR* header   = reinterpret_cast<TCHAR*>(static_cast<LONG_PTR>(wParam));
-            HANDLE hCancel  = reinterpret_cast<HANDLE>(static_cast<LONG_PTR>(lParam));
+            TCHAR* header   = reinterpret_cast<TCHAR*>(wParam);
+            HANDLE hCancel  = reinterpret_cast<HANDLE>(lParam);
 
             if (hCancel)
                 ActivityWin::Show(header, hCancel);
@@ -1796,7 +1796,7 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         case WM_CLOSE_ACTIVITY_WIN:
         {
-            HANDLE hCancel = reinterpret_cast<HANDLE>(static_cast<LONG_PTR>(lParam));
+            HANDLE hCancel = reinterpret_cast<HANDLE>(lParam);
 
             if (hCancel)
             {

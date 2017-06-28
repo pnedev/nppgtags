@@ -243,7 +243,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 13 * txtHeight + txtInfoHeight + 265);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 13 * txtHeight + txtInfoHeight + 270);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -294,7 +294,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     yPos += (win.bottom - win.top + 25);
     _hTab = CreateWindowEx(WS_EX_TRANSPARENT, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | TCS_BUTTONS | TCS_FIXEDWIDTH | TCS_FOCUSNEVER,
-            xPos, yPos, width, height - yPos - 45,
+            xPos, yPos, width, height - yPos - 50,
             _hWnd, NULL, HMod, NULL);
 
     _activeTab = new Tab;
@@ -322,7 +322,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     GetClientRect(_hWnd, &win);
     win.top     = yPos;
-    win.bottom  = win.top + height - yPos - 45;
+    win.bottom  = win.top + height - yPos - 50;
     win.left    = xPos;
     win.right   = win.left + width;
 

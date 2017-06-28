@@ -266,8 +266,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
         case WM_SETFOCUS:
         {
-            ActivityWin* aw =
-                    reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            ActivityWin* aw = reinterpret_cast<ActivityWin*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
             SetFocus(aw->_hBtn);
         }
         return 0;
@@ -279,8 +278,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
             {
-                ActivityWin* aw =
-                        reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+                ActivityWin* aw = reinterpret_cast<ActivityWin*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
                 EnableWindow(aw->_hBtn, FALSE);
                 SetEvent(aw->_hCancel);
                 return 0;
@@ -289,8 +287,7 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
         case WM_DESTROY:
         {
-            ActivityWin* aw =
-                    reinterpret_cast<ActivityWin*>(static_cast<LONG_PTR>(GetWindowLongPtr(hWnd, GWLP_USERDATA)));
+            ActivityWin* aw = reinterpret_cast<ActivityWin*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
             delete aw;
         }
         return 0;

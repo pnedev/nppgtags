@@ -148,14 +148,15 @@ unsigned CmdEngine::start()
                 header += _T('\"');
             }
 
-            SendMessage(MainWndH, WM_OPEN_ACTIVITY_WIN, (WPARAM)header.C_str(), (LPARAM)hCancel);
+            SendMessage(MainWndH, WM_OPEN_ACTIVITY_WIN,
+                    reinterpret_cast<WPARAM>(header.C_str()), reinterpret_cast<LPARAM>(hCancel));
 
             HANDLE waitHandles[] = {pi.hProcess, hCancel};
             DWORD handleId = WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE) - WAIT_OBJECT_0;
             if (handleId > 0 && handleId < 2 && waitHandles[handleId] == hCancel)
                 _cmd->_status = CANCELLED;
 
-            SendMessage(MainWndH, WM_CLOSE_ACTIVITY_WIN, 0, (LPARAM)hCancel);
+            SendMessage(MainWndH, WM_CLOSE_ACTIVITY_WIN, 0, reinterpret_cast<LPARAM>(hCancel));
 
             CloseHandle(hCancel);
         }
