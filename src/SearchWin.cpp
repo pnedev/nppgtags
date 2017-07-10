@@ -386,15 +386,14 @@ void SearchWin::filterComplList()
 
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
 
-    const LineParser& completion = *static_cast<const LineParser*>(_completion.get());
     if (filter.Len() == cComplAfter)
     {
-        for (const auto& complEntry : completion())
+        for (const auto& complEntry : _completion->GetList())
             ComboBox_AddString(_hSearch, complEntry);
     }
     else
     {
-        for (const auto& complEntry : completion())
+        for (const auto& complEntry : _completion->GetList())
             if (!pCompare(complEntry, filter.C_str(), filter.Len()))
                 ComboBox_AddString(_hSearch, complEntry);
     }

@@ -844,8 +844,7 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
 
     _activeTab = tab;
 
-    const TabParser& data = *static_cast<const TabParser*>(tab->_parser.get());
-    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(data().C_str()));
+    sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_parser->GetText().C_str()));
     sendSci(SCI_SETREADONLY, 1);
 
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);

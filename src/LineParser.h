@@ -48,11 +48,8 @@ public:
 
     virtual int Parse(const CmdPtr_t&);
 
-    const std::vector<TCHAR*>& operator()() const { return _lines; }
-
 private:
-    CText               _buf;
-    std::vector<TCHAR*> _lines;
+    CText _buf;
 };
 
 } // namespace GTags

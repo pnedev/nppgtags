@@ -49,6 +49,12 @@ public:
     virtual ~ResultParser() {}
 
     virtual int Parse(const CmdPtr_t&) = 0;
+    virtual const CTextA& GetText() const { return _buf; }
+    virtual const std::vector<TCHAR*>& GetList() const { return _lines; }
+
+protected:
+    CTextA              _buf;
+    std::vector<TCHAR*> _lines;
 };
 
 

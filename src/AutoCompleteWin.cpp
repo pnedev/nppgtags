@@ -201,12 +201,11 @@ int AutoCompleteWin::filterLV(const CText& filter)
 
     ListView_DeleteAllItems(_hLVWnd);
 
-    const LineParser& completion = *static_cast<const LineParser*>(_completion.get());
-    for (unsigned i = 0; i < completion().size(); ++i)
+    for (const auto& complEntry : _completion->GetList())
     {
-        if (!len || !_tcsncmp(completion()[i], filter.C_str(), len))
+        if (!len || !_tcsncmp(complEntry, filter.C_str(), len))
         {
-            lvItem.pszText = completion()[i];
+            lvItem.pszText = complEntry;
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
         }

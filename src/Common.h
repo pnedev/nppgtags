@@ -167,7 +167,7 @@ class CPath : public CText
 {
 public:
 	CPath() : CText() {}
-    CPath(const CPath& path) : CText(static_cast<const CText&>(path)) {}
+    CPath(const CPath& path) : CText(path) {}
 	CPath(const char* pathStr) : CText(pathStr) {}
 	CPath(const wchar_t* pathStr) : CText(pathStr) {}
     CPath(unsigned size) : CText(size) {}

@@ -55,15 +55,11 @@ public:
 
         virtual int Parse(const CmdPtr_t&);
 
-        const CTextA& operator()() const { return _buf; }
-
     private:
         static bool filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len);
 
         int parseCmd(const CmdPtr_t&);
         int parseFindFile(const CmdPtr_t&);
-
-        CTextA  _buf;
     };
 
 
