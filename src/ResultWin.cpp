@@ -751,7 +751,26 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
     if (_hSearchFont)
         SendMessage(_hSearchTxt, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
 
-    if (!_lastSearchTxt.IsEmpty())
+    INpp& npp = INpp::Get();
+
+    HWND nppHSci = npp.ReadSciHandle();
+
+    npp.SetSciHandle(_hSci);
+
+    CTextA selectionA;
+    if (!npp.IsSelectionVertical())
+        npp.GetSelection(selectionA);
+
+    npp.SetSciHandle(nppHSci);
+
+    if (!selectionA.IsEmpty())
+    {
+        const CText selection(selectionA.C_str());
+
+        Edit_SetText(_hSearchTxt, selection.C_str());
+        Edit_SetSel(_hSearchTxt, 0, -1);
+    }
+    else if (!_lastSearchTxt.IsEmpty())
     {
         Edit_SetText(_hSearchTxt, _lastSearchTxt.C_str());
         Edit_SetSel(_hSearchTxt, 0, -1);
