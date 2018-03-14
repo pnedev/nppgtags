@@ -220,6 +220,8 @@ private:
     HFONT       _hSearchFont;
     HFONT       _hBtnFont;
 
+    int         _searchTxtHeight;
+
     bool        _lastRE;
     bool        _lastMC;
     bool        _lastWW;

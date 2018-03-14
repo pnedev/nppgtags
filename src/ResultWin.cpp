@@ -673,23 +673,23 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
     _hSearchFont    = Tools::CreateFromSystemMessageFont(hdc, cSearchFontSize);
     _hBtnFont       = Tools::CreateFromSystemMenuFont(hdc, cSearchFontSize - 1);
 
-    int searchHeight    = Tools::GetFontHeight(hdc, _hSearchFont) + 1;
+    _searchTxtHeight    = Tools::GetFontHeight(hdc, _hSearchFont) + 1;
     int btnHeight       = Tools::GetFontHeight(hdc, _hBtnFont) + 2;
 
     ReleaseDC(_hSearch, hdc);
 
     const DWORD styleTxtEx  = WS_EX_CLIENTEDGE;
-    const DWORD styleTxt    = WS_CHILD | WS_VISIBLE;
+    const DWORD styleTxt    = WS_CHILD | WS_VISIBLE | WS_HSCROLL | ES_AUTOHSCROLL;
 
     {
-        RECT win { 0, 0, cSearchWidth, searchHeight };
+        RECT win { 0, 0, cSearchWidth, _searchTxtHeight };
         AdjustWindowRectEx(&win, styleTxt, FALSE, styleTxtEx);
-        searchHeight = win.bottom - win.top;
+        _searchTxtHeight = win.bottom - win.top;
     }
 
     RECT win = Tools::GetWinRect(_hWnd,
             GetWindowLongPtr(_hSearch, GWL_EXSTYLE), GetWindowLongPtr(_hSearch, GWL_STYLE),
-            cSearchWidth + 1, searchHeight + btnHeight + 1);
+            cSearchWidth + 1, _searchTxtHeight + btnHeight + 1);
     RECT ownerWin;
     GetWindowRect(_hWnd, &ownerWin);
 
@@ -743,13 +743,15 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
     Button_SetCheck(_hWW, _lastWW ? BST_CHECKED : BST_UNCHECKED);
 
     _hSearchTxt = CreateWindowEx(styleTxtEx, RICHEDIT_CLASS, NULL, styleTxt,
-            0, btnHeight + 1, win.right - win.left, searchHeight,
+            0, btnHeight + 1, win.right - win.left, _searchTxtHeight,
             _hSearch, NULL, HMod, NULL);
 
     SendMessage(_hSearchTxt, EM_SETBKGNDCOLOR, 0, GetSysColor(cSearchBkgndColor));
 
     if (_hSearchFont)
         SendMessage(_hSearchTxt, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+
+    SendMessage(_hSearchTxt, EM_SETEVENTMASK, 0, ENM_REQUESTRESIZE);
 
     INpp& npp = INpp::Get();
 
@@ -1535,18 +1537,31 @@ void ResultWin::onMove()
 {
     if (_hSearch)
     {
+        RECT ownerWin;
+        GetWindowRect(_hWnd, &ownerWin);
+
         RECT win;
         GetWindowRect(_hSearch, &win);
 
-        RECT ownerWin;
-        GetWindowRect(_hWnd, &ownerWin);
+        RECT txtWin;
+        GetWindowRect(_hSearchTxt, &txtWin);
+
+        const int hScrollSize =
+                (GetWindowLongPtr(_hSearchTxt, GWL_STYLE) & WS_HSCROLL) ? GetSystemMetrics(SM_CYHSCROLL) : 0;
 
         MoveWindow(_hSearch,
                 ownerWin.right - (win.right - win.left) -
                 GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CXFIXEDFRAME) - GetSystemMetrics(SM_CXVSCROLL),
                 ownerWin.top +
                 GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYFIXEDFRAME) + GetSystemMetrics(SM_CYSIZE),
-                win.right - win.left, win.bottom - win.top, TRUE);
+                win.right - win.left,
+                win.bottom - win.top - (txtWin.bottom - txtWin.top) + _searchTxtHeight + hScrollSize, TRUE);
+
+        GetClientRect(_hSearch, &win);
+
+        MoveWindow(_hSearchTxt,
+                0, win.bottom - _searchTxtHeight - hScrollSize,
+                win.right - win.left, _searchTxtHeight + hScrollSize, TRUE);
     }
 }
 
@@ -1845,6 +1860,14 @@ LRESULT APIENTRY ResultWin::searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         case WM_SETFOCUS:
             SetFocus(RW->_hSearchTxt);
         return 0;
+
+        case WM_NOTIFY:
+            if (((LPNMHDR)lParam)->code == EN_REQUESTRESIZE)
+            {
+                RW->onMove();
+                return 0;
+            }
+        break;
 
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)
