@@ -96,7 +96,7 @@ if (UNIX OR MINGW)
     target_link_libraries (NppGTags ${comctl32})
 
     install (FILES ${CMAKE_BINARY_DIR}/libNppGTags.dll
-        DESTINATION "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins"
+        DESTINATION "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
         RENAME NppGTags.dll
     )
 else (UNIX OR MINGW)

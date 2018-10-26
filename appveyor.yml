@@ -90,11 +90,12 @@ after_build:
             $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM.zip"
             md deploy -Force | Out-Null
             md deploy\NppGTags -Force | Out-Null
-            Copy-Item _build\$env:CONFIGURATION\NppGTags.dll deploy\NppGTags.dll
-            Copy-Item bin\NppGTags\*.* deploy\NppGTags\
+            md deploy\NppGTags\NppGTags -Force | Out-Null
+            Copy-Item _build\$env:CONFIGURATION\NppGTags.dll deploy\NppGTags\NppGTags.dll
+            Copy-Item bin\NppGTags\*.* deploy\NppGTags\NppGTags\
             7z a $ZipFileName .\deploy\*
-            Remove-Item deploy\NppGTags.dll
-            Remove-Item deploy\NppGTags\*.*
+            Remove-Item deploy\NppGTags\NppGTags.dll
+            Remove-Item deploy\NppGTags\NppGTags\*.*
         }
     }
 
