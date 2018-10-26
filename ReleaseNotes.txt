@@ -1,3 +1,12 @@
+What's new in v4.4.1
+=======================
+
+- Made find-in-results window horizontally scrollable.
+- Automatically add selected text in results window to the find-in-results text field.
+- Changed plugin's installation path according to the latest Notepad++'s requirements.
+- GTags binaries updated to v6.6.2.
+
+
 What's new in v4.4.0
 =======================
 

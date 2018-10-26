@@ -1,5 +1,5 @@
-To support NppGTags consider donating a Euro. Thank You.
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/pnedev/1)
+To support NppGTags consider donating. Thank You.
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/pnedev)
 
 
 **--- NppGTags ---**
