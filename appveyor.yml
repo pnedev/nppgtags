@@ -71,7 +71,7 @@ after_build:
         md deploy\NppGTags\NppGTags -Force | Out-Null
         Copy-Item _build\$env:CONFIGURATION\NppGTags.dll deploy\NppGTags\NppGTags.dll
         Copy-Item bin\NppGTags\*.* deploy\NppGTags\NppGTags\
-        7z a $ZipFileName .\deploy\*
+        7z a $ZipFileName .\deploy\NppGTags\*
         Remove-Item deploy\NppGTags\NppGTags.dll
         Remove-Item deploy\NppGTags\NppGTags\*.*
     }
