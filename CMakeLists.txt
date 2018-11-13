@@ -85,7 +85,6 @@ add_definitions (${defs})
 add_library (NppGTags MODULE ${project_rc_files} ${project_sources})
 
 if (UNIX OR MINGW)
-
     include_directories (${win32_inc_dir})
 
     find_library (comctl32
@@ -95,10 +94,20 @@ if (UNIX OR MINGW)
 
     target_link_libraries (NppGTags ${comctl32})
 
+	set (INSTALL_PATH
+		"$ENV{HOME}/.wine/drive_c/users/$ENV{USER}/Local Settings/Application Data/Notepad++/plugins/NppGTags"
+	)
+
     install (FILES ${CMAKE_BINARY_DIR}/libNppGTags.dll
-        DESTINATION "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
+        DESTINATION "${INSTALL_PATH}"
         RENAME NppGTags.dll
     )
 else (UNIX OR MINGW)
     target_link_libraries (NppGTags comctl32)
 endif (UNIX OR MINGW)
+
+message ("Install destination: ${INSTALL_PATH}")
+
+install (DIRECTORY bin/NppGTags/
+    DESTINATION "${INSTALL_PATH}/NppGTags"
+)
