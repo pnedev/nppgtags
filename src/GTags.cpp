@@ -147,6 +147,9 @@ CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
 }
 
 
+void dbWriteCB(const CmdPtr_t& cmd);
+
+
 /**
  *  \brief
  */
@@ -165,7 +168,28 @@ DbHandle getDatabase(bool writeEn = false)
 
     if (!db)
     {
-        MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
+        if (writeEn)
+        {
+            MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
+            return db;
+        }
+
+        int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\nDo you want to create it?"),
+                cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+        if (choice != IDYES)
+            return db;
+
+        currentFile.StripFilename();
+
+        if (!Tools::BrowseForFolder(npp.GetHandle(), currentFile))
+            return db;
+
+        db = DbManager::Get().RegisterDb(currentFile);
+
+        CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+        CmdEngine::Run(cmd, dbWriteCB);
+
+        return NULL;
     }
     else if (!success)
     {
