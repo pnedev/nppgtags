@@ -174,7 +174,7 @@ DbHandle getDatabase(bool writeEn = false)
             return db;
         }
 
-        int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\nDo you want to create it?"),
+        int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\n\nDo you want to create it?"),
                 cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
         if (choice != IDYES)
             return db;
