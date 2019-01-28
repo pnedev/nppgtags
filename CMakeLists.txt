@@ -95,7 +95,7 @@ if (UNIX OR MINGW)
     target_link_libraries (NppGTags ${comctl32})
 
 	set (INSTALL_PATH
-		"$ENV{HOME}/.wine/drive_c/users/Public/Application Data/Notepad++/plugins/NppGTags"
+		"$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
 	)
 
     install (FILES ${CMAKE_BINARY_DIR}/libNppGTags.dll
