@@ -15,13 +15,17 @@ You can also download them from [GNU Global official website](http://www.gnu.org
 **Build Status**
 ======================
 
-AppVeyor `VS2013` and `VS2015`  [![Build status](https://ci.appveyor.com/api/projects/status/b4aam50a4q2vacd7?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
+AppVeyor `VS2015`  [![Build status](https://ci.appveyor.com/api/projects/status/b4aam50a4q2vacd7?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
 
 
 **Installation**
 ======================
 
-Copy *NppGTags.dll* and *NppGTags* folder containing GTags binaries to your Notepad++ plugins directory, start Notepad++ and you are ready to go.
+For Notepad++ versions 7.6.3 and above you can use the built-in PluginAdmin dialog (accessible through the *Plugins* menu).
+
+You can manually install the plugin by copying *NppGTags.dll* and *NppGTags* folder containing GTags binaries to your Notepad++ plugins directory.
+After Notepad++ version 7.6, the above files should be copied in Notepad++ plugins directory BUT in a separate sub-folder named `NppGTags`.
+Restart Notepad++ and you are all set.
 
 
 **Usage**
