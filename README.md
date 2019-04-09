@@ -64,7 +64,7 @@ If you run one of the plugin's **Find** commands (those include the **Search** c
 
 The search box allows choosing case sensitivity and regexp for the **Find** command where applicable.
 It also provides search completion list where possible which appears when you enter several characters in the box.
-If the **Find** command is started without the search box (case 1 and 2) the search is case sensitive and literal (no regexp).
+If the **Find** command is started without the search box (case 1 and 2) the search is literal (no regexp) and the case sensitivity depends on the menu flag **Ignore Case**.
 
 **Find File** command will skip step 2, it will directly go to step 3 if there is no selection.
 It will automatically fill the search box (from step 3) with the name of the current file without the extension to make switching between source <-> header file easier.
@@ -81,6 +81,7 @@ Any **Search** will search for a string either "literally" (not using regular ex
 As a summary, **Find Definition / Reference** will search for identifiers (single whole words) whereas **Search...** will search for strings in general (parts of words, several consecutive words, etc.) either literally or using regular expressions.
 
 **AutoComplete** will show found *Definitions* + found *Symbols*. It will look for the string from the beginning of the word to the caret position.
+Autocomplete case sensitivity also depends on the menu flag **Ignore Case**.
 
 While auto complete results window is active you can narrow the results shown by continuing typing.
 *Backspace* will undo the narrowing one step at a time (as the newly typed characters are deleted).
