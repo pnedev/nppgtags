@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015 Pavel Nedev
+ *  Copyright(C) 2015-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ class Cmd
 {
 public:
     Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL, ParserPtr_t parser = ParserPtr_t(NULL),
-            const TCHAR* tag = NULL, bool regExp = false, bool matchCase = true);
+            const TCHAR* tag = NULL, bool ignoreCase = false, bool regExp = false);
     ~Cmd() {}
 
     inline void Id(CmdId_t id) { _id = id; }
@@ -86,8 +86,8 @@ public:
     inline void RegExp(bool re) { _regExp = re; }
     inline bool RegExp() const { return _regExp; }
 
-    inline void MatchCase(bool mc) { _matchCase = mc; }
-    inline bool MatchCase() const { return _matchCase; }
+    inline void IgnoreCase(bool ic) { _ignoreCase = ic; }
+    inline bool IgnoreCase() const { return _ignoreCase; }
 
     inline void SkipLibs(bool skipLibs) { _skipLibs = skipLibs; }
     inline bool SkipLibs() const { return _skipLibs; }
@@ -114,8 +114,8 @@ private:
 
     CText               _tag;
     ParserPtr_t         _parser;
+    bool                _ignoreCase;
     bool                _regExp;
-    bool                _matchCase;
     bool                _skipLibs;
 
     CmdStatus_t         _status;

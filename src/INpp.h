@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -294,7 +294,7 @@ public:
     long GetWordSize(bool partial = false) const;
     void GetWord(CTextA& word, bool partial = false, bool select = false) const;
     void ReplaceWord(const char* replText, bool partial = false) const;
-    bool SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
+    bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
             long* startPos = NULL, long* endPos = NULL) const;
 
     inline void Backspace() const

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2016 Pavel Nedev
+ *  Copyright(C) 2015-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -41,8 +41,8 @@ const TCHAR Settings::cInfo[] =
 
 const TCHAR Settings::cUseDefDbKey[]     = _T("UseDefaultDB = ");
 const TCHAR Settings::cDefDbPathKey[]    = _T("DefaultDBPath = ");
-const TCHAR Settings::cREOptionKey[]     = _T("RegExpOptionOn = ");
-const TCHAR Settings::cMCOptionKey[]     = _T("MatchCaseOptionOn = ");
+const TCHAR Settings::cREOptionKey[]     = _T("RegExp = ");
+const TCHAR Settings::cICOptionKey[]     = _T("IgnoreCase = ");
 
 const TCHAR DbConfig::cInfo[] =
         _T("# ") PLUGIN_NAME _T(" database config\n");
@@ -349,7 +349,7 @@ void Settings::SetDefaults()
     _useDefDb = false;
     _defDbPath.Clear();
     _re = false;
-    _mc = true;
+    _ic = false;
 
     _genericDbCfg.SetDefaults();
 }
@@ -410,13 +410,13 @@ bool Settings::Load()
             else
                 _re = false;
         }
-        else if (!_tcsncmp(line, cMCOptionKey, _countof(cMCOptionKey) - 1))
+        else if (!_tcsncmp(line, cICOptionKey, _countof(cICOptionKey) - 1))
         {
-            const unsigned pos = _countof(cMCOptionKey) - 1;
+            const unsigned pos = _countof(cICOptionKey) - 1;
             if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
-                _mc = true;
+                _ic = true;
             else
-                _mc = false;
+                _ic = false;
         }
         else if (!_genericDbCfg.ReadOption(line))
         {
@@ -451,11 +451,14 @@ bool Settings::Save() const
     if (_ftprintf_s(fp, _T("%s%s\n"), cUseDefDbKey, (_useDefDb ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cDefDbPathKey, _defDbPath.C_str()) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cREOptionKey, (_re ? _T("yes") : _T("no"))) > 0)
-    if (_ftprintf_s(fp, _T("%s%s\n\n"), cMCOptionKey, (_mc ? _T("yes") : _T("no"))) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n\n"), cICOptionKey, (_ic ? _T("yes") : _T("no"))) > 0)
     if (_genericDbCfg.Write(fp))
         success = true;
 
     fclose(fp);
+
+    if (success)
+        _dirty = false;
 
     return success;
 }
@@ -471,7 +474,7 @@ const Settings& Settings::operator=(const Settings& rhs)
         _useDefDb       = rhs._useDefDb;
         _defDbPath      = rhs._defDbPath;
         _re             = rhs._re;
-        _mc             = rhs._mc;
+        _ic             = rhs._ic;
         _genericDbCfg   = rhs._genericDbCfg;
     }
 
@@ -488,7 +491,7 @@ bool Settings::operator==(const Settings& rhs) const
         return true;
 
     return (_useDefDb == rhs._useDefDb && _defDbPath == rhs._defDbPath &&
-            _re == rhs._re && _mc == rhs._mc && _genericDbCfg == rhs._genericDbCfg);
+            _re == rhs._re && _ic == rhs._ic && _genericDbCfg == rhs._genericDbCfg);
 }
 
 } // namespace GTags

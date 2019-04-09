@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2016 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ enum PluginWinMessages_t
     WM_CLOSE_ACTIVITY_WIN
 };
 
-extern FuncItem     Menu[19];
+extern FuncItem     Menu[21];
 
 extern HINSTANCE    HMod;
 extern CPath        DllPath;
@@ -69,6 +69,7 @@ BOOL PluginLoad(HINSTANCE hMod);
 void PluginInit();
 void PluginDeInit();
 
+void OnNppReady();
 void OnFileBeforeChange(const CPath& file);
 void OnFileChangeCancel();
 void OnFileChange(const CPath& file);

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2016 Pavel Nedev
+ *  Copyright(C) 2015-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -124,9 +124,11 @@ public:
     bool    _useDefDb;
     CPath   _defDbPath;
     bool    _re;
-    bool    _mc;
+    bool    _ic;
 
     DbConfig    _genericDbCfg;
+
+    mutable bool _dirty = false;
 
 private:
     static const TCHAR cInfo[];
@@ -134,7 +136,7 @@ private:
     static const TCHAR cUseDefDbKey[];
     static const TCHAR cDefDbPathKey[];
     static const TCHAR cREOptionKey[];
-    static const TCHAR cMCOptionKey[];
+    static const TCHAR cICOptionKey[];
 };
 
 } // namespace GTags

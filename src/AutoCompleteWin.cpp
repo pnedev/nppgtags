@@ -99,7 +99,7 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
  *  \brief
  */
 AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
-    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()),
+    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _ic(cmd->IgnoreCase()),
     _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())), _completion(cmd->Parser())
 {}
 
@@ -201,9 +201,16 @@ int AutoCompleteWin::filterLV(const CText& filter)
 
     ListView_DeleteAllItems(_hLVWnd);
 
+    int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
+
+    if (_ic)
+        pCompare = &_tcsnicmp;
+    else
+        pCompare = &_tcsncmp;
+
     for (const auto& complEntry : _completion->GetList())
     {
-        if (!len || !_tcsncmp(complEntry, filter.C_str(), len))
+        if (!len || !pCompare(complEntry, filter.C_str(), len))
         {
             lvItem.pszText = complEntry;
             ListView_InsertItem(_hLVWnd, &lvItem);

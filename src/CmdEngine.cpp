@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -305,10 +305,10 @@ void CmdEngine::composeCmd(CText& buf) const
     }
     else if (_cmd->_id != VERSION && _cmd->_id != CTAGS_VERSION)
     {
-        if (_cmd->_matchCase)
-            buf += _T(" -M");
-        else
+        if (_cmd->_ignoreCase)
             buf += _T(" -i");
+        else
+            buf += _T(" -M");
 
         if (!_cmd->_regExp)
             buf += _T(" --literal");

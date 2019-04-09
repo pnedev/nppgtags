@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2017 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -426,7 +426,7 @@ void AutoComplete()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, NULL, tag.C_str()));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, NULL, tag.C_str(), GTagsSettings._ic));
 
     CmdEngine::Run(cmd, halfComplCB);
 }
@@ -448,7 +448,7 @@ void AutoCompleteFile()
         return;
 
     ParserPtr_t parser(new LineParser);
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, parser, tag.C_str()));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, parser, tag.C_str(), GTagsSettings._ic));
 
     CmdEngine::Run(cmd, autoComplCB);
 }
@@ -473,7 +473,7 @@ void FindFile()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser));
+    CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci, false, DONT_SELECT);
     if (tag.IsEmpty())
@@ -510,7 +510,7 @@ void FindDefinition()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db, parser));
+    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -554,7 +554,7 @@ void FindReference()
     }
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser));
+    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -588,7 +588,7 @@ void SearchSrc()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP, cSearchSrc, db, parser));
+    CmdPtr_t cmd(new Cmd(GREP, cSearchSrc, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -622,7 +622,7 @@ void SearchOther()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchOther, db, parser));
+    CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchOther, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -634,6 +634,19 @@ void SearchOther()
         cmd->Tag(tag);
         CmdEngine::Run(cmd, showResultCB);
     }
+}
+
+
+/**
+ *  \brief
+ */
+void IgnoreCase()
+{
+    GTagsSettings._ic = !GTagsSettings._ic;
+
+    INpp::Get().SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+
+    GTagsSettings._dirty = true;
 }
 
 
@@ -788,7 +801,7 @@ void About()
 namespace GTags
 {
 
-FuncItem Menu[19] = {
+FuncItem Menu[21] = {
     /* 0 */  FuncItem(cAutoCompl, AutoComplete),
     /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
     /* 2 */  FuncItem(cFindFile, FindFile),
@@ -797,17 +810,19 @@ FuncItem Menu[19] = {
     /* 5 */  FuncItem(cSearchSrc, SearchSrc),
     /* 6 */  FuncItem(cSearchOther, SearchOther),
     /* 7 */  FuncItem(),
-    /* 8 */  FuncItem(_T("Go Back"), GoBack),
-    /* 9 */  FuncItem(_T("Go Forward"), GoForward),
-    /* 10 */ FuncItem(),
-    /* 11 */ FuncItem(cCreateDatabase, CreateDatabase),
-    /* 12 */ FuncItem(_T("Delete Database"), DeleteDatabase),
-    /* 13 */ FuncItem(),
-    /* 14 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
+    /* 8 */  FuncItem(_T("Ignore Case"), IgnoreCase), // Array number is important as it is used to toggle the flag!!!
+    /* 9 */  FuncItem(),
+    /* 10*/  FuncItem(_T("Go Back"), GoBack),
+    /* 11*/  FuncItem(_T("Go Forward"), GoForward),
+    /* 12 */ FuncItem(),
+    /* 13 */ FuncItem(cCreateDatabase, CreateDatabase),
+    /* 14 */ FuncItem(_T("Delete Database"), DeleteDatabase),
     /* 15 */ FuncItem(),
-    /* 16 */ FuncItem(_T("Settings..."), SettingsCfg),
+    /* 16 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
     /* 17 */ FuncItem(),
-    /* 18 */ FuncItem(_T("About..."), About)
+    /* 18 */ FuncItem(_T("Settings..."), SettingsCfg),
+    /* 19 */ FuncItem(),
+    /* 20 */ FuncItem(_T("About..."), About)
 };
 
 HINSTANCE HMod = NULL;
@@ -879,6 +894,9 @@ void PluginInit()
  */
 void PluginDeInit()
 {
+    if (GTagsSettings._dirty)
+        GTagsSettings.Save();
+
     ActivityWin::Unregister();
     SearchWin::Unregister();
     AutoCompleteWin::Unregister();
@@ -891,6 +909,15 @@ void PluginDeInit()
     }
 
     HMod = NULL;
+}
+
+
+/**
+ *  \brief
+ */
+void OnNppReady()
+{
+    INpp::Get().SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
 }
 
 

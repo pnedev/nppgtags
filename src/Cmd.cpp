@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015 Pavel Nedev
+ *  Copyright(C) 2015-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -32,9 +32,9 @@ namespace GTags
  *  \brief
  */
 Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, ParserPtr_t parser,
-        const TCHAR* tag, bool regExp, bool matchCase) :
+        const TCHAR* tag, bool ignoreCase, bool regExp) :
         _id(id), _db(db), _parser(parser),
-        _regExp(regExp), _matchCase(matchCase), _skipLibs(false), _status(CANCELLED)
+        _ignoreCase(ignoreCase), _regExp(regExp), _skipLibs(false), _status(CANCELLED)
 {
     if (name)
         _name = name;

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2017 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -118,7 +118,7 @@ private:
 
         const CmdId_t   _cmdId;
         const bool      _regExp;
-        const bool      _matchCase;
+        const bool      _ignoreCase;
         CTextA          _projectPath;
         CTextA          _search;
         int             _currentLine;
@@ -151,7 +151,7 @@ private:
 
     ResultWin() : _hWnd(NULL), _hSci(NULL), _hKeyHook(NULL), _sciFunc(NULL), _sciPtr(0), _activeTab(NULL),
             _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
-            _lastRE(false), _lastMC(true), _lastWW(true) {}
+            _lastRE(false), _lastIC(false), _lastWW(true) {}
     ResultWin(const ResultWin&);
     ~ResultWin();
 
@@ -184,7 +184,7 @@ private:
     void loadTab(Tab* tab);
     bool openItem(int lineNum, unsigned matchNum = 1);
 
-    bool findString(const char* str, int* startPos, int* endPos, bool matchCase, bool wholeWord, bool regExp);
+    bool findString(const char* str, int* startPos, int* endPos, bool ignoreCase, bool wholeWord, bool regExp);
     void toggleFolding(int lineNum);
     void foldAll(int foldAction);
     void onStyleNeeded(SCNotification* notify);
@@ -213,7 +213,7 @@ private:
     HWND        _hSearch;
     HWND        _hSearchTxt;
     HWND        _hRE;
-    HWND        _hMC;
+    HWND        _hIC;
     HWND        _hWW;
     HWND        _hUp;
     HWND        _hDown;
@@ -223,7 +223,7 @@ private:
     int         _searchTxtHeight;
 
     bool        _lastRE;
-    bool        _lastMC;
+    bool        _lastIC;
     bool        _lastWW;
     CText       _lastSearchTxt;
 };

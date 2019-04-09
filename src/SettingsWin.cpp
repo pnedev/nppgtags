@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2017 Pavel Nedev
+ *  Copyright(C) 2015-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -804,7 +804,7 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
     }
 
     newSettings._re = GTagsSettings._re;
-    newSettings._mc = GTagsSettings._mc;
+    newSettings._ic = GTagsSettings._ic;
 
     CPath cfgFile;
     INpp::Get().GetPluginsConfDir(cfgFile);

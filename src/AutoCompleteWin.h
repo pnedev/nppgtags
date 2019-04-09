@@ -71,6 +71,7 @@ private:
     HWND            _hLVWnd;
     HFONT           _hFont;
     const CmdId_t   _cmdId;
+    const bool      _ic;
     const int       _cmdTagLen;
     ParserPtr_t     _completion;
 };

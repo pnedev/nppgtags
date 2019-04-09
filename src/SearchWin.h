@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public:
     static void Register();
     static void Unregister();
 
-    static void Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE = true, bool enMC = true);
+    static void Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE = true, bool enIC = true);
     static void Close();
 
 private:
@@ -66,7 +66,7 @@ private:
     ~SearchWin();
     SearchWin& operator=(const SearchWin&) = delete;
 
-    HWND composeWindow(HWND hOwner, bool enRE, bool enMC);
+    HWND composeWindow(HWND hOwner, bool enRE, bool enIC);
     void startCompletion();
     void clearCompletion();
     void filterComplList();
@@ -83,7 +83,7 @@ private:
     HWND        _hWnd;
     HWND        _hSearch;
     HWND        _hRE;
-    HWND        _hMC;
+    HWND        _hIC;
     HWND        _hOK;
     HFONT       _hTxtFont;
     HFONT       _hBtnFont;

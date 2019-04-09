@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2016 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-void SearchWin::Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE, bool enMC)
+void SearchWin::Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE, bool enIC)
 {
     if (SW)
         SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
@@ -93,7 +93,7 @@ void SearchWin::Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE, bool 
     HWND hOwner = INpp::Get().GetHandle();
 
     SW = new SearchWin(cmd, complCB);
-    if (SW->composeWindow(hOwner, enRE, enMC) == NULL)
+    if (SW->composeWindow(hOwner, enRE, enIC) == NULL)
     {
         delete SW;
         SW = NULL;
@@ -135,7 +135,7 @@ SearchWin::~SearchWin()
 /**
  *  \brief
  */
-HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
+HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
 {
     HDC hdc = GetWindowDC(hOwner);
 
@@ -171,7 +171,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
             5, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
-    _hMC = CreateWindowEx(0, _T("BUTTON"), _T("MatchCase"),
+    _hIC = CreateWindowEx(0, _T("BUTTON"), _T("IgnoreCase"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             width + 10, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);
@@ -198,7 +198,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
     if (_hBtnFont)
     {
         SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hIC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hOK, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
@@ -212,14 +212,14 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enMC)
         EnableWindow(_hRE, FALSE);
     }
 
-    if (enMC)
+    if (enIC)
     {
-        Button_SetCheck(_hMC, GTagsSettings._mc ? BST_CHECKED : BST_UNCHECKED);
+        Button_SetCheck(_hIC, GTagsSettings._ic ? BST_CHECKED : BST_UNCHECKED);
     }
     else
     {
-        Button_SetCheck(_hMC, _cmd->MatchCase() ? BST_CHECKED : BST_UNCHECKED);
-        EnableWindow(_hMC, FALSE);
+        Button_SetCheck(_hIC, _cmd->IgnoreCase() ? BST_CHECKED : BST_UNCHECKED);
+        EnableWindow(_hIC, FALSE);
     }
 
     _hKeyHook = SetWindowsHookEx(WH_KEYBOARD, keyHookProc, NULL, GetCurrentThreadId());
@@ -270,7 +270,7 @@ void SearchWin::startCompletion()
     }
 
     CmdPtr_t cmpl(new Cmd(cmplId, _T("AutoComplete"), _cmd->Db(), parser,
-            tag, false, (Button_GetCheck(_hMC) == BST_CHECKED)));
+            tag, (Button_GetCheck(_hIC) == BST_CHECKED), false));
 
     if (_cmd->Id() != FIND_DEFINITION)
         cmpl->SkipLibs(true);
@@ -374,10 +374,10 @@ void SearchWin::filterComplList()
 
     int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
 
-    if (Button_GetCheck(_hMC) == BST_CHECKED)
-        pCompare = &_tcsncmp;
-    else
+    if (Button_GetCheck(_hIC) == BST_CHECKED)
         pCompare = &_tcsnicmp;
+    else
+        pCompare = &_tcsncmp;
 
     ComboBox_ResetContent(_hSearch);
     ComboBox_ShowDropdown(_hSearch, FALSE);
@@ -419,24 +419,12 @@ void SearchWin::filterComplList()
 void SearchWin::saveSearchOptions()
 {
     bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
-    bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
-
-    bool saveCfg = false;
 
     if (IsWindowEnabled(_hRE) && re != GTagsSettings._re)
     {
         GTagsSettings._re = re;
-        saveCfg = true;
-    }
-
-    if (IsWindowEnabled(_hMC) && mc != GTagsSettings._mc)
-    {
-        GTagsSettings._mc = mc;
-        saveCfg = true;
-    }
-
-    if (saveCfg)
         GTagsSettings.Save();
+    }
 }
 
 
@@ -479,11 +467,11 @@ void SearchWin::onOK()
         ComboBox_GetText(_hSearch, tag.C_str(), tag.Size());
 
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
-        bool mc = (Button_GetCheck(_hMC) == BST_CHECKED);
+        bool ic = (Button_GetCheck(_hIC) == BST_CHECKED);
 
         _cmd->Tag(tag);
         _cmd->RegExp(re);
-        _cmd->MatchCase(mc);
+        _cmd->IgnoreCase(ic);
 
         _cancelled = false;
         CmdEngine::Run(_cmd, _complCB);

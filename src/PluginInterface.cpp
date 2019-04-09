@@ -125,6 +125,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         }
         break;
 
+        case NPPN_READY:
+            GTags::OnNppReady();
+        break;
+
         case NPPN_SHUTDOWN:
             GTags::PluginDeInit();
         break;

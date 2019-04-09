@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2017 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -82,10 +82,27 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
     _buf = cmd->Name();
     _buf += " \"";
     _buf += cmd->Tag().C_str();
-    _buf += "\" (";
-    _buf += cmd->RegExp() ? "regexp, ": "literal, ";
-    _buf += cmd->MatchCase() ? "match case": "ignore case";
-    _buf += ") in \"";
+    _buf += "\"";
+
+    if (cmd->RegExp() || cmd->IgnoreCase())
+    {
+        _buf += " (";
+
+        if (cmd->RegExp())
+        {
+            _buf += "regexp";
+
+            if (cmd->IgnoreCase())
+                _buf += ", ";
+        }
+
+        if (cmd->IgnoreCase())
+            _buf += "ignore case";
+
+        _buf += ")";
+    }
+
+    _buf += " in \"";
     _buf += cmd->Db()->GetPath().C_str();
     _buf += "\"";
 
@@ -271,7 +288,7 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
  *  \brief
  */
 ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
-    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _matchCase(cmd->MatchCase()),
+    _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _ignoreCase(cmd->IgnoreCase()),
     _projectPath(cmd->Db()->GetPath().C_str()), _search(cmd->Tag().C_str()), _currentLine(1), _firstVisibleLine(0),
     _parser(cmd->Parser())
 {
@@ -709,7 +726,7 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
             1, 0, btnWidth, btnHeight,
             _hSearch, NULL, HMod, NULL);
 
-    _hMC = CreateWindowEx(0, _T("BUTTON"), _T("MatchCase"),
+    _hIC = CreateWindowEx(0, _T("BUTTON"), _T("IgnoreCase"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             btnWidth + 1, 0, btnWidth, btnHeight,
             _hSearch, NULL, HMod, NULL);
@@ -732,14 +749,14 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
     if (_hBtnFont)
     {
         SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hMC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hIC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hWW, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hUp, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
         SendMessage(_hDown, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
     }
 
     Button_SetCheck(_hRE, _lastRE ? BST_CHECKED : BST_UNCHECKED);
-    Button_SetCheck(_hMC, _lastMC ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hIC, _lastIC ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hWW, _lastWW ? BST_CHECKED : BST_UNCHECKED);
 
     _hSearchTxt = CreateWindowEx(styleTxtEx, RICHEDIT_CLASS, NULL, styleTxt,
@@ -946,7 +963,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, --matchNum)
     {
-        if (!npp.SearchText(_activeTab->_search.C_str(), _activeTab->_matchCase, wholeWord, _activeTab->_regExp,
+        if (!npp.SearchText(_activeTab->_search.C_str(), _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp,
                 &findBegin, &findEnd))
         {
             MessageBox(npp.GetHandle(),
@@ -964,10 +981,10 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 /**
  *  \brief
  */
-bool ResultWin::findString(const char* str, int* startPos, int* endPos, bool matchCase, bool wholeWord, bool regExp)
+bool ResultWin::findString(const char* str, int* startPos, int* endPos, bool ignoreCase, bool wholeWord, bool regExp)
 {
     int searchFlags = 0;
-    if (matchCase)
+    if (!ignoreCase)
         searchFlags |= SCFIND_MATCHCASE;
     if (wholeWord)
         searchFlags |= SCFIND_WHOLEWORD;
@@ -1076,7 +1093,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                     int findEnd = endPos;
 
                     if (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
-                        _activeTab->_matchCase, false, _activeTab->_regExp))
+                        _activeTab->_ignoreCase, false, _activeTab->_regExp))
                     {
                         // Highlight all matches in a single result line
                         do
@@ -1090,7 +1107,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                             findEnd = endPos;
                         }
                         while (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
-                                _activeTab->_matchCase, false, _activeTab->_regExp));
+                                _activeTab->_ignoreCase, false, _activeTab->_regExp));
 
                         if (endPos - startPos)
                             sendSci(SCI_SETSTYLING, endPos - startPos, SCE_GTAGS_FILE);
@@ -1121,7 +1138,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                 const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
                 if (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
-                    _activeTab->_matchCase, wholeWord, _activeTab->_regExp))
+                    _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp))
                 {
                     sendSci(SCI_SETSTYLING, previewPos - startPos, SCE_GTAGS_LINE_NUM);
 
@@ -1137,7 +1154,7 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
                         findEnd = endPos;
                     }
                     while (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
-                            _activeTab->_matchCase, wholeWord, _activeTab->_regExp));
+                            _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp));
 
                     if (endPos - previewPos)
                         sendSci(SCI_SETSTYLING, endPos - previewPos, STYLE_DEFAULT);
@@ -1191,7 +1208,7 @@ void ResultWin::onHotspotClick(SCNotification* notify)
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
         for (int findEnd = endLine; findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
-                    _activeTab->_matchCase, wholeWord, _activeTab->_regExp);
+                    _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp);
                 findBegin = findEnd, findEnd = endLine, ++matchNum)
             if (notify->position >= findBegin && notify->position <= findEnd)
                 break;
@@ -1574,7 +1591,7 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
     if (_hSearch)
     {
         _lastRE = (Button_GetCheck(_hRE) == BST_CHECKED);
-        _lastMC = (Button_GetCheck(_hMC) == BST_CHECKED);
+        _lastIC = (Button_GetCheck(_hIC) == BST_CHECKED);
         _lastWW = (Button_GetCheck(_hWW) == BST_CHECKED);
 
         int txtLen = Edit_GetTextLength(_hSearchTxt);
@@ -1610,13 +1627,13 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         endPos = 0;
     }
 
-    bool found = findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE);
+    bool found = findString(txt.C_str(), &startPos, &endPos, _lastIC, _lastWW, _lastRE);
 
     if (!found && ((!reverseDir && startPos) || (reverseDir && startPos != docEnd)))
     {
         startPos = reverseDir ? docEnd : 0;
 
-        found = findString(txt.C_str(), &startPos, &endPos, _lastMC, _lastWW, _lastRE);
+        found = findString(txt.C_str(), &startPos, &endPos, _lastIC, _lastWW, _lastRE);
 
         FLASHWINFO fi {0};
         fi.cbSize       = sizeof(fi);

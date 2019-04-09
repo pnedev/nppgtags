@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2019 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -133,7 +133,7 @@ void INpp::SetView(long startPos, long endPos) const
 /**
  *  \brief
  */
-bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord, bool regExp,
+bool INpp::SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
         long* startPos, long* endPos) const
 {
     if (startPos == NULL || endPos == NULL)
@@ -146,7 +146,7 @@ bool INpp::SearchText(const char* text, bool matchCase, bool wholeWord, bool reg
         *endPos = SendMessage(_hSC, SCI_GETLENGTH, 0, 0);
 
     int searchFlags = 0;
-    if (matchCase)
+    if (!ignoreCase)
         searchFlags |= SCFIND_MATCHCASE;
     if (wholeWord)
         searchFlags |= SCFIND_WHOLEWORD;
