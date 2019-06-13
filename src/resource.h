@@ -6,13 +6,13 @@
 
 #define PLUGIN_NAME         _T("NppGTags")
 
-#define VER_VERSION         4,4,1,0
-#define VER_VERSION_STR     _T("4.4.1\0")
+#define VER_VERSION         4,4,2,0
+#define VER_VERSION_STR     _T("4.4.2\0")
 
 #define VER_DESCRIPTION     _T("GTags plugin for Notepad++\0")
 
 #define VER_AUTHOR          _T("Pavel Nedev\0")
-#define VER_COPYRIGHT       _T("Copyright (C) 2014-2018 Pavel Nedev\0")
+#define VER_COPYRIGHT       _T("Copyright (C) 2014-2019 Pavel Nedev\0")
 #define VER_URL             _T("https://github.com/pnedev/nppgtags\0")
 #define VER_USER_GUIDE      _T("https://github.com/pnedev/nppgtags/blob/master/README.md\0")
 
