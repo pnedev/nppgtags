@@ -1,3 +1,13 @@
+What's new in v4.4.2
+=======================
+
+- Prompt for database creation if it is not found on user interaction.
+- Add "Ignore Case" option command to the menu - "Match Case" replaced by "Ignore Case".
+    "Ignore Case" option always active (for the direct searches also not only via Search window).
+- Change platform toolset so XP is no longer supported.
+- Updated to Notepad++ 7.7 and above plugins API (and the new Scintilla).
+
+
 What's new in v4.4.1
 =======================
 

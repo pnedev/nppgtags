@@ -65,7 +65,11 @@ void INpp::GetWord(CTextA& word, bool partial, bool select) const
 
     word.Resize(len);
 
-    struct TextRange tr = { { wordStart, wordEnd }, word.C_str() };
+    struct Sci_TextRange tr;
+    tr.chrg.cpMin   = wordStart;
+    tr.chrg.cpMax   = wordEnd;
+    tr.lpstrText    = word.C_str();
+
     SendMessage(_hSC, SCI_GETTEXTRANGE, 0, (LPARAM)&tr);
     word.AutoFit();
 }
