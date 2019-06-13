@@ -3,7 +3,7 @@ image: Visual Studio 2015
 
 environment:
     matrix:
-        - PlatformToolset: v140_xp
+        - PlatformToolset: v140
 
 platform:
     - x64
@@ -28,7 +28,7 @@ before_build:
     Write-Output "Platform: $env:PLATFORM"
     $generator = switch ($env:PLATFORMTOOLSET)
     {
-        "v140_xp" {"Visual Studio 14 2015"}
+        "v140" {"Visual Studio 14 2015"}
     }
     # not applicable with MinGW Makefiles generator
     if ($env:PLATFORM -eq "x64")
@@ -63,7 +63,7 @@ after_build:
     $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
     Push-AppveyorArtifact "_build\$env:CONFIGURATION\NppGTags.dll" -FileName "$NppGTagsFileName"
 
-    if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v140_xp" -and $env:CONFIGURATION -eq "Release")
+    if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v140" -and $env:CONFIGURATION -eq "Release")
     {
         $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM.zip"
         md deploy -Force | Out-Null
@@ -90,5 +90,5 @@ deploy:
     force_update: true
     on:
         appveyor_repo_tag: true
-        PlatformToolset: v140_xp
+        PlatformToolset: v140
         configuration: Release
