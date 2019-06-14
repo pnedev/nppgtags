@@ -1,8 +1,9 @@
 version: Build {Build}
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 environment:
     matrix:
+        - PlatformToolset: v141
         - PlatformToolset: v140
 
 platform:
@@ -15,23 +16,25 @@ configuration:
 
 install:
     - if "%platform%"=="x64" set archi=amd64
-    - if "%platform%"=="x86" set archi=x86
-    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
+    - if "%platform%"=="x64" set platform_input=x64
 
-build:
-    parallel: true
-    verbosity: minimal
+    - if "%platform%"=="x86" set archi=x86
+    - if "%platform%"=="x86" set platform_input=x86
+
+    - if "%PlatformToolset%"=="v140" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v141" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
 
 before_build:
 - ps: |
     Write-Output "Configuration: $env:CONFIGURATION"
-    Write-Output "Platform: $env:PLATFORM"
+    Write-Output "Platform: $env:PLATFORM_INPUT"
     $generator = switch ($env:PLATFORMTOOLSET)
     {
         "v140" {"Visual Studio 14 2015"}
+        "v141" {"Visual Studio 15 2017"}
     }
     # not applicable with MinGW Makefiles generator
-    if ($env:PLATFORM -eq "x64")
+    if ($env:PLATFORM_INPUT -eq "x64")
     {
         $generator = "$generator Win64"
     }
@@ -60,12 +63,12 @@ after_build:
 - ps: |
     cd c:\projects\nppgtags\
 
-    $NppGTagsFileName = "NppGTags.$env:PLATFORM.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
+    $NppGTagsFileName = "NppGTags.$env:PLATFORM_INPUT.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
     Push-AppveyorArtifact "_build\$env:CONFIGURATION\NppGTags.dll" -FileName "$NppGTagsFileName"
 
     if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v140" -and $env:CONFIGURATION -eq "Release")
     {
-        $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM.zip"
+        $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM_INPUT.zip"
         md deploy -Force | Out-Null
         md deploy\NppGTags -Force | Out-Null
         md deploy\NppGTags\NppGTags -Force | Out-Null
