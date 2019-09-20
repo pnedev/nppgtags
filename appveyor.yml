@@ -3,8 +3,8 @@ image: Visual Studio 2017
 
 environment:
     matrix:
-        - PlatformToolset: v141
-        - PlatformToolset: v140
+        - PlatformToolset: v141_xp
+        - PlatformToolset: v140_xp
 
 platform:
     - x64
@@ -21,8 +21,8 @@ install:
     - if "%platform%"=="x86" set archi=x86
     - if "%platform%"=="x86" set platform_input=x86
 
-    - if "%PlatformToolset%"=="v140" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
-    - if "%PlatformToolset%"=="v141" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v141_xp" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v140_xp" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
 
 before_build:
 - ps: |
@@ -30,8 +30,8 @@ before_build:
     Write-Output "Platform: $env:PLATFORM_INPUT"
     $generator = switch ($env:PLATFORMTOOLSET)
     {
-        "v140" {"Visual Studio 14 2015"}
-        "v141" {"Visual Studio 15 2017"}
+        "v141_xp" {"Visual Studio 15 2017"}
+        "v140_xp" {"Visual Studio 14 2015"}
     }
     # not applicable with MinGW Makefiles generator
     if ($env:PLATFORM_INPUT -eq "x64")
@@ -66,7 +66,7 @@ after_build:
     $NppGTagsFileName = "NppGTags.$env:PLATFORM_INPUT.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
     Push-AppveyorArtifact "_build\$env:CONFIGURATION\NppGTags.dll" -FileName "$NppGTagsFileName"
 
-    if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v140" -and $env:CONFIGURATION -eq "Release")
+    if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v141_xp" -and $env:CONFIGURATION -eq "Release")
     {
         $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM_INPUT.zip"
         md deploy -Force | Out-Null
@@ -93,5 +93,5 @@ deploy:
     force_update: true
     on:
         appveyor_repo_tag: true
-        PlatformToolset: v140
+        PlatformToolset: v141_xp
         configuration: Release

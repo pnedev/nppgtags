@@ -52,7 +52,7 @@ else (UNIX OR MINGW)
     endif ()
 
     set (CMAKE_CXX_FLAGS
-        "/EHsc /MP /W4"
+        "/EHsc /LD /MP /W4"
     )
 endif (UNIX OR MINGW)
 
