@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.15)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
@@ -39,6 +39,8 @@ if (UNIX OR MINGW)
         "-s"
     )
 else (UNIX OR MINGW)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
     if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
         set (defs
             -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
@@ -52,7 +54,7 @@ else (UNIX OR MINGW)
     endif ()
 
     set (CMAKE_CXX_FLAGS
-        "/EHsc /LD /MP /W4"
+        "/EHsc /LD /MT /MP /W4"
     )
 endif (UNIX OR MINGW)
 
