@@ -35,6 +35,7 @@
 #include <richedit.h>
 #include <commctrl.h>
 #include <vector>
+#include <string>
 #include "Common.h"
 #include "GTags.h"
 #include "dockingResource.h"
@@ -78,6 +79,10 @@ ResultWin* ResultWin::RW = NULL;
  */
 int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 {
+    _filesCount = 0;
+    _hits = 0;
+    _headerStatusLen = 0;
+
     // Add the search header - cmd name + search word + project path
     _buf = cmd->Name();
     _buf += " \"";
@@ -106,11 +111,71 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
     _buf += cmd->Db()->GetPath().C_str();
     _buf += "\"";
 
+    const unsigned countsPos = _buf.Len();
+
+    int res;
+
     // parsing command result
     if (cmd->Id() == FIND_FILE)
-        return parseFindFile(cmd);
+    {
+        res = parseFindFile(cmd);
+
+        // Add results sumary in header
+        if (res > 0)
+        {
+            std::string str = " (";
+
+            if (_filesCount == 1)
+            {
+                str += "1 hit)";
+            }
+            else
+            {
+                str += std::to_string(_filesCount);
+                str += " hits)";
+            }
+
+            _headerStatusLen = str.size();
+
+            _buf.Insert(countsPos, str.c_str(), str.size());
+        }
+    }
     else
-        return parseCmd(cmd);
+    {
+        res = parseCmd(cmd);
+
+        // Add results sumary in header
+        if (res > 0)
+        {
+            std::string str = " (";
+
+            if (_hits == 1)
+            {
+                str += "1 hit in 1 file)";
+            }
+            else
+            {
+                str += std::to_string(_hits);
+                str += " hits in ";
+
+                if (_filesCount == 1)
+                {
+                    str += "1 file)";
+                }
+                else
+                {
+                    str += std::to_string(_filesCount);
+                    str += " files)";
+                }
+            }
+
+            _headerStatusLen = str.size();
+
+            _buf.Insert(countsPos, str.c_str(), str.size());
+        }
+    }
+
+    return res;
 }
 
 
@@ -140,8 +205,6 @@ bool ResultWin::TabParser::filterEntry(const DbConfig& cfg, const char* pEntry, 
  */
 int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
 {
-    int result = 0;
-
     const char* pSrc = cmd->Result();
     const char* pEol;
 
@@ -162,13 +225,13 @@ int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
             _buf += "\n\t";
             _buf.Append(pSrc, pEol - pSrc);
 
-            ++result;
+            ++_filesCount;
         }
 
         pSrc = pEol;
     }
 
-    return result;
+    return _filesCount;
 }
 
 
@@ -177,8 +240,6 @@ int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
  */
 int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 {
-    int result = 0;
-
     bool filterReoccurring = false;
 
     const DbConfig& cfg = cmd->Db()->GetConfig();
@@ -239,6 +300,7 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
             {
                 _buf += "\n\t";
                 _buf.Append(pPreviousFile, previousFileLen);
+                ++_filesCount;
 
                 previousFileFiltered = false;
             }
@@ -277,10 +339,10 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         if (filterReoccurring && !strChecker.IsUnique(pLine))
             _buf.Resize(previousBufLen);
         else
-            ++result;
+            ++_hits;
     }
 
-    return result;
+    return _hits;
 }
 
 
@@ -1078,10 +1140,12 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
         if ((char)sendSci(SCI_GETCHARAT, startPos) != '\t')
         {
             int pathLen = _activeTab->_projectPath.Len();
+            const TabParser* parser = dynamic_cast<TabParser*>(_activeTab->_parser.get());
 
-            // 2 * '"' + LF + CR = 4
-            sendSci(SCI_SETSTYLING, lineLen - pathLen - 4, SCE_GTAGS_HEADER);
-            sendSci(SCI_SETSTYLING, pathLen + 4, SCE_GTAGS_PROJECT_PATH);
+            // 2 * '"' + LF + CR = 4 so length to style is modified with -4 and +1 (as it is length)
+            sendSci(SCI_SETSTYLING, lineLen - pathLen - parser->getHeaderStatusLen() - 3, SCE_GTAGS_HEADER);
+            sendSci(SCI_SETSTYLING, pathLen + 2, SCE_GTAGS_PROJECT_PATH);
+            sendSci(SCI_SETSTYLING, parser->getHeaderStatusLen(), SCE_GTAGS_HEADER);
         }
         else
         {

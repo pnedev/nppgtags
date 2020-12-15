@@ -50,16 +50,23 @@ public:
     class TabParser : public ResultParser
     {
     public:
-        TabParser() {}
+        TabParser() : _filesCount(0), _hits(0), _headerStatusLen(0) {}
         virtual ~TabParser() {}
 
         virtual int Parse(const CmdPtr_t&);
+
+        int getHitsCount() const { return _hits ? _hits : _filesCount; }
+        int getHeaderStatusLen() const { return _headerStatusLen; }
 
     private:
         static bool filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len);
 
         int parseCmd(const CmdPtr_t&);
         int parseFindFile(const CmdPtr_t&);
+
+        int _filesCount;
+        int _hits;
+        int _headerStatusLen;
     };
 
 
