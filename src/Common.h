@@ -215,7 +215,7 @@ HFONT CreateFromSystemMessageFont(HDC hdc = NULL, unsigned fontHeight = 0);
 HFONT CreateFromSystemMenuFont(HDC hdc = NULL, unsigned fontHeight = 0);
 
 
-#ifdef DEVELOPMENT
+#ifdef DEVEL
 
 #ifdef UNICODE
 #define Msg(x)  MsgW(x)

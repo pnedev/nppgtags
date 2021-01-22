@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.15)
 set (CMAKE_SYSTEM_NAME Windows)
 
 if (UNIX OR MINGW)
-	set (CMAKE_SYSROOT "/usr")
+    set (CMAKE_SYSROOT "/usr")
 
     set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM  NEVER)
     set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY  ONLY)
@@ -17,7 +17,7 @@ if (UNIX OR MINGW)
 
     set (win32_inc_dir ${CMAKE_SYSROOT}/${toolchain_prefix}/include)
     set (win32_lib_dir ${CMAKE_SYSROOT}/${toolchain_prefix}/lib)
-endif (UNIX OR MINGW)
+endif ()
 
 project (NppGTags)
 
@@ -27,19 +27,21 @@ if (UNIX OR MINGW)
         -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
     )
 
-	if (DEVELOPMENT)
-		set (defs ${defs} -DDEVELOPMENT)
-	endif ()
+    if (DEVEL)
+        set (defs ${defs} -DDEVEL)
+    endif ()
 
     set (CMAKE_CXX_FLAGS
-		"-std=c++11 -O3 -static-libgcc -static-libstdc++ -Wall -Wno-unknown-pragmas"
+        "-std=c++11 -O3 -static-libgcc -static-libstdc++ -Wall -Wno-unknown-pragmas"
     )
 
     set (CMAKE_MODULE_LINKER_FLAGS
         "-s"
     )
-else (UNIX OR MINGW)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+    set (CMAKE_SHARED_MODULE_PREFIX "")
+else ()
+    set (CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
     if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
         set (defs
@@ -56,7 +58,7 @@ else (UNIX OR MINGW)
     set (CMAKE_CXX_FLAGS
         "/EHsc /LD /MT /MP /W4"
     )
-endif (UNIX OR MINGW)
+endif ()
 
 set (project_rc_files
     src/nppgtags.rc
@@ -96,17 +98,16 @@ if (UNIX OR MINGW)
 
     target_link_libraries (NppGTags ${comctl32})
 
-	set (INSTALL_PATH
-		"$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
-	)
-
-    install (FILES ${CMAKE_BINARY_DIR}/libNppGTags.dll
-        DESTINATION "${INSTALL_PATH}"
-        RENAME NppGTags.dll
+    set (INSTALL_PATH
+        "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
     )
-else (UNIX OR MINGW)
+
+    install (FILES ${CMAKE_BINARY_DIR}/NppGTags.dll
+        DESTINATION "${INSTALL_PATH}"
+    )
+else ()
     target_link_libraries (NppGTags comctl32)
-endif (UNIX OR MINGW)
+endif ()
 
 message ("Install destination: ${INSTALL_PATH}")
 
