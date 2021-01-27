@@ -559,6 +559,58 @@ void ResultWin::show(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
+void ResultWin::close(const CmdPtr_t& cmd)
+{
+    int count = TabCtrl_GetItemCount(_hTab);
+    if (count == 0)
+        return;
+
+    CmdId_t cmdId       = cmd->Id();
+    CTextA  projectPath = cmd->Db()->GetPath().C_str();
+    CTextA  search      = cmd->Tag().C_str();
+
+    for (int i = count; i; --i)
+    {
+        Tab* oldTab = getTab(i - 1);
+
+        if (oldTab && ((cmdId == oldTab->_cmdId) ||
+            ((cmdId == FIND_SYMBOL) && ((oldTab->_cmdId == FIND_DEFINITION) || (oldTab->_cmdId == FIND_REFERENCE)))) &&
+            (projectPath == oldTab->_projectPath) && (search == oldTab->_search)) // same search tab already present?
+        {
+            --i;
+
+            if (_activeTab == oldTab) // is this the currently active tab?
+                _activeTab = NULL;
+            delete oldTab;
+
+            TabCtrl_DeleteItem(_hTab, i);
+
+            if (--count)
+            {
+                i = i ? i - 1 : 0;
+                Tab* tab = getTab(i);
+                TabCtrl_SetCurSel(_hTab, i);
+                if (tab)
+                    loadTab(tab);
+            }
+            else
+            {
+                sendSci(SCI_SETREADONLY, 0);
+                sendSci(SCI_CLEARALL);
+                sendSci(SCI_SETREADONLY, 1);
+
+                hideWindow();
+            }
+
+            return;
+        }
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void ResultWin::applyStyle()
 {
     INpp& npp = INpp::Get();

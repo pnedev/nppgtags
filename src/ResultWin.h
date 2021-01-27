@@ -85,6 +85,12 @@ public:
             RW->show(cmd);
     }
 
+    static void Close(const CmdPtr_t& cmd)
+    {
+        if (RW)
+            RW->close(cmd);
+    }
+
     static void ApplyStyle()
     {
         if (RW)
@@ -164,6 +170,7 @@ private:
 
     void show();
     void show(const CmdPtr_t& cmd);
+    void close(const CmdPtr_t& cmd);
     void applyStyle();
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)

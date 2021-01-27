@@ -316,6 +316,8 @@ void showResultCB(const CmdPtr_t& cmd)
             msg += cmd->Tag();
             msg += _T("\" not found.");
             MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
+
+            ResultWin::Close(cmd);
         }
     }
     else if (cmd->Status() == FAILED)
