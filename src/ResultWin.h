@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -143,6 +143,8 @@ private:
         inline void ClearFolded(int lineNum);
         inline bool IsFolded(int lineNum);
 
+        inline void MoveFolded(Tab& tab);
+
     private:
         std::unordered_set<int> _expandedLines;
     };
@@ -171,6 +173,7 @@ private:
     void show();
     void show(const CmdPtr_t& cmd);
     void close(const CmdPtr_t& cmd);
+    void reRunCmd();
     void applyStyle();
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)

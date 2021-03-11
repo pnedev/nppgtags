@@ -51,8 +51,7 @@ GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(
  */
 void GTagsDb::Update(const CPath& file)
 {
-    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, _T("Database Single File Update"),
-            this->shared_from_this(), NULL, file.C_str()));
+    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, this->shared_from_this(), NULL, file.C_str()));
     CmdEngine::Run(cmd, dbUpdateCB);
 }
 

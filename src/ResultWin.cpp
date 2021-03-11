@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "DocLocation.h"
 #include "ActivityWin.h"
 #include "Cmd.h"
+#include "CmdEngine.h"
 #include <windowsx.h>
 #include <richedit.h>
 #include <commctrl.h>
@@ -396,6 +397,15 @@ inline bool ResultWin::Tab::IsFolded(int lineNum)
 /**
  *  \brief
  */
+inline void ResultWin::Tab::MoveFolded(Tab& tab)
+{
+    _expandedLines = std::move(tab._expandedLines);
+}
+
+
+/**
+ *  \brief
+ */
 HWND ResultWin::Register()
 {
     if (RW)
@@ -494,6 +504,8 @@ void ResultWin::show(const CmdPtr_t& cmd)
 
         if (oldTab && (*tab == *oldTab)) // same search tab already present?
         {
+            tab->MoveFolded(*oldTab);
+
             if (_activeTab == oldTab) // is this the currently active tab?
                 _activeTab = NULL;
             delete oldTab;
@@ -605,6 +617,26 @@ void ResultWin::close(const CmdPtr_t& cmd)
             return;
         }
     }
+}
+
+
+/**
+ *  \brief
+ */
+void ResultWin::reRunCmd()
+{
+    if (!_activeTab)
+        return;
+
+    DbHandle db = getDatabaseAt(CPath(_activeTab->_projectPath.C_str()));
+    if (!db)
+        return;
+
+    CmdPtr_t cmd(new Cmd(_activeTab->_cmdId, db, _activeTab->_parser, NULL,
+            _activeTab->_ignoreCase, _activeTab->_regExp));
+
+    cmd->Tag(CText(_activeTab->_search.C_str()));
+    CmdEngine::Run(cmd, showResultCB);
 }
 
 
@@ -1826,6 +1858,11 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                             if (wParam == VK_RETURN || wParam == VK_SPACE)
                             {
                                 RW->onDoubleClick(0);
+                                return 1;
+                            }
+                            if (wParam == VK_F5)
+                            {
+                                RW->reRunCmd();
                                 return 1;
                             }
                         }

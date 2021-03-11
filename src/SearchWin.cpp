@@ -269,8 +269,7 @@ void SearchWin::startCompletion()
         complCB = halfComplete;
     }
 
-    CmdPtr_t cmpl(new Cmd(cmplId, _T("AutoComplete"), _cmd->Db(), parser,
-            tag, (Button_GetCheck(_hIC) == BST_CHECKED), false));
+    CmdPtr_t cmpl(new Cmd(cmplId, _cmd->Db(), parser, tag, (Button_GetCheck(_hIC) == BST_CHECKED), false));
 
     if (_cmd->Id() != FIND_DEFINITION)
         cmpl->SkipLibs(true);

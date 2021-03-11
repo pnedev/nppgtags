@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2019 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -65,15 +65,16 @@ protected:
 class Cmd
 {
 public:
-    Cmd(CmdId_t id, const TCHAR* name, DbHandle db = NULL, ParserPtr_t parser = ParserPtr_t(NULL),
+    static const TCHAR* CmdName[];
+
+    Cmd(CmdId_t id, DbHandle db = NULL, ParserPtr_t parser = ParserPtr_t(NULL),
             const TCHAR* tag = NULL, bool ignoreCase = false, bool regExp = false);
     ~Cmd() {}
 
     inline void Id(CmdId_t id) { _id = id; }
     inline CmdId_t Id() const { return _id; }
 
-    inline void Name(const TCHAR* name) { if (name) _name = name; }
-    inline const TCHAR* Name() const { return _name.C_str(); }
+    inline const TCHAR* Name() const { return CmdName[_id]; }
 
     inline DbHandle Db() const { return _db; }
 
@@ -109,7 +110,6 @@ private:
     friend class CmdEngine;
 
     CmdId_t             _id;
-    CText               _name;
     DbHandle            _db;
 
     CText               _tag;

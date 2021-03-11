@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -37,19 +37,21 @@
 namespace GTags
 {
 
-const TCHAR CmdEngine::cCreateDatabaseCmd[] = _T("\"%s\\gtags.exe\" -c --skip-unreadable");
-const TCHAR CmdEngine::cUpdateSingleCmd[]   = _T("\"%s\\gtags.exe\" -c --skip-unreadable --single-update \"%s\"");
-const TCHAR CmdEngine::cAutoComplCmd[]      = _T("\"%s\\global.exe\" -cT \"%s\"");
-const TCHAR CmdEngine::cAutoComplSymCmd[]   = _T("\"%s\\global.exe\" -cs \"%s\"");
-const TCHAR CmdEngine::cAutoComplFileCmd[]  = _T("\"%s\\global.exe\" -cP --match-part=all \"%s\"");
-const TCHAR CmdEngine::cFindFileCmd[]       = _T("\"%s\\global.exe\" -P \"%s\"");
-const TCHAR CmdEngine::cFindDefinitionCmd[] = _T("\"%s\\global.exe\" -dT --result=grep \"%s\"");
-const TCHAR CmdEngine::cFindReferenceCmd[]  = _T("\"%s\\global.exe\" -r --result=grep \"%s\"");
-const TCHAR CmdEngine::cFindSymbolCmd[]     = _T("\"%s\\global.exe\" -s --result=grep \"%s\"");
-const TCHAR CmdEngine::cGrepCmd[]           = _T("\"%s\\global.exe\" -g --result=grep \"%s\"");
-const TCHAR CmdEngine::cGrepTxtCmd[]        = _T("\"%s\\global.exe\" -gO --result=grep \"%s\"");
-const TCHAR CmdEngine::cVersionCmd[]        = _T("\"%s\\global.exe\" --version");
-const TCHAR CmdEngine::cCtagsVersionCmd[]   = _T("\"%s\\ctags.exe\" --version");
+const TCHAR* CmdEngine::CmdLine[] = {
+    _T("\"%s\\gtags.exe\" -c --skip-unreadable"),                           // CREATE_DATABASE
+    _T("\"%s\\gtags.exe\" -c --skip-unreadable --single-update \"%s\""),    // UPDATE_SINGLE
+    _T("\"%s\\global.exe\" -cT \"%s\""),                                    // AUTOCOMPLETE
+    _T("\"%s\\global.exe\" -cs \"%s\""),                                    // AUTOCOMPLETE_SYMBOL
+    _T("\"%s\\global.exe\" -cP --match-part=all \"%s\""),                   // AUTOCOMPLETE_FILE
+    _T("\"%s\\global.exe\" -P \"%s\""),                                     // FIND_FILE
+    _T("\"%s\\global.exe\" -dT --result=grep \"%s\""),                      // FIND_DEFINITION
+    _T("\"%s\\global.exe\" -r --result=grep \"%s\""),                       // FIND_REFERENCE
+    _T("\"%s\\global.exe\" -s --result=grep \"%s\""),                       // FIND_SYMBOL
+    _T("\"%s\\global.exe\" -g --result=grep \"%s\""),                       // GREP
+    _T("\"%s\\global.exe\" -gO --result=grep \"%s\""),                      // GREP_TEXT
+    _T("\"%s\\global.exe\" --version"),                                     // VERSION
+    _T("\"%s\\ctags.exe\" --version")                                       // CTAGS_VERSION
+};
 
 
 /**
@@ -239,45 +241,6 @@ unsigned CmdEngine::start()
 /**
  *  \brief
  */
-const TCHAR* CmdEngine::getCmdLine() const
-{
-    switch (_cmd->_id)
-    {
-        case CREATE_DATABASE:
-            return cCreateDatabaseCmd;
-        case UPDATE_SINGLE:
-            return cUpdateSingleCmd;
-        case AUTOCOMPLETE:
-            return cAutoComplCmd;
-        case AUTOCOMPLETE_SYMBOL:
-            return cAutoComplSymCmd;
-        case AUTOCOMPLETE_FILE:
-            return cAutoComplFileCmd;
-        case FIND_FILE:
-            return cFindFileCmd;
-        case FIND_DEFINITION:
-            return cFindDefinitionCmd;
-        case FIND_REFERENCE:
-            return cFindReferenceCmd;
-        case FIND_SYMBOL:
-            return cFindSymbolCmd;
-        case GREP:
-            return cGrepCmd;
-        case GREP_TEXT:
-            return cGrepTxtCmd;
-        case VERSION:
-            return cVersionCmd;
-        case CTAGS_VERSION:
-            return cCtagsVersionCmd;
-    }
-
-    return NULL;
-}
-
-
-/**
- *  \brief
- */
 void CmdEngine::composeCmd(CText& buf) const
 {
     CPath path(DllPath);
@@ -287,9 +250,10 @@ void CmdEngine::composeCmd(CText& buf) const
     buf.Resize(2048);
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == VERSION || _cmd->_id == CTAGS_VERSION)
-        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str());
+        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, CmdLine[_cmd->_id], path.C_str());
     else
-        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, getCmdLine(), path.C_str(), _cmd->Tag().C_str());
+        _sntprintf_s(buf.C_str(), buf.Size(), _TRUNCATE, CmdLine[_cmd->_id], path.C_str(),
+                _cmd->Tag().C_str());
 
     if (_cmd->_id == CREATE_DATABASE || _cmd->_id == UPDATE_SINGLE)
     {

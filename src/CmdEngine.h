@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -47,19 +47,7 @@ public:
     static bool Run(const CmdPtr_t& cmd, CompletionCB complCB);
 
 private:
-    static const TCHAR  cCreateDatabaseCmd[];
-    static const TCHAR  cUpdateSingleCmd[];
-    static const TCHAR  cAutoComplCmd[];
-    static const TCHAR  cAutoComplSymCmd[];
-    static const TCHAR  cAutoComplFileCmd[];
-    static const TCHAR  cFindFileCmd[];
-    static const TCHAR  cFindDefinitionCmd[];
-    static const TCHAR  cFindReferenceCmd[];
-    static const TCHAR  cFindSymbolCmd[];
-    static const TCHAR  cGrepCmd[];
-    static const TCHAR  cGrepTxtCmd[];
-    static const TCHAR  cVersionCmd[];
-    static const TCHAR  cCtagsVersionCmd[];
+    static const TCHAR* CmdLine[];
 
     static unsigned __stdcall threadFunc(void* data);
 
@@ -68,7 +56,6 @@ private:
     CmdEngine& operator=(const CmdEngine&) = delete;
 
     unsigned start();
-    const TCHAR* getCmdLine() const;
     void composeCmd(CText& buf) const;
     void setEnvironmentVars() const;
     bool runProcess(PROCESS_INFORMATION& pi, ReadPipe& dataPipe, ReadPipe& errorPipe);

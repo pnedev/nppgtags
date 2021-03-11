@@ -70,7 +70,7 @@ SettingsWin::Tab::~Tab()
     {
         if (_updateDb)
         {
-            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Create Database"), _db));
+            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _db));
             CmdEngine::Run(cmd, SettingsWin::dbWriteReady);
         }
         else
@@ -928,7 +928,7 @@ bool SettingsWin::createDatabase(CPath& dbPath, CompletionCB complCB)
         db = DbManager::Get().RegisterDb(dbPath);
     }
 
-    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _T("Creating Database"), db));
+    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
     CmdEngine::Run(cmd, complCB);
 
     return true;

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2019 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -28,17 +28,31 @@
 namespace GTags
 {
 
+const TCHAR* Cmd::CmdName[] = {
+    _T("Create Database"),              // CREATE_DATABASE
+    _T("Database Single File Update"),  // UPDATE_SINGLE
+    _T("AutoComplete"),                 // AUTOCOMPLETE
+    _T("AutoComplete"),                 // AUTOCOMPLETE_SYMBOL
+    _T("AutoComplete File Name"),       // AUTOCOMPLETE_FILE
+    _T("Find File"),                    // FIND_FILE
+    _T("Find Definition"),              // FIND_DEFINITION
+    _T("Find Reference"),               // FIND_REFERENCE
+    _T("Find Symbol"),                  // FIND_SYMBOL
+    _T("Search in Source Files"),       // GREP
+    _T("Search in Other Files"),        // GREP_TEXT
+    _T("About"),                        // VERSION
+    _T("About CTags")                   // CTAGS_VERSION
+};
+
+
 /**
  *  \brief
  */
-Cmd::Cmd(CmdId_t id, const TCHAR* name, DbHandle db, ParserPtr_t parser,
+Cmd::Cmd(CmdId_t id, DbHandle db, ParserPtr_t parser,
         const TCHAR* tag, bool ignoreCase, bool regExp) :
         _id(id), _db(db), _parser(parser),
         _ignoreCase(ignoreCase), _regExp(regExp), _skipLibs(false), _status(CANCELLED)
 {
-    if (name)
-        _name = name;
-
     if (tag)
         _tag = tag;
 }

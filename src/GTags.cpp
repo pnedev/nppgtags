@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -47,18 +47,6 @@ namespace
 {
 
 using namespace GTags;
-
-
-const TCHAR cCreateDatabase[]   = _T("Create Database");
-const TCHAR cAutoCompl[]        = _T("AutoComplete");
-const TCHAR cAutoComplFile[]    = _T("AutoComplete File Name");
-const TCHAR cFindFile[]         = _T("Find File");
-const TCHAR cFindDefinition[]   = _T("Find Definition");
-const TCHAR cFindReference[]    = _T("Find Reference");
-const TCHAR cFindSymbol[]       = _T("Find Symbol");
-const TCHAR cSearchSrc[]        = _T("Search in Source Files");
-const TCHAR cSearchOther[]      = _T("Search in Other Files");
-const TCHAR cVersion[]          = _T("About");
 
 
 std::unique_ptr<CPath>  ChangedFile;
@@ -186,7 +174,7 @@ DbHandle getDatabase(bool writeEn = false)
 
         db = DbManager::Get().RegisterDb(currentFile);
 
-        CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+        CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
         CmdEngine::Run(cmd, dbWriteCB);
 
         return NULL;
@@ -198,37 +186,6 @@ DbHandle getDatabase(bool writeEn = false)
         msg += _T("\"\nis currently in use.\nPlease try again later.");
 
         MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
-        db = NULL;
-    }
-
-    return db;
-}
-
-
-/**
- *  \brief
- */
-DbHandle getDatabaseAt(const CPath& dbPath)
-{
-    bool success;
-
-    DbHandle db = DbManager::Get().GetDbAt(dbPath, false, &success);
-
-    if (!db)
-    {
-        CText msg(_T("Database at\n\""));
-        msg += dbPath;
-        msg += _T("\"\ndoes not exist.");
-
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
-    }
-    else if (!success)
-    {
-        CText msg(_T("Database at\n\""));
-        msg += db->GetPath();
-        msg += _T("\"\nis currently in use.\nPlease try again later.");
-
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
         db = NULL;
     }
 
@@ -300,53 +257,11 @@ void halfComplCB(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void showResultCB(const CmdPtr_t& cmd)
-{
-    DbManager::Get().PutDb(cmd->Db());
-
-    if (cmd->Status() == OK || cmd->Status() == PARSE_EMPTY)
-    {
-        if (cmd->Result() && cmd->Status() == OK)
-        {
-            ResultWin::Show(cmd);
-        }
-        else
-        {
-            CText msg(_T("\""));
-            msg += cmd->Tag();
-            msg += _T("\" not found.");
-            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
-
-            ResultWin::Close(cmd);
-        }
-    }
-    else if (cmd->Status() == FAILED)
-    {
-        CText msg(cmd->Result());
-        msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
-    }
-    else if (cmd->Status() == RUN_ERROR)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
-    }
-    else if (cmd->Status() == PARSE_ERROR)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Database seems outdated.\nPlease re-create it and redo the search."),
-                cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
-    }
-}
-
-
-/**
- *  \brief
- */
 void findCB(const CmdPtr_t& cmd)
 {
     if (cmd->Status() == OK && cmd->Result() == NULL)
     {
         cmd->Id(FIND_SYMBOL);
-        cmd->Name(cFindSymbol);
 
         CmdEngine::Run(cmd, showResultCB);
     }
@@ -428,7 +343,7 @@ void AutoComplete()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, cAutoCompl, db, NULL, tag.C_str(), GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.C_str(), GTagsSettings._ic));
 
     CmdEngine::Run(cmd, halfComplCB);
 }
@@ -450,7 +365,7 @@ void AutoCompleteFile()
         return;
 
     ParserPtr_t parser(new LineParser);
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, cAutoComplFile, db, parser, tag.C_str(), GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, db, parser, tag.C_str(), GTagsSettings._ic));
 
     CmdEngine::Run(cmd, autoComplCB);
 }
@@ -475,7 +390,7 @@ void FindFile()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_FILE, cFindFile, db, parser, NULL, GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(FIND_FILE, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci, false, DONT_SELECT);
     if (tag.IsEmpty())
@@ -512,7 +427,7 @@ void FindDefinition()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, cFindDefinition, db, parser, NULL, GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -556,7 +471,7 @@ void FindReference()
     }
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, cFindReference, db, parser, NULL, GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -590,7 +505,7 @@ void SearchSrc()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP, cSearchSrc, db, parser, NULL, GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(GREP, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -624,7 +539,7 @@ void SearchOther()
         return;
 
     ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP_TEXT, cSearchOther, db, parser, NULL, GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(GREP_TEXT, db, parser, NULL, GTagsSettings._ic));
 
     CText tag = getSelection(rwHSci);
     if (tag.IsEmpty())
@@ -714,7 +629,7 @@ void CreateDatabase()
         db = DbManager::Get().RegisterDb(currentFile);
     }
 
-    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, cCreateDatabase, db));
+    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
     CmdEngine::Run(cmd, dbWriteCB);
 }
 
@@ -793,7 +708,7 @@ void SettingsCfg()
  */
 void About()
 {
-    CmdPtr_t cmd(new Cmd(VERSION, cVersion));
+    CmdPtr_t cmd(new Cmd(VERSION));
     CmdEngine::Run(cmd, halfAboutCB);
 }
 
@@ -804,20 +719,20 @@ namespace GTags
 {
 
 FuncItem Menu[21] = {
-    /* 0 */  FuncItem(cAutoCompl, AutoComplete),
-    /* 1 */  FuncItem(cAutoComplFile, AutoCompleteFile),
-    /* 2 */  FuncItem(cFindFile, FindFile),
-    /* 3 */  FuncItem(cFindDefinition, FindDefinition),
-    /* 4 */  FuncItem(cFindReference, FindReference),
-    /* 5 */  FuncItem(cSearchSrc, SearchSrc),
-    /* 6 */  FuncItem(cSearchOther, SearchOther),
+    /* 0 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE], AutoComplete),
+    /* 1 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE_FILE], AutoCompleteFile),
+    /* 2 */  FuncItem(Cmd::CmdName[FIND_FILE], FindFile),
+    /* 3 */  FuncItem(Cmd::CmdName[FIND_DEFINITION], FindDefinition),
+    /* 4 */  FuncItem(Cmd::CmdName[FIND_REFERENCE], FindReference),
+    /* 5 */  FuncItem(Cmd::CmdName[GREP], SearchSrc),
+    /* 6 */  FuncItem(Cmd::CmdName[GREP_TEXT], SearchOther),
     /* 7 */  FuncItem(),
     /* 8 */  FuncItem(_T("Ignore Case"), IgnoreCase), // Array number is important as it is used to toggle the flag!!!
     /* 9 */  FuncItem(),
     /* 10*/  FuncItem(_T("Go Back"), GoBack),
     /* 11*/  FuncItem(_T("Go Forward"), GoForward),
     /* 12 */ FuncItem(),
-    /* 13 */ FuncItem(cCreateDatabase, CreateDatabase),
+    /* 13 */ FuncItem(Cmd::CmdName[CREATE_DATABASE], CreateDatabase),
     /* 14 */ FuncItem(_T("Delete Database"), DeleteDatabase),
     /* 15 */ FuncItem(),
     /* 16 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
@@ -836,6 +751,78 @@ unsigned UIFontSize;
 HWND MainWndH = NULL;
 
 Settings GTagsSettings;
+
+
+/**
+ *  \brief
+ */
+DbHandle getDatabaseAt(const CPath& dbPath)
+{
+    bool success;
+
+    DbHandle db = DbManager::Get().GetDbAt(dbPath, false, &success);
+
+    if (!db)
+    {
+        CText msg(_T("Database at\n\""));
+        msg += dbPath;
+        msg += _T("\"\ndoes not exist.");
+
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
+    }
+    else if (!success)
+    {
+        CText msg(_T("Database at\n\""));
+        msg += db->GetPath();
+        msg += _T("\"\nis currently in use.\nPlease try again later.");
+
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
+        db = NULL;
+    }
+
+    return db;
+}
+
+
+/**
+ *  \brief
+ */
+void showResultCB(const CmdPtr_t& cmd)
+{
+    DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == OK || cmd->Status() == PARSE_EMPTY)
+    {
+        if (cmd->Result() && cmd->Status() == OK)
+        {
+            ResultWin::Show(cmd);
+        }
+        else
+        {
+            CText msg(_T("\""));
+            msg += cmd->Tag();
+            msg += _T("\" not found.");
+            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONINFORMATION);
+
+            ResultWin::Close(cmd);
+        }
+    }
+    else if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+    else if (cmd->Status() == PARSE_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Database seems outdated.\nPlease re-create it and redo the search."),
+                cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+}
 
 
 /**

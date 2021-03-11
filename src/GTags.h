@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include <memory>
 #include "resource.h"
 #include "CmdDefines.h"
+#include "DbManager.h"
 
 
 struct FuncItem;
@@ -64,6 +65,9 @@ class Settings;
 
 extern Settings GTagsSettings;
 
+
+DbHandle getDatabaseAt(const CPath& dbPath);
+void showResultCB(const CmdPtr_t& cmd);
 
 BOOL PluginLoad(HINSTANCE hMod);
 void PluginInit();
