@@ -611,6 +611,17 @@ void ResultWin::close(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
+void ResultWin::reRunCmd()
+{
+    if (!_activeTab)
+        return;
+
+}
+
+
+/**
+ *  \brief
+ */
 void ResultWin::applyStyle()
 {
     INpp& npp = INpp::Get();
@@ -1825,6 +1836,11 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                             if (wParam == VK_RETURN || wParam == VK_SPACE)
                             {
                                 RW->onDoubleClick(0);
+                                return 1;
+                            }
+                            if (wParam == VK_F5)
+                            {
+                                RW->reRunCmd();
                                 return 1;
                             }
                         }

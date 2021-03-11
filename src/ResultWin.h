@@ -171,6 +171,7 @@ private:
     void show();
     void show(const CmdPtr_t& cmd);
     void close(const CmdPtr_t& cmd);
+    void reRunCmd();
     void applyStyle();
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
