@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <unordered_set>
-#include "Scintilla.h"
+#include "NppAPI/Scintilla.h"
 #include "Common.h"
 #include "Cmd.h"
 

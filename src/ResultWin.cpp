@@ -38,7 +38,7 @@
 #include <string>
 #include "Common.h"
 #include "GTags.h"
-#include "dockingResource.h"
+#include "NppAPI/dockingResource.h"
 #include "StrUniquenessChecker.h"
 
 

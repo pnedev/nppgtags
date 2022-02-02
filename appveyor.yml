@@ -7,7 +7,6 @@ matrix:
 environment:
     matrix:
         - PlatformToolset: v141
-        - PlatformToolset: v140
 
 platform:
     - x64
@@ -25,7 +24,6 @@ install:
     - if "%platform%"=="x86" set platform_input=x86
 
     - if "%PlatformToolset%"=="v141" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
-    - if "%PlatformToolset%"=="v140" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %archi%
 
 before_build:
 - ps: |
@@ -34,7 +32,6 @@ before_build:
     $generator = switch ($env:PLATFORMTOOLSET)
     {
         "v141" {"Visual Studio 15 2017"}
-        "v140" {"Visual Studio 14 2015"}
     }
     # not applicable with MinGW Makefiles generator
     if ($env:PLATFORM_INPUT -eq "x64")
@@ -86,15 +83,15 @@ artifacts:
   - path: NppGTags_*.zip
     name: releases
 
-deploy:
-    provider: GitHub
-    auth_token:
-        secure: 7/ifzsk2Tk/V63jr6/WyA4HdmukWhg2PD7pCgJma7f/QYuZCsyE6RZ5M3RIr6JVc
-    artifact: releases
-    draft: false
-    prerelease: false
-    force_update: true
-    on:
-        appveyor_repo_tag: true
-        PlatformToolset: v141
-        configuration: Release
+# deploy:
+    # provider: GitHub
+    # auth_token:
+        # secure: 
+    # artifact: releases
+    # draft: false
+    # prerelease: false
+    # force_update: true
+    # on:
+        # appveyor_repo_tag: true
+        # PlatformToolset: v141
+        # configuration: Release

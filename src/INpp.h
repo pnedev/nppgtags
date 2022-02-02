@@ -29,9 +29,9 @@
 #include <tchar.h>
 #include <vector>
 #include "Common.h"
-#include "Notepad_plus_msgs.h"
-#include "Docking.h"
-#include "PluginInterface.h"
+#include "NppAPI/Notepad_plus_msgs.h"
+#include "NppAPI/Docking.h"
+#include "NppAPI/PluginInterface.h"
 
 
 /**

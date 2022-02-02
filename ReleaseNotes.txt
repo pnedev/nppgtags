@@ -1,3 +1,9 @@
+What's new in v4.5.0
+=======================
+- Add summary of the hits count in every search header
+- Update Notepad++ API to match header changes after v8.2.2
+
+
 What's new in v4.4.3
 =======================
 - No functional changes, just link statically to MSVC run-time library

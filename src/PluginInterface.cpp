@@ -18,9 +18,9 @@
 
 #include <windows.h>
 #include <tchar.h>
-#include "PluginInterface.h"
-#include "Notepad_plus_msgs.h"
-#include "menuCmdID.h"
+#include "NppAPI/PluginInterface.h"
+#include "NppAPI/Notepad_plus_msgs.h"
+#include "NppAPI/menuCmdID.h"
 #include "Common.h"
 #include "INpp.h"
 #include "ResultWin.h"
