@@ -9,7 +9,11 @@ if (UNIX OR MINGW)
     set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY  ONLY)
     set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE  ONLY)
 
-    set (toolchain_prefix   i686-w64-mingw32)
+    if (WIN64)
+        set (toolchain_prefix   x86_64-w64-mingw32)
+    else ()
+        set (toolchain_prefix   i686-w64-mingw32)
+    endif ()
 
     set (CMAKE_C_COMPILER   ${CMAKE_SYSROOT}/bin/${toolchain_prefix}-gcc)
     set (CMAKE_CXX_COMPILER ${CMAKE_SYSROOT}/bin/${toolchain_prefix}-g++)
@@ -24,8 +28,12 @@ project (NppGTags)
 if (UNIX OR MINGW)
     set (defs
         -DUNICODE -D_UNICODE -DMINGW_HAS_SECURE_API=1 -D_WIN32 -DWIN32
-        -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
+        -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
     )
+
+    if (WIN64)
+        set (defs ${defs} -D_WIN64)
+    endif ()
 
     if (DEVEL)
         set (defs ${defs} -DDEVEL)
@@ -46,12 +54,12 @@ else ()
     if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
         set (defs
             -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
-            -D_WIN32_WINNT=0x0502 -DWIN32_LEAN_AND_MEAN -DNOCOMM -D_WIN64
+            -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN -DNOCOMM -D_WIN64
         )
     else ()
         set (defs
             -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
-            -D_WIN32_WINNT=0x0501 -DWIN32_LEAN_AND_MEAN -DNOCOMM
+            -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN -DNOCOMM
         )
     endif ()
 
@@ -99,7 +107,7 @@ if (UNIX OR MINGW)
     target_link_libraries (NppGTags ${comctl32})
 
     set (INSTALL_PATH
-        "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
+        "$ENV{HOME}/wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
     )
 
     install (FILES ${CMAKE_BINARY_DIR}/NppGTags.dll

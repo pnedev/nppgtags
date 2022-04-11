@@ -82,16 +82,3 @@ after_build:
 artifacts:
   - path: NppGTags_*.zip
     name: releases
-
-# deploy:
-    # provider: GitHub
-    # auth_token:
-        # secure: 
-    # artifact: releases
-    # draft: false
-    # prerelease: false
-    # force_update: true
-    # on:
-        # appveyor_repo_tag: true
-        # PlatformToolset: v141
-        # configuration: Release
