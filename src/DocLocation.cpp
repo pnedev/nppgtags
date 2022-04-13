@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -124,6 +124,7 @@ void DocLocation::swapView(Location& loc)
     newLoc._posInFile = npp.GetPos();
 
     npp.OpenFile(loc._filePath.C_str());
+    UpdateWindow(npp.GetHandle());
     npp.SetView(loc._posInFile);
 
     loc = newLoc;

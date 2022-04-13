@@ -1064,6 +1064,7 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     DocLocation::Get().Push();
     npp.OpenFile(file.C_str());
+    UpdateWindow(npp.GetHandle());
 
     if (_activeTab->_cmdId == FIND_FILE)
         return true;
