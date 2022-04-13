@@ -15,7 +15,7 @@ You can also download them from [GNU Global official website](http://www.gnu.org
 **Build Status**
 ======================
 
-AppVeyor `VS2015`  [![Build status](https://ci.appveyor.com/api/projects/status/b4aam50a4q2vacd7?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
+AppVeyor [![Build status](https://ci.appveyor.com/api/projects/status/b4aam50a4q2vacd7?svg=true)](https://ci.appveyor.com/project/pnedev/nppgtags)
 
 
 **Installation**
@@ -108,6 +108,8 @@ Clicking in head line margin or pressing *'+'* / *'-'* keys while head line is t
 The results window is Scintilla window actually (same as Notepad++). This means that you can use *CTRL* + mouse scroll to zoom in / out or you can select text and copy it (*CTRL* + *'C'*).
 
 When the focus is on the results window pressing *CTRL* + *'F'* will open a search dialog. Fill-in what you are looking for and press *Enter*. The search dialog will remain open until you press *ESC*. While it is open you can continue searching by pressing *Enter* again. *Shift* + *Enter* searches backwards. If you close the search dialog you can continue searching for the same thing using *F3* and *Shift* + *F3* (forward or backward respectively). *F3* works while the search dialog is open as well. The search always wraps around when it reaches the results end - the Notepad++ window will blink to notify you in that case.
+
+When the focus is on the results window pressing *F5* will re-run the same search as the active results tab. This is kind-of active results tab refresh.
 
 **Toggle Results Window Focus** command is added for convenience. It switches the focus back and forth between the edited document and the results window. It's meant to be used with a shortcut so you can use the plugin through the keyboard entirely.
 
