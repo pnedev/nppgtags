@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2017 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -77,7 +77,6 @@ private:
     static void dbWriteReady(const CmdPtr_t& cmd);
     static void createDefDbCB(const CmdPtr_t& cmd);
     static void createLibDbCB(const CmdPtr_t& cmd);
-    static void updateDbCB(const CmdPtr_t& cmd);
 
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "GTags.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
+#include "ResultWin.h"
 
 
 namespace GTags
@@ -147,6 +148,9 @@ void GTagsDb::dbUpdateCB(const CmdPtr_t& cmd)
 
     cmd->Db()->unlock();
     cmd->Db()->runScheduledUpdate();
+
+    if (cmd->Status() == OK)
+        ResultWin::NotifyDBUpdate(cmd);
 }
 
 

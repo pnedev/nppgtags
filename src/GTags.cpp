@@ -291,6 +291,9 @@ void dbWriteCB(const CmdPtr_t& cmd)
         CText msg(cmd->Result());
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
+
+    if (cmd->Status() == OK)
+        ResultWin::NotifyDBUpdate(cmd);
 }
 
 

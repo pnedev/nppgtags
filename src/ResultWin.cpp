@@ -84,6 +84,8 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
     _hits = 0;
     _headerStatusLen = 0;
 
+    _fileResults.clear();
+
     // Add the search header - cmd name + search word + project path
     _buf = cmd->Name();
     _buf += " \"";
@@ -226,6 +228,8 @@ int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
             _buf += "\n\t";
             _buf.Append(pSrc, pEol - pSrc);
 
+            addResultFile(pSrc, pEol - pSrc);
+
             ++_filesCount;
         }
 
@@ -301,6 +305,9 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
             {
                 _buf += "\n\t";
                 _buf.Append(pPreviousFile, previousFileLen);
+
+                addResultFile(pPreviousFile, previousFileLen);
+
                 ++_filesCount;
 
                 previousFileFiltered = false;
@@ -353,7 +360,7 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
     _cmdId(cmd->Id()), _regExp(cmd->RegExp()), _ignoreCase(cmd->IgnoreCase()),
     _projectPath(cmd->Db()->GetPath().C_str()), _search(cmd->Tag().C_str()), _currentLine(1), _firstVisibleLine(0),
-    _parser(cmd->Parser())
+    _parser(cmd->Parser()), _dirty(false)
 {
 }
 
@@ -497,6 +504,8 @@ void ResultWin::show(const CmdPtr_t& cmd)
 {
     Tab* tab = new Tab(cmd);
 
+    HWND hFocus = NULL;
+
     int i;
     for (i = TabCtrl_GetItemCount(_hTab); i; --i)
     {
@@ -504,10 +513,17 @@ void ResultWin::show(const CmdPtr_t& cmd)
 
         if (oldTab && (*tab == *oldTab)) // same search tab already present?
         {
+            tab->_currentLine       = oldTab->_currentLine;
+            tab->_firstVisibleLine  = oldTab->_firstVisibleLine;
+
             tab->MoveFolded(*oldTab);
 
             if (_activeTab == oldTab) // is this the currently active tab?
+            {
                 _activeTab = NULL;
+                hFocus = GetFocus();
+            }
+
             delete oldTab;
             break;
         }
@@ -564,7 +580,7 @@ void ResultWin::show(const CmdPtr_t& cmd)
     TabCtrl_SetCurSel(_hTab, i);
     loadTab(tab);
 
-    showWindow();
+    showWindow(hFocus);
 }
 
 
@@ -637,6 +653,8 @@ void ResultWin::reRunCmd()
 
     cmd->Tag(CText(_activeTab->_search.C_str()));
     CmdEngine::Run(cmd, showResultCB);
+
+    _activeTab->_dirty = false;
 }
 
 
@@ -676,6 +694,59 @@ void ResultWin::applyStyle()
 
     sendSci(SCI_SETCARETLINEBACK, caretLineBackColor);
     sendSci(SCI_STYLESETHOTSPOT, SCE_GTAGS_WORD2SEARCH, true);
+}
+
+
+/**
+ *  \brief
+ */
+void ResultWin::notifyDBUpdate(const CmdPtr_t& cmd)
+{
+    // TODO: Hardcoded to true for now. Maybe make it a setting in the future
+    const bool alwaysUpdate = true || (cmd->Id() == CREATE_DATABASE);
+
+    const CTextA tag(cmd->Tag().C_str());
+    CTextA lastProjPath;
+
+    std::string updatedFile;
+
+    for (int i = TabCtrl_GetItemCount(_hTab); i; --i)
+    {
+        Tab* tab = getTab(i - 1);
+
+        if (alwaysUpdate)
+        {
+            if (CPath(tab->_projectPath.C_str()) == cmd->Db()->GetPath())
+                tab->_dirty = true;
+        }
+        else
+        {
+            if (!(lastProjPath == tab->_projectPath))
+            {
+                lastProjPath = tab->_projectPath;
+
+                if (!(CPath(tab->_projectPath.C_str()) == cmd->Db()->GetPath()))
+                    continue;
+
+                if (tag.Len() <= tab->_projectPath.Len())
+                    continue;
+
+                updatedFile = tag.C_str() + tab->_projectPath.Len();
+
+                size_t j = 0;
+                while ((j = updatedFile.find('\\', j)) != std::string::npos)
+                    updatedFile[j] = '/';
+            }
+
+            const TabParser* parser = dynamic_cast<TabParser*>(tab->_parser.get());
+
+            if (parser->isFileInResults(updatedFile))
+                tab->_dirty = true;
+        }
+    }
+
+    if (_activeTab && _activeTab->_dirty)
+        reRunCmd();
 }
 
 
@@ -953,13 +1024,16 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
 /**
  *  \brief
  */
-void ResultWin::showWindow()
+void ResultWin::showWindow(HWND hFocus)
 {
     INpp::Get().ShowDockingWin(_hWnd);
 
     ActivityWin::UpdatePositions();
 
-    SetFocus(_hWnd);
+    if (hFocus)
+        SetFocus(hFocus);
+    else
+        SetFocus(_hWnd);
 }
 
 
@@ -1033,6 +1107,9 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
 
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
     sendSci(SCI_GOTOLINE, tab->_currentLine);
+
+    if (tab->_dirty)
+        reRunCmd();
 }
 
 

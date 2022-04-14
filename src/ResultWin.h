@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <unordered_set>
+#include <string>
 #include "NppAPI/Scintilla.h"
 #include "Common.h"
 #include "Cmd.h"
@@ -58,6 +59,9 @@ public:
         int getHitsCount() const { return _hits ? _hits : _filesCount; }
         int getHeaderStatusLen() const { return _headerStatusLen; }
 
+        void addResultFile(const char* pEntry, unsigned len) { _fileResults.emplace(pEntry, len); }
+        bool isFileInResults(const std::string& file) const { return (_fileResults.find(file) != _fileResults.end()); }
+
     private:
         static bool filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len);
 
@@ -67,6 +71,8 @@ public:
         int _filesCount;
         int _hits;
         int _headerStatusLen;
+
+        std::unordered_set<std::string> _fileResults;
     };
 
 
@@ -95,6 +101,12 @@ public:
     {
         if (RW)
             RW->applyStyle();
+    }
+
+    static void NotifyDBUpdate(const CmdPtr_t& cmd)
+    {
+        if (RW)
+            RW->notifyDBUpdate(cmd);
     }
 
     static HWND GetSciHandleIfFocused()
@@ -126,7 +138,8 @@ private:
 
         inline bool operator==(const Tab& tab) const
         {
-            return (_cmdId == tab._cmdId && _projectPath == tab._projectPath && _search == tab._search);
+            return (_cmdId == tab._cmdId && _projectPath == tab._projectPath && _search == tab._search &&
+                    _ignoreCase == tab._ignoreCase && _regExp == tab._regExp);
         }
 
         const CmdId_t   _cmdId;
@@ -137,6 +150,8 @@ private:
         int             _currentLine;
         int             _firstVisibleLine;
         ParserPtr_t     _parser;
+
+        bool            _dirty;
 
         inline void SetFolded(int lineNum);
         inline void SetAllFolded();
@@ -175,6 +190,7 @@ private:
     void close(const CmdPtr_t& cmd);
     void reRunCmd();
     void applyStyle();
+    void notifyDBUpdate(const CmdPtr_t& cmd);
 
     inline LRESULT sendSci(UINT Msg, WPARAM wParam = 0, LPARAM lParam = 0)
     {
@@ -189,7 +205,7 @@ private:
     HWND composeWindow();
     void createSearchWindow();
     void onSearchWindowCreate(HWND hWnd);
-    void showWindow();
+    void showWindow(HWND hFocus = NULL);
     void hideWindow();
 
     void hookKeyboard()

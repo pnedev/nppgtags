@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2019 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@
 #include "SettingsWin.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
+#include "ResultWin.h"
 
 
 namespace GTags
@@ -530,7 +531,7 @@ void SettingsWin::onUpdateDefDb()
 
     defDb.AsFolder();
     if (defDb.Exists())
-        createDatabase(defDb, updateDbCB);
+        createDatabase(defDb, dbWriteReady);
 }
 
 
@@ -562,7 +563,7 @@ void SettingsWin::onUpdateLibDb()
 
     if (updateCount)
         for (unsigned i = 0; i < updateCount; ++i)
-            createDatabase(dbs[i], updateDbCB);
+            createDatabase(dbs[i], dbWriteReady);
 }
 
 
@@ -956,6 +957,9 @@ void SettingsWin::dbWriteReady(const CmdPtr_t& cmd)
         HWND hWnd = (SW == NULL) ? INpp::Get().GetHandle() : SW->_hWnd;
         MessageBox(hWnd, msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
+
+    if (cmd->Status() == OK)
+        ResultWin::NotifyDBUpdate(cmd);
 }
 
 
@@ -990,18 +994,6 @@ void SettingsWin::createLibDbCB(const CmdPtr_t& cmd)
 
     if (cmd->Status() == OK)
         SW->fillLibDb(cmd->Db()->GetPath());
-}
-
-
-/**
- *  \brief
- */
-void SettingsWin::updateDbCB(const CmdPtr_t& cmd)
-{
-    dbWriteReady(cmd);
-
-    if (SW == NULL)
-        return;
 }
 
 
