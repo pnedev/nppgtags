@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -28,15 +28,15 @@
 /**
  *  \brief
  */
-long INpp::GetWordSize(bool partial) const
+intptr_t INpp::GetWordSize(bool partial) const
 {
-    long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
 
     if (partial)
         return currPos - wordStart;
 
-    long wordEnd    = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    intptr_t wordEnd = SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     return wordEnd - wordStart;
 }
@@ -47,11 +47,11 @@ long INpp::GetWordSize(bool partial) const
  */
 void INpp::GetWord(CTextA& word, bool partial, bool select) const
 {
-    long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-    long wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    intptr_t wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
-    long len = wordEnd - wordStart;
+    intptr_t len = wordEnd - wordStart;
     if (len == 0)
     {
         word.Clear();
@@ -80,9 +80,9 @@ void INpp::GetWord(CTextA& word, bool partial, bool select) const
  */
 void INpp::ReplaceWord(const char* replText, bool partial) const
 {
-    long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-    long wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    intptr_t wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     SendMessage(_hSC, SCI_SETTARGETSTART, wordStart, 0);
     SendMessage(_hSC, SCI_SETTARGETEND, wordEnd, 0);
@@ -98,12 +98,12 @@ void INpp::ReplaceWord(const char* replText, bool partial) const
  */
 void INpp::EnsureCurrentLineVisible() const
 {
-    int lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION, SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0), 0);
+    intptr_t lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION, SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0), 0);
     SendMessage(_hSC, SCI_ENSUREVISIBLE, lineNum, 0);
     lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0);
 
-    int linesOnScreen       = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
-    int firstVisibleLine    = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
+    intptr_t linesOnScreen       = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
+    intptr_t firstVisibleLine    = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
 
     if (lineNum < firstVisibleLine || lineNum > firstVisibleLine + linesOnScreen)
     {
@@ -118,14 +118,14 @@ void INpp::EnsureCurrentLineVisible() const
 /**
  *  \brief
  */
-void INpp::SetView(long startPos, long endPos) const
+void INpp::SetView(intptr_t startPos, intptr_t endPos) const
 {
     if (endPos == 0)
         endPos = startPos;
-    long lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION, startPos, 0);
+    intptr_t lineNum = SendMessage(_hSC, SCI_LINEFROMPOSITION, startPos, 0);
     SendMessage(_hSC, SCI_ENSUREVISIBLE, lineNum, 0);
 
-    int linesOnScreen = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
+    intptr_t linesOnScreen = SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
     lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0) - linesOnScreen / 2;
     if (lineNum < 0)
         lineNum = 0;
@@ -138,7 +138,7 @@ void INpp::SetView(long startPos, long endPos) const
  *  \brief
  */
 bool INpp::SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
-        long* startPos, long* endPos) const
+        intptr_t* startPos, intptr_t* endPos) const
 {
     if (startPos == NULL || endPos == NULL)
         return false;

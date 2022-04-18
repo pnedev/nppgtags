@@ -41,12 +41,12 @@ void DocLocation::SetDepth(unsigned depth)
     }
     else
     {
-        int diff = _locList.size() - depth;
+        int diff = (int)_locList.size() - depth;
         if (diff > 0)
         {
             _locList.erase(_locList.begin(), _locList.begin() + diff);
             _locList.resize(depth);
-            _backLocIdx = _locList.size() - 1;
+            _backLocIdx = (int)_locList.size() - 1;
         }
     }
 
@@ -72,7 +72,7 @@ void DocLocation::Push()
     if (_locList.empty() || !(loc == _locList.back()))
         _locList.push_back(loc);
 
-    _backLocIdx = _locList.size() - 1;
+    _backLocIdx = (int)_locList.size() - 1;
 }
 
 

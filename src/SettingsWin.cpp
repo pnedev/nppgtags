@@ -447,7 +447,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         SendMessage(_hCancel, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
     }
 
-    for (unsigned i = 0; DbConfig::Parser(i); ++i)
+    for (size_t i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
 
 	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
@@ -527,7 +527,7 @@ void SettingsWin::onUpdateDefDb()
 
     CPath defDb(len);
 
-    Edit_GetText(_hDefDb, defDb.C_str(), defDb.Size());
+    Edit_GetText(_hDefDb, defDb.C_str(), (int)defDb.Size());
 
     defDb.AsFolder();
     if (defDb.Exists())
@@ -546,7 +546,7 @@ void SettingsWin::onUpdateLibDb()
 
     CText buf(len);
 
-    Edit_GetText(_hLibDbs, buf.C_str(), buf.Size());
+    Edit_GetText(_hLibDbs, buf.C_str(), (int)buf.Size());
 
     std::vector<CPath> dbs;
 
@@ -559,10 +559,10 @@ void SettingsWin::onUpdateLibDb()
             dbs.push_back(db);
     }
 
-    unsigned updateCount = dbs.size();
+    size_t updateCount = dbs.size();
 
     if (updateCount)
-        for (unsigned i = 0; i < updateCount; ++i)
+        for (size_t i = 0; i < updateCount; ++i)
             createDatabase(dbs[i], dbWriteReady);
 }
 
@@ -695,7 +695,7 @@ void SettingsWin::readTabData()
     if (len)
     {
         CText libDbPaths(len);
-        Edit_GetText(_hLibDbs, libDbPaths.C_str(), libDbPaths.Size());
+        Edit_GetText(_hLibDbs, libDbPaths.C_str(), (int)libDbPaths.Size());
         _activeTab->_cfg.DbPathsFromBuf(libDbPaths.C_str(), _T("\n\r"));
     }
 
@@ -705,7 +705,7 @@ void SettingsWin::readTabData()
     if (len)
     {
         CText pathFilters(len);
-        Edit_GetText(_hPathFilters, pathFilters.C_str(), pathFilters.Size());
+        Edit_GetText(_hPathFilters, pathFilters.C_str(), (int)pathFilters.Size());
         _activeTab->_cfg.FiltersFromBuf(pathFilters.C_str(), _T("\n\r"));
     }
 
@@ -713,7 +713,7 @@ void SettingsWin::readTabData()
     _activeTab->_cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
     _activeTab->_cfg._usePathFilter = (Button_GetCheck(_hEnPathFilter) == BST_CHECKED) ? true : false;
 
-    _activeTab->_cfg._parserIdx = SendMessage(_hParser, CB_GETCURSEL, 0, 0);
+    _activeTab->_cfg._parserIdx = (int)SendMessage(_hParser, CB_GETCURSEL, 0, 0);
 }
 
 
@@ -797,7 +797,7 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
     if (len)
     {
         newSettings._defDbPath.Resize(len);
-        Edit_GetText(_hDefDb, newSettings._defDbPath.C_str(), newSettings._defDbPath.Size());
+        Edit_GetText(_hDefDb, newSettings._defDbPath.C_str(), (int)newSettings._defDbPath.Size());
 
         newSettings._defDbPath.AsFolder();
         if (!newSettings._defDbPath.Exists())
@@ -842,9 +842,9 @@ void SettingsWin::fillMissing(HWND SettingsWin::*editCtrl, const CText& entry)
 
     if (len)
     {
-        Edit_GetText(this->*editCtrl, buf.C_str(), buf.Size());
+        Edit_GetText(this->*editCtrl, buf.C_str(), (int)buf.Size());
 
-        int entryLen = entry.Len();
+        int entryLen = (int)entry.Len();
 
         for (TCHAR* ptr = _tcsstr(buf.C_str(), entry.C_str()); ptr; ptr = _tcsstr(ptr, entry.C_str()))
         {

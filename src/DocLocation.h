@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 
 
 #include <tchar.h>
+#include <cstdint>
 #include <vector>
 #include "Common.h"
 
@@ -56,8 +57,8 @@ private:
      */
     struct Location
     {
-        CPath   _filePath;
-        long    _posInFile;
+        CPath       _filePath;
+        intptr_t    _posInFile;
 
         inline const Location& operator=(const Location& loc)
         {

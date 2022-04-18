@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2017 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #include "Common.h"
 #include <shlobj.h>
 #include <objbase.h>
+#include <versionhelpers.h>
 
 
 namespace
@@ -176,27 +177,13 @@ unsigned Tools::GetFontHeight(HDC hdc, HFONT font)
 /**
  *  \brief
  */
-unsigned Tools::GetWindowsVersion()
-{
-    OSVERSIONINFO osvi = {0};
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-    GetVersionEx(&osvi);
-
-    return ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion);
-}
-
-
-/**
- *  \brief
- */
 HFONT Tools::CreateFromSystemMessageFont(HDC hdc, unsigned fontHeight)
 {
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(ncm);
 
 #if (WINVER >= 0x0600)
-    if (GetWindowsVersion() <= 0x0502)
+    if (!IsWindows7OrGreater())
         ncm.cbSize -= sizeof(int);
 #endif
 
@@ -218,7 +205,7 @@ HFONT Tools::CreateFromSystemMenuFont(HDC hdc, unsigned fontHeight)
     ncm.cbSize = sizeof(ncm);
 
 #if (WINVER >= 0x0600)
-    if (GetWindowsVersion() <= 0x0502)
+    if (!IsWindows7OrGreater())
         ncm.cbSize -= sizeof(int);
 #endif
 
@@ -327,7 +314,7 @@ void CTextW::operator+=(const wchar_t* str)
 
     if (str)
     {
-        unsigned len = wcslen(str);
+        size_t len = wcslen(str);
         if (len)
         {
             _buf.pop_back();
@@ -346,12 +333,12 @@ void CTextW::operator+=(const char* str)
 
     if (str)
     {
-        unsigned len = strlen(str);
+        size_t len = strlen(str);
         if (len)
         {
             _buf.pop_back();
 
-            unsigned size = _buf.size();
+            size_t size = _buf.size();
             _buf.resize(size + len + 1, 0);
 
             size_t cnt;
@@ -377,7 +364,7 @@ void CTextW::operator+=(wchar_t letter)
 /**
  *  \brief
  */
-void CTextW::Append(const wchar_t* data, unsigned len)
+void CTextW::Append(const wchar_t* data, size_t len)
 {
     AutoFit();
 
@@ -393,13 +380,13 @@ void CTextW::Append(const wchar_t* data, unsigned len)
 /**
  *  \brief
  */
-void CTextW::Append(const char* data, unsigned len)
+void CTextW::Append(const char* data, size_t len)
 {
     AutoFit();
 
     if (data && len)
     {
-        const unsigned currentLen = Len();
+        const size_t currentLen = Len();
         _buf.resize(currentLen + len + 1, 0);
         size_t cnt;
         mbstowcs_s(&cnt, _buf.data() + currentLen, len + 1, data, _TRUNCATE);
@@ -410,7 +397,7 @@ void CTextW::Append(const char* data, unsigned len)
 /**
  *  \brief
  */
-void CTextW::Insert(unsigned at_pos, wchar_t letter)
+void CTextW::Insert(size_t at_pos, wchar_t letter)
 {
     AutoFit();
 
@@ -422,7 +409,7 @@ void CTextW::Insert(unsigned at_pos, wchar_t letter)
 /**
  *  \brief
  */
-void CTextW::Insert(unsigned at_pos, const wchar_t* data, unsigned len)
+void CTextW::Insert(size_t at_pos, const wchar_t* data, size_t len)
 {
     AutoFit();
 
@@ -434,7 +421,7 @@ void CTextW::Insert(unsigned at_pos, const wchar_t* data, unsigned len)
 /**
  *  \brief
  */
-void CTextW::Erase(unsigned from_pos, unsigned len)
+void CTextW::Erase(size_t from_pos, size_t len)
 {
     AutoFit();
 
@@ -462,9 +449,9 @@ void CTextW::Clear()
 /**
  *  \brief
  */
-void CTextW::Resize(unsigned size)
+void CTextW::Resize(size_t size)
 {
-    const unsigned len = Len();
+    const size_t len = Len();
 
     _buf.resize(size);
     _buf.push_back(0);
@@ -568,7 +555,7 @@ void CTextA::operator+=(const char* str)
 
     if (str)
     {
-        unsigned len = strlen(str);
+        size_t len = strlen(str);
         if (len)
         {
             _buf.pop_back();
@@ -587,12 +574,12 @@ void CTextA::operator+=(const wchar_t* str)
 
     if (str)
     {
-        unsigned len = wcslen(str);
+        size_t len = wcslen(str);
         if (len)
         {
             _buf.pop_back();
 
-            unsigned size = _buf.size();
+            size_t size = _buf.size();
             _buf.resize(size + len + 1, 0);
 
             size_t cnt;
@@ -618,7 +605,7 @@ void CTextA::operator+=(char letter)
 /**
  *  \brief
  */
-void CTextA::Append(const char* data, unsigned len)
+void CTextA::Append(const char* data, size_t len)
 {
     AutoFit();
 
@@ -634,13 +621,13 @@ void CTextA::Append(const char* data, unsigned len)
 /**
  *  \brief
  */
-void CTextA::Append(const wchar_t* data, unsigned len)
+void CTextA::Append(const wchar_t* data, size_t len)
 {
     AutoFit();
 
     if (data && len)
     {
-        const unsigned currentLen = Len();
+        const size_t currentLen = Len();
         _buf.resize(currentLen + len + 1, 0);
         size_t cnt;
         wcstombs_s(&cnt, _buf.data() + currentLen, len + 1, data, _TRUNCATE);
@@ -651,7 +638,7 @@ void CTextA::Append(const wchar_t* data, unsigned len)
 /**
  *  \brief
  */
-void CTextA::Insert(unsigned at_pos, char letter)
+void CTextA::Insert(size_t at_pos, char letter)
 {
     AutoFit();
 
@@ -663,7 +650,7 @@ void CTextA::Insert(unsigned at_pos, char letter)
 /**
  *  \brief
  */
-void CTextA::Insert(unsigned at_pos, const char* data, unsigned len)
+void CTextA::Insert(size_t at_pos, const char* data, size_t len)
 {
     AutoFit();
 
@@ -675,7 +662,7 @@ void CTextA::Insert(unsigned at_pos, const char* data, unsigned len)
 /**
  *  \brief
  */
-void CTextA::Erase(unsigned from_pos, unsigned len)
+void CTextA::Erase(size_t from_pos, size_t len)
 {
     AutoFit();
 
@@ -703,9 +690,9 @@ void CTextA::Clear()
 /**
  *  \brief
  */
-void CTextA::Resize(unsigned size)
+void CTextA::Resize(size_t size)
 {
-    const unsigned len = Len();
+    const size_t len = Len();
 
     _buf.resize(size);
     _buf.push_back(0);
@@ -720,7 +707,7 @@ void CPath::AsFolder()
 {
     AutoFit();
 
-    unsigned len = Len();
+    size_t len = Len();
 
     for (; len > 0; --len)
         if (_buf[len - 1] != _T(' ') && _buf[len - 1] != _T('\t') &&
@@ -739,11 +726,11 @@ void CPath::AsFolder()
 /**
  *  \brief
  */
-unsigned CPath::StripFilename()
+size_t CPath::StripFilename()
 {
     AutoFit();
 
-    unsigned len = Len();
+    size_t len = Len();
 
     for (; len > 0; --len)
         if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
@@ -759,11 +746,11 @@ unsigned CPath::StripFilename()
 /**
  *  \brief
  */
-unsigned CPath::DirUp()
+size_t CPath::DirUp()
 {
     AutoFit();
 
-    unsigned len = Len();
+    size_t len = Len();
     if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
         --len;
 
@@ -783,7 +770,7 @@ unsigned CPath::DirUp()
  */
 const TCHAR* CPath::GetFilename() const
 {
-    unsigned len = Len();
+    size_t len = Len();
 
     for (; len > 0; --len)
         if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
@@ -799,7 +786,7 @@ const TCHAR* CPath::GetFilename() const
 /**
  *  \brief
  */
-bool CPath::pathMatches(const TCHAR* pathStr, unsigned len) const
+bool CPath::pathMatches(const TCHAR* pathStr, size_t len) const
 {
     if (len > Len())
         return false;
@@ -820,7 +807,7 @@ bool CPath::pathMatches(const TCHAR* pathStr, unsigned len) const
  */
 bool CPath::IsParentOf(const CPath& path) const
 {
-    unsigned len = Len();
+    size_t len = Len();
     if (len > path.Len())
         return false;
 
@@ -833,7 +820,7 @@ bool CPath::IsParentOf(const CPath& path) const
  */
 bool CPath::IsParentOf(const TCHAR* pathStr) const
 {
-    unsigned len = Len();
+    size_t len = Len();
     if (len > _tcslen(pathStr))
         return false;
 
@@ -846,7 +833,7 @@ bool CPath::IsParentOf(const TCHAR* pathStr) const
  */
 bool CPath::IsSubpathOf(const CPath& path) const
 {
-    unsigned len = path.Len();
+    size_t len = path.Len();
     if (len > Len())
         return false;
 
@@ -859,7 +846,7 @@ bool CPath::IsSubpathOf(const CPath& path) const
  */
 bool CPath::IsSubpathOf(const TCHAR* pathStr) const
 {
-    unsigned len = _tcslen(pathStr);
+    size_t len = _tcslen(pathStr);
     if (len > Len())
         return false;
 

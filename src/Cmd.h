@@ -98,7 +98,7 @@ public:
 
     inline char* Result() { return _result.data(); }
     inline const char* Result() const { return _result.data(); }
-    inline unsigned ResultLen() const { return _result.size() - 1; }
+    inline size_t ResultLen() const { return _result.size() - 1; }
 
     void AppendToResult(const std::vector<char>& data);
     void SetResult(const std::vector<char>& data)

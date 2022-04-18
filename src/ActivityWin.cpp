@@ -162,7 +162,7 @@ void ActivityWin::adjustSizeAndPos(int width, int height, int winNum)
     win.right = width;
     win.bottom = height;
 
-    AdjustWindowRect(&win, GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
+    AdjustWindowRect(&win, (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
 
     width = win.right - win.left;
     height = win.bottom - win.top;
@@ -200,7 +200,7 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     }
 
     WindowList.push_back(this);
-    int winNum = WindowList.size();
+    int winNum = (int)WindowList.size();
 
     HWND hWndTxt = CreateWindowEx(0, _T("STATIC"), text,
             WS_CHILD | WS_VISIBLE | SS_LEFT | SS_PATHELLIPSIS,

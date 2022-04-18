@@ -100,7 +100,7 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _ic(cmd->IgnoreCase()),
-    _cmdTagLen((_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())), _completion(cmd->Parser())
+    _cmdTagLen((int)(_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())), _completion(cmd->Parser())
 {}
 
 
@@ -197,7 +197,7 @@ int AutoCompleteWin::filterLV(const CText& filter)
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
-    int len = filter.Len();
+    size_t len = filter.Len();
 
     ListView_DeleteAllItems(_hLVWnd);
 
@@ -270,7 +270,7 @@ void AutoCompleteWin::resizeLV()
     win.right   = win.left + lvWidth;
     win.bottom  = win.top + lvHeight;
 
-    AdjustWindowRect(&win, GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
+    AdjustWindowRect(&win, (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
     lvWidth     = win.right - win.left;
     lvHeight    = win.bottom - win.top;
 

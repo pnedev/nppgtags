@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <cstdint>
 #include <vector>
 #include "Common.h"
 #include "NppAPI/Notepad_plus_msgs.h"
@@ -187,7 +188,7 @@ public:
 
     inline int GetCaretLineBack() const
     {
-        return SendMessage(_hSC, SCI_GETCARETLINEBACK, 0, 0);
+        return (int)SendMessage(_hSC, SCI_GETCARETLINEBACK, 0, 0);
     }
 
     inline void GetFontName(int style, char* fontName) const
@@ -197,117 +198,117 @@ public:
 
     inline int GetFontSize(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETSIZE, style, 0);
+        return (int)SendMessage(_hSC, SCI_STYLEGETSIZE, style, 0);
     }
 
     inline int GetForegroundColor(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETFORE, style, 0);
+        return (int)SendMessage(_hSC, SCI_STYLEGETFORE, style, 0);
     }
 
     inline int GetBackgroundColor(int style) const
     {
-        return SendMessage(_hSC, SCI_STYLEGETBACK, style, 0);
+        return (int)SendMessage(_hSC, SCI_STYLEGETBACK, style, 0);
     }
 
     inline int GetTextHeight() const
     {
-        long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
         currPos = SendMessage(_hSC, SCI_LINEFROMPOSITION, currPos, 0);
-        return SendMessage(_hSC, SCI_TEXTHEIGHT, currPos, 0);
+        return (int)SendMessage(_hSC, SCI_TEXTHEIGHT, currPos, 0);
     }
 
     inline void GetPointPos(int* x, int* y) const
     {
-        long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        *x = SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, currPos) + 2;
-        *y = SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, currPos) + 2;
+        intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        *x = (int)SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, currPos) + 2;
+        *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, currPos) + 2;
     }
 
-    inline void GoToPos(long pos) const
+    inline void GoToPos(intptr_t pos) const
     {
         SendMessage(_hSC, SCI_GOTOPOS, pos, 0);
     }
 
-    inline void GoToLine(long line) const
+    inline void GoToLine(intptr_t line) const
     {
         SendMessage(_hSC, SCI_GOTOLINE, line, 0);
     }
 
-    inline long PositionFromLine(long line) const
+    inline intptr_t PositionFromLine(intptr_t line) const
     {
         return SendMessage(_hSC, SCI_POSITIONFROMLINE, line, 0);
     }
 
-    inline long LineEndPosition(long line) const
+    inline intptr_t LineEndPosition(intptr_t line) const
     {
         return SendMessage(_hSC, SCI_GETLINEENDPOSITION, line, 0);
     }
 
-    inline int IsSelectionVertical() const
+    inline bool IsSelectionVertical() const
     {
-        return SendMessage(_hSC, SCI_SELECTIONISRECTANGLE, 0, 0);
+        return (bool)SendMessage(_hSC, SCI_SELECTIONISRECTANGLE, 0, 0);
     }
 
-    inline long GetSelectionSize() const
+    inline intptr_t GetSelectionSize() const
     {
         return SendMessage(_hSC, SCI_GETSELTEXT, 0, 0) - 1;
     }
 
     inline void GetSelection(CTextA& sel) const
     {
-        long selLen = GetSelectionSize();
+        intptr_t selLen = GetSelectionSize();
 
         sel.Resize(selLen);
         SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)sel.C_str());
         sel.AutoFit();
     }
 
-    inline void SetSelection(long startPos, long endPos) const
+    inline void SetSelection(intptr_t startPos, intptr_t endPos) const
     {
         SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
     }
 
     inline void SelectWord(bool partial = false) const
     {
-        long currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-        long wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-        long wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+        intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+        intptr_t wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
         SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
     }
 
     inline void ClearSelection() const
     {
-        long currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+        intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
         SendMessage(_hSC, SCI_SETSEL, currPos, currPos);
     }
 
-    inline long GetPos() const
+    inline intptr_t GetPos() const
     {
         return SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     }
 
     void EnsureCurrentLineVisible() const;
-    void SetView(long startPos, long endPos = 0) const;
+    void SetView(intptr_t startPos, intptr_t endPos = 0) const;
 
-    long GetWordSize(bool partial = false) const;
+    intptr_t GetWordSize(bool partial = false) const;
     void GetWord(CTextA& word, bool partial = false, bool select = false) const;
     void ReplaceWord(const char* replText, bool partial = false) const;
     bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
-            long* startPos = NULL, long* endPos = NULL) const;
+            intptr_t* startPos = NULL, intptr_t* endPos = NULL) const;
 
     inline void Backspace() const
     {
         SendMessage(_hSC, SCI_DELETEBACK, 0, 0);
     }
 
-    inline char GetChar(long pos) const
+    inline char GetChar(intptr_t pos) const
     {
         return (char)SendMessage(_hSC, SCI_GETCHARAT, pos, 0);
     }
 
-    inline void AddText(char* txt, int len) const
+    inline void AddText(char* txt, size_t len) const
     {
         SendMessage(_hSC, SCI_ADDTEXT, len, (LPARAM)txt);
     }

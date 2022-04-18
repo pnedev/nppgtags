@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <cstdint>
 #include <unordered_set>
 #include <string>
 #include "NppAPI/Scintilla.h"
@@ -59,11 +60,11 @@ public:
         int getHitsCount() const { return _hits ? _hits : _filesCount; }
         int getHeaderStatusLen() const { return _headerStatusLen; }
 
-        void addResultFile(const char* pEntry, unsigned len) { _fileResults.emplace(pEntry, len); }
+        void addResultFile(const char* pEntry, size_t len) { _fileResults.emplace(pEntry, len); }
         bool isFileInResults(const std::string& file) const { return (_fileResults.find(file) != _fileResults.end()); }
 
     private:
-        static bool filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len);
+        static bool filterEntry(const DbConfig& cfg, const char* pEntry, size_t len);
 
         int parseCmd(const CmdPtr_t&);
         int parseFindFile(const CmdPtr_t&);
@@ -147,21 +148,21 @@ private:
         const bool      _ignoreCase;
         CTextA          _projectPath;
         CTextA          _search;
-        int             _currentLine;
-        int             _firstVisibleLine;
+        intptr_t        _currentLine;
+        intptr_t        _firstVisibleLine;
         ParserPtr_t     _parser;
 
         bool            _dirty;
 
-        inline void SetFolded(int lineNum);
+        inline void SetFolded(intptr_t lineNum);
         inline void SetAllFolded();
-        inline void ClearFolded(int lineNum);
-        inline bool IsFolded(int lineNum);
+        inline void ClearFolded(intptr_t lineNum);
+        inline bool IsFolded(intptr_t lineNum);
 
         inline void MoveFolded(Tab& tab);
 
     private:
-        std::unordered_set<int> _expandedLines;
+        std::unordered_set<intptr_t> _expandedLines;
     };
 
 
@@ -215,15 +216,16 @@ private:
 
     Tab* getTab(int i = -1);
     void loadTab(Tab* tab);
-    bool openItem(int lineNum, unsigned matchNum = 1);
+    bool openItem(intptr_t lineNum, unsigned matchNum = 1);
 
-    bool findString(const char* str, int* startPos, int* endPos, bool ignoreCase, bool wholeWord, bool regExp);
-    void toggleFolding(int lineNum);
+    bool findString(const char* str, intptr_t* startPos, intptr_t* endPos,
+            bool ignoreCase, bool wholeWord, bool regExp);
+    void toggleFolding(intptr_t lineNum);
     void foldAll(int foldAction);
     void onStyleNeeded(SCNotification* notify);
     void onNewPosition();
     void onHotspotClick(SCNotification* notify);
-    void onDoubleClick(int pos);
+    void onDoubleClick(intptr_t pos);
     void onMarginClick(SCNotification* notify);
     bool onKeyPress(WORD keyCode, bool alt);
     void onTabChange();

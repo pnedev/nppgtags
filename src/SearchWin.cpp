@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2019 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -344,7 +344,7 @@ void SearchWin::clearCompletion()
 
     CText txt(ComboBox_GetTextLength(_hSearch));
 
-    ComboBox_GetText(_hSearch, txt.C_str(), txt.Size());
+    ComboBox_GetText(_hSearch, txt.C_str(), (int)txt.Size());
     int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     ComboBox_ResetContent(_hSearch);
@@ -367,7 +367,7 @@ void SearchWin::filterComplList()
 
     CText filter(ComboBox_GetTextLength(_hSearch));
 
-    ComboBox_GetText(_hSearch, filter.C_str(), filter.Size());
+    ComboBox_GetText(_hSearch, filter.C_str(), (int)filter.Size());
 
     int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
@@ -463,7 +463,7 @@ void SearchWin::onOK()
     {
         CText tag(ComboBox_GetTextLength(_hSearch));
 
-        ComboBox_GetText(_hSearch, tag.C_str(), tag.Size());
+        ComboBox_GetText(_hSearch, tag.C_str(), (int)tag.Size());
 
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
         bool ic = (Button_GetCheck(_hIC) == BST_CHECKED);
@@ -504,7 +504,7 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                     return 1;
                 }
 
-                SW->_keyPressed = wParam;
+                SW->_keyPressed = (int)wParam;
             }
         }
     }

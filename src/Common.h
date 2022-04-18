@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ protected:
 
 public:
     CTextW() : _invalidStrLen(false) { _buf.push_back(0); }
-    CTextW(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, 0); }
+    CTextW(size_t size) : _invalidStrLen(true) { _buf.resize(size + 1, 0); }
 
     CTextW(const wchar_t* str);
     CTextW(const char* str);
@@ -81,21 +81,21 @@ public:
     void operator+=(const char* str);
     void operator+=(wchar_t letter);
 
-    void Append(const wchar_t* data, unsigned len);
-    void Append(const char* data, unsigned len);
-    void Insert(unsigned at_pos, wchar_t letter);
-    void Insert(unsigned at_pos, const wchar_t* data, unsigned len);
-    void Erase(unsigned from_pos, unsigned len);
+    void Append(const wchar_t* data, size_t len);
+    void Append(const char* data, size_t len);
+    void Insert(size_t at_pos, wchar_t letter);
+    void Insert(size_t at_pos, const wchar_t* data, size_t len);
+    void Erase(size_t from_pos, size_t len);
 
     void Clear();
-    void Resize(unsigned size);
+    void Resize(size_t size);
 
-    inline unsigned Len() const { return (_invalidStrLen) ? wcslen(_buf.data()) : (_buf.size() - 1); }
+    inline size_t Len() const { return (_invalidStrLen) ? wcslen(_buf.data()) : (_buf.size() - 1); }
     inline bool IsEmpty() const { return (Len() == 0); }
     inline const std::vector<wchar_t>& Vector() const { return _buf; }
     inline const wchar_t* C_str() const { return _buf.data(); }
     inline wchar_t* C_str() { return _buf.data(); }
-    inline unsigned Size() const { return _buf.size(); }
+    inline size_t Size() const { return _buf.size(); }
 };
 
 
@@ -111,7 +111,7 @@ protected:
 
 public:
     CTextA() : _invalidStrLen(false) { _buf.push_back(0); }
-    CTextA(unsigned size) : _invalidStrLen(true) { _buf.resize(size + 1, 0); }
+    CTextA(size_t size) : _invalidStrLen(true) { _buf.resize(size + 1, 0); }
 
     CTextA(const char* str);
     CTextA(const wchar_t* str);
@@ -141,21 +141,21 @@ public:
     void operator+=(const wchar_t* str);
     void operator+=(char letter);
 
-    void Append(const char* data, unsigned len);
-    void Append(const wchar_t* data, unsigned len);
-    void Insert(unsigned at_pos, char letter);
-    void Insert(unsigned at_pos, const char* data, unsigned len);
-    void Erase(unsigned from_pos, unsigned len);
+    void Append(const char* data, size_t len);
+    void Append(const wchar_t* data, size_t len);
+    void Insert(size_t at_pos, char letter);
+    void Insert(size_t at_pos, const char* data, size_t len);
+    void Erase(size_t from_pos, size_t len);
 
     void Clear();
-    void Resize(unsigned size);
+    void Resize(size_t size);
 
-    inline unsigned Len() const { return (_invalidStrLen) ? strlen(_buf.data()) : (_buf.size() - 1); }
+    inline size_t Len() const { return (_invalidStrLen) ? strlen(_buf.data()) : (_buf.size() - 1); }
     inline bool IsEmpty() const { return (Len() == 0); }
     inline const std::vector<char>& Vector() const { return _buf; }
     inline const char* C_str() const { return _buf.data(); }
     inline char* C_str() { return _buf.data(); }
-    inline unsigned Size() const { return _buf.size(); }
+    inline size_t Size() const { return _buf.size(); }
 };
 
 
@@ -170,7 +170,7 @@ public:
     CPath(const CPath& path) : CText(path) {}
 	CPath(const char* pathStr) : CText(pathStr) {}
 	CPath(const wchar_t* pathStr) : CText(pathStr) {}
-    CPath(unsigned size) : CText(size) {}
+    CPath(size_t size) : CText(size) {}
     ~CPath() {}
 
     inline bool Exists() const
@@ -190,8 +190,8 @@ public:
     }
 
     void AsFolder();
-    unsigned StripFilename();
-    unsigned DirUp();
+    size_t StripFilename();
+    size_t DirUp();
 
     const TCHAR* GetFilename() const;
     bool IsParentOf(const CPath& path) const;
@@ -200,7 +200,7 @@ public:
     bool IsSubpathOf(const TCHAR* pathStr) const;
 
 private:
-    bool pathMatches(const TCHAR* pathStr, unsigned len) const;
+    bool pathMatches(const TCHAR* pathStr, size_t len) const;
 };
 
 
@@ -210,7 +210,6 @@ namespace Tools
 bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);
 RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 unsigned GetFontHeight(HDC hdc, HFONT font);
-unsigned GetWindowsVersion();
 HFONT CreateFromSystemMessageFont(HDC hdc = NULL, unsigned fontHeight = 0);
 HFONT CreateFromSystemMenuFont(HDC hdc = NULL, unsigned fontHeight = 0);
 

@@ -114,7 +114,7 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
     _buf += cmd->Db()->GetPath().C_str();
     _buf += "\"";
 
-    const unsigned countsPos = _buf.Len();
+    const size_t countsPos = _buf.Len();
 
     int res;
 
@@ -138,7 +138,7 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
                 str += " hits)";
             }
 
-            _headerStatusLen = str.size();
+            _headerStatusLen = (int)str.size();
 
             _buf.Insert(countsPos, str.c_str(), str.size());
         }
@@ -172,7 +172,7 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
                 }
             }
 
-            _headerStatusLen = str.size();
+            _headerStatusLen = (int)str.size();
 
             _buf.Insert(countsPos, str.c_str(), str.size());
         }
@@ -185,7 +185,7 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-bool ResultWin::TabParser::filterEntry(const DbConfig& cfg, const char* pEntry, unsigned len)
+bool ResultWin::TabParser::filterEntry(const DbConfig& cfg, const char* pEntry, size_t len)
 {
     if (cfg._usePathFilter)
     {
@@ -270,7 +270,7 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
     unsigned    previousFileLen = 0;
     bool        previousFileFiltered = false;
 
-    unsigned    previousBufLen;
+    size_t      previousBufLen;
 
     for (;;)
     {
@@ -295,7 +295,7 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
             strncmp(pSrc, pPreviousFile, previousFileLen))
         {
             pPreviousFile = pSrc;
-            previousFileLen = pIdx - pSrc;
+            previousFileLen = (unsigned)(pIdx - pSrc);
 
             if (filterEntry(cfg, pPreviousFile, previousFileLen))
             {
@@ -368,7 +368,7 @@ ResultWin::Tab::Tab(const CmdPtr_t& cmd) :
 /**
  *  \brief
  */
-inline void ResultWin::Tab::SetFolded(int lineNum)
+inline void ResultWin::Tab::SetFolded(intptr_t lineNum)
 {
     _expandedLines.erase(lineNum);
 }
@@ -386,7 +386,7 @@ inline void ResultWin::Tab::SetAllFolded()
 /**
  *  \brief
  */
-inline void ResultWin::Tab::ClearFolded(int lineNum)
+inline void ResultWin::Tab::ClearFolded(intptr_t lineNum)
 {
     _expandedLines.insert(lineNum);
 }
@@ -395,7 +395,7 @@ inline void ResultWin::Tab::ClearFolded(int lineNum)
 /**
  *  \brief
  */
-inline bool ResultWin::Tab::IsFolded(int lineNum)
+inline bool ResultWin::Tab::IsFolded(intptr_t lineNum)
 {
     return (_expandedLines.find(lineNum) == _expandedLines.end());
 }
@@ -922,7 +922,7 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
     }
 
     RECT win = Tools::GetWinRect(_hWnd,
-            GetWindowLongPtr(_hSearch, GWL_EXSTYLE), GetWindowLongPtr(_hSearch, GWL_STYLE),
+            (DWORD)GetWindowLongPtr(_hSearch, GWL_EXSTYLE), (DWORD)GetWindowLongPtr(_hSearch, GWL_STYLE),
             cSearchWidth + 1, _searchTxtHeight + btnHeight + 1);
     RECT ownerWin;
     GetWindowRect(_hWnd, &ownerWin);
@@ -1116,11 +1116,11 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
 /**
  *  \brief
  */
-bool ResultWin::openItem(int lineNum, unsigned matchNum)
+bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
 
-    int lineLen = sendSci(SCI_LINELENGTH, lineNum);
+    intptr_t lineLen = sendSci(SCI_LINELENGTH, lineNum);
     if (lineLen <= 0)
         return false;
 
@@ -1129,8 +1129,8 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 
     sendSci(SCI_GETLINE, lineNum, reinterpret_cast<LPARAM>(lineTxt.data()));
 
-    int line = 0;
-    int i;
+    intptr_t line = 0;
+    intptr_t i;
 
     if (_activeTab->_cmdId != FIND_FILE)
     {
@@ -1178,13 +1178,13 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
     if (_activeTab->_cmdId == FIND_FILE)
         return true;
 
-    const long endPos = npp.LineEndPosition(line);
+    const intptr_t endPos = npp.LineEndPosition(line);
 
     const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
     // Highlight the corresponding match number if there are more than one
     // matches on single result line
-    for (long findBegin = npp.PositionFromLine(line), findEnd = endPos;
+    for (intptr_t findBegin = npp.PositionFromLine(line), findEnd = endPos;
         matchNum; findBegin = findEnd, findEnd = endPos, --matchNum)
     {
         if (!npp.SearchText(_activeTab->_search.C_str(), _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp,
@@ -1205,7 +1205,8 @@ bool ResultWin::openItem(int lineNum, unsigned matchNum)
 /**
  *  \brief
  */
-bool ResultWin::findString(const char* str, int* startPos, int* endPos, bool ignoreCase, bool wholeWord, bool regExp)
+bool ResultWin::findString(const char* str, intptr_t* startPos, intptr_t* endPos,
+    bool ignoreCase, bool wholeWord, bool regExp)
 {
     int searchFlags = 0;
     if (!ignoreCase)
@@ -1233,7 +1234,7 @@ bool ResultWin::findString(const char* str, int* startPos, int* endPos, bool ign
 /**
  *  \brief
  */
-void ResultWin::toggleFolding(int lineNum)
+void ResultWin::toggleFolding(intptr_t lineNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
     sendSci(SCI_TOGGLEFOLD, lineNum);
@@ -1252,9 +1253,9 @@ void ResultWin::foldAll(int foldAction)
 {
     sendSci(SCI_FOLDALL, foldAction);
 
-    const int linesCount = sendSci(SCI_GETLINECOUNT);
+    const intptr_t linesCount = sendSci(SCI_GETLINECOUNT);
 
-    int lineNum = 1;
+    intptr_t lineNum = 1;
     for (; lineNum < linesCount && !(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG); ++lineNum);
 
     if (lineNum == linesCount)
@@ -1285,23 +1286,23 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
     if (_activeTab == NULL)
         return;
 
-    int lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
-    const int endStylingPos = notify->position;
+    intptr_t lineNum = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETENDSTYLED));
+    const intptr_t endStylingPos = notify->position;
 
-    for (int startPos = sendSci(SCI_POSITIONFROMLINE, lineNum); endStylingPos > startPos;
+    for (intptr_t startPos = sendSci(SCI_POSITIONFROMLINE, lineNum); endStylingPos > startPos;
             startPos = sendSci(SCI_POSITIONFROMLINE, ++lineNum))
     {
-        const int lineLen = sendSci(SCI_LINELENGTH, lineNum);
+        const intptr_t lineLen = sendSci(SCI_LINELENGTH, lineNum);
         if (lineLen <= 0)
             continue;
 
-        const int endPos = startPos + lineLen;
+        const intptr_t endPos = startPos + lineLen;
 
         sendSci(SCI_STARTSTYLING, startPos, 0xFF);
 
         if ((char)sendSci(SCI_GETCHARAT, startPos) != '\t')
         {
-            int pathLen = _activeTab->_projectPath.Len();
+            size_t pathLen = _activeTab->_projectPath.Len();
             const TabParser* parser = dynamic_cast<TabParser*>(_activeTab->_parser.get());
 
             // 2 * '"' + LF + CR = 4 so length to style is modified with -4 and +1 (as it is length)
@@ -1315,8 +1316,8 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
             {
                 if (_activeTab->_cmdId == FIND_FILE)
                 {
-                    int findBegin = startPos;
-                    int findEnd = endPos;
+                    intptr_t findBegin = startPos;
+                    intptr_t findEnd = endPos;
 
                     if (findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                         _activeTab->_ignoreCase, false, _activeTab->_regExp))
@@ -1355,11 +1356,11 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
             else
             {
                 // "\t\tline: Num" - 'N' is at position 8
-                int previewPos = startPos + 8;
+                intptr_t previewPos = startPos + 8;
                 for (; (char)sendSci(SCI_GETCHARAT, previewPos) != '\t'; ++previewPos);
 
-                int findBegin = previewPos;
-                int findEnd = endPos;
+                intptr_t findBegin = previewPos;
+                intptr_t findEnd = endPos;
 
                 const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
@@ -1402,11 +1403,11 @@ void ResultWin::onStyleNeeded(SCNotification* notify)
  */
 void ResultWin::onNewPosition()
 {
-    const int pos = sendSci(SCI_GETCURRENTPOS);
+    const intptr_t pos = sendSci(SCI_GETCURRENTPOS);
 
     if (pos == sendSci(SCI_POSITIONAFTER, pos)) // end of document
     {
-        const int foldLine = sendSci(SCI_GETFOLDPARENT, sendSci(SCI_LINEFROMPOSITION, pos));
+        const intptr_t foldLine = sendSci(SCI_GETFOLDPARENT, sendSci(SCI_LINEFROMPOSITION, pos));
         if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
             sendSci(SCI_GOTOLINE, foldLine);
     }
@@ -1418,22 +1419,22 @@ void ResultWin::onNewPosition()
  */
 void ResultWin::onHotspotClick(SCNotification* notify)
 {
-    const int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+    const intptr_t lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
     unsigned matchNum = 1;
 
     if (_activeTab->_cmdId != FIND_FILE)
     {
-        const int endLine = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+        const intptr_t endLine = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
         // "\t\tline: Num" - 'N' is at position 8
-        int findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
+        intptr_t findBegin = sendSci(SCI_POSITIONFROMLINE, lineNum) + 8;
         for (; (char)sendSci(SCI_GETCHARAT, findBegin) != '\t'; ++findBegin);
 
         const bool wholeWord = (_activeTab->_cmdId != GREP && _activeTab->_cmdId != GREP_TEXT);
 
         // Find which hotspot was clicked in case there are more than one
         // matches on single result line
-        for (int findEnd = endLine; findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
+        for (intptr_t findEnd = endLine; findString(_activeTab->_search.C_str(), &findBegin, &findEnd,
                     _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp);
                 findBegin = findEnd, findEnd = endLine, ++matchNum)
             if (notify->position >= findBegin && notify->position <= findEnd)
@@ -1450,9 +1451,9 @@ void ResultWin::onHotspotClick(SCNotification* notify)
 /**
  *  \brief
  */
-void ResultWin::onDoubleClick(int pos)
+void ResultWin::onDoubleClick(intptr_t pos)
 {
-    int lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
+    intptr_t lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
 
     if (lineNum == 0)
     {
@@ -1460,7 +1461,7 @@ void ResultWin::onDoubleClick(int pos)
         if (pos == sendSci(SCI_POSITIONAFTER, pos)) // end of document
         {
             lineNum = sendSci(SCI_LINEFROMPOSITION, pos);
-            const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+            const intptr_t foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
             if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
             {
                 lineNum = foldLine;
@@ -1493,7 +1494,7 @@ void ResultWin::onDoubleClick(int pos)
  */
 void ResultWin::onMarginClick(SCNotification* notify)
 {
-    int lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
+    intptr_t lineNum = sendSci(SCI_LINEFROMPOSITION, notify->position);
 
     if (lineNum == 0)
     {
@@ -1522,26 +1523,26 @@ void ResultWin::onMarginClick(SCNotification* notify)
  */
 bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 {
-    const int currentPos = sendSci(SCI_GETCURRENTPOS);
-    int lineNum = sendSci(SCI_LINEFROMPOSITION, currentPos);
+    const intptr_t currentPos = sendSci(SCI_GETCURRENTPOS);
+    intptr_t lineNum = sendSci(SCI_LINEFROMPOSITION, currentPos);
 
     switch (keyCode)
     {
         case VK_UP:
         {
-            int linePosOffset = currentPos - sendSci(SCI_POSITIONFROMLINE, lineNum);
+            intptr_t linePosOffset = currentPos - sendSci(SCI_POSITIONFROMLINE, lineNum);
 
             if (--lineNum >= 0)
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 {
-                    const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    const intptr_t foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                         lineNum = foldLine;
                 }
 
-                const int lineStart = sendSci(SCI_POSITIONFROMLINE, lineNum);
-                const int lineEnd = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+                const intptr_t lineStart = sendSci(SCI_POSITIONFROMLINE, lineNum);
+                const intptr_t lineEnd = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
                 if (linePosOffset > lineEnd - lineStart)
                     linePosOffset = lineEnd - lineStart;
@@ -1553,23 +1554,23 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 
         case VK_DOWN:
         {
-            int linePosOffset = currentPos - sendSci(SCI_POSITIONFROMLINE, lineNum);
+            intptr_t linePosOffset = currentPos - sendSci(SCI_POSITIONFROMLINE, lineNum);
 
             if (++lineNum < sendSci(SCI_GETLINECOUNT))
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG))
                 {
-                    const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    const intptr_t foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                     {
-                        const int nextFold =
+                        const intptr_t nextFold =
                                 sendSci(SCI_GETLASTCHILD, foldLine, sendSci(SCI_GETFOLDLEVEL, foldLine)) + 1;
                         lineNum = (nextFold < sendSci(SCI_GETLINECOUNT)) ? nextFold : foldLine;
                     }
                 }
 
-                const int lineStart = sendSci(SCI_POSITIONFROMLINE, lineNum);
-                const int lineEnd = sendSci(SCI_GETLINEENDPOSITION, lineNum);
+                const intptr_t lineStart = sendSci(SCI_POSITIONFROMLINE, lineNum);
+                const intptr_t lineEnd = sendSci(SCI_GETLINEENDPOSITION, lineNum);
 
                 if (linePosOffset > lineEnd - lineStart)
                     linePosOffset = lineEnd - lineStart;
@@ -1619,7 +1620,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 
         case VK_PRIOR:
         {
-            const int linesOnScreen = sendSci(SCI_LINESONSCREEN);
+            const intptr_t linesOnScreen = sendSci(SCI_LINESONSCREEN);
             sendSci(SCI_LINESCROLL, 0, -linesOnScreen);
             lineNum = sendSci(SCI_DOCLINEFROMVISIBLE, sendSci(SCI_GETFIRSTVISIBLELINE));
             sendSci(SCI_GOTOLINE, lineNum);
@@ -1628,10 +1629,10 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
 
         case VK_NEXT:
         {
-            const int linesOnScreen     = sendSci(SCI_LINESONSCREEN);
-            const int firstVisibleLine  = sendSci(SCI_GETFIRSTVISIBLELINE);
+            const intptr_t linesOnScreen     = sendSci(SCI_LINESONSCREEN);
+            const intptr_t firstVisibleLine  = sendSci(SCI_GETFIRSTVISIBLELINE);
             sendSci(SCI_LINESCROLL, 0, linesOnScreen);
-            const int newFirstVisible   = sendSci(SCI_GETFIRSTVISIBLELINE);
+            const intptr_t newFirstVisible   = sendSci(SCI_GETFIRSTVISIBLELINE);
 
             if (newFirstVisible - firstVisibleLine >= linesOnScreen)
             {
@@ -1640,7 +1641,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
             else
             {
                 lineNum = sendSci(SCI_GETLINECOUNT) - 1;
-                const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                const intptr_t foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                 if (!sendSci(SCI_GETFOLDEXPANDED, foldLine))
                     lineNum = foldLine;
             }
@@ -1668,7 +1669,7 @@ bool ResultWin::onKeyPress(WORD keyCode, bool alt)
             {
                 if (!(sendSci(SCI_GETFOLDLEVEL, lineNum) & SC_FOLDLEVELHEADERFLAG) && lineNum)
                 {
-                    const int foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
+                    const intptr_t foldLine = sendSci(SCI_GETFOLDPARENT, lineNum);
                     if (foldLine > 0)
                         sendSci(SCI_GOTOLINE, foldLine);
                 }
@@ -1829,7 +1830,7 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
         }
 
         _lastSearchTxt.Resize(txtLen);
-        Edit_GetText(_hSearchTxt, _lastSearchTxt.C_str(), _lastSearchTxt.Size());
+        Edit_GetText(_hSearchTxt, _lastSearchTxt.C_str(), (int)_lastSearchTxt.Size());
     }
     else if (_lastSearchTxt.IsEmpty())
     {
@@ -1838,10 +1839,10 @@ void ResultWin::onSearch(bool reverseDir, bool keepFocus)
 
     CTextA txt(_lastSearchTxt.C_str());
 
-    const int docEnd = sendSci(SCI_GETLENGTH);
+    const intptr_t docEnd = sendSci(SCI_GETLENGTH);
 
-    int startPos = sendSci(SCI_GETCURRENTPOS);
-    int endPos = docEnd;
+    intptr_t startPos = sendSci(SCI_GETCURRENTPOS);
+    intptr_t endPos = docEnd;
 
     if (reverseDir)
     {

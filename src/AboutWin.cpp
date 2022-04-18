@@ -213,8 +213,8 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                     int width   = pReqResize->rc.right - pReqResize->rc.left + 30;
                     int height  = pReqResize->rc.bottom - pReqResize->rc.top;
 
-                    RECT win = Tools::GetWinRect(GetParent(hWnd),
-                            GetWindowLongPtr(hWnd, GWL_EXSTYLE), GetWindowLongPtr(hWnd, GWL_STYLE), width, height);
+                    RECT win = Tools::GetWinRect(GetParent(hWnd), (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE),
+                            (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE), width, height);
                     MoveWindow(hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
                     GetClientRect(hWnd, &win);
                     MoveWindow(hEdit, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);

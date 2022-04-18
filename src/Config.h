@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2019 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ public:
     DbConfig();
     ~DbConfig() {}
 
-    static const TCHAR* Parser(unsigned idx)
+    static const TCHAR* Parser(size_t idx)
     {
         return (idx < PARSER_LIST_END) ? cParsers[idx] : NULL;
     }

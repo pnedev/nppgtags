@@ -218,7 +218,7 @@ unsigned CmdEngine::start()
                 CText word(wordA.C_str());
 
                 TCHAR* tag = _cmd->_tag.C_str();
-                int len = _cmd->_tag.Len();
+                size_t len = _cmd->_tag.Len();
                 if (_cmd->_id == AUTOCOMPLETE_FILE)
                 {
                     ++tag;
@@ -295,7 +295,7 @@ void CmdEngine::setEnvironmentVars() const
             if (!cfg._libDbPaths[0].IsSubpathOf(_cmd->Db()->GetPath()))
                 buf += cfg._libDbPaths[0];
 
-            for (unsigned i = 1; i < cfg._libDbPaths.size(); ++i)
+            for (size_t i = 1; i < cfg._libDbPaths.size(); ++i)
             {
                 if (!cfg._libDbPaths[i].IsSubpathOf(_cmd->Db()->GetPath()))
                 {
