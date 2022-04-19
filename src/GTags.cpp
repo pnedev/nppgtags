@@ -804,6 +804,34 @@ void showResultCB(const CmdPtr_t& cmd)
     {
         if (cmd->Result() && cmd->Status() == OK)
         {
+            if (cmd->Id() == FIND_FILE)
+            {
+                const ResultWin::TabParser* parser = dynamic_cast<ResultWin::TabParser*>(cmd->Parser().get());
+
+                if (parser->getHitsCount() == 1)
+                {
+                    CPath file = cmd->Db()->GetPath();
+
+                    file += parser->getFirstFileResult().c_str();
+
+                    INpp& npp = INpp::Get();
+                    if (!file.FileExists())
+                    {
+                        MessageBox(npp.GetHandle(),
+                                _T("File not found, database seems outdated.")
+                                _T("\nPlease re-create it and redo the search."),
+                                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+                        return;
+                    }
+
+                    DocLocation::Get().Push();
+                    npp.OpenFile(file.C_str());
+                    UpdateWindow(npp.GetHandle());
+
+                    return;
+                }
+            }
+
             ResultWin::Show(cmd);
         }
         else
@@ -924,8 +952,9 @@ void OnNppReady()
 		TCHAR buf[256];
 
 		_sntprintf_s(buf, _countof(buf), _TRUNCATE,
-				_T("NppGTags plugin version is for Notepad++ versions above v%d.%d (included). It might not function as expected and might cause instability or crash!"),
-				MIN_NOTEPADPP_VERSION_MAJOR, MIN_NOTEPADPP_VERSION_MINOR);
+				_T("%s plugin version is for Notepad++ versions above v%d.%d (included).")
+                _T("\nIt might not function as expected and might cause instability or crash!"),
+				cPluginName, MIN_NOTEPADPP_VERSION_MAJOR, MIN_NOTEPADPP_VERSION_MINOR);
 
 		MessageBox(npp.GetHandle(), buf, cPluginName, MB_OK | MB_ICONERROR);
 	}

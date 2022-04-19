@@ -57,11 +57,16 @@ public:
 
         virtual int Parse(const CmdPtr_t&);
 
-        int getHitsCount() const { return _hits ? _hits : _filesCount; }
-        int getHeaderStatusLen() const { return _headerStatusLen; }
+        inline int getHitsCount() const { return _hits ? _hits : _filesCount; }
+        inline int getHeaderStatusLen() const { return _headerStatusLen; }
 
-        void addResultFile(const char* pEntry, size_t len) { _fileResults.emplace(pEntry, len); }
-        bool isFileInResults(const std::string& file) const { return (_fileResults.find(file) != _fileResults.end()); }
+        inline void addResultFile(const char* pEntry, size_t len) { _fileResults.emplace(pEntry, len); }
+        inline bool isFileInResults(const std::string& file) const
+        {
+            return (_fileResults.find(file) != _fileResults.end());
+        }
+
+        inline const std::string& getFirstFileResult() const { return *(_fileResults.begin()); }
 
     private:
         static bool filterEntry(const DbConfig& cfg, const char* pEntry, size_t len);

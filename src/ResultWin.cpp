@@ -1166,7 +1166,7 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
     {
         MessageBox(npp.GetHandle(),
                 _T("File not found, present results are outdated.")
-                _T("\nPlease redo the search."),
+                _T("\nPlease re-create database and redo the search."),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
         return false;
     }
