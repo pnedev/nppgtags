@@ -49,6 +49,12 @@ namespace
 using namespace GTags;
 
 
+constexpr int MIN_NOTEPADPP_VERSION_MAJOR = 8;
+constexpr int MIN_NOTEPADPP_VERSION_MINOR = 30;
+
+constexpr int MIN_NOTEPADPP_VERSION = ((MIN_NOTEPADPP_VERSION_MAJOR << 16) | MIN_NOTEPADPP_VERSION_MINOR);
+
+
 std::unique_ptr<CPath>  ChangedFile;
 bool                    DeInitCOM = false;
 
@@ -909,7 +915,20 @@ void PluginDeInit()
  */
 void OnNppReady()
 {
-    INpp::Get().SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+    INpp& npp = INpp::Get();
+
+    npp.SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+
+	if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
+	{
+		TCHAR buf[256];
+
+		_sntprintf_s(buf, _countof(buf), _TRUNCATE,
+				_T("NppGTags plugin version is for Notepad++ versions above v%d.%d (included). It might not function as expected and might cause instability or crash!"),
+				MIN_NOTEPADPP_VERSION_MAJOR, MIN_NOTEPADPP_VERSION_MINOR);
+
+		MessageBox(npp.GetHandle(), buf, cPluginName, MB_OK | MB_ICONERROR);
+	}
 }
 
 

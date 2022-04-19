@@ -86,6 +86,11 @@ public:
         SendMessage(_nppData._nppHandle, NPPM_SETMENUITEMCHECK, cmdId, enable);
     }
 
+    inline int GetVersion()
+    {
+        return (int)::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 0, 0);
+    }
+
     inline HMENU GetPluginMenu() const
     {
         return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE, NPPPLUGINMENU, 0);
