@@ -804,34 +804,6 @@ void showResultCB(const CmdPtr_t& cmd)
     {
         if (cmd->Result() && cmd->Status() == OK)
         {
-            if (cmd->Id() == FIND_FILE)
-            {
-                const ResultWin::TabParser* parser = dynamic_cast<ResultWin::TabParser*>(cmd->Parser().get());
-
-                if (parser->getHitsCount() == 1)
-                {
-                    CPath file = cmd->Db()->GetPath();
-
-                    file += parser->getFirstFileResult().c_str();
-
-                    INpp& npp = INpp::Get();
-                    if (!file.FileExists())
-                    {
-                        MessageBox(npp.GetHandle(),
-                                _T("File not found, database seems outdated.")
-                                _T("\nPlease re-create it and redo the search."),
-                                cPluginName, MB_OK | MB_ICONEXCLAMATION);
-                        return;
-                    }
-
-                    DocLocation::Get().Push();
-                    npp.OpenFile(file.C_str());
-                    UpdateWindow(npp.GetHandle());
-
-                    return;
-                }
-            }
-
             ResultWin::Show(cmd);
         }
         else

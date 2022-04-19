@@ -529,8 +529,14 @@ void ResultWin::show(const CmdPtr_t& cmd)
         }
     }
 
-    if (i == 0) // search is completely new - add new tab
+    if (i == 0) // search is completely new - add new tab or visit single result
     {
+        if (visitSingleResult(tab))
+        {
+            delete tab;
+            return;
+        }
+
         TCHAR buf[64];
         _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%s \"%s\""), cmd->Name(), cmd->Tag().C_str());
 
@@ -1116,6 +1122,66 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
 /**
  *  \brief
  */
+bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
+{
+    const TabParser* parser = dynamic_cast<TabParser*>(tab->_parser.get());
+
+    if (parser->getHitsCount() != 1)
+        return false;
+
+    intptr_t line = -1;
+
+    if (tab->_cmdId != FIND_FILE)
+    {
+        const std::string results(parser->GetText().C_str());
+
+        const size_t pos = results.rfind("\t\tline ");
+        if (pos != std::string::npos)
+        {
+            const std::string lineNum = results.substr(pos + 7);
+            line = std::stoll(lineNum) - 1;
+        }
+    }
+
+    CPath file = tab->_projectPath.C_str();
+    file += parser->getFirstFileResult().c_str();
+
+    INpp& npp = INpp::Get();
+    if (!file.FileExists())
+    {
+        MessageBox(npp.GetHandle(),
+                _T("File not found, database seems outdated.")
+                _T("\nPlease re-create it and redo the search."),
+                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+        return true;
+    }
+
+    DocLocation::Get().Push();
+    npp.OpenFile(file.C_str());
+    UpdateWindow(npp.GetHandle());
+
+    if (tab->_cmdId == FIND_FILE)
+        return true;
+
+    const bool wholeWord    = (tab->_cmdId != GREP && tab->_cmdId != GREP_TEXT);
+    intptr_t findBegin      = npp.PositionFromLine(line);
+    intptr_t findEnd        = npp.LineEndPosition(line);
+
+    if (!npp.SearchText(tab->_search.C_str(), tab->_ignoreCase, wholeWord, tab->_regExp, &findBegin, &findEnd))
+    {
+        MessageBox(npp.GetHandle(),
+                _T("Look-up mismatch, database seems outdated.")
+                _T("\nSave all modified files, re-create it and redo the search."),
+                cPluginName, MB_OK | MB_ICONEXCLAMATION);
+    }
+
+    return true;
+}
+
+
+/**
+ *  \brief
+ */
 bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
 {
     sendSci(SCI_GOTOLINE, lineNum);
@@ -1136,7 +1202,7 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
     {
         for (i = 7; i <= lineLen && lineTxt[i] != ':'; ++i);
         lineTxt[i] = 0;
-        line = atoi(&lineTxt[7]) - 1;
+        line = atoll(&lineTxt[7]) - 1;
 
         lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
         if (lineNum == -1)

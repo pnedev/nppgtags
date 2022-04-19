@@ -221,6 +221,7 @@ private:
 
     Tab* getTab(int i = -1);
     void loadTab(Tab* tab);
+    bool visitSingleResult(Tab* tab);
     bool openItem(intptr_t lineNum, unsigned matchNum = 1);
 
     bool findString(const char* str, intptr_t* startPos, intptr_t* endPos,
