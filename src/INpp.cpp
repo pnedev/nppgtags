@@ -129,8 +129,8 @@ void INpp::SetView(intptr_t startPos, intptr_t endPos) const
     lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0) - linesOnScreen / 2;
     if (lineNum < 0)
         lineNum = 0;
-    SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, lineNum, 0);
     SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
+    SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, lineNum, 0);
 }
 
 

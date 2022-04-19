@@ -1105,8 +1105,8 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
     sendSci(SCI_SETTEXT, 0, reinterpret_cast<LPARAM>(tab->_parser->GetText().C_str()));
     sendSci(SCI_SETREADONLY, 1);
 
-    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
     sendSci(SCI_GOTOLINE, tab->_currentLine);
+    sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
 
     if (tab->_dirty)
         reRunCmd();
