@@ -504,6 +504,7 @@ void ResultWin::show(const CmdPtr_t& cmd)
 {
     Tab* tab = new Tab(cmd);
 
+    bool isNewTab = false;
     HWND hFocus = NULL;
 
     int i;
@@ -551,6 +552,8 @@ void ResultWin::show(const CmdPtr_t& cmd)
             delete tab;
             return;
         }
+
+        isNewTab = true;
     }
     else // same search tab exists - reuse it, just update results
     {
@@ -584,7 +587,7 @@ void ResultWin::show(const CmdPtr_t& cmd)
     }
 
     TabCtrl_SetCurSel(_hTab, i);
-    loadTab(tab);
+    loadTab(tab, isNewTab);
 
     showWindow(hFocus);
 }
@@ -1092,7 +1095,7 @@ ResultWin::Tab* ResultWin::getTab(int i)
 /**
  *  \brief
  */
-void ResultWin::loadTab(ResultWin::Tab* tab)
+void ResultWin::loadTab(ResultWin::Tab* tab, bool firstTimeLoad)
 {
     // store current view if there is one
     if (_activeTab)
@@ -1115,7 +1118,16 @@ void ResultWin::loadTab(ResultWin::Tab* tab)
     sendSci(SCI_SETFIRSTVISIBLELINE, tab->_firstVisibleLine);
 
     if (tab->_dirty)
+    {
         reRunCmd();
+    }
+    else if (firstTimeLoad && tab->_cmdId != FIND_FILE)
+    {
+        const TabParser* parser = dynamic_cast<TabParser*>(tab->_parser.get());
+
+        if (parser->getFilesCount() == 1)
+            foldAll(SC_FOLDACTION_EXPAND);
+    }
 }
 
 

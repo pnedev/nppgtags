@@ -57,6 +57,7 @@ public:
 
         virtual int Parse(const CmdPtr_t&);
 
+        inline int getFilesCount() const { return _filesCount; }
         inline int getHitsCount() const { return _hits ? _hits : _filesCount; }
         inline int getHeaderStatusLen() const { return _headerStatusLen; }
 
@@ -220,7 +221,7 @@ private:
     }
 
     Tab* getTab(int i = -1);
-    void loadTab(Tab* tab);
+    void loadTab(Tab* tab, bool firstTimeLoad = false);
     bool visitSingleResult(Tab* tab);
     bool openItem(intptr_t lineNum, unsigned matchNum = 1);
 
