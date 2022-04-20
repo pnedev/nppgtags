@@ -1073,6 +1073,33 @@ void ResultWin::hideWindow()
 /**
  *  \brief
  */
+void ResultWin::releaseKeys()
+{
+    INPUT inputs[4] = {};
+    ZeroMemory(inputs, sizeof(inputs));
+
+    inputs[0].type = INPUT_KEYBOARD;
+    inputs[0].ki.wVk = VK_SHIFT;
+    inputs[0].ki.dwFlags = KEYEVENTF_KEYUP;
+
+    inputs[1].type = INPUT_KEYBOARD;
+    inputs[1].ki.wVk = VK_CONTROL;
+    inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+    inputs[2].type = INPUT_KEYBOARD;
+    inputs[2].ki.wVk = VK_MENU;
+    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+
+    inputs[3].type = INPUT_MOUSE;
+    inputs[3].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+
+    SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
+}
+
+
+/**
+ *  \brief
+ */
 ResultWin::Tab* ResultWin::getTab(int i)
 {
     if (i == -1)
@@ -1141,6 +1168,8 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
     if (parser->getHitsCount() != 1)
         return false;
 
+    releaseKeys();
+
     intptr_t line = -1;
 
     if (tab->_cmdId != FIND_FILE)
@@ -1196,9 +1225,12 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
  */
 bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
 {
-    sendSci(SCI_GOTOLINE, lineNum);
+    releaseKeys();
 
-    intptr_t lineLen = sendSci(SCI_LINELENGTH, lineNum);
+    intptr_t lineLen = sendSci(SCI_GETCURRENTPOS, 0, 0);
+    sendSci(SCI_SETSEL, lineLen, lineLen);
+
+    lineLen = sendSci(SCI_LINELENGTH, lineNum);
     if (lineLen <= 0)
         return false;
 
