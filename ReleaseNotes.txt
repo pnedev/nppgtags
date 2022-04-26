@@ -1,3 +1,12 @@
+What's new in v5.0.0
+=======================
+- Auto-rerun active results tab search and auto-update results when database is updated
+- Directly visit single result
+- Auto-expand results if all of them are located in single file
+- Update Ctags to 5.9.20220508.0 and Global GTags binaries to 6.6.8
+- Updated for the new Scintilla 5 and Notepad++ versions above 8.4.1
+
+
 What's new in v4.5.0
 =======================
 - Add summary of the hits count in every search header

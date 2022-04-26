@@ -9,7 +9,7 @@ To support NppGTags consider donating. Thank You.
 This is a front-end to GNU Global source code tagging system (GTags) for Notepad++. It provides various functions to ease project code navigation - search for file, definition, reference, literal, regular expression, perform auto-completion.
 
 You'll need GTags binaries for Win32 to use this plugin. Those are supplied with the plugin binary for convenience.
-You can also download them from [GNU Global official website](http://www.gnu.org/software/global/global.html) - look for the Win32 port. Put GTags Win32 binaries in folder named *NppGTags*.
+You can also download them from [GNU Global official website](http://www.gnu.org/software/global/global.html) - look for the Win32 port. Put GTags Win32 binaries in folder named *bin*.
 
 
 **Build Status**
@@ -23,7 +23,7 @@ AppVeyor [![Build status](https://ci.appveyor.com/api/projects/status/b4aam50a4q
 
 For Notepad++ versions 7.6.3 and above you can use the built-in PluginAdmin dialog (accessible through the *Plugins* menu).
 
-You can manually install the plugin by copying *NppGTags.dll* and *NppGTags* folder containing GTags binaries to your Notepad++ plugins directory.
+You can manually install the plugin by copying *NppGTags.dll*, *bin* folder (containing GTags binaries) and *share* folder (containing pygments parser .py script) to your Notepad++ plugins directory.
 After Notepad++ version 7.6, the above files should be copied in Notepad++ plugins directory BUT in a separate sub-folder named `NppGTags`.
 Restart Notepad++ and you are all set.
 

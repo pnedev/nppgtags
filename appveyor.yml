@@ -72,9 +72,9 @@ after_build:
         md deploy -Force | Out-Null
         md deploy\NppGTags -Force | Out-Null
         Copy-Item _build\$env:CONFIGURATION\NppGTags.dll deploy\NppGTags\NppGTags.dll
-        Copy-Item bin\* deploy\NppGTags\
+        Copy-Item bin\* deploy\NppGTags\ -Recurse
         7z a $ZipFileName .\deploy\NppGTags\*
-        Remove-Item deploy\NppGTags\*
+        Remove-Item deploy\NppGTags\* -Recurse
     }
 
 artifacts:
