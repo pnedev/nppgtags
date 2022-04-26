@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <cstdint>
 #include <vector>
 #include "Common.h"
 #include "CmdDefines.h"
@@ -48,7 +49,7 @@ class ResultParser
 public:
     virtual ~ResultParser() {}
 
-    virtual int Parse(const CmdPtr_t&) = 0;
+    virtual intptr_t Parse(const CmdPtr_t&) = 0;
     virtual const CTextA& GetText() const { return _buf; }
     virtual const std::vector<TCHAR*>& GetList() const { return _lines; }
 

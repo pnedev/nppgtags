@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2016 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include "Common.h"
@@ -46,7 +47,7 @@ public:
     LineParser() {}
     virtual ~LineParser() {}
 
-    virtual int Parse(const CmdPtr_t&);
+    virtual intptr_t Parse(const CmdPtr_t&);
 
 private:
     CText _buf;

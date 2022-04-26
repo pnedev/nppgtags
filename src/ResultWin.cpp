@@ -78,7 +78,7 @@ ResultWin* ResultWin::RW = NULL;
 /**
  *  \brief
  */
-int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
+intptr_t ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 {
     _filesCount = 0;
     _hits = 0;
@@ -116,7 +116,7 @@ int ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 
     const size_t countsPos = _buf.Len();
 
-    int res;
+    intptr_t res;
 
     // parsing command result
     if (cmd->Id() == FIND_FILE)
@@ -206,7 +206,7 @@ bool ResultWin::TabParser::filterEntry(const DbConfig& cfg, const char* pEntry, 
 /**
  *  \brief
  */
-int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
+intptr_t ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
 {
     const char* pSrc = cmd->Result();
     const char* pEol;
@@ -228,7 +228,7 @@ int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
             _buf += "\n\t";
             _buf.Append(pSrc, pEol - pSrc);
 
-            addResultFile(pSrc, pEol - pSrc);
+            addResultFile(pSrc, pEol - pSrc, 0);
 
             ++_filesCount;
         }
@@ -243,7 +243,7 @@ int ResultWin::TabParser::parseFindFile(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
+intptr_t ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
 {
     bool filterReoccurring = false;
 
@@ -271,6 +271,8 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
     bool        previousFileFiltered = false;
 
     size_t      previousBufLen;
+
+    intptr_t    line = 0;
 
     for (;;)
     {
@@ -303,10 +305,11 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
             }
             else
             {
+                ++line;
                 _buf += "\n\t";
                 _buf.Append(pPreviousFile, previousFileLen);
 
-                addResultFile(pPreviousFile, previousFileLen);
+                addResultFile(pPreviousFile, previousFileLen, line);
 
                 ++_filesCount;
 
@@ -325,6 +328,7 @@ int ResultWin::TabParser::parseCmd(const CmdPtr_t& cmd)
         while (*pSrc != ':')
             ++pSrc;
 
+        ++line;
         _buf += "\n\t\tline ";
         _buf.Append(pIdx, pSrc - pIdx);
         _buf += ":\t";
@@ -404,9 +408,52 @@ inline bool ResultWin::Tab::IsFolded(intptr_t lineNum)
 /**
  *  \brief
  */
-inline void ResultWin::Tab::MoveFolded(Tab& tab)
+void ResultWin::Tab::RestoreView(const Tab& oldTab)
 {
-    _expandedLines = std::move(tab._expandedLines);
+    _currentLine = oldTab._currentLine;
+    _firstVisibleLine = oldTab._firstVisibleLine;
+
+    if (_cmdId == FIND_FILE)
+        return;
+
+    intptr_t currentLineAdjustment = 0;
+    intptr_t firstVisLineAdjustment = 0;
+
+    intptr_t lastCurrent = 0;
+    intptr_t lastFirst = 0;
+
+    const std::unordered_map<std::string, intptr_t>& newFileRes =
+            dynamic_cast<const TabParser*>(_parser.get())->getFileResults();
+
+    const std::unordered_map<std::string, intptr_t>& oldFileRes =
+            dynamic_cast<const TabParser*>(oldTab._parser.get())->getFileResults();
+
+    for (const auto& oldFile : oldFileRes)
+    {
+        if (oldTab._expandedLines.find(oldFile.second) == oldTab._expandedLines.end())
+            continue;
+
+        const auto newFile = newFileRes.find(oldFile.first);
+        if (newFile == newFileRes.end())
+            continue;
+
+        _expandedLines.insert(newFile->second);
+
+        if (_currentLine >= newFile->second && lastCurrent < newFile->second)
+        {
+            currentLineAdjustment = newFile->second - oldFile.second;
+            lastCurrent = newFile->second;
+        }
+
+        if (_firstVisibleLine >= newFile->second && lastFirst < newFile->second)
+        {
+            firstVisLineAdjustment = newFile->second - oldFile.second;
+            lastFirst = newFile->second;
+        }
+    }
+
+    _currentLine += currentLineAdjustment;
+    _firstVisibleLine += firstVisLineAdjustment;
 }
 
 
@@ -514,16 +561,16 @@ void ResultWin::show(const CmdPtr_t& cmd)
 
         if (oldTab && (*tab == *oldTab)) // same search tab already present?
         {
-            tab->_currentLine       = oldTab->_currentLine;
-            tab->_firstVisibleLine  = oldTab->_firstVisibleLine;
-
-            tab->MoveFolded(*oldTab);
-
             if (_activeTab == oldTab) // is this the currently active tab?
             {
+                _activeTab->_currentLine = sendSci(SCI_LINEFROMPOSITION, sendSci(SCI_GETCURRENTPOS));
+                _activeTab->_firstVisibleLine = sendSci(SCI_GETFIRSTVISIBLELINE);
+
                 _activeTab = NULL;
                 hFocus = GetFocus();
             }
+
+            tab->RestoreView(*oldTab);
 
             delete oldTab;
             break;
@@ -657,8 +704,8 @@ void ResultWin::reRunCmd()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(_activeTab->_cmdId, db, _activeTab->_parser, NULL,
-            _activeTab->_ignoreCase, _activeTab->_regExp));
+    ParserPtr_t parser(new ResultWin::TabParser);
+    CmdPtr_t cmd(new Cmd(_activeTab->_cmdId, db, parser, NULL, _activeTab->_ignoreCase, _activeTab->_regExp));
 
     cmd->Tag(CText(_activeTab->_search.C_str()));
     CmdEngine::Run(cmd, showResultCB);
@@ -1180,7 +1227,7 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
         if (pos != std::string::npos)
         {
             const std::string lineNum = results.substr(pos + 7);
-            line = std::stoll(lineNum) - 1;
+            line = (intptr_t)std::stoll(lineNum) - 1;
         }
     }
 
@@ -1246,7 +1293,7 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
     {
         for (i = 7; i <= lineLen && lineTxt[i] != ':'; ++i);
         lineTxt[i] = 0;
-        line = atoll(&lineTxt[7]) - 1;
+        line = (intptr_t)atoll(&lineTxt[7]) - 1;
 
         lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
         if (lineNum == -1)

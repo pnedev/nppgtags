@@ -194,7 +194,7 @@ unsigned CmdEngine::start()
     {
         if (_cmd->Result())
         {
-            const int parsedEntries = _cmd->_parser->Parse(_cmd);
+            const intptr_t parsedEntries = _cmd->_parser->Parse(_cmd);
 
             if (parsedEntries < 0)
             {

@@ -234,10 +234,10 @@ inline void MsgA(const char* msg)
 }
 
 
-inline void MsgNum(int num, int radix = 10)
+inline void MsgNum(intptr_t num, int radix = 10)
 {
     char buf[128];
-    _itoa_s(num, buf, _countof(buf), radix);
+    _i64toa_s(num, buf, _countof(buf), radix);
     MessageBoxA(NULL, buf, "", MB_OK);
 }
 

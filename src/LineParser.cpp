@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2016 Pavel Nedev
+ *  Copyright(C) 2015-2022 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -32,9 +32,9 @@ namespace GTags
 /**
  *  \brief
  */
-int LineParser::Parse(const CmdPtr_t& cmd)
+intptr_t LineParser::Parse(const CmdPtr_t& cmd)
 {
-    int result = 0;
+    intptr_t result = 0;
 
     const bool filterReoccurring = cmd->Db()->GetConfig()._useLibDb;
 

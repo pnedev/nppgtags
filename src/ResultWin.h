@@ -29,6 +29,7 @@
 #include <tchar.h>
 #include <cstdint>
 #include <unordered_set>
+#include <unordered_map>
 #include <string>
 #include "NppAPI/Scintilla.h"
 #include "Common.h"
@@ -55,31 +56,36 @@ public:
         TabParser() : _filesCount(0), _hits(0), _headerStatusLen(0) {}
         virtual ~TabParser() {}
 
-        virtual int Parse(const CmdPtr_t&);
+        virtual intptr_t Parse(const CmdPtr_t&);
 
-        inline int getFilesCount() const { return _filesCount; }
-        inline int getHitsCount() const { return _hits ? _hits : _filesCount; }
+        inline intptr_t getFilesCount() const { return _filesCount; }
+        inline intptr_t getHitsCount() const { return _hits ? _hits : _filesCount; }
         inline int getHeaderStatusLen() const { return _headerStatusLen; }
 
-        inline void addResultFile(const char* pEntry, size_t len) { _fileResults.emplace(pEntry, len); }
+        inline void addResultFile(const char* pFile, size_t len, intptr_t line)
+        {
+            _fileResults.emplace(std::string(pFile, len), line);
+        }
+
         inline bool isFileInResults(const std::string& file) const
         {
             return (_fileResults.find(file) != _fileResults.end());
         }
 
-        inline const std::string& getFirstFileResult() const { return *(_fileResults.begin()); }
+        inline const std::string& getFirstFileResult() const { return _fileResults.begin()->first; }
+        inline const std::unordered_map<std::string, intptr_t>& getFileResults() const { return _fileResults; }
 
     private:
         static bool filterEntry(const DbConfig& cfg, const char* pEntry, size_t len);
 
-        int parseCmd(const CmdPtr_t&);
-        int parseFindFile(const CmdPtr_t&);
+        intptr_t parseCmd(const CmdPtr_t&);
+        intptr_t parseFindFile(const CmdPtr_t&);
 
-        int _filesCount;
-        int _hits;
-        int _headerStatusLen;
+        intptr_t    _filesCount;
+        intptr_t    _hits;
+        int         _headerStatusLen;
 
-        std::unordered_set<std::string> _fileResults;
+        std::unordered_map<std::string, intptr_t> _fileResults;
     };
 
 
@@ -165,7 +171,7 @@ private:
         inline void ClearFolded(intptr_t lineNum);
         inline bool IsFolded(intptr_t lineNum);
 
-        inline void MoveFolded(Tab& tab);
+        void RestoreView(const Tab& oldTab);
 
     private:
         std::unordered_set<intptr_t> _expandedLines;
