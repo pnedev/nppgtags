@@ -63,7 +63,7 @@ void INpp::GetWord(CTextA& word, bool partial, bool select) const
     else
         SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
 
-    word.Resize(len);
+    word.Resize(len + 1);
 
     struct Sci_TextRange tr;
     tr.chrg.cpMin   = wordStart;
