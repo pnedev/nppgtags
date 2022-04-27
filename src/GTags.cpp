@@ -919,17 +919,17 @@ void OnNppReady()
 
     npp.SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
 
-	if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
-	{
-		TCHAR buf[256];
+	// if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
+	// {
+		// TCHAR buf[256];
 
-		_sntprintf_s(buf, _countof(buf), _TRUNCATE,
-				_T("%s plugin version is for Notepad++ versions above v%d.%d (included).")
-                _T("\nIt might not function as expected and might cause instability or crash!"),
-				cPluginName, MIN_NOTEPADPP_VERSION_MAJOR, MIN_NOTEPADPP_VERSION_MINOR);
+		// _sntprintf_s(buf, _countof(buf), _TRUNCATE,
+				// _T("%s plugin version is for Notepad++ versions above v%d.%d (included).")
+                // _T("\nIt might not function as expected and might cause instability or crash!"),
+				// cPluginName, MIN_NOTEPADPP_VERSION_MAJOR, MIN_NOTEPADPP_VERSION_MINOR);
 
-		MessageBox(npp.GetHandle(), buf, cPluginName, MB_OK | MB_ICONERROR);
-	}
+		// MessageBox(npp.GetHandle(), buf, cPluginName, MB_OK | MB_ICONERROR);
+	// }
 }
 
 
