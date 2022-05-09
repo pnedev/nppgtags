@@ -64,7 +64,7 @@ public:
     {
         if (_invalidStrLen)
         {
-            _buf.resize(wcslen(_buf.data()) + 1);
+            _buf.resize(wcslen(_buf.data()) + 1, 0);
             _invalidStrLen = false;
         }
     }
@@ -124,7 +124,7 @@ public:
     {
         if (_invalidStrLen)
         {
-            _buf.resize(strlen(_buf.data()) + 1);
+            _buf.resize(strlen(_buf.data()) + 1, 0);
             _invalidStrLen = false;
         }
     }
