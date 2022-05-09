@@ -88,7 +88,7 @@ public:
 
     inline int GetVersion()
     {
-        return (int)::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 0, 0);
+        return (int)::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 1, 0);
     }
 
     inline HMENU GetPluginMenu() const

@@ -50,7 +50,7 @@ using namespace GTags;
 
 
 constexpr int MIN_NOTEPADPP_VERSION_MAJOR = 8;
-constexpr int MIN_NOTEPADPP_VERSION_MINOR = 30;
+constexpr int MIN_NOTEPADPP_VERSION_MINOR = 410;
 
 constexpr int MIN_NOTEPADPP_VERSION = ((MIN_NOTEPADPP_VERSION_MAJOR << 16) | MIN_NOTEPADPP_VERSION_MINOR);
 
@@ -919,17 +919,28 @@ void OnNppReady()
 
     npp.SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
 
-	// if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
-	// {
-		// TCHAR buf[256];
+	if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
+	{
+		TCHAR buf[256];
 
-		// _sntprintf_s(buf, _countof(buf), _TRUNCATE,
-				// _T("%s plugin version is for Notepad++ versions above v%d.%d (included).")
-                // _T("\nIt might not function as expected and might cause instability or crash!"),
-				// cPluginName, MIN_NOTEPADPP_VERSION_MAJOR, MIN_NOTEPADPP_VERSION_MINOR);
+		_sntprintf_s(buf, _countof(buf), _TRUNCATE,
+				_T("%s v%s is not compatible with current Notepad++ version.\nPlugin commands will be disabled."),
+				cPluginName, VER_VERSION_STR);
 
-		// MessageBox(npp.GetHandle(), buf, cPluginName, MB_OK | MB_ICONERROR);
-	// }
+		MessageBox(npp.GetHandle(), buf, cPluginName, MB_OK | MB_ICONWARNING);
+
+        HMENU hMenu = (HMENU)::SendMessage(npp.GetHandle(), NPPM_GETMENUHANDLE, NPPPLUGINMENU, 0);
+
+        constexpr int flag = MF_BYCOMMAND | MF_DISABLED | MF_GRAYED;
+
+        for (size_t i = 0; i < _countof(GTags::Menu); ++i)
+        {
+            if (GTags::Menu[i]._pFunc != nullptr)
+                ::EnableMenuItem(hMenu, GTags::Menu[i]._cmdID, flag);
+        }
+
+        ::DrawMenuBar(npp.GetHandle());
+	}
 }
 
 
