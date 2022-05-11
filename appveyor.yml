@@ -71,12 +71,10 @@ after_build:
         $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM_INPUT.zip"
         md deploy -Force | Out-Null
         md deploy\NppGTags -Force | Out-Null
-        md deploy\NppGTags\NppGTags -Force | Out-Null
         Copy-Item _build\$env:CONFIGURATION\NppGTags.dll deploy\NppGTags\NppGTags.dll
-        Copy-Item bin\NppGTags\*.* deploy\NppGTags\NppGTags\
+        Copy-Item bin\* deploy\NppGTags\
         7z a $ZipFileName .\deploy\NppGTags\*
-        Remove-Item deploy\NppGTags\NppGTags.dll
-        Remove-Item deploy\NppGTags\NppGTags\*.*
+        Remove-Item deploy\NppGTags\*
     }
 
 artifacts:

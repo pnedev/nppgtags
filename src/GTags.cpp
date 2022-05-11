@@ -65,7 +65,7 @@ bool                    DeInitCOM = false;
 bool checkForGTagsBinaries(CPath& dllPath)
 {
     dllPath.StripFilename();
-    dllPath += cPluginName;
+    dllPath += cBinariesFolder;
     dllPath += _T("\\global.exe");
 
     bool gtagsBinsFound = dllPath.FileExists();

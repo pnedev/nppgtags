@@ -43,6 +43,7 @@ namespace GTags
 
 const TCHAR cPluginName[]           = PLUGIN_NAME;
 const TCHAR cPluginCfgFileName[]    = PLUGIN_NAME _T(".cfg");
+const TCHAR cBinariesFolder[]       = _T("bin");
 
 enum PluginWinMessages_t
 {

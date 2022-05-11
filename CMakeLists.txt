@@ -119,6 +119,10 @@ endif ()
 
 message ("Install destination: ${INSTALL_PATH}")
 
-install (DIRECTORY bin/NppGTags/
-    DESTINATION "${INSTALL_PATH}/NppGTags"
+install (DIRECTORY bin/bin
+    DESTINATION "${INSTALL_PATH}"
+)
+
+install (DIRECTORY bin/share
+    DESTINATION "${INSTALL_PATH}"
 )
