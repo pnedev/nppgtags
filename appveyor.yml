@@ -1,12 +1,12 @@
 version: Build {Build}
-image: Visual Studio 2017
+image: Visual Studio 2022
 
 matrix:
     fast_finish: true
 
 environment:
     matrix:
-        - PlatformToolset: v141
+        - PlatformToolset: v143
 
 platform:
     - x64
@@ -23,7 +23,7 @@ install:
     - if "%platform%"=="x86" set archi=x86
     - if "%platform%"=="x86" set platform_input=x86
 
-    - if "%PlatformToolset%"=="v141" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
+    - if "%PlatformToolset%"=="v143" call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" %archi%
 
 before_build:
 - ps: |
@@ -31,12 +31,7 @@ before_build:
     Write-Output "Platform: $env:PLATFORM_INPUT"
     $generator = switch ($env:PLATFORMTOOLSET)
     {
-        "v141" {"Visual Studio 15 2017"}
-    }
-    # not applicable with MinGW Makefiles generator
-    if ($env:PLATFORM_INPUT -eq "x64")
-    {
-        $generator = "$generator Win64"
+        "v143" {"Visual Studio 17 2022"}
     }
     # cmake build type, depended on the used generator, see https://cmake.org/cmake/help/v3.6/variable/CMAKE_BUILD_TYPE.html#variable:CMAKE_BUILD_TYPE
     # seems vs build always needs also the debug config, choose via the config option to the build command
@@ -50,7 +45,14 @@ build_script:
     cd c:\projects\nppgtags\
     md _build -Force | Out-Null
     cd _build
-    & cmake -G "$generator" $build_type ..
+    if ($env:PLATFORM_INPUT -eq "x64")
+    {
+        & cmake -G "$generator" -A x64 $build_type ..
+    }
+    else
+    {
+        & cmake -G "$generator" -A Win32 $build_type ..
+    }
     if ($LastExitCode -ne 0) {
         throw "Exec: $ErrorMessage"
     }
@@ -66,7 +68,7 @@ after_build:
     $NppGTagsFileName = "NppGTags.$env:PLATFORM_INPUT.$env:CONFIGURATION.$env:PLATFORMTOOLSET.dll"
     Push-AppveyorArtifact "_build\$env:CONFIGURATION\NppGTags.dll" -FileName "$NppGTagsFileName"
 
-    if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:PLATFORMTOOLSET -eq "v141" -and $env:CONFIGURATION -eq "Release")
+    if ($($env:APPVEYOR_REPO_TAG) -eq "true" -and $env:CONFIGURATION -eq "Release")
     {
         $ZipFileName = "NppGTags_$($env:APPVEYOR_REPO_TAG_NAME)_$env:PLATFORM_INPUT.zip"
         md deploy -Force | Out-Null
