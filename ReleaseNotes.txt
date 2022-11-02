@@ -1,3 +1,8 @@
+What's new in v5.1.0
+=======================
+- Update Notepad++ and Scintilla API headers for latest Notepad++ versions
+
+
 What's new in v5.0.0
 =======================
 - Auto-rerun active results tab search and auto-update results when database is updated

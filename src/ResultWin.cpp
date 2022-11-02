@@ -866,7 +866,6 @@ void ResultWin::configScintilla()
     sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_CARET);
 
     // Implement lexer in the container
-    sendSci(SCI_SETLEXER, 0);
     sendSci(SCI_SETILEXER, 0, (LPARAM)NULL);
 
     ApplyStyle();

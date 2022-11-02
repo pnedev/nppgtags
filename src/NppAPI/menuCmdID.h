@@ -1,5 +1,5 @@
 // This file is part of Notepad++ project
-// Copyright (C)2021 Don HO <don.h@free.fr>
+// Copyright (C)2022 Don HO <don.h@free.fr>
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@
 //10  Rename...
 //11  Close
 //12  Close All
-//13  Close More
+//13  Close Multiple Documents
 //14  Move to Recycle Bin
 //15  --------
 //16  Load Session...
@@ -175,6 +175,8 @@
     #define    IDM_EDIT_AUTOCOMPLETE_CURRENTFILE    (50000 + 1)
     #define    IDM_EDIT_FUNCCALLTIP                 (50000 + 2)
     #define    IDM_EDIT_AUTOCOMPLETE_PATH           (50000 + 6)
+    #define    IDM_EDIT_FUNCCALLTIP_PREVIOUS                    (50000 + 10)
+    #define    IDM_EDIT_FUNCCALLTIP_NEXT                        (50000 + 11)
 
 
 #define    IDM_SEARCH    (IDM + 3000)
@@ -223,8 +225,8 @@
     #define    IDM_SEARCH_GONEXTMARKER_DEF     (IDM_SEARCH + 44)
 
     #define    IDM_FOCUS_ON_FOUND_RESULTS      (IDM_SEARCH + 45)
-    #define    IDM_SEARCH_GOTONEXTFOUND	       (IDM_SEARCH + 46)
-    #define    IDM_SEARCH_GOTOPREVFOUND	       (IDM_SEARCH + 47)
+    #define    IDM_SEARCH_GOTONEXTFOUND        (IDM_SEARCH + 46)
+    #define    IDM_SEARCH_GOTOPREVFOUND        (IDM_SEARCH + 47)
 
     #define    IDM_SEARCH_SETANDFINDNEXT       (IDM_SEARCH + 48)
     #define    IDM_SEARCH_SETANDFINDPREV       (IDM_SEARCH + 49)
@@ -265,7 +267,7 @@
     #define    IDM_VIEW_DRAWTABBAR_TOPBAR         (IDM_VIEW + 7)
     #define    IDM_VIEW_DRAWTABBAR_INACIVETAB     (IDM_VIEW + 8)
     #define    IDM_VIEW_POSTIT                    (IDM_VIEW + 9)
-    #define    IDM_VIEW_TOGGLE_FOLDALL            (IDM_VIEW + 10)
+    #define    IDM_VIEW_FOLDALL                   (IDM_VIEW + 10)
     #define    IDM_VIEW_DISTRACTIONFREE           (IDM_VIEW + 11)
     #define    IDM_VIEW_LINENUMBER                (IDM_VIEW + 12)
     #define    IDM_VIEW_SYMBOLMARGIN              (IDM_VIEW + 13)
@@ -284,7 +286,7 @@
     #define    IDM_VIEW_EOL                       (IDM_VIEW + 26)
     #define    IDM_VIEW_TOOLBAR_REDUCE_SET2       (IDM_VIEW + 27)
     #define    IDM_VIEW_TOOLBAR_ENLARGE_SET2      (IDM_VIEW + 28)
-    #define    IDM_VIEW_TOGGLE_UNFOLDALL          (IDM_VIEW + 29)
+    #define    IDM_VIEW_UNFOLDALL                 (IDM_VIEW + 29)
     #define    IDM_VIEW_FOLD_CURRENT              (IDM_VIEW + 30)
     #define    IDM_VIEW_UNFOLD_CURRENT            (IDM_VIEW + 31)
     #define    IDM_VIEW_FULLSCREENTOGGLE          (IDM_VIEW + 32)
@@ -300,11 +302,11 @@
     #define    IDM_VIEW_HIDELINES                 (IDM_VIEW + 42)
     #define    IDM_VIEW_DRAWTABBAR_VERTICAL       (IDM_VIEW + 43)
     #define    IDM_VIEW_DRAWTABBAR_MULTILINE      (IDM_VIEW + 44)
-    #define    IDM_VIEW_DOCCHANGEMARGIN           (IDM_VIEW + 45)
-    #define    IDM_VIEW_LWDEF					  (IDM_VIEW + 46)
-    #define    IDM_VIEW_LWALIGN					  (IDM_VIEW + 47)
-    #define    IDM_VIEW_LWINDENT				  (IDM_VIEW + 48)
-    #define    IDM_VIEW_SUMMARY 				  (IDM_VIEW + 49)
+    //#define    IDM_VIEW_DOCCHANGEMARGIN           (IDM_VIEW + 45)
+    #define    IDM_VIEW_LWDEF                     (IDM_VIEW + 46)
+    #define    IDM_VIEW_LWALIGN                   (IDM_VIEW + 47)
+    #define    IDM_VIEW_LWINDENT                  (IDM_VIEW + 48)
+    #define    IDM_VIEW_SUMMARY                   (IDM_VIEW + 49)
 
     #define    IDM_VIEW_FOLD                      (IDM_VIEW + 50)
         #define    IDM_VIEW_FOLD_1    (IDM_VIEW_FOLD + 1)
@@ -339,24 +341,24 @@
 	#define    IDM_VIEW_FUNC_LIST                 (IDM_VIEW + 84)
 	#define    IDM_VIEW_FILEBROWSER               (IDM_VIEW + 85)
 
-	#define	   IDM_VIEW_TAB1					  (IDM_VIEW + 86)
-	#define	   IDM_VIEW_TAB2					  (IDM_VIEW + 87)
-	#define	   IDM_VIEW_TAB3					  (IDM_VIEW + 88)
-	#define	   IDM_VIEW_TAB4					  (IDM_VIEW + 89)
-	#define	   IDM_VIEW_TAB5					  (IDM_VIEW + 90)
-	#define	   IDM_VIEW_TAB6					  (IDM_VIEW + 91)
-	#define	   IDM_VIEW_TAB7					  (IDM_VIEW + 92)
-	#define	   IDM_VIEW_TAB8					  (IDM_VIEW + 93)
-	#define	   IDM_VIEW_TAB9					  (IDM_VIEW + 94)
-	#define	   IDM_VIEW_TAB_NEXT				  (IDM_VIEW + 95)
-	#define	   IDM_VIEW_TAB_PREV				  (IDM_VIEW + 96)
+    #define    IDM_VIEW_TAB1                      (IDM_VIEW + 86)
+    #define    IDM_VIEW_TAB2                      (IDM_VIEW + 87)
+    #define    IDM_VIEW_TAB3                      (IDM_VIEW + 88)
+    #define    IDM_VIEW_TAB4                      (IDM_VIEW + 89)
+    #define    IDM_VIEW_TAB5                      (IDM_VIEW + 90)
+    #define    IDM_VIEW_TAB6                      (IDM_VIEW + 91)
+    #define    IDM_VIEW_TAB7                      (IDM_VIEW + 92)
+    #define    IDM_VIEW_TAB8                      (IDM_VIEW + 93)
+    #define    IDM_VIEW_TAB9                      (IDM_VIEW + 94)
+    #define    IDM_VIEW_TAB_NEXT                  (IDM_VIEW + 95)
+    #define    IDM_VIEW_TAB_PREV                  (IDM_VIEW + 96)
     #define    IDM_VIEW_MONITORING                (IDM_VIEW + 97)
-	#define	   IDM_VIEW_TAB_MOVEFORWARD			  (IDM_VIEW + 98)
-	#define	   IDM_VIEW_TAB_MOVEBACKWARD		  (IDM_VIEW + 99)
-	#define	   IDM_VIEW_IN_FIREFOX                (IDM_VIEW + 100)
-	#define	   IDM_VIEW_IN_CHROME                 (IDM_VIEW + 101)
-	#define	   IDM_VIEW_IN_EDGE	                  (IDM_VIEW + 102)
-	#define	   IDM_VIEW_IN_IE                     (IDM_VIEW + 103)
+    #define    IDM_VIEW_TAB_MOVEFORWARD           (IDM_VIEW + 98)
+    #define    IDM_VIEW_TAB_MOVEBACKWARD          (IDM_VIEW + 99)
+    #define    IDM_VIEW_IN_FIREFOX                (IDM_VIEW + 100)
+    #define    IDM_VIEW_IN_CHROME                 (IDM_VIEW + 101)
+    #define    IDM_VIEW_IN_EDGE                   (IDM_VIEW + 102)
+    #define    IDM_VIEW_IN_IE                     (IDM_VIEW + 103)
 
     #define    IDM_VIEW_SWITCHTO_PROJECT_PANEL_1  (IDM_VIEW + 104)
     #define    IDM_VIEW_SWITCHTO_PROJECT_PANEL_2  (IDM_VIEW + 105)
@@ -364,6 +366,13 @@
     #define    IDM_VIEW_SWITCHTO_FILEBROWSER      (IDM_VIEW + 107)
     #define    IDM_VIEW_SWITCHTO_FUNC_LIST        (IDM_VIEW + 108)
     #define    IDM_VIEW_SWITCHTO_DOCLIST          (IDM_VIEW + 109)
+
+    #define    IDM_VIEW_TAB_COLOUR_NONE           (IDM_VIEW + 110)
+    #define    IDM_VIEW_TAB_COLOUR_1              (IDM_VIEW + 111)
+    #define    IDM_VIEW_TAB_COLOUR_2              (IDM_VIEW + 112)
+    #define    IDM_VIEW_TAB_COLOUR_3              (IDM_VIEW + 113)
+    #define    IDM_VIEW_TAB_COLOUR_4              (IDM_VIEW + 114)
+    #define    IDM_VIEW_TAB_COLOUR_5              (IDM_VIEW + 115)
 
     #define    IDM_VIEW_GOTO_ANOTHER_VIEW        10001
     #define    IDM_VIEW_CLONE_TO_ANOTHER_VIEW    10002
@@ -497,7 +506,7 @@
     #define    IDM_LANG_R                  (IDM_LANG + 54)
     #define    IDM_LANG_JSP                (IDM_LANG + 55)
 	#define    IDM_LANG_COFFEESCRIPT       (IDM_LANG + 56)
-	#define    IDM_LANG_JSON		       (IDM_LANG + 57)
+    #define    IDM_LANG_JSON               (IDM_LANG + 57)
     #define    IDM_LANG_FORTRAN_77         (IDM_LANG + 58)
 	#define    IDM_LANG_BAANC              (IDM_LANG + 59)
     #define    IDM_LANG_SREC               (IDM_LANG + 60)
@@ -565,17 +574,17 @@
     #define    IDM_SETTING_PREFERENCE               (IDM_SETTING + 11)
     #define    IDM_SETTING_OPENPLUGINSDIR           (IDM_SETTING + 14)
     #define    IDM_SETTING_PLUGINADM                (IDM_SETTING + 15)
-    #define	   IDM_SETTING_SHORTCUT_MAPPER_MACRO	(IDM_SETTING + 16)
-	#define	   IDM_SETTING_SHORTCUT_MAPPER_RUN		(IDM_SETTING + 17)
-	#define	   IDM_SETTING_EDITCONTEXTMENU  	    (IDM_SETTING + 18)
+    #define    IDM_SETTING_SHORTCUT_MAPPER_MACRO    (IDM_SETTING + 16)
+    #define    IDM_SETTING_SHORTCUT_MAPPER_RUN      (IDM_SETTING + 17)
+    #define    IDM_SETTING_EDITCONTEXTMENU          (IDM_SETTING + 18)
 
 #define    IDM_TOOL  (IDM + 8500)
-	#define	   IDM_TOOL_MD5_GENERATE  	            (IDM_TOOL + 1)
-	#define	   IDM_TOOL_MD5_GENERATEFROMFILE  	    (IDM_TOOL + 2)
-	#define	   IDM_TOOL_MD5_GENERATEINTOCLIPBOARD  	(IDM_TOOL + 3)
-	#define	   IDM_TOOL_SHA256_GENERATE  	            (IDM_TOOL + 4)
-	#define	   IDM_TOOL_SHA256_GENERATEFROMFILE  	    (IDM_TOOL + 5)
-	#define	   IDM_TOOL_SHA256_GENERATEINTOCLIPBOARD  	(IDM_TOOL + 6)
+    #define    IDM_TOOL_MD5_GENERATE                    (IDM_TOOL + 1)
+    #define    IDM_TOOL_MD5_GENERATEFROMFILE            (IDM_TOOL + 2)
+    #define    IDM_TOOL_MD5_GENERATEINTOCLIPBOARD       (IDM_TOOL + 3)
+    #define    IDM_TOOL_SHA256_GENERATE                 (IDM_TOOL + 4)
+    #define    IDM_TOOL_SHA256_GENERATEFROMFILE         (IDM_TOOL + 5)
+    #define    IDM_TOOL_SHA256_GENERATEINTOCLIPBOARD    (IDM_TOOL + 6)
 
 #define    IDM_EXECUTE  (IDM + 9000)
 
@@ -585,3 +594,22 @@
     #define IDM_SYSTRAYPOPUP_NEW_AND_PASTE    (IDM_SYSTRAYPOPUP + 3)
     #define IDM_SYSTRAYPOPUP_OPENFILE         (IDM_SYSTRAYPOPUP + 4)
     #define IDM_SYSTRAYPOPUP_CLOSE            (IDM_SYSTRAYPOPUP + 5)
+
+#define IDR_WINDOWS_MENU 11000
+    #define  IDM_WINDOW_WINDOWS   	(IDR_WINDOWS_MENU + 1)
+    #define  IDM_WINDOW_SORT_FN_ASC	(IDR_WINDOWS_MENU + 2)
+    #define  IDM_WINDOW_SORT_FN_DSC	(IDR_WINDOWS_MENU + 3)
+    #define  IDM_WINDOW_SORT_FP_ASC	(IDR_WINDOWS_MENU + 4)
+    #define  IDM_WINDOW_SORT_FP_DSC	(IDR_WINDOWS_MENU + 5)
+    #define  IDM_WINDOW_SORT_FT_ASC	(IDR_WINDOWS_MENU + 6)
+    #define  IDM_WINDOW_SORT_FT_DSC	(IDR_WINDOWS_MENU + 7)
+    #define  IDM_WINDOW_SORT_FS_ASC	(IDR_WINDOWS_MENU + 8)
+    #define  IDM_WINDOW_SORT_FS_DSC	(IDR_WINDOWS_MENU + 9)
+    #define  IDM_WINDOW_MRU_FIRST 	(IDR_WINDOWS_MENU + 20)
+    #define  IDM_WINDOW_MRU_LIMIT 	(IDR_WINDOWS_MENU + 59)
+    #define  IDM_WINDOW_COPY_NAME 	(IDM_WINDOW_MRU_LIMIT + 1)
+    #define  IDM_WINDOW_COPY_PATH 	(IDM_WINDOW_MRU_LIMIT + 2)
+
+#define IDR_DROPLIST_MENU 14000
+    #define    IDM_DROPLIST_LIST           (IDR_DROPLIST_MENU + 1)
+    #define    IDM_DROPLIST_MRU_FIRST      (IDR_DROPLIST_MENU + 20)
