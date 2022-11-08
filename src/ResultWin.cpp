@@ -1138,7 +1138,7 @@ void ResultWin::releaseKeys()
     inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
 
     inputs[3].type = INPUT_MOUSE;
-    inputs[3].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    inputs[3].mi.dwFlags = GetSystemMetrics(SM_SWAPBUTTON) ? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP;
 
     SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
 }
