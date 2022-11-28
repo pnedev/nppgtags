@@ -1599,9 +1599,6 @@ void ResultWin::onHotspotClick(SCNotification* notify)
     }
 
     openItem(lineNum, matchNum);
-
-    // Clear false selection in results win when visiting result location
-    sendSci(SCI_GOTOPOS, notify->position);
 }
 
 
