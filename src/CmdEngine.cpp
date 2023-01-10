@@ -179,13 +179,15 @@ unsigned CmdEngine::start()
     }
     else if (!errorPipe.GetOutput().empty())
     {
-        _cmd->SetResult(errorPipe.GetOutput());
-
         if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
         {
+            _cmd->SetResult(errorPipe.GetOutput());
             _cmd->_status = FAILED;
             return 1;
         }
+
+        if (_cmd->Db()->GetConfig()._parserIdx == DbConfig::DEFAULT_PARSER)
+            _cmd->SetResult(errorPipe.GetOutput());
     }
 
     _cmd->_status = OK;
