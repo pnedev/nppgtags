@@ -186,7 +186,7 @@ unsigned CmdEngine::start()
             return 1;
         }
 
-        if (_cmd->Db()->GetConfig()._parserIdx == DbConfig::DEFAULT_PARSER)
+        if (_cmd->_id == CREATE_DATABASE)
             _cmd->SetResult(errorPipe.GetOutput());
     }
 
