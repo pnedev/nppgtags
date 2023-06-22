@@ -112,6 +112,8 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     if (_hWnd == NULL)
         return NULL;
 
+    INpp::Get().RegisterWinForDarkMode(_hWnd);
+
     GetClientRect(_hWnd, &win);
 
     style = WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_NOOLEDRAGDROP;

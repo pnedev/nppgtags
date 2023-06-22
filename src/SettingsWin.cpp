@@ -254,6 +254,8 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     if (_hWnd == NULL)
         return NULL;
 
+    INpp::Get().RegisterWinForDarkMode(_hWnd);
+
     GetClientRect(_hWnd, &win);
     const int totalWidth = win.right - win.left;
 

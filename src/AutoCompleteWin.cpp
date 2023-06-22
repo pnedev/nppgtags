@@ -134,6 +134,8 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     if (_hWnd == NULL)
         return NULL;
 
+    INpp::Get().RegisterWinForDarkMode(_hWnd);
+
     GetClientRect(_hWnd, &win);
 
     _hLVWnd = CreateWindow(WC_LISTVIEW, NULL, WS_CHILD | WS_VISIBLE |

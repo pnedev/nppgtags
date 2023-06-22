@@ -96,6 +96,11 @@ public:
         return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE, NPPPLUGINMENU, 0);
     }
 
+    inline void RegisterWinForDarkMode(HWND hWnd) const
+    {
+        SendMessage(_nppData._nppHandle, NPPM_DARKMODESUBCLASSANDTHEME, (WPARAM)NppDarkMode::dmfInit, (LPARAM)hWnd);
+    }
+
     inline void RegisterWin(HWND hWnd) const
     {
         SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG, MODELESSDIALOGADD, (LPARAM)hWnd);

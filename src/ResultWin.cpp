@@ -497,7 +497,7 @@ HWND ResultWin::Register()
         return NULL;
     }
 
-    tTbData data        = {0};
+    tTbData data;
     data.hClient        = RW->_hWnd;
     data.pszName        = const_cast<TCHAR*>(cPluginName);
     data.uMask          = 0;
@@ -905,6 +905,8 @@ HWND ResultWin::composeWindow()
     if (_hWnd == NULL)
         return NULL;
 
+    npp.RegisterWinForDarkMode(_hWnd);
+
     _hSci = npp.CreateSciHandle(_hWnd);
     if (_hSci)
     {
@@ -957,6 +959,8 @@ void ResultWin::createSearchWindow()
 void ResultWin::onSearchWindowCreate(HWND hWnd)
 {
     _hSearch = hWnd;
+
+    INpp::Get().RegisterWinForDarkMode(_hSearch);
 
     HDC hdc = GetWindowDC(_hSearch);
 

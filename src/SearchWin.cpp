@@ -163,6 +163,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
     if (_hWnd == NULL)
         return NULL;
 
+    INpp::Get().RegisterWinForDarkMode(_hWnd);
+
     GetClientRect(_hWnd, &win);
     width = (win.right - win.left - 20) / 3;
 

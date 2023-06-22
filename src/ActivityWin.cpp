@@ -190,6 +190,8 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     if (_hWnd == NULL)
         return NULL;
 
+    INpp::Get().RegisterWinForDarkMode(_hWnd);
+
     if (WindowList.empty())
     {
         HWND hParent = INpp::Get().GetHandle();
