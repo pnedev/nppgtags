@@ -263,6 +263,95 @@ void halfComplCB(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
+std::string ws2s(const std::wstring& wstr)
+{
+    int size_needed = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), int(wstr.length() + 1), 0, 0, 0, 0);
+    std::string strTo(size_needed, 0);
+    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), int(wstr.length() + 1), &strTo[0], size_needed, 0, 0);
+    return strTo;
+}
+
+/**
+ *  \brief
+ */
+void sciAutoComplCB(const CmdPtr_t& cmd)
+{
+    DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == OK && cmd->Result())
+    {
+        size_t size = cmd->Parser()->GetList().size();
+        if (size == 0)
+            return;
+
+        std::string wList;
+        int i = 0;
+        for (const auto& complEntry : cmd->Parser()->GetList())
+        {
+            wList += ws2s(complEntry).c_str();
+            i++;
+            if (i < size)
+                wList += " ";
+        }
+
+        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
+        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, true, 0);
+        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, cmd->Tag().Len(), (LPARAM) wList.c_str());
+
+        return;
+    }
+
+    INpp::Get().ClearSelection();
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void sciHalfComplCB(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() == OK)
+    {
+        cmd->Id(AUTOCOMPLETE_SYMBOL);
+
+        ParserPtr_t parser(new LineParser);
+        cmd->Parser(parser);
+
+        CmdEngine::Run(cmd, sciAutoComplCB);
+        return;
+    }
+
+    DbManager::Get().PutDb(cmd->Db());
+
+    INpp::Get().ClearSelection();
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void findCB(const CmdPtr_t& cmd)
 {
     if (cmd->Status() == OK && cmd->Result() == NULL)
@@ -1022,6 +1111,29 @@ void OnFileDelete(const CPath& file)
     {
         OnFileChange(file);
     }
+}
+
+
+/**
+ *  \brief
+ */
+void SciAutoComplete()
+{
+    // Need better way to get selection - this is visible (and slow) while typing
+    // Fast typing "overlaps" with the selection and ends up overwriting / deleting the temporary selection
+    // Even with the ClearSelection() call right after it
+    CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
+    INpp::Get().ClearSelection();
+    if (tag.IsEmpty())
+        return;
+
+    DbHandle db = getDatabase();
+    if (!db)
+        return;
+
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.C_str(), GTagsSettings._ic));
+
+    CmdEngine::Run(cmd, sciHalfComplCB);
 }
 
 } // namespace GTags
