@@ -47,6 +47,11 @@ public:
 
     static void Show(const CmdPtr_t& cmd);
 
+    static bool IsShown()
+    {
+        return (ACW != nullptr);
+    }
+
     AutoCompleteWin(const CmdPtr_t& cmd);
     AutoCompleteWin(const AutoCompleteWin&);
     ~AutoCompleteWin();

@@ -241,7 +241,10 @@ void dbWriteCB(const CmdPtr_t& cmd)
     }
 
     if (cmd->Status() == OK)
+    {
+        NoDBFound = false;
         ResultWin::NotifyDBUpdate(cmd);
+    }
 }
 
 
@@ -284,19 +287,28 @@ void halfAboutCB(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void AutoComplete()
+void autoComplete(bool autorun)
 {
     CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
         return;
 
-    DbHandle db = getDatabase();
+    DbHandle db = getDatabase(false, autorun);
     if (!db)
         return;
 
-    CmdPtr_t cmd = std::make_shared<Cmd>(AUTOCOMPLETE, db, nullptr, tag.C_str(), GTagsSettings._ic);
+    CmdPtr_t cmd = std::make_shared<Cmd>(AUTOCOMPLETE, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
 
     CmdEngine::Run(cmd, halfComplCB);
+}
+
+
+/**
+ *  \brief
+ */
+void AutoComplete()
+{
+    autoComplete(false);
 }
 
 
@@ -676,6 +688,8 @@ void SettingsCfg()
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
     }
 
+    NoDBFound = false;
+
     SettingsWin::Show();
 }
 
@@ -730,6 +744,8 @@ HWND MainWndH = NULL;
 
 Settings GTagsSettings;
 
+bool NoDBFound = false;
+
 
 /**
  *  \brief
@@ -772,6 +788,10 @@ DbHandle getDatabase(bool writeEn, bool skipDialogs)
             CmdPtr_t cmd = std::make_shared<Cmd>(CREATE_DATABASE, db);
 
             CmdEngine::Run(cmd, dbWriteCB);
+        }
+        else
+        {
+            NoDBFound = true;
         }
 
         return NULL;
@@ -1054,6 +1074,17 @@ void OnFileDelete(const CPath& file)
     {
         OnFileChange(file);
     }
+}
+
+
+
+/**
+ *  \brief
+ */
+void OnUserInput()
+{
+    if (!AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= 3))
+        autoComplete(true);
 }
 
 } // namespace GTags

@@ -66,6 +66,8 @@ class Settings;
 
 extern Settings GTagsSettings;
 
+extern bool NoDBFound;
+
 
 DbHandle getDatabase(bool writeEn = false, bool skipDialogs = false);
 DbHandle getDatabaseAt(const CPath& dbPath);
@@ -81,5 +83,6 @@ void OnFileChangeCancel();
 void OnFileChange(const CPath& file);
 void OnFileRename(const CPath& file);
 void OnFileDelete(const CPath& file);
+void OnUserInput();
 
 } // namespace GTags

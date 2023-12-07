@@ -68,8 +68,8 @@ class Cmd
 public:
     static const TCHAR* CmdName[];
 
-    Cmd(CmdId_t id, DbHandle db = nullptr, ParserPtr_t parser = nullptr,
-            const TCHAR* tag = nullptr, bool ignoreCase = false, bool regExp = false);
+    Cmd(CmdId_t id, DbHandle db = NULL, ParserPtr_t parser = ParserPtr_t(NULL),
+            const TCHAR* tag = NULL, bool ignoreCase = false, bool regExp = false, bool autorun = false);
     ~Cmd() {}
 
     inline void Id(CmdId_t id) { _id = id; }
@@ -90,6 +90,8 @@ public:
 
     inline void IgnoreCase(bool ic) { _ignoreCase = ic; }
     inline bool IgnoreCase() const { return _ignoreCase; }
+
+    inline bool IsAutorun() const { return _autorun; }
 
     inline void SkipLibs(bool skipLibs) { _skipLibs = skipLibs; }
     inline bool SkipLibs() const { return _skipLibs; }
@@ -117,6 +119,7 @@ private:
     ParserPtr_t         _parser;
     bool                _ignoreCase;
     bool                _regExp;
+    bool                _autorun; // Used only for AutoComplete command to distinguish between auto and manual run
     bool                _skipLibs;
 
     CmdStatus_t         _status;

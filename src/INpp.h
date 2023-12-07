@@ -260,6 +260,11 @@ public:
         return (bool)SendMessage(_hSC, SCI_SELECTIONISRECTANGLE, 0, 0);
     }
 
+    inline bool IsMultiSelection() const
+    {
+        return (SendMessage(_hSC, SCI_GETSELECTIONS, 0, 0) != 1);
+    }
+
     inline intptr_t GetSelectionSize() const
     {
         return SendMessage(_hSC, SCI_GETSELTEXT, 0, 0) + 1;
@@ -288,6 +293,11 @@ public:
         SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
     }
 
+    inline bool IsRangeWord(intptr_t startPos, intptr_t endPos) const
+    {
+        return SendMessage(_hSC, SCI_ISRANGEWORD, startPos, endPos);
+    }
+
     inline void ClearSelection() const
     {
         intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
@@ -303,10 +313,17 @@ public:
     void SetView(intptr_t startPos, intptr_t endPos = 0) const;
 
     intptr_t GetWordSize(bool partial = false) const;
-    void GetWord(CTextA& word, bool partial = false, bool select = false) const;
+    intptr_t GetWord(CTextA& word, bool partial = false, bool select = false) const;
     void ReplaceWord(const char* replText, bool partial = false) const;
     bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
             intptr_t* startPos = NULL, intptr_t* endPos = NULL) const;
+
+    inline bool IsPreviousCharWordEnd()
+    {
+        const intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0) - 1;
+
+        return (currPos > 0) && (SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true) == currPos);
+    }
 
     inline void Backspace() const
     {
