@@ -342,7 +342,7 @@ void halfAboutCB(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
-void AutoComplete()
+void autoComplete(bool autorun)
 {
     CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
     if (tag.IsEmpty())
@@ -352,9 +352,18 @@ void AutoComplete()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.C_str(), GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.C_str(), GTagsSettings._ic, false, autorun));
 
     CmdEngine::Run(cmd, halfComplCB);
+}
+
+
+/**
+ *  \brief
+ */
+void AutoComplete()
+{
+    autoComplete(false);
 }
 
 
@@ -1022,6 +1031,17 @@ void OnFileDelete(const CPath& file)
     {
         OnFileChange(file);
     }
+}
+
+
+
+/**
+ *  \brief
+ */
+void OnUserInput()
+{
+    if (!AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) > 2))
+        autoComplete(true);
 }
 
 } // namespace GTags

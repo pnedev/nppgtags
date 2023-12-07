@@ -100,7 +100,8 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _ic(cmd->IgnoreCase()),
-    _cmdTagLen((int)(_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())), _completion(cmd->Parser())
+    _cmdTagLen((int)(cmd->Id() == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())),
+    _completion(cmd->Parser())
 {}
 
 
@@ -331,18 +332,21 @@ void AutoCompleteWin::onDblClick()
  */
 bool AutoCompleteWin::onKeyDown(int keyCode)
 {
+    bool closeWin = false;
+
     switch (keyCode)
     {
         case VK_UP:
         case VK_DOWN:
         return false;
 
-        case VK_SPACE:
         case VK_TAB:
         case VK_RETURN:
             onDblClick();
         return true;
 
+        case VK_LEFT:
+        case VK_RIGHT:
         case VK_ESCAPE:
         case VK_CONTROL:
         case VK_MENU:
@@ -367,6 +371,11 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         }
         break;
 
+        case VK_SPACE:
+            closeWin = true;
+            PostMessage(_hWnd, WM_CLOSE, 0, 0);
+            // Intentional fall-through
+
         default:
         {
             BYTE keysState[256];
@@ -382,6 +391,9 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
             npp.AddText((char*)&character, 1);
         }
     }
+
+    if (closeWin)
+        return true;
 
     CTextA wordA;
     INpp::Get().GetWord(wordA, true, true);

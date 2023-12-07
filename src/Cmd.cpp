@@ -49,9 +49,9 @@ const TCHAR* Cmd::CmdName[] = {
  *  \brief
  */
 Cmd::Cmd(CmdId_t id, DbHandle db, ParserPtr_t parser,
-        const TCHAR* tag, bool ignoreCase, bool regExp) :
+        const TCHAR* tag, bool ignoreCase, bool regExp, bool autorun) :
         _id(id), _db(db), _parser(parser),
-        _ignoreCase(ignoreCase), _regExp(regExp), _skipLibs(false), _status(CANCELLED)
+        _ignoreCase(ignoreCase), _regExp(regExp), _autorun(autorun), _skipLibs(false), _status(CANCELLED)
 {
     if (tag)
         _tag = tag;

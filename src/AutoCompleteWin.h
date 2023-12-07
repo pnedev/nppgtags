@@ -46,6 +46,11 @@ public:
 
     static void Show(const CmdPtr_t& cmd);
 
+    static bool IsShown()
+    {
+        return (ACW != NULL);
+    }
+
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;

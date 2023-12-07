@@ -210,7 +210,8 @@ unsigned CmdEngine::start()
             }
         }
         // Blink the auto-complete word to inform the user if nothing is found
-        else if (_cmd->_id == AUTOCOMPLETE || _cmd->_id == AUTOCOMPLETE_FILE || _cmd->_id == AUTOCOMPLETE_SYMBOL)
+        else if (_cmd->_id == AUTOCOMPLETE_FILE ||
+                ((_cmd->_id == AUTOCOMPLETE || _cmd->_id == AUTOCOMPLETE_SYMBOL) && !_cmd->_autorun))
         {
             CTextA wordA;
             INpp::Get().GetWord(wordA, true, true);

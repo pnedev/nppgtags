@@ -75,6 +75,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
 {
     switch (notifyCode->nmhdr.code)
     {
+        case SCN_CHARADDED:
+        {
+            if (notifyCode->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT)
+                GTags::OnUserInput();
+        }
+        break;
+
         case NPPN_FILESAVED:
         {
             CPath file;
