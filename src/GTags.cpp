@@ -116,7 +116,7 @@ CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
     if (hSci)
         npp.SetSciHandle(hSci);
 
-    if (npp.IsSelectionVertical())
+    if (npp.IsMultiSelection() || npp.IsSelectionVertical())
     {
         if (hSci)
             npp.SetSciHandle(nppHSci);

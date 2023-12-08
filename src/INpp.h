@@ -254,6 +254,11 @@ public:
         return (bool)SendMessage(_hSC, SCI_SELECTIONISRECTANGLE, 0, 0);
     }
 
+    inline bool IsMultiSelection() const
+    {
+        return (SendMessage(_hSC, SCI_GETSELECTIONS, 0, 0) != 1);
+    }
+
     inline intptr_t GetSelectionSize() const
     {
         return SendMessage(_hSC, SCI_GETSELTEXT, 0, 0) + 1;
