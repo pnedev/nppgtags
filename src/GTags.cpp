@@ -314,8 +314,6 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
         return;
     }
 
-    INpp::Get().ClearSelection();
-
     if (cmd->Status() == FAILED)
     {
         CText msg(cmd->Result());
@@ -346,8 +344,6 @@ void sciHalfComplCB(const CmdPtr_t& cmd)
     }
 
     DbManager::Get().PutDb(cmd->Db());
-
-    INpp::Get().ClearSelection();
 
     if (cmd->Status() == FAILED)
     {
@@ -1158,6 +1154,9 @@ void SciAutoComplete()
 	tr.chrg.cpMax = endPos;
 	tr.lpstrText  = tagStr;
     ::SendMessage(INpp::Get().GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
+
+    if (strlen(tagStr) == 0)
+        return;
 
     std::wstring tag = s2ws(tagStr);
 
