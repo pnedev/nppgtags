@@ -58,6 +58,45 @@ constexpr int MIN_NOTEPADPP_VERSION = ((MIN_NOTEPADPP_VERSION_MAJOR << 16) | MIN
 std::unique_ptr<CPath>  ChangedFile;
 bool                    DeInitCOM = false;
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+#define REGIMGIDL 22680
+const char *xpmGtL[] = {
+/* columns rows colors chars-per-pixel */
+    "16 16 14 1 ",
+    "  c #000000",
+    ". c #800000",
+    "X c #FF0000",
+    "o c #008000",
+    "O c #00FF00",
+    "+ c #808000",
+    "@ c #FFFF00",
+    "# c #000080",
+    "$ c #0000FF",
+    "% c #800080",
+    "& c #008080",
+    "* c #808080",
+    "= c #C0C0C0",
+    "- c None",
+    /* pixels */
+    "-----=*=**=-----",
+    "----#O$&&&$ =---",
+    "--=@$$OOoOO$o---",
+    "-=@#**&&&&$O$O=-",
+    "-+@+=#%%$$$$$$o-",
+    "=@*++%$%$$$$$$&*",
+    "*@@=#$#%X$$$$$$=",
+    "-@*+=+$*$$$$$$$=",
+    "=@+@%*&$$$$$$$$=",
+    "=@=**$=*$&$$&$$=",
+    "-+%+@+$%&&*&$$$*",
+    "-=$&+*++%*$$$$o-",
+    "-=+$*+%@.%*$$&*-",
+    "---$$*%$*$$$&o--",
+    "---=$$$$$$$#=---",
+    "------*=*==-----"
+};
+
 
 /**
  *  \brief
@@ -305,13 +344,17 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
         for (const auto& complEntry : cmd->Parser()->GetList())
         {
             wList += ws2s(complEntry).c_str();
+            wList += '\x1E';
+            wList += STR(REGIMGIDL);
             i++;
             if (i < size)
                 wList += " ";
         }
 
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
+        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETTYPESEPARATOR, WPARAM('\x1E'), 0 );
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, true, 0);
+        SendMessage(INpp::Get().GetSciHandle(), SCI_REGISTERIMAGE, REGIMGIDL, (LPARAM)xpmGtL);
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, cmd->Tag().Len(), (LPARAM) wList.c_str());
 
         return;
