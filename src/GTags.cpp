@@ -271,11 +271,25 @@ std::string ws2s(const std::wstring& wstr)
     return strTo;
 }
 
+
+/**
+ *  \brief
+ */
+std::wstring s2ws(const std::string& str)
+{
+    int size_needed = MultiByteToWideChar(CP_ACP, 0, str.c_str(), int(str.length() + 1), 0, 0);
+    std::wstring strTo(size_needed, 0);
+    MultiByteToWideChar(CP_ACP, 0, str.c_str(), int(str.length() + 1), &strTo[0], size_needed);
+    return strTo;
+}
+
+
 /**
  *  \brief
  */
 void sciAutoComplCB(const CmdPtr_t& cmd)
 {
+    INpp::Get().ClearSelection();
     DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == OK && cmd->Result())
@@ -321,6 +335,7 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
  */
 void sciHalfComplCB(const CmdPtr_t& cmd)
 {
+    INpp::Get().ClearSelection();
     if (cmd->Status() == OK)
     {
         cmd->Id(AUTOCOMPLETE_SYMBOL);
@@ -1122,17 +1137,35 @@ void SciAutoComplete()
     // Need better way to get selection - this is visible (and slow) while typing
     // Fast typing "overlaps" with the selection and ends up overwriting / deleting the temporary selection
     // Even with the ClearSelection() call right after it
-    CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
-    INpp::Get().ClearSelection();
-    if (tag.IsEmpty())
+    // CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
+    // INpp::Get().ClearSelection();
+    // if (tag.IsEmpty())
+        // return;
+
+    Sci_Position curPos, startPos, endPos;
+    char tagStr[32 + 1] = { 0 };
+
+    curPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_GETCURRENTPOS, 0, 0));
+    startPos = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDSTARTPOSITION, curPos, ( LPARAM )true));
+    endPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDENDPOSITION, curPos, ( LPARAM )true));
+    if ( (endPos - startPos) > 32 )
         return;
+
+    Sci_TextRangeFull tr;
+	tr.chrg.cpMin = startPos;
+	tr.chrg.cpMax = endPos;
+	tr.lpstrText  = tagStr;
+    ::SendMessage(INpp::Get().GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
+
+    std::wstring tag = s2ws(tagStr);
 
     DbHandle db = getDatabase();
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.C_str(), GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.c_str(), GTagsSettings._ic));
 
+    INpp::Get().ClearSelection();
     CmdEngine::Run(cmd, sciHalfComplCB);
 }
 
