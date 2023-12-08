@@ -147,7 +147,7 @@ void dbWriteCB(const CmdPtr_t& cmd);
 /**
  *  \brief
  */
-DbHandle getDatabase(bool writeEn = false)
+DbHandle getDatabase(bool writeEn = false, bool createDb = true)
 {
     INpp& npp = INpp::Get();
     bool success;
@@ -159,6 +159,9 @@ DbHandle getDatabase(bool writeEn = false)
     // Search default database for read operations (if no local DB found and default is configured to be used)
     if (!db && !writeEn && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
         db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, writeEn, &success);
+
+    if (!createDb)
+        return db;
 
     if (!db)
     {
@@ -1139,21 +1142,13 @@ void SciAutoComplete()
     Sci_Position curPos, startPos, endPos;
     char tagStr[32 + 1] = { 0 };
 
-    bool success;
-    INpp& npp = INpp::Get();
-    CPath currentFile;
-    npp.GetFilePath(currentFile);
-    DbHandle db = DbManager::Get().GetDb(currentFile, false, &success);
-    // Search default database for read operations (if no local DB found and default is configured to be used)
-    if (!db && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
-        db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, false, &success);
-
+    DbHandle db = getDatabase(false, false);
     if (!db)
         return;
 
-    curPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_GETCURRENTPOS, 0, 0));
-    startPos = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDSTARTPOSITION, curPos, (LPARAM)true));
-    endPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDENDPOSITION, curPos, (LPARAM)true));
+    curPos   = static_cast<Sci_Position>(INpp::Get().GetPos());
+    startPos = static_cast<Sci_Position>(INpp::Get().GetWordStartPos(curPos));
+    endPos   = static_cast<Sci_Position>(INpp::Get().GetWordEndPos(curPos));
     if ((endPos - startPos) > 32)
         return;
 
