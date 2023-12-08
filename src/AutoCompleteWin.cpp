@@ -332,8 +332,6 @@ void AutoCompleteWin::onDblClick()
  */
 bool AutoCompleteWin::onKeyDown(int keyCode)
 {
-    bool closeWin = false;
-
     switch (keyCode)
     {
         case VK_UP:
@@ -371,11 +369,6 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         }
         break;
 
-        case VK_SPACE:
-            closeWin = true;
-            PostMessage(_hWnd, WM_CLOSE, 0, 0);
-            // Intentional fall-through
-
         default:
         {
             BYTE keysState[256];
@@ -392,32 +385,36 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         }
     }
 
-    if (closeWin)
-        return true;
+    if (!INpp::Get().IsPreviousCharWordEnd())
+    {
+        CTextA wordA;
+        INpp::Get().GetWord(wordA, true, true);
+        CText word(wordA.C_str());
+        int lvItemsCnt = filterLV(word);
 
-    CTextA wordA;
-    INpp::Get().GetWord(wordA, true, true);
-    CText word(wordA.C_str());
-    int lvItemsCnt = filterLV(word);
+        if (lvItemsCnt == 0)
+        {
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        }
+        else if (lvItemsCnt == 1)
+        {
+            TCHAR itemTxt[MAX_PATH];
+            LVITEM lvItem       = {0};
+            lvItem.mask         = LVIF_TEXT;
+            lvItem.iItem        = ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED);
+            lvItem.pszText      = itemTxt;
+            lvItem.cchTextMax   = _countof(itemTxt);
 
-    if (lvItemsCnt == 0)
+            ListView_GetItem(_hLVWnd, &lvItem);
+            lvItem.pszText[lvItem.cchTextMax - 1] = 0;
+
+            if (!_tcscmp(word.C_str(), lvItem.pszText))
+                SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        }
+    }
+    else
     {
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
-    }
-    else if (lvItemsCnt == 1)
-    {
-        TCHAR itemTxt[MAX_PATH];
-        LVITEM lvItem       = {0};
-        lvItem.mask         = LVIF_TEXT;
-        lvItem.iItem        = ListView_GetNextItem(_hLVWnd, -1, LVNI_SELECTED);
-        lvItem.pszText      = itemTxt;
-        lvItem.cchTextMax   = _countof(itemTxt);
-
-        ListView_GetItem(_hLVWnd, &lvItem);
-        lvItem.pszText[lvItem.cchTextMax - 1] = 0;
-
-        if (!_tcscmp(word.C_str(), lvItem.pszText))
-            SendMessage(_hWnd, WM_CLOSE, 0, 0);
     }
 
     return true;

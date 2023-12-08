@@ -312,6 +312,13 @@ public:
     bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
             intptr_t* startPos = NULL, intptr_t* endPos = NULL) const;
 
+    inline bool IsPreviousCharWordEnd()
+    {
+        const intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0) - 1;
+
+        return (currPos > 0) && (SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true) == currPos);
+    }
+
     inline void Backspace() const
     {
         SendMessage(_hSC, SCI_DELETEBACK, 0, 0);

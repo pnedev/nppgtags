@@ -52,6 +52,7 @@ intptr_t INpp::GetWord(CTextA& word, bool partial, bool select) const
     intptr_t wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
     intptr_t len = wordEnd - wordStart;
+
     if (len == 0)
     {
         word.Clear();
