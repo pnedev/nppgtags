@@ -299,6 +299,16 @@ public:
         return SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     }
 
+    inline intptr_t GetWordStartPos(intptr_t currPos, bool onlyWord = true) const
+    {
+        return SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, onlyWord);
+    }
+
+    inline intptr_t GetWordEndPos(intptr_t currPos, bool onlyWord = true) const
+    {
+        return SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, onlyWord);
+    }
+
     void EnsureCurrentLineVisible() const;
     void SetView(intptr_t startPos, intptr_t endPos = 0) const;
 
