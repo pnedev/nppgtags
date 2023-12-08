@@ -287,6 +287,11 @@ public:
         SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
     }
 
+    inline bool IsRangeWord(intptr_t startPos, intptr_t endPos) const
+    {
+        return SendMessage(_hSC, SCI_ISRANGEWORD, startPos, endPos);
+    }
+
     inline void ClearSelection() const
     {
         intptr_t currPos = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
