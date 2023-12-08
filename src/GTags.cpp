@@ -289,7 +289,6 @@ std::wstring s2ws(const std::string& str)
  */
 void sciAutoComplCB(const CmdPtr_t& cmd)
 {
-    INpp::Get().ClearSelection();
     DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == OK && cmd->Result())
@@ -335,10 +334,9 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
  */
 void sciHalfComplCB(const CmdPtr_t& cmd)
 {
-    INpp::Get().ClearSelection();
     if (cmd->Status() == OK)
     {
-        cmd->Id(AUTOCOMPLETE_SYMBOL);
+        cmd->Id(AUTOCOMPLETE_SCINTILLA_SYMBOL);
 
         ParserPtr_t parser(new LineParser);
         cmd->Parser(parser);
@@ -1145,10 +1143,14 @@ void SciAutoComplete()
     Sci_Position curPos, startPos, endPos;
     char tagStr[32 + 1] = { 0 };
 
+    DbHandle db = getDatabase();
+    if (!db)
+        return;
+
     curPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_GETCURRENTPOS, 0, 0));
-    startPos = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDSTARTPOSITION, curPos, ( LPARAM )true));
-    endPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDENDPOSITION, curPos, ( LPARAM )true));
-    if ( (endPos - startPos) > 32 )
+    startPos = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDSTARTPOSITION, curPos, (LPARAM)true));
+    endPos   = static_cast<Sci_Position>(SendMessage(INpp::Get().GetSciHandle(), SCI_WORDENDPOSITION, curPos, (LPARAM)true));
+    if ((endPos - startPos) > 32)
         return;
 
     Sci_TextRangeFull tr;
@@ -1159,13 +1161,8 @@ void SciAutoComplete()
 
     std::wstring tag = s2ws(tagStr);
 
-    DbHandle db = getDatabase();
-    if (!db)
-        return;
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), GTagsSettings._ic));
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.c_str(), GTagsSettings._ic));
-
-    INpp::Get().ClearSelection();
     CmdEngine::Run(cmd, sciHalfComplCB);
 }
 
