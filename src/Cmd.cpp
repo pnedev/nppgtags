@@ -41,7 +41,9 @@ const TCHAR* Cmd::CmdName[] = {
     _T("Search in Source Files"),       // GREP
     _T("Search in Other Files"),        // GREP_TEXT
     _T("About"),                        // VERSION
-    _T("About CTags")                   // CTAGS_VERSION
+    _T("About CTags"),                  // CTAGS_VERSION
+    _T("AutoComplete Scintilla"),       // AUTOCOMPLETE_SCINTILLA
+    _T("AutoComplete Scintilla")        // AUTOCOMPLETE_SCINTILLA_SYMBOL
 };
 
 
