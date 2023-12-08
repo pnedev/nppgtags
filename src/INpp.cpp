@@ -45,7 +45,7 @@ intptr_t INpp::GetWordSize(bool partial) const
 /**
  *  \brief
  */
-void INpp::GetWord(CTextA& word, bool partial, bool select) const
+intptr_t INpp::GetWord(CTextA& word, bool partial, bool select) const
 {
     intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
     intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
@@ -55,7 +55,7 @@ void INpp::GetWord(CTextA& word, bool partial, bool select) const
     if (len == 0)
     {
         word.Clear();
-        return;
+        return len;
     }
 
     if (select)
@@ -72,6 +72,8 @@ void INpp::GetWord(CTextA& word, bool partial, bool select) const
 
     SendMessage(_hSC, SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
     word.AutoFit();
+
+    return len;
 }
 
 

@@ -297,7 +297,7 @@ public:
     void SetView(intptr_t startPos, intptr_t endPos = 0) const;
 
     intptr_t GetWordSize(bool partial = false) const;
-    void GetWord(CTextA& word, bool partial = false, bool select = false) const;
+    intptr_t GetWord(CTextA& word, bool partial = false, bool select = false) const;
     void ReplaceWord(const char* replText, bool partial = false) const;
     bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
             intptr_t* startPos = NULL, intptr_t* endPos = NULL) const;
