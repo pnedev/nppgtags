@@ -1139,7 +1139,15 @@ void SciAutoComplete()
     Sci_Position curPos, startPos, endPos;
     char tagStr[32 + 1] = { 0 };
 
-    DbHandle db = getDatabase();
+    bool success;
+    INpp& npp = INpp::Get();
+    CPath currentFile;
+    npp.GetFilePath(currentFile);
+    DbHandle db = DbManager::Get().GetDb(currentFile, false, &success);
+    // Search default database for read operations (if no local DB found and default is configured to be used)
+    if (!db && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
+        db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, false, &success);
+
     if (!db)
         return;
 
