@@ -66,6 +66,8 @@ class Settings;
 
 extern Settings GTagsSettings;
 
+extern bool DBNotFoundCache;
+
 
 DbHandle getDatabaseAt(const CPath& dbPath);
 void showResultCB(const CmdPtr_t& cmd);
@@ -81,5 +83,9 @@ void OnFileChange(const CPath& file);
 void OnFileRename(const CPath& file);
 void OnFileDelete(const CPath& file);
 void OnUserInput();
+
+inline void DBNotFoundSet()     { DBNotFoundCache = true; }
+inline void DBNotFoundClear()   { DBNotFoundCache = false; }
+inline bool IsDBNotFound()      { return DBNotFoundCache; }
 
 } // namespace GTags

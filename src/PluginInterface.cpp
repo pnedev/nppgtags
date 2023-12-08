@@ -77,9 +77,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     {
         case SCN_CHARADDED:
         {
-            if (notifyCode->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT)
+            if ((notifyCode->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT) && !GTags::IsDBNotFound())
                 GTags::OnUserInput();
         }
+        break;
+
+        case NPPN_BUFFERACTIVATED:
+            GTags::DBNotFoundClear();
         break;
 
         case NPPN_FILESAVED:

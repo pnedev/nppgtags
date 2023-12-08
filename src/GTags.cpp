@@ -147,7 +147,7 @@ void dbWriteCB(const CmdPtr_t& cmd);
 /**
  *  \brief
  */
-DbHandle getDatabase(bool writeEn = false)
+DbHandle getDatabase(bool writeEn = false, bool offerToCreate = true)
 {
     INpp& npp = INpp::Get();
     bool success;
@@ -165,23 +165,30 @@ DbHandle getDatabase(bool writeEn = false)
         if (writeEn)
         {
             MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
-            return db;
+            return NULL;
         }
 
-        int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\n\nDo you want to create it?"),
-                cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
-        if (choice != IDYES)
-            return db;
+        if (offerToCreate)
+        {
+            int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\n\nDo you want to create it?"),
+                    cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+            if (choice != IDYES)
+                return NULL;
 
-        currentFile.StripFilename();
+            currentFile.StripFilename();
 
-        if (!Tools::BrowseForFolder(npp.GetHandle(), currentFile))
-            return db;
+            if (!Tools::BrowseForFolder(npp.GetHandle(), currentFile))
+                return db;
 
-        db = DbManager::Get().RegisterDb(currentFile);
+            db = DbManager::Get().RegisterDb(currentFile);
 
-        CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
-        CmdEngine::Run(cmd, dbWriteCB);
+            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
+            CmdEngine::Run(cmd, dbWriteCB);
+        }
+        else
+        {
+            DBNotFoundSet();
+        }
 
         return NULL;
     }
@@ -299,7 +306,10 @@ void dbWriteCB(const CmdPtr_t& cmd)
     }
 
     if (cmd->Status() == OK)
+    {
+        DBNotFoundClear();
         ResultWin::NotifyDBUpdate(cmd);
+    }
 }
 
 
@@ -348,7 +358,7 @@ void autoComplete(bool autorun)
     if (tag.IsEmpty())
         return;
 
-    DbHandle db = getDatabase();
+    DbHandle db = getDatabase(false, !autorun);
     if (!db)
         return;
 
@@ -717,6 +727,8 @@ void SettingsCfg()
         MessageBox(INpp::Get().GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
     }
 
+    DBNotFoundClear();
+
     SettingsWin::Show();
 }
 
@@ -769,6 +781,8 @@ unsigned UIFontSize;
 HWND MainWndH = NULL;
 
 Settings GTagsSettings;
+
+bool DBNotFoundCache = false;
 
 
 /**
