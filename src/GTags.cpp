@@ -1182,6 +1182,7 @@ void SciAutoComplete()
     // if (tag.IsEmpty())
         // return;
 
+    INpp& npp = INpp::Get();
     Sci_Position curPos, startPos, endPos;
     char tagStr[32 + 1] = { 0 };
 
@@ -1189,9 +1190,9 @@ void SciAutoComplete()
     if (!db)
         return;
 
-    curPos   = static_cast<Sci_Position>(INpp::Get().GetPos());
-    startPos = static_cast<Sci_Position>(INpp::Get().GetWordStartPos(curPos));
-    endPos   = static_cast<Sci_Position>(INpp::Get().GetWordEndPos(curPos));
+    curPos   = static_cast<Sci_Position>(npp.GetPos());
+    startPos = static_cast<Sci_Position>(npp.GetWordStartPos(curPos));
+    endPos   = static_cast<Sci_Position>(npp.GetWordEndPos(curPos));
     if ((endPos - startPos) > 32)
         return;
 
@@ -1199,7 +1200,7 @@ void SciAutoComplete()
 	tr.chrg.cpMin = startPos;
 	tr.chrg.cpMax = endPos;
 	tr.lpstrText  = tagStr;
-    ::SendMessage(INpp::Get().GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
+    ::SendMessage(npp.GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
 
     if (strlen(tagStr) == 0)
         return;
