@@ -774,10 +774,7 @@ const TCHAR* CPath::GetFilename() const
 
     for (; len > 0; --len)
         if (_buf[len - 1] == _T('\\') || _buf[len - 1] == _T('/'))
-        {
-            ++len;
             break;
-        }
 
     return &_buf[len];
 }
