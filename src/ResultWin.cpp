@@ -500,9 +500,10 @@ HWND ResultWin::Register()
     tTbData data;
     data.hClient        = RW->_hWnd;
     data.pszName        = const_cast<TCHAR*>(cPluginName);
-    data.uMask          = 0;
     data.pszAddInfo     = NULL;
-    data.uMask          = DWS_DF_CONT_BOTTOM;
+    data.uMask          = DWS_DF_CONT_BOTTOM | DWS_ICONTAB;
+    data.hIconTab       = ( HICON )::LoadImage(HMod, MAKEINTRESOURCE(IDI_PLUGINPANEL),
+                              IMAGE_ICON, 0, 0, LR_LOADTRANSPARENT);
     data.pszModuleName  = DllPath.GetFilename();
     data.dlgID          = 0;
 

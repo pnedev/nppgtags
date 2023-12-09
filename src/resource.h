@@ -29,3 +29,5 @@
 #else
 #define VER_PRODUCT_NAME    PLUGIN_NAME _T(" (64-bit)\0")
 #endif
+
+#define IDI_PLUGINPANEL 2501
