@@ -51,8 +51,8 @@ const TCHAR* CmdEngine::CmdLine[] = {
     _T("\"%s\\global.exe\" -gO --result=grep \"%s\""),                      // GREP_TEXT
     _T("\"%s\\global.exe\" --version"),                                     // VERSION
     _T("\"%s\\ctags.exe\" --version"),                                      // CTAGS_VERSION
-    _T("\"%s\\global.exe\" -cT -i \"%s\""),                                 // AUTOCOMPLETE_SCINTILLA
-    _T("\"%s\\global.exe\" -cs -i \"%s\"")                                  // AUTOCOMPLETE_SCINTILLA_SYMBOL
+    _T("\"%s\\global.exe\" -cT \"%s\""),                                    // AUTOCOMPLETE_SCINTILLA
+    _T("\"%s\\global.exe\" -cs \"%s\"")                                     // AUTOCOMPLETE_SCINTILLA_SYMBOL
 };
 
 

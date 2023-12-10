@@ -1207,7 +1207,7 @@ void SciAutoComplete()
 
     std::wstring tag = s2ws(tagStr);
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), GTagsSettings._ic));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), true));
 
     CmdEngine::Run(cmd, sciHalfComplCB);
 }
