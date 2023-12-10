@@ -350,10 +350,10 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
             if (i < size)
                 wList += " ";
         }
-
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETTYPESEPARATOR, WPARAM('\x1E'), 0 );
-        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, true, 0);
+        if (cmd->IgnoreCase())
+            SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, true, 0);
         SendMessage(INpp::Get().GetSciHandle(), SCI_REGISTERIMAGE, REGIMGIDL, (LPARAM)xpmGtL);
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, cmd->Tag().Len(), (LPARAM) wList.c_str());
 
@@ -1190,6 +1190,9 @@ void SciAutoComplete()
     if (!db)
         return;
 
+    if (!db->GetConfig()._useSciAutoC)
+        return;
+
     curPos   = static_cast<Sci_Position>(npp.GetPos());
     startPos = static_cast<Sci_Position>(npp.GetWordStartPos(curPos));
     endPos   = static_cast<Sci_Position>(npp.GetWordEndPos(curPos));
@@ -1207,7 +1210,7 @@ void SciAutoComplete()
 
     std::wstring tag = s2ws(tagStr);
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), true));
+    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), db->GetConfig()._SciAutoCIgnoreCase));
 
     CmdEngine::Run(cmd, sciHalfComplCB);
 }

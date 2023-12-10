@@ -78,6 +78,8 @@ public:
     std::vector<CPath>  _libDbPaths;
     bool                _usePathFilter;
     std::vector<CPath>  _pathFilters;
+    bool                _useSciAutoC;
+    bool                _SciAutoCIgnoreCase;
 
 private:
     bool ReadOption(TCHAR* line);
@@ -91,6 +93,9 @@ private:
     static const TCHAR cLibDbPathsKey[];
     static const TCHAR cUsePathFilterKey[];
     static const TCHAR cPathFiltersKey[];
+    static const TCHAR cUseSciAutoCKey[];
+    static const TCHAR cSciAutoCIgnoreCaseKey[];
+    static const TCHAR cSciAutoCFromNCharKey[];
 
     static const TCHAR cDefaultParser[];
     static const TCHAR cCtagsParser[];
