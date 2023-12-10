@@ -317,6 +317,8 @@ const DbConfig& DbConfig::operator=(const DbConfig& rhs)
         _libDbPaths     = rhs._libDbPaths;
         _usePathFilter  = rhs._usePathFilter;
         _pathFilters    = rhs._pathFilters;
+        _useSciAutoC    = rhs._useSciAutoC;
+        _SciAutoCIgnoreCase = rhs._SciAutoCIgnoreCase;
     }
 
     return *this;
@@ -333,7 +335,8 @@ bool DbConfig::operator==(const DbConfig& rhs) const
 
     return (_parserIdx == rhs._parserIdx && _autoUpdate == rhs._autoUpdate &&
             _useLibDb == rhs._useLibDb && _libDbPaths == rhs._libDbPaths &&
-            _usePathFilter == rhs._usePathFilter && _pathFilters == rhs._pathFilters);
+            _usePathFilter == rhs._usePathFilter && _pathFilters == rhs._pathFilters &&
+            _useSciAutoC == rhs._useSciAutoC && _SciAutoCIgnoreCase == rhs._SciAutoCIgnoreCase);
 }
 
 
