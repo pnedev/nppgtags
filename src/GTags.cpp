@@ -1173,14 +1173,6 @@ void OnFileDelete(const CPath& file)
  */
 void SciAutoComplete()
 {
-    // Need better way to get selection - this is visible (and slow) while typing
-    // Fast typing "overlaps" with the selection and ends up overwriting / deleting the temporary selection
-    // Even with the ClearSelection() call right after it
-    // CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
-    // INpp::Get().ClearSelection();
-    // if (tag.IsEmpty())
-        // return;
-
     INpp& npp = INpp::Get();
     Sci_Position curPos, startPos, endPos;
     char tagStr[32 + 1] = { 0 };
