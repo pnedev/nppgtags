@@ -1205,7 +1205,7 @@ void SciAutoComplete()
 	tr.lpstrText  = tagStr;
     ::SendMessage(npp.GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
 
-    if (strlen(tagStr) == 0)
+    if (strlen(tagStr) < db->GetConfig()._SciAutoCFromNChar)
         return;
 
     std::wstring tag = s2ws(tagStr);
