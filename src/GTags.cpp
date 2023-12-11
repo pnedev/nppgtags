@@ -352,8 +352,7 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
         }
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETTYPESEPARATOR, WPARAM('\x1E'), 0 );
-        if (cmd->IgnoreCase())
-            SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, true, 0);
+        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, cmd->IgnoreCase(), 0);
         SendMessage(INpp::Get().GetSciHandle(), SCI_REGISTERIMAGE, REGIMGIDL, (LPARAM)xpmGtL);
         SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, cmd->Tag().Len(), (LPARAM) wList.c_str());
 
