@@ -119,6 +119,11 @@ private:
     HWND        _hParserInfo;
     HWND        _hParser;
     HWND        _hAutoUpdDb;
+    HWND        _hSciAutoCInfo;
+    HWND        _hSciAutoCEn;
+    HWND        _hSciAutoCIC;
+    HWND        _hSciAutoCFromCharPreInfo;
+    HWND        _hSciAutoCFromCharPostInfo;
     HWND        _hEnLibDb;
     HWND        _hAddLibDb;
     HWND        _hUpdLibDbs;
