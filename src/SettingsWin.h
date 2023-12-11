@@ -123,6 +123,7 @@ private:
     HWND        _hSciAutoCEn;
     HWND        _hSciAutoCIC;
     HWND        _hSciAutoCFromCharPreInfo;
+    HWND        _hSciAutoCFromChar;
     HWND        _hSciAutoCFromCharPostInfo;
     HWND        _hEnLibDb;
     HWND        _hAddLibDb;

@@ -380,7 +380,10 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             xPos + (width / 2) + 5, (yPos + 7), (width / 8), txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
 
-    // Scintilla Autocomplete FromNChar text box
+    _hSciAutoCFromChar = CreateWindowEx(0, WC_COMBOBOX, NULL,
+            WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
+            xPos + (width / 2) + (width / 8) + 5, yPos, (width / 12), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
 
     _hSciAutoCFromCharPostInfo = CreateWindowEx(0, _T("STATIC"), _T("th character"),
             WS_CHILD | WS_VISIBLE | SS_LEFT,
@@ -459,6 +462,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hLibDbs, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hPathFilters, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hSciAutoCFromChar, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
     if (_hFontInfo)
@@ -485,6 +489,9 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     for (size_t i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
+
+    for (int i = 1; i <= 9; ++i)
+        SendMessage(_hSciAutoCFromChar, CB_ADDSTRING, 0, (LPARAM)std::to_wstring(i).c_str());
 
 	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
     Edit_SetText(_hDefDb, GTagsSettings._defDbPath.C_str());
@@ -719,6 +726,7 @@ void SettingsWin::fillTabData()
     Button_SetCheck(_hEnPathFilter, _activeTab->_cfg._usePathFilter ? BST_CHECKED : BST_UNCHECKED);
 
     SendMessage(_hParser, CB_SETCURSEL, _activeTab->_cfg._parserIdx, 0);
+    SendMessage(_hSciAutoCFromChar, CB_SETCURSEL, (_activeTab->_cfg._SciAutoCFromNChar - 1), 0);
 }
 
 
@@ -754,6 +762,7 @@ void SettingsWin::readTabData()
     _activeTab->_cfg._usePathFilter = (Button_GetCheck(_hEnPathFilter) == BST_CHECKED) ? true : false;
 
     _activeTab->_cfg._parserIdx = (int)SendMessage(_hParser, CB_GETCURSEL, 0, 0);
+    _activeTab->_cfg._SciAutoCFromNChar = (int)SendMessage(_hSciAutoCFromChar, CB_GETCURSEL, 0, 0) + 1;
 }
 
 
@@ -1100,20 +1109,18 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                 if ((HWND)lParam == SW->_hSciAutoCEn)
                 {
                     BOOL en;
-                    int color;
 
                     if (Button_GetCheck(SW->_hSciAutoCEn) == BST_CHECKED)
                     {
                         en = TRUE;
-                        color = COLOR_WINDOW;
                     }
                     else
                     {
                         en = FALSE;
-                        color = COLOR_BTNFACE;
                     }
 
                     EnableWindow(SW->_hSciAutoCIC, en);
+                    EnableWindow(SW->_hSciAutoCFromChar, en);
 
                     EnableWindow(SW->_hSave, TRUE);
 
