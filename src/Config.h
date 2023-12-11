@@ -80,6 +80,7 @@ public:
     std::vector<CPath>  _pathFilters;
     bool                _useSciAutoC;
     bool                _SciAutoCIgnoreCase;
+    int                 _SciAutoCFromNChar;
 
 private:
     bool ReadOption(TCHAR* line);

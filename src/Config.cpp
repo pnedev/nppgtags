@@ -90,6 +90,7 @@ void DbConfig::SetDefaults()
     _pathFilters.clear();
     _useSciAutoC = false;
     _SciAutoCIgnoreCase = false;
+    _SciAutoCFromNChar = 3;
 }
 
 
@@ -158,6 +159,13 @@ bool DbConfig::ReadOption(TCHAR* line)
         else
             _SciAutoCIgnoreCase = false;
     }
+    else if (!_tcsncmp(line, cSciAutoCFromNCharKey, _countof(cSciAutoCFromNCharKey) - 1))
+    {
+        const unsigned pos = _countof(cSciAutoCFromNCharKey) - 1;
+        _SciAutoCFromNChar = _tstoi(&line[pos]);
+        if (_SciAutoCFromNChar <= 0 || _SciAutoCFromNChar >= 10)
+            _SciAutoCFromNChar = 3;
+    }
     else
     {
         return false;
@@ -189,6 +197,7 @@ bool DbConfig::Write(FILE* fp) const
     if (_ftprintf_s(fp, _T("%s%s\n"), cPathFiltersKey, pathFilters.C_str()) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cUseSciAutoCKey, (_useSciAutoC ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cSciAutoCIgnoreCaseKey, (_SciAutoCIgnoreCase ? _T("yes") : _T("no"))) > 0)
+    if (_ftprintf_s(fp, _T("%s%i\n"), cSciAutoCFromNCharKey, _SciAutoCFromNChar) > 0)
         success = true;
 
     return success;
@@ -319,6 +328,7 @@ const DbConfig& DbConfig::operator=(const DbConfig& rhs)
         _pathFilters    = rhs._pathFilters;
         _useSciAutoC    = rhs._useSciAutoC;
         _SciAutoCIgnoreCase = rhs._SciAutoCIgnoreCase;
+        _SciAutoCFromNChar  = rhs._SciAutoCFromNChar;
     }
 
     return *this;
@@ -336,7 +346,8 @@ bool DbConfig::operator==(const DbConfig& rhs) const
     return (_parserIdx == rhs._parserIdx && _autoUpdate == rhs._autoUpdate &&
             _useLibDb == rhs._useLibDb && _libDbPaths == rhs._libDbPaths &&
             _usePathFilter == rhs._usePathFilter && _pathFilters == rhs._pathFilters &&
-            _useSciAutoC == rhs._useSciAutoC && _SciAutoCIgnoreCase == rhs._SciAutoCIgnoreCase);
+            _useSciAutoC == rhs._useSciAutoC && _SciAutoCIgnoreCase == rhs._SciAutoCIgnoreCase &&
+            _SciAutoCFromNChar == rhs._SciAutoCFromNChar);
 }
 
 
