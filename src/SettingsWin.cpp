@@ -490,7 +490,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     for (size_t i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
 
-    for (int i = 1; i <= 9; ++i)
+    for (int i = SCIAUTOCNCHAR_MIN; i <= SCIAUTOCNCHAR_MAX; ++i)
         SendMessage(_hSciAutoCFromChar, CB_ADDSTRING, 0, (LPARAM)std::to_wstring(i).c_str());
 
 	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);

@@ -163,7 +163,7 @@ bool DbConfig::ReadOption(TCHAR* line)
     {
         const unsigned pos = _countof(cSciAutoCFromNCharKey) - 1;
         _SciAutoCFromNChar = _tstoi(&line[pos]);
-        if (_SciAutoCFromNChar <= 0 || _SciAutoCFromNChar >= 10)
+        if (_SciAutoCFromNChar < SCIAUTOCNCHAR_MIN || _SciAutoCFromNChar > SCIAUTOCNCHAR_MAX)
             _SciAutoCFromNChar = 3;
     }
     else

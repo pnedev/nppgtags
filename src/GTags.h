@@ -32,6 +32,11 @@
 #include "CmdDefines.h"
 #include "DbManager.h"
 
+// These are also used as ComboBox array indices in SettingsWin.cpp
+// If the MIN value is changed, it must be accounted for as arrays 
+// are 0-based indices and this currently starts with 1
+#define SCIAUTOCNCHAR_MIN 1
+#define SCIAUTOCNCHAR_MAX 9
 
 struct FuncItem;
 class CText;
