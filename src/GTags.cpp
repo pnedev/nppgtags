@@ -96,7 +96,7 @@ const char *xpmGtL[] = {
     "---=$$$$$$$#=---",
     "------*=*==-----"
 };
-
+std::string sciAutoCList;
 
 /**
  *  \brief
@@ -329,6 +329,19 @@ std::wstring s2ws(const std::string& str)
 /**
  *  \brief
  */
+void ShowSciAutoComplete(BOOL ignoreCase, size_t len)
+{
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETTYPESEPARATOR, WPARAM('\x1E'), 0 );
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, ignoreCase, 0);
+    SendMessage(INpp::Get().GetSciHandle(), SCI_REGISTERIMAGE, REGIMGIDL, (LPARAM)xpmGtL);
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, len, (LPARAM) sciAutoCList.c_str());
+}
+
+
+/**
+ *  \brief
+ */
 void sciAutoComplCB(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
@@ -339,23 +352,18 @@ void sciAutoComplCB(const CmdPtr_t& cmd)
         if (size == 0)
             return;
 
-        std::string wList;
+        sciAutoCList.clear();
         int i = 0;
         for (const auto& complEntry : cmd->Parser()->GetList())
         {
-            wList += ws2s(complEntry).c_str();
-            wList += '\x1E';
-            wList += STR(REGIMGIDL);
+            sciAutoCList += ws2s(complEntry).c_str();
+            sciAutoCList += '\x1E';
+            sciAutoCList += STR(REGIMGIDL);
             i++;
             if (i < size)
-                wList += " ";
+                sciAutoCList += " ";
         }
-        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
-        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETTYPESEPARATOR, WPARAM('\x1E'), 0 );
-        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, cmd->IgnoreCase(), 0);
-        SendMessage(INpp::Get().GetSciHandle(), SCI_REGISTERIMAGE, REGIMGIDL, (LPARAM)xpmGtL);
-        SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, cmd->Tag().Len(), (LPARAM) wList.c_str());
-
+        ShowSciAutoComplete(cmd->IgnoreCase(), cmd->Tag().Len());
         return;
     }
 
@@ -1171,7 +1179,7 @@ void OnFileDelete(const CPath& file)
 /**
  *  \brief
  */
-void SciAutoComplete()
+void SciAutoComplete(int ch)
 {
     INpp& npp = INpp::Get();
     Sci_Position curPos, startPos, endPos;
@@ -1190,20 +1198,28 @@ void SciAutoComplete()
     if ((endPos - startPos) > 32)
         return;
 
-    Sci_TextRangeFull tr;
-	tr.chrg.cpMin = startPos;
-	tr.chrg.cpMax = endPos;
-	tr.lpstrText  = tagStr;
-    ::SendMessage(npp.GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
+    if ((ch != 0x20) && (0 < sciAutoCList.length()) && (sciAutoCList.length() < 50))
+    {
+        ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, endPos - startPos);
+    }
+    else
+    {
+        sciAutoCList.clear();
+        Sci_TextRangeFull tr;
+        tr.chrg.cpMin = startPos;
+        tr.chrg.cpMax = endPos;
+        tr.lpstrText  = tagStr;
+        ::SendMessage(npp.GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
 
-    if (strlen(tagStr) < db->GetConfig()._SciAutoCFromNChar)
-        return;
+        if (strlen(tagStr) < db->GetConfig()._SciAutoCFromNChar)
+            return;
 
-    std::wstring tag = s2ws(tagStr);
+        std::wstring tag = s2ws(tagStr);
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), db->GetConfig()._SciAutoCIgnoreCase));
+        CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), db->GetConfig()._SciAutoCIgnoreCase));
 
-    CmdEngine::Run(cmd, sciHalfComplCB);
+        CmdEngine::Run(cmd, sciHalfComplCB);
+    }
 }
 
 } // namespace GTags
