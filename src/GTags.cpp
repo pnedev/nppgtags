@@ -97,6 +97,7 @@ const char *xpmGtL[] = {
     "------*=*==-----"
 };
 std::string sciAutoCList;
+#define SCIAUTOCLIST_LONG 256
 
 /**
  *  \brief
@@ -1198,7 +1199,7 @@ void SciAutoComplete(int ch)
     if ((endPos - startPos) > 32)
         return;
 
-    if ((ch != 0x20) && (0 < sciAutoCList.length()) && (sciAutoCList.length() < 50))
+    if ((ch != 0x20) && (0 < sciAutoCList.length()) && (sciAutoCList.length() < SCIAUTOCLIST_LONG))
     {
         ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, endPos - startPos);
     }
