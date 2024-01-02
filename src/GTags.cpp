@@ -97,6 +97,7 @@ const char *xpmGtL[] = {
     "------*=*==-----"
 };
 std::string sciAutoCList;
+std::string _defaultCharList;
 #define SCIAUTOCLIST_LONG 256
 
 /**
@@ -1093,6 +1094,13 @@ void OnNppReady()
 
         ::DrawMenuBar(npp.GetHandle());
 	}
+
+    auto defaultCharListLen = SendMessage(npp.GetSciHandle(), SCI_GETWORDCHARS, 0, 0);
+    char *defaultCharList = new char[defaultCharListLen + 1];
+    SendMessage(npp.GetSciHandle(), SCI_GETWORDCHARS, 0, reinterpret_cast<LPARAM>(defaultCharList));
+    defaultCharList[defaultCharListLen] = '\0';
+    _defaultCharList = defaultCharList;
+    delete[] defaultCharList;
 }
 
 
@@ -1199,7 +1207,10 @@ void SciAutoComplete(int ch)
     if ((endPos - startPos) > 32)
         return;
 
-    if ((ch != 0x20) && (0 < sciAutoCList.length()) && (sciAutoCList.length() < SCIAUTOCLIST_LONG))
+    if (_defaultCharList.find(char(ch)) == std::string::npos)
+        return;
+
+    if ((0 < sciAutoCList.length()) && (sciAutoCList.length() < SCIAUTOCLIST_LONG))
     {
         ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, endPos - startPos);
     }
