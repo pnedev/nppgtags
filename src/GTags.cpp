@@ -1204,16 +1204,17 @@ void SciAutoComplete(int ch)
     curPos   = static_cast<Sci_Position>(npp.GetPos());
     startPos = static_cast<Sci_Position>(npp.GetWordStartPos(curPos));
     endPos   = static_cast<Sci_Position>(npp.GetWordEndPos(curPos));
-    if ((endPos - startPos) > 32)
+    if ((curPos - startPos) > 32)
         return;
 
     if (_defaultCharList.find(char(ch)) == std::string::npos)
+    {
+        sciAutoCList.clear();
         return;
+    }
 
     if ((0 < sciAutoCList.length()) && (sciAutoCList.length() < SCIAUTOCLIST_LONG))
-    {
-        ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, endPos - startPos);
-    }
+        ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, curPos - startPos);
     else
     {
         sciAutoCList.clear();
