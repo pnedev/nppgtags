@@ -127,6 +127,9 @@ unsigned CmdEngine::start()
         return 1;
 
     bool showActivityWin = true;
+    if (_cmd->_id == AUTOCOMPLETE_SCINTILLA || _cmd->_id == AUTOCOMPLETE_SCINTILLA_SYMBOL)
+        showActivityWin = false;
+
     if (_cmd->_id != CREATE_DATABASE && _cmd->_id != UPDATE_SINGLE)
     {
         // Wait 300 ms and if process has finished don't show Activity Window
