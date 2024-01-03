@@ -1213,11 +1213,11 @@ void SciAutoComplete(int ch)
         return;
     }
 
+
     if ((0 < sciAutoCList.length()) && (sciAutoCList.length() < SCIAUTOCLIST_LONG))
-        ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, curPos - startPos);
+        ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, (size_t)(curPos - startPos));
     else
     {
-        sciAutoCList.clear();
         Sci_TextRangeFull tr;
         tr.chrg.cpMin = startPos;
         tr.chrg.cpMax = endPos;
