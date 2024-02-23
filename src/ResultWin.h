@@ -124,8 +124,8 @@ public:
 
     static HWND GetSciHandleIfFocused()
     {
-        if (RW && GetFocus() == RW->_hSci)
-            return RW->_hSci;
+        if (RW && GetFocus() == ResultWin::_hSci)
+            return ResultWin::_hSci;
 
         return NULL;
     }
@@ -192,7 +192,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ResultWin() : _hWnd(NULL), _hSci(NULL), _hKeyHook(NULL), _sciFunc(NULL), _sciPtr(0), _activeTab(NULL),
+    ResultWin() : _hWnd(NULL), _hKeyHook(NULL), _activeTab(NULL),
             _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
             _lastRE(false), _lastIC(false), _lastWW(true) {}
     ResultWin(const ResultWin&);
@@ -251,12 +251,13 @@ private:
 
     static ResultWin* RW;
 
+    static HWND         _hSci;
+    static SciFnDirect  _sciFunc;
+    static sptr_t       _sciPtr;
+
     HWND        _hWnd;
-    HWND        _hSci;
     HWND        _hTab;
     HHOOK       _hKeyHook;
-    SciFnDirect _sciFunc;
-    sptr_t      _sciPtr;
     Tab*        _activeTab;
 
     HWND        _hSearch;

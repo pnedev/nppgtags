@@ -141,12 +141,6 @@ public:
         return hSciWnd;
     }
 
-    inline void DestroySciHandle(const HWND hSciWnd)
-    {
-        if (isSciWndRegistered(hSciWnd, true))
-            SendMessage(_nppData._nppHandle, NPPM_DESTROYSCINTILLAHANDLE, 0, (LPARAM)hSciWnd);
-    }
-
     inline void GetMainDir(CPath& path) const
     {
         path.Resize(MAX_PATH);
@@ -338,7 +332,7 @@ private:
     INpp(const INpp&);
     ~INpp() {}
 
-    bool isSciWndRegistered(HWND hSciWnd, bool remove = false);
+    bool isSciWndRegistered(HWND hSciWnd);
 
     NppData             _nppData;
     HWND                _hSC;

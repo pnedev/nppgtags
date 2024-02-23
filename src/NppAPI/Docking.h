@@ -1,5 +1,5 @@
 // This file is part of Notepad++ project
-// Copyright (C)2021 Don HO <don.h@free.fr>
+// Copyright (C)2022 Don HO <don.h@free.fr>
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@
 #define DWS_ICONTAB			0x00000001			// Icon for tabs are available
 #define DWS_ICONBAR			0x00000002			// Icon for icon bar are available (currently not supported)
 #define DWS_ADDINFO			0x00000004			// Additional information are in use
-#define DWS_USEOWNDARKMODE	0x00000008			// Use plugin's own dark mode
 #define DWS_PARAMSALL		(DWS_ICONTAB|DWS_ICONBAR|DWS_ADDINFO)
 
 // default docking values for first call of plugin
