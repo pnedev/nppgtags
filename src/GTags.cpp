@@ -58,6 +58,47 @@ constexpr int MIN_NOTEPADPP_VERSION = ((MIN_NOTEPADPP_VERSION_MAJOR << 16) | MIN
 std::unique_ptr<CPath>  ChangedFile;
 bool                    DeInitCOM = false;
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+#define REGIMGIDL 22680
+const char *xpmGtL[] = {
+/* columns rows colors chars-per-pixel */
+    "16 16 14 1 ",
+    "  c #000000",
+    ". c #800000",
+    "X c #FF0000",
+    "o c #008000",
+    "O c #00FF00",
+    "+ c #808000",
+    "@ c #FFFF00",
+    "# c #000080",
+    "$ c #0000FF",
+    "% c #800080",
+    "& c #008080",
+    "* c #808080",
+    "= c #C0C0C0",
+    "- c None",
+    /* pixels */
+    "-----=*=**=-----",
+    "----#O$&&&$ =---",
+    "--=@$$OOoOO$o---",
+    "-=@#**&&&&$O$O=-",
+    "-+@+=#%%$$$$$$o-",
+    "=@*++%$%$$$$$$&*",
+    "*@@=#$#%X$$$$$$=",
+    "-@*+=+$*$$$$$$$=",
+    "=@+@%*&$$$$$$$$=",
+    "=@=**$=*$&$$&$$=",
+    "-+%+@+$%&&*&$$$*",
+    "-=$&+*++%*$$$$o-",
+    "-=+$*+%@.%*$$&*-",
+    "---$$*%$*$$$&o--",
+    "---=$$$$$$$#=---",
+    "------*=*==-----"
+};
+std::string sciAutoCList;
+std::string _defaultCharList;
+#define SCIAUTOCLIST_LONG 256
 
 /**
  *  \brief
@@ -147,7 +188,7 @@ void dbWriteCB(const CmdPtr_t& cmd);
 /**
  *  \brief
  */
-DbHandle getDatabase(bool writeEn = false)
+DbHandle getDatabase(bool writeEn = false, bool createDb = true)
 {
     INpp& npp = INpp::Get();
     bool success;
@@ -159,6 +200,9 @@ DbHandle getDatabase(bool writeEn = false)
     // Search default database for read operations (if no local DB found and default is configured to be used)
     if (!db && !writeEn && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
         db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, writeEn, &success);
+
+    if (!createDb)
+        return db;
 
     if (!db)
     {
@@ -246,6 +290,115 @@ void halfComplCB(const CmdPtr_t& cmd)
     DbManager::Get().PutDb(cmd->Db());
 
     INpp::Get().ClearSelection();
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+std::string ws2s(const std::wstring& wstr)
+{
+    int size_needed = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), int(wstr.length() + 1), 0, 0, 0, 0);
+    std::string strTo(size_needed, 0);
+    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), int(wstr.length() + 1), &strTo[0], size_needed, 0, 0);
+    return strTo;
+}
+
+
+/**
+ *  \brief
+ */
+std::wstring s2ws(const std::string& str)
+{
+    int size_needed = MultiByteToWideChar(CP_ACP, 0, str.c_str(), int(str.length() + 1), 0, 0);
+    std::wstring strTo(size_needed, 0);
+    MultiByteToWideChar(CP_ACP, 0, str.c_str(), int(str.length() + 1), &strTo[0], size_needed);
+    return strTo;
+}
+
+
+/**
+ *  \brief
+ */
+void ShowSciAutoComplete(BOOL ignoreCase, size_t len)
+{
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETSEPARATOR, ' ', 0);
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETTYPESEPARATOR, WPARAM('\x1E'), 0 );
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSETIGNORECASE, ignoreCase, 0);
+    SendMessage(INpp::Get().GetSciHandle(), SCI_REGISTERIMAGE, REGIMGIDL, (LPARAM)xpmGtL);
+    SendMessage(INpp::Get().GetSciHandle(), SCI_AUTOCSHOW, len, (LPARAM) sciAutoCList.c_str());
+}
+
+
+/**
+ *  \brief
+ */
+void sciAutoComplCB(const CmdPtr_t& cmd)
+{
+    DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == OK && cmd->Result())
+    {
+        size_t size = cmd->Parser()->GetList().size();
+        if (size == 0)
+            return;
+
+        sciAutoCList.clear();
+        int i = 0;
+        for (const auto& complEntry : cmd->Parser()->GetList())
+        {
+            sciAutoCList += ws2s(complEntry).c_str();
+            sciAutoCList += '\x1E';
+            sciAutoCList += STR(REGIMGIDL);
+            i++;
+            if (i < size)
+                sciAutoCList += " ";
+        }
+        ShowSciAutoComplete(cmd->IgnoreCase(), cmd->Tag().Len());
+        return;
+    }
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void sciHalfComplCB(const CmdPtr_t& cmd)
+{
+    if (cmd->Status() == OK)
+    {
+        cmd->Id(AUTOCOMPLETE_SCINTILLA_SYMBOL);
+
+        ParserPtr_t parser(new LineParser);
+        cmd->Parser(parser);
+
+        CmdEngine::Run(cmd, sciAutoComplCB);
+        return;
+    }
+
+    DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == FAILED)
     {
@@ -941,6 +1094,13 @@ void OnNppReady()
 
         ::DrawMenuBar(npp.GetHandle());
 	}
+
+    auto defaultCharListLen = SendMessage(npp.GetSciHandle(), SCI_GETWORDCHARS, 0, 0);
+    char *defaultCharList = new char[defaultCharListLen + 1];
+    SendMessage(npp.GetSciHandle(), SCI_GETWORDCHARS, 0, reinterpret_cast<LPARAM>(defaultCharList));
+    defaultCharList[defaultCharListLen] = '\0';
+    _defaultCharList = defaultCharList;
+    delete[] defaultCharList;
 }
 
 
@@ -1021,6 +1181,57 @@ void OnFileDelete(const CPath& file)
     else
     {
         OnFileChange(file);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void SciAutoComplete(int ch)
+{
+    INpp& npp = INpp::Get();
+    Sci_Position curPos, startPos, endPos;
+    char tagStr[32 + 1] = { 0 };
+
+    DbHandle db = getDatabase(false, false);
+    if (!db)
+        return;
+
+    if (!db->GetConfig()._useSciAutoC)
+        return;
+
+    curPos   = static_cast<Sci_Position>(npp.GetPos());
+    startPos = static_cast<Sci_Position>(npp.GetWordStartPos(curPos));
+    endPos   = static_cast<Sci_Position>(npp.GetWordEndPos(curPos));
+    if ((curPos - startPos) > 32)
+        return;
+
+    if (_defaultCharList.find(char(ch)) == std::string::npos)
+    {
+        sciAutoCList.clear();
+        return;
+    }
+
+
+    if ((0 < sciAutoCList.length()) && (sciAutoCList.length() < SCIAUTOCLIST_LONG))
+        ShowSciAutoComplete(db->GetConfig()._SciAutoCIgnoreCase, (size_t)(curPos - startPos));
+    else
+    {
+        Sci_TextRangeFull tr;
+        tr.chrg.cpMin = startPos;
+        tr.chrg.cpMax = endPos;
+        tr.lpstrText  = tagStr;
+        ::SendMessage(npp.GetSciHandle(), SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
+
+        if (strlen(tagStr) < db->GetConfig()._SciAutoCFromNChar)
+            return;
+
+        std::wstring tag = s2ws(tagStr);
+
+        CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_SCINTILLA, db, NULL, tag.c_str(), db->GetConfig()._SciAutoCIgnoreCase));
+
+        CmdEngine::Run(cmd, sciHalfComplCB);
     }
 }
 
