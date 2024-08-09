@@ -244,7 +244,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 13 * txtHeight + txtInfoHeight + 270);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 17 * txtHeight + txtInfoHeight + 270);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -359,6 +359,38 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 30);
+    _hSciAutoCInfo = CreateWindowEx(0, _T("STATIC"), _T("Scintilla AutoComplete"),
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            xPos, yPos, width, txtInfoHeight,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (txtInfoHeight + 5);
+    _hSciAutoCEn = CreateWindowEx(0, _T("BUTTON"), _T("Enable"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos, yPos, (width / 4), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    _hSciAutoCIC = CreateWindowEx(0, _T("BUTTON"), _T("Ignore Case"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos + (width / 4) + 5, yPos, (width / 4), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    _hSciAutoCFromCharPreInfo = CreateWindowEx(0, _T("STATIC"), _T("From"),
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            xPos + (width / 2) + 5, (yPos + 7), (width / 8), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    _hSciAutoCFromChar = CreateWindowEx(0, WC_COMBOBOX, NULL,
+            WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
+            xPos + (width / 2) + (width / 8) + 5, yPos, (width / 12), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    _hSciAutoCFromCharPostInfo = CreateWindowEx(0, _T("STATIC"), _T("th character"),
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            xPos + (width / 2) + (width / 4) + 5, (yPos + 7), (width / 4), txtHeight + 10,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (txtHeight + 30);
     _hEnLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable library databases"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             xPos, yPos, (width / 2), txtHeight + 10,
@@ -430,11 +462,17 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         SendMessage(_hParser, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hLibDbs, WM_SETFONT, (WPARAM)_hFont, TRUE);
         SendMessage(_hPathFilters, WM_SETFONT, (WPARAM)_hFont, TRUE);
+        SendMessage(_hSciAutoCFromChar, WM_SETFONT, (WPARAM)_hFont, TRUE);
     }
 
     if (_hFontInfo)
     {
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSciAutoCInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSciAutoCEn, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSciAutoCIC, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSciAutoCFromCharPreInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hSciAutoCFromCharPostInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hEnDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hSetDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hUpdDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
@@ -451,6 +489,9 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     for (size_t i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
+
+    for (int i = SCIAUTOCNCHAR_MIN; i <= SCIAUTOCNCHAR_MAX; ++i)
+        SendMessage(_hSciAutoCFromChar, CB_ADDSTRING, 0, (LPARAM)std::to_wstring(i).c_str());
 
 	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
     Edit_SetText(_hDefDb, GTagsSettings._defDbPath.C_str());
@@ -678,11 +719,14 @@ void SettingsWin::fillTabData()
         SendMessage(_hPathFilters, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
     }
 
+    Button_SetCheck(_hSciAutoCEn, _activeTab->_cfg._useSciAutoC ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hSciAutoCIC, _activeTab->_cfg._SciAutoCIgnoreCase ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hAutoUpdDb, _activeTab->_cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hEnLibDb, _activeTab->_cfg._useLibDb ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hEnPathFilter, _activeTab->_cfg._usePathFilter ? BST_CHECKED : BST_UNCHECKED);
 
     SendMessage(_hParser, CB_SETCURSEL, _activeTab->_cfg._parserIdx, 0);
+    SendMessage(_hSciAutoCFromChar, CB_SETCURSEL, (_activeTab->_cfg._SciAutoCFromNChar - 1), 0);
 }
 
 
@@ -711,11 +755,14 @@ void SettingsWin::readTabData()
         _activeTab->_cfg.FiltersFromBuf(pathFilters.C_str(), _T("\n\r"));
     }
 
+    _activeTab->_cfg._useSciAutoC   = (Button_GetCheck(_hSciAutoCEn) == BST_CHECKED) ? true : false;
+    _activeTab->_cfg._SciAutoCIgnoreCase = (Button_GetCheck(_hSciAutoCIC) == BST_CHECKED) ? true : false;
     _activeTab->_cfg._autoUpdate    = (Button_GetCheck(_hAutoUpdDb) == BST_CHECKED) ? true : false;
     _activeTab->_cfg._useLibDb      = (Button_GetCheck(_hEnLibDb) == BST_CHECKED) ? true : false;
     _activeTab->_cfg._usePathFilter = (Button_GetCheck(_hEnPathFilter) == BST_CHECKED) ? true : false;
 
     _activeTab->_cfg._parserIdx = (int)SendMessage(_hParser, CB_GETCURSEL, 0, 0);
+    _activeTab->_cfg._SciAutoCFromNChar = (int)SendMessage(_hSciAutoCFromChar, CB_GETCURSEL, 0, 0) + 1;
 }
 
 
@@ -1056,6 +1103,34 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                 if ((HWND)lParam == SW->_hCancel)
                 {
                     SendMessage(hWnd, WM_CLOSE, 0, 0);
+                    return 0;
+                }
+
+                if ((HWND)lParam == SW->_hSciAutoCEn)
+                {
+                    BOOL en;
+
+                    if (Button_GetCheck(SW->_hSciAutoCEn) == BST_CHECKED)
+                    {
+                        en = TRUE;
+                    }
+                    else
+                    {
+                        en = FALSE;
+                    }
+
+                    EnableWindow(SW->_hSciAutoCIC, en);
+                    EnableWindow(SW->_hSciAutoCFromChar, en);
+
+                    EnableWindow(SW->_hSave, TRUE);
+
+                    return 0;
+                }
+
+                if ((HWND)lParam == SW->_hSciAutoCIC)
+                {
+                    EnableWindow(SW->_hSave, TRUE);
+
                     return 0;
                 }
 

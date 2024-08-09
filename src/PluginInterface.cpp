@@ -125,6 +125,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         }
         break;
 
+        case SCN_CHARADDED:
+        {
+            if (notifyCode->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT)
+                GTags::SciAutoComplete(notifyCode->ch);
+        }
+        break;
+
         case NPPN_READY:
             GTags::OnNppReady();
         break;
