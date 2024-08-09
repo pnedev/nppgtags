@@ -1,3 +1,10 @@
+What's new in v5.1.2
+=======================
+- Update Notepad++ API (>= Notepad++ v8.6.5 but it is compatible with older version as well)
+- Update Ctags to 6.1.0 and Global GTags binaries to 6.6.9
+- Several small fixes and improvements
+
+
 What's new in v5.1.1
 =======================
 - Fix issue with swapped mouse buttons

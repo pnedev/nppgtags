@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -72,7 +72,10 @@ const unsigned ResultWin::cSearchFontSize   = 10;
 const int ResultWin::cSearchWidth           = 420;
 
 
-ResultWin* ResultWin::RW = NULL;
+ResultWin*  ResultWin::RW       = NULL;
+HWND        ResultWin::_hSci    = NULL;
+SciFnDirect ResultWin::_sciFunc = NULL;
+sptr_t      ResultWin::_sciPtr  = 0;
 
 
 /**
@@ -816,12 +819,6 @@ ResultWin::~ResultWin()
     {
         closeAllTabs();
 
-        if (_hSci)
-        {
-            INpp::Get().DestroySciHandle(_hSci);
-            _hSci = NULL;
-        }
-
         SendMessage(_hWnd, WM_CLOSE, 0, 0);
     }
 }
@@ -908,11 +905,14 @@ HWND ResultWin::composeWindow()
 
     npp.RegisterWinForDarkMode(_hWnd);
 
-    _hSci = npp.CreateSciHandle(_hWnd);
-    if (_hSci)
+    if (!_hSci)
     {
-        _sciFunc    = (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
-        _sciPtr     = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
+        _hSci = npp.CreateSciHandle(_hWnd);
+        if (_hSci)
+        {
+            _sciFunc    = (SciFnDirect)::SendMessage(_hSci, SCI_GETDIRECTFUNCTION, 0, 0);
+            _sciPtr     = (sptr_t)::SendMessage(_hSci, SCI_GETDIRECTPOINTER, 0, 0);
+        }
     }
 
     if (_hSci == NULL || _sciFunc == NULL || _sciPtr == 0)
@@ -2083,7 +2083,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                                 if (RW->_hSearch)
                                 {
                                     SendMessage(RW->_hSearch, WM_CLOSE, 0, 0);
-                                    SetFocus(RW->_hSci);
+                                    SetFocus(ResultWin::_hSci);
                                 }
                                 else
                                 {
@@ -2136,7 +2136,7 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                 if (wParam == VK_ESCAPE && !shift)
                 {
                     SendMessage(RW->_hSearch, WM_CLOSE, 0, 0);
-                    SetFocus(RW->_hSci);
+                    SetFocus(ResultWin::_hSci);
                     return 1;
                 }
             }
@@ -2159,7 +2159,7 @@ LRESULT APIENTRY ResultWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         case WM_SETFOCUS:
             RW->hookKeyboard();
-            SetFocus(RW->_hSci);
+            SetFocus(ResultWin::_hSci);
         return 0;
 
         case WM_NOTIFY:

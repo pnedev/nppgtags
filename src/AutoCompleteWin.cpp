@@ -435,7 +435,7 @@ LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
                 case LVN_KEYDOWN:
                     if (ACW->onKeyDown(((LPNMLVKEYDOWN)lParam)->wVKey))
-                        return 0;
+                        return 1;
                 break;
 
                 case NM_DBLCLK:
