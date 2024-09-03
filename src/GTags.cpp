@@ -331,7 +331,7 @@ void halfAboutCB(const CmdPtr_t& cmd)
         cmd->SetResult(txt.Vector());
     }
 
-    const CTextA txt("\nCurrent Ctags parser version:\n\n");
+    const CTextA txt("\nCurrent Universal Ctags parser version:\n\n");
     cmd->AppendToResult(txt.Vector());
 
     cmd->Id(CTAGS_VERSION);
