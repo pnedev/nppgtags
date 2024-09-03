@@ -233,7 +233,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         HDC hdc = GetWindowDC(hOwner);
 
         _hFont      = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
-        _hFontInfo  = Tools::CreateFromSystemMenuFont(hdc, cFontSize - 2);
+        _hFontInfo  = Tools::CreateFromSystemMenuFont(hdc, cFontSize);
 
         txtHeight       = Tools::GetFontHeight(hdc, _hFont) + 1;
         txtInfoHeight   = Tools::GetFontHeight(hdc, _hFontInfo) + 1;
@@ -244,7 +244,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 500, 13 * txtHeight + txtInfoHeight + 270);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 520, 13 * txtHeight + txtInfoHeight + 285);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -302,7 +302,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     _activeTab = new Tab;
     {
-        TCHAR buf[64]   = _T("Generic database config");
+        TCHAR buf[64]   = _T("New database defaults");
         TCITEM tci      = {0};
         tci.mask        = TCIF_TEXT | TCIF_PARAM;
         tci.pszText     = buf;
@@ -397,7 +397,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     _hAddPathFilter = CreateWindowEx(0, _T("BUTTON"), _T("Add sub-folder"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            xPos + (width / 2) + (width / 4) + 5, yPos, (width / 4) - 5, 25,
+            xPos + width + 5 - (width / 3), yPos, (width / 3) - 5, 25,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
@@ -411,16 +411,16 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (win.bottom - win.top + 20);
+    yPos += (win.bottom - win.top + 25);
     width = totalWidth / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
             WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON,
-            width, yPos, width, 25,
+            width, yPos, width, 30,
             _hWnd, NULL, HMod, NULL);
 
     _hCancel = CreateWindowEx(0, _T("BUTTON"), _T("Cancel"),
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            3 * width, yPos, width, 25,
+            3 * width, yPos, width, 30,
             _hWnd, NULL, HMod, NULL);
 
     if (_hFont)
