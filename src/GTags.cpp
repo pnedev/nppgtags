@@ -675,7 +675,7 @@ void DeleteDatabase()
 /**
  *  \brief
  */
-void ToggleResultWinFocus()
+void ToggleWindowsFocus()
 {
     ResultWin::Show();
 }
@@ -744,7 +744,7 @@ FuncItem Menu[21] = {
     /* 13 */ FuncItem(Cmd::CmdName[CREATE_DATABASE], CreateDatabase),
     /* 14 */ FuncItem(_T("Delete Database"), DeleteDatabase),
     /* 15 */ FuncItem(),
-    /* 16 */ FuncItem(_T("Toggle Results Window Focus"), ToggleResultWinFocus),
+    /* 16 */ FuncItem(_T("Toggle Windows Focus"), ToggleWindowsFocus),
     /* 17 */ FuncItem(),
     /* 18 */ FuncItem(_T("Settings..."), SettingsCfg),
     /* 19 */ FuncItem(),
