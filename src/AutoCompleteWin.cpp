@@ -337,7 +337,6 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         case VK_DOWN:
         return false;
 
-        case VK_SPACE:
         case VK_TAB:
         case VK_RETURN:
             onDblClick();
@@ -380,6 +379,12 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
             INpp& npp = INpp::Get();
             npp.ClearSelection();
             npp.AddText((char*)&character, 1);
+
+            if (keyCode == VK_SPACE)
+            {
+                SendMessage(_hWnd, WM_CLOSE, 0, 0);
+                return true;
+            }
         }
     }
 
