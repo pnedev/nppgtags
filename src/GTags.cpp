@@ -981,7 +981,7 @@ void OnNppReady()
  */
 void OnFileBeforeChange(const CPath& file)
 {
-    ChangedFile.reset(new CPath(file));
+    ChangedFile = std::make_unique<CPath>(file);
 }
 
 

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@ namespace GTags
 class GTagsDb : public std::enable_shared_from_this<GTagsDb>
 {
 public:
+    GTagsDb(const CPath& dbPath, bool writeEn);
     ~GTagsDb() {}
 
     inline const CPath& GetPath() const { return _path; }
@@ -60,8 +61,6 @@ public:
 
 private:
     friend class DbManager;
-
-    GTagsDb(const CPath& dbPath, bool writeEn);
 
     static void dbUpdateCB(const CmdPtr_t& cmd);
 

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2016 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -43,7 +43,8 @@ const TCHAR AboutWin::cClassName[]      = _T("AboutWin");
 const int AboutWin::cBackgroundColor    = COLOR_INFOBK;
 const unsigned AboutWin::cFontSize      = 10;
 
-AboutWin* AboutWin::AW = NULL;
+
+std::unique_ptr<AboutWin> AboutWin::AW {nullptr};
 
 
 /**
@@ -75,12 +76,10 @@ void AboutWin::Show(const TCHAR* info)
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    AW = new AboutWin;
+    AW = std::make_unique<AboutWin>();
+
     if (AW->composeWindow(hOwner, info) == NULL)
-    {
-        delete AW;
-        AW = NULL;
-    }
+        AW = nullptr;
 }
 
 
@@ -244,8 +243,7 @@ LRESULT APIENTRY AboutWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
         case WM_DESTROY:
             DestroyCaret();
-            delete AW;
-            AW = NULL;
+            AW = nullptr;
         return 0;
     }
 

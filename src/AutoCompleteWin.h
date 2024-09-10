@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <memory>
 #include "Common.h"
 #include "CmdDefines.h"
 
@@ -46,6 +47,10 @@ public:
 
     static void Show(const CmdPtr_t& cmd);
 
+    AutoCompleteWin(const CmdPtr_t& cmd);
+    AutoCompleteWin(const AutoCompleteWin&);
+    ~AutoCompleteWin();
+
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
@@ -53,9 +58,6 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    AutoCompleteWin(const CmdPtr_t& cmd);
-    AutoCompleteWin(const AutoCompleteWin&);
-    ~AutoCompleteWin();
     AutoCompleteWin& operator=(const AutoCompleteWin&) = delete;
 
     HWND composeWindow(const TCHAR* header);
@@ -65,7 +67,7 @@ private:
     void onDblClick();
     bool onKeyDown(int keyCode);
 
-    static AutoCompleteWin* ACW;
+    static std::unique_ptr<AutoCompleteWin> ACW;
 
     HWND            _hWnd;
     HWND            _hLVWnd;

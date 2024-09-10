@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ GTagsDb::GTagsDb(const CPath& dbPath, bool writeEn) : _path(dbPath), _writeLock(
  */
 void GTagsDb::Update(const CPath& file)
 {
-    CmdPtr_t cmd(new Cmd(UPDATE_SINGLE, this->shared_from_this(), NULL, file.C_str()));
+    CmdPtr_t cmd = std::make_shared<Cmd>(UPDATE_SINGLE, this->shared_from_this(), nullptr, file.C_str());
     CmdEngine::Run(cmd, dbUpdateCB);
 }
 
@@ -310,7 +310,7 @@ const DbHandle& DbManager::lockDb(const CPath& dbPath, bool writeEn, bool* succe
         }
     }
 
-    DbHandle newDb(new GTagsDb(dbPath, writeEn));
+    DbHandle newDb = std::make_shared<GTagsDb>(dbPath, writeEn);
     _dbList.push_back(newDb);
 
     *success = true;

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2022 Pavel Nedev
+ *  Copyright(C) 2015-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -49,6 +49,9 @@ public:
     static void Show();
     static void Show(const DbHandle& db);
 
+    SettingsWin();
+    ~SettingsWin();
+
 private:
     /**
      *  \struct  Tab
@@ -81,9 +84,7 @@ private:
     static LRESULT CALLBACK keyHookProc(int code, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    SettingsWin();
     SettingsWin(const SettingsWin&);
-    ~SettingsWin();
 
     HWND composeWindow(HWND hOwner);
 
@@ -105,7 +106,7 @@ private:
 
     bool createDatabase(CPath& dbPath, CompletionCB complCB);
 
-    static SettingsWin* SW;
+    static std::unique_ptr<SettingsWin> SW;
 
     Tab*        _activeTab;
 

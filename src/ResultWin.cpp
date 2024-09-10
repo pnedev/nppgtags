@@ -72,7 +72,8 @@ const unsigned ResultWin::cSearchFontSize   = 10;
 const int ResultWin::cSearchWidth           = 420;
 
 
-ResultWin*  ResultWin::RW       = NULL;
+std::unique_ptr<ResultWin> ResultWin::RW {nullptr};
+
 HWND        ResultWin::_hSci    = NULL;
 SciFnDirect ResultWin::_sciFunc = NULL;
 sptr_t      ResultWin::_sciPtr  = 0;
@@ -508,7 +509,8 @@ HWND ResultWin::Register()
     // Scintilla uses that, make sure it is not accidentally unloaded
     LoadLibrary(_T("Riched20.dll"));
 
-    RW = new ResultWin();
+    RW = std::make_unique<ResultWin>();
+
     if (RW->composeWindow() == NULL)
     {
         Unregister();
@@ -539,10 +541,7 @@ HWND ResultWin::Register()
 void ResultWin::Unregister()
 {
     if (RW)
-    {
-        delete RW;
-        RW = NULL;
-    }
+        RW = nullptr;
 
     UnregisterClass(cClassName, HMod);
     UnregisterClass(cSearchClassName, HMod);

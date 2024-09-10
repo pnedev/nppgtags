@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <unordered_set>
 #include <unordered_map>
+#include <memory>
 #include <string>
 #include "NppAPI/Scintilla.h"
 #include "Common.h"
@@ -148,6 +149,11 @@ public:
 
     static bool Activate();
 
+    ResultWin() : _hWnd(NULL), _hKeyHook(NULL), _activeTab(NULL),
+            _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
+            _lastRE(false), _lastIC(false), _lastWW(true) {}
+    ~ResultWin();
+
 private:
     /**
      *  \struct  Tab
@@ -202,11 +208,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     static LRESULT APIENTRY searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    ResultWin() : _hWnd(NULL), _hKeyHook(NULL), _activeTab(NULL),
-            _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
-            _lastRE(false), _lastIC(false), _lastWW(true) {}
     ResultWin(const ResultWin&);
-    ~ResultWin();
 
     void show();
     void show(const CmdPtr_t& cmd);
@@ -259,7 +261,7 @@ private:
     void onMove();
     void onSearch(bool reverseDir = false, bool keepFocus = false);
 
-    static ResultWin* RW;
+    static std::unique_ptr<ResultWin> RW;
 
     static HWND         _hSci;
     static SciFnDirect  _sciFunc;

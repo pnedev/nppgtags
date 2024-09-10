@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2022 Pavel Nedev
+ *  Copyright(C) 2015-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <memory>
 #include <vector>
 #include "Common.h"
 #include "INpp.h"
@@ -47,7 +48,7 @@ const int SettingsWin::cBackgroundColor = COLOR_BTNFACE;
 const int SettingsWin::cFontSize        = 10;
 
 
-SettingsWin* SettingsWin::SW = NULL;
+std::unique_ptr<SettingsWin> SettingsWin::SW {nullptr};
 
 
 /**
@@ -71,7 +72,7 @@ SettingsWin::Tab::~Tab()
     {
         if (_updateDb)
         {
-            CmdPtr_t cmd(new Cmd(CREATE_DATABASE, _db));
+            CmdPtr_t cmd = std::make_shared<Cmd>(CREATE_DATABASE, _db);
             CmdEngine::Run(cmd, SettingsWin::dbWriteReady);
         }
         else
@@ -176,11 +177,11 @@ bool SettingsWin::createWin()
 
     HWND hOwner = INpp::Get().GetHandle();
 
-    SW = new SettingsWin();
+    SW = std::make_unique<SettingsWin>();
+
     if (SW->composeWindow(hOwner) == NULL)
     {
-        delete SW;
-        SW = NULL;
+        SW = nullptr;
         return false;
     }
 
@@ -931,7 +932,7 @@ bool SettingsWin::createDatabase(CPath& dbPath, CompletionCB complCB)
         db = DbManager::Get().RegisterDb(dbPath);
     }
 
-    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
+    CmdPtr_t cmd = std::make_shared<Cmd>(CREATE_DATABASE, db);
     CmdEngine::Run(cmd, complCB);
 
     return true;
@@ -950,13 +951,13 @@ void SettingsWin::dbWriteReady(const CmdPtr_t& cmd)
 
     if (cmd->Status() == RUN_ERROR)
     {
-        HWND hWnd = (SW == NULL) ? INpp::Get().GetHandle() : SW->_hWnd;
+        HWND hWnd = (!SW) ? INpp::Get().GetHandle() : SW->_hWnd;
         MessageBox(hWnd, _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
     }
     else if (cmd->Result())
     {
         CText msg(cmd->Result());
-        HWND hWnd = (SW == NULL) ? INpp::Get().GetHandle() : SW->_hWnd;
+        HWND hWnd = (!SW) ? INpp::Get().GetHandle() : SW->_hWnd;
         MessageBox(hWnd, msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
 
@@ -972,7 +973,7 @@ void SettingsWin::createDefDbCB(const CmdPtr_t& cmd)
 {
     dbWriteReady(cmd);
 
-    if (SW == NULL)
+    if (!SW)
         return;
 
     EnableWindow(SW->_hWnd, TRUE);
@@ -989,7 +990,7 @@ void SettingsWin::createLibDbCB(const CmdPtr_t& cmd)
 {
     dbWriteReady(cmd);
 
-    if (SW == NULL)
+    if (!SW)
         return;
 
     EnableWindow(SW->_hWnd, TRUE);
@@ -1221,8 +1222,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
         case WM_DESTROY:
             DestroyCaret();
-            delete SW;
-            SW = NULL;
+            SW = nullptr;
         return 0;
     }
 

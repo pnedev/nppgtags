@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2015 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <memory>
 
 namespace GTags
 {
@@ -40,6 +41,9 @@ class AboutWin
 public:
     static void Show(const TCHAR *info);
 
+    AboutWin() : _hWnd(NULL), _hFont(NULL) {}
+    ~AboutWin();
+
 private:
     static const TCHAR      cClassName[];
     static const int        cBackgroundColor;
@@ -47,13 +51,11 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    AboutWin() : _hWnd(NULL), _hFont(NULL) {}
     AboutWin(const AboutWin&);
-    ~AboutWin();
 
     HWND composeWindow(HWND hOwner, const TCHAR* info);
 
-    static AboutWin* AW;
+    static std::unique_ptr<AboutWin> AW;
 
     HWND    _hWnd;
     HFONT   _hFont;

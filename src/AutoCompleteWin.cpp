@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2016 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ const int AutoCompleteWin::cBackgroundColor = COLOR_INFOBK;
 const int AutoCompleteWin::cWidth           = 400;
 
 
-AutoCompleteWin* AutoCompleteWin::ACW = NULL;
+std::unique_ptr<AutoCompleteWin> AutoCompleteWin::ACW {nullptr};
 
 
 /**
@@ -86,12 +86,10 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
     if (ACW)
         return;
 
-    ACW = new AutoCompleteWin(cmd);
+    ACW = std::make_unique<AutoCompleteWin>(cmd);
+
     if (ACW->composeWindow(cmd->Name()) == NULL)
-    {
-        delete ACW;
-        ACW = NULL;
-    }
+        ACW = nullptr;
 }
 
 
@@ -450,8 +448,7 @@ LRESULT APIENTRY AutoCompleteWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
         case WM_DESTROY:
-            delete ACW;
-            ACW = NULL;
+            ACW = nullptr;
         return 0;
     }
 
