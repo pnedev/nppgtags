@@ -103,7 +103,7 @@ void SearchWin::Show(CmdId_t cmdId, CompletionCB complCB, const TCHAR* hint, boo
     }
 
     if (hint)
-        SW->onEditChange();
+        SW->startCompletion();
 }
 
 
@@ -201,7 +201,10 @@ HWND SearchWin::composeWindow(HWND hOwner, const TCHAR* hint, bool enRE, bool en
     ComboBox_SetMinVisible(_hSearch, 7);
 
     if (hint)
+    {
+        _initialCompl = true;
         ComboBox_SetText(_hSearch, hint);
+    }
 
     if (_hBtnFont)
     {
@@ -254,6 +257,7 @@ void SearchWin::reinit(CmdId_t cmdId, CompletionCB complCB, const TCHAR* hint, b
 
     if (hint)
     {
+        _initialCompl = true;
         ComboBox_SetText(_hSearch, hint);
         PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
     }
@@ -329,7 +333,10 @@ void SearchWin::startCompletion()
     DbHandle db = getDatabase(false, true);
 
     if (!db)
+    {
+        _initialCompl = false;
         return;
+    }
 
     CmdPtr_t cmpl = std::make_shared<Cmd>(cmplId, db, parser, tag, (Button_GetCheck(_hIC) == BST_CHECKED), false);
 
@@ -471,7 +478,15 @@ void SearchWin::filterComplList()
         if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
             ComboBox_SetText(_hSearch, filter.C_str());
 
-        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
+        if (_initialCompl)
+        {
+        	_initialCompl = false;
+            PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
+        }
+        else
+        {
+            PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
+        }
     }
 
     SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);

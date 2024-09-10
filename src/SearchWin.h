@@ -71,7 +71,7 @@ public:
 
     SearchWin(CmdId_t cmdId, CompletionCB complCB) :
         _cmdId(cmdId), _complCB(complCB), _cmd(NULL), _hKeyHook(NULL), _cancelled(true), _keyPressed(0),
-        _completionStarted(false), _completionDone(false) {}
+        _completionStarted(false), _completionDone(false), _initialCompl(false) {}
     ~SearchWin();
 
 private:
@@ -119,6 +119,8 @@ private:
     bool        _completionStarted;
     bool        _completionDone;
     ParserPtr_t _completion;
+
+    bool        _initialCompl;
 };
 
 } // namespace GTags
