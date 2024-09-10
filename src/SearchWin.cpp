@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@
 #include "Cmd.h"
 #include "LineParser.h"
 #include "Config.h"
+#include "ResultWin.h"
 
 
 namespace GTags
@@ -47,7 +48,7 @@ const int SearchWin::cWidth         = 450;
 const int SearchWin::cComplAfter    = 2;
 
 
-SearchWin* SearchWin::SW = NULL;
+std::unique_ptr<SearchWin> SearchWin::SW {nullptr};
 
 
 /**
@@ -85,19 +86,24 @@ void SearchWin::Unregister()
 /**
  *  \brief
  */
-void SearchWin::Show(const CmdPtr_t& cmd, CompletionCB complCB, bool enRE, bool enIC)
+void SearchWin::Show(CmdId_t cmdId, CompletionCB complCB, const TCHAR* hint, bool enRE, bool enIC)
 {
-    if (SW)
-        SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
-
-    HWND hOwner = INpp::Get().GetHandle();
-
-    SW = new SearchWin(cmd, complCB);
-    if (SW->composeWindow(hOwner, enRE, enIC) == NULL)
+    if (!SW)
     {
-        delete SW;
-        SW = NULL;
+        HWND hOwner = INpp::Get().GetHandle();
+
+        SW = std::make_unique<SearchWin>(cmdId, complCB);
+
+        if (SW->composeWindow(hOwner, hint, enRE, enIC) == NULL)
+            SW = nullptr;
     }
+    else
+    {
+        SW->reinit(cmdId, complCB, hint, enRE, enIC);
+    }
+
+    if (hint)
+        SW->onEditChange();
 }
 
 
@@ -124,7 +130,7 @@ SearchWin::~SearchWin()
     if (_hTxtFont)
         DeleteObject(_hTxtFont);
 
-    if (_cancelled)
+    if (_cancelled && _cmd)
     {
         _cmd->Status(CANCELLED);
         _complCB(_cmd);
@@ -135,7 +141,7 @@ SearchWin::~SearchWin()
 /**
  *  \brief
  */
-HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
+HWND SearchWin::composeWindow(HWND hOwner, const TCHAR* hint, bool enRE, bool enIC)
 {
     HDC hdc = GetWindowDC(hOwner);
 
@@ -157,7 +163,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
     RECT win    = Tools::GetWinRect(hOwner, styleEx, style, cWidth, txtHeight + btnHeight + 17);
     int width   = win.right - win.left;
 
-    _hWnd = CreateWindowEx(styleEx, cClassName, _cmd->Name(), style,
+    _hWnd = CreateWindowEx(styleEx, cClassName, Cmd::CmdName[_cmdId], style,
             win.left, win.top, width, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -194,8 +200,8 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
 
     ComboBox_SetMinVisible(_hSearch, 7);
 
-    if (!_cmd->Tag().IsEmpty())
-        ComboBox_SetText(_hSearch, _cmd->Tag().C_str());
+    if (hint)
+        ComboBox_SetText(_hSearch, hint);
 
     if (_hBtnFont)
     {
@@ -210,7 +216,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
     }
     else
     {
-        Button_SetCheck(_hRE, _cmd->RegExp() ? BST_CHECKED : BST_UNCHECKED);
+        Button_SetCheck(_hRE, BST_UNCHECKED);
         EnableWindow(_hRE, FALSE);
     }
 
@@ -220,7 +226,7 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
     }
     else
     {
-        Button_SetCheck(_hIC, _cmd->IgnoreCase() ? BST_CHECKED : BST_UNCHECKED);
+        Button_SetCheck(_hIC, BST_UNCHECKED);
         EnableWindow(_hIC, FALSE);
     }
 
@@ -230,6 +236,55 @@ HWND SearchWin::composeWindow(HWND hOwner, bool enRE, bool enIC)
     UpdateWindow(_hWnd);
 
     return _hWnd;
+}
+
+
+/**
+ *  \brief
+ */
+void SearchWin::reinit(CmdId_t cmdId, CompletionCB complCB, const TCHAR* hint, bool enRE, bool enIC)
+{
+    _cmdId = cmdId;
+    _complCB = complCB;
+
+    _cancelled = true;
+    _cmd = nullptr;
+
+    SetWindowText(_hWnd, Cmd::CmdName[_cmdId]);
+
+    if (hint)
+    {
+        ComboBox_SetText(_hSearch, hint);
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
+    }
+    else
+    {
+        ComboBox_SetText(_hSearch, _T(""));
+    }
+
+    EnableWindow(_hRE, enRE);
+    EnableWindow(_hIC, enIC);
+
+    bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
+    bool ic = (Button_GetCheck(_hIC) == BST_CHECKED);
+
+    if (enRE != re)
+    {
+        if (enRE)
+            Button_SetCheck(_hRE, GTagsSettings._re ? BST_CHECKED : BST_UNCHECKED);
+        else
+            Button_SetCheck(_hRE, BST_UNCHECKED);
+    }
+
+    if (enIC != ic)
+    {
+        if (enIC)
+            Button_SetCheck(_hIC, GTagsSettings._ic ? BST_CHECKED : BST_UNCHECKED);
+        else
+            Button_SetCheck(_hIC, BST_UNCHECKED);
+    }
+
+    SetFocus(_hSearch);
 }
 
 
@@ -246,7 +301,7 @@ void SearchWin::startCompletion()
     CompletionCB complCB;
     ParserPtr_t parser;
 
-    if (_cmd->Id() == FIND_FILE)
+    if (_cmdId == FIND_FILE)
     {
         cmplId = AUTOCOMPLETE_FILE;
 
@@ -255,7 +310,7 @@ void SearchWin::startCompletion()
         tag[cComplAfter + 1] = 0;
 
         complCB = endCompletion;
-        parser.reset(new LineParser);
+        parser = std::make_shared<LineParser>();
     }
     else
     {
@@ -271,9 +326,14 @@ void SearchWin::startCompletion()
         complCB = halfComplete;
     }
 
-    CmdPtr_t cmpl(new Cmd(cmplId, _cmd->Db(), parser, tag, (Button_GetCheck(_hIC) == BST_CHECKED), false));
+    DbHandle db = getDatabase(false, true);
 
-    if (_cmd->Id() != FIND_DEFINITION)
+    if (!db)
+        return;
+
+    CmdPtr_t cmpl = std::make_shared<Cmd>(cmplId, db, parser, tag, (Button_GetCheck(_hIC) == BST_CHECKED), false);
+
+    if (_cmdId != FIND_DEFINITION)
         cmpl->SkipLibs(true);
 
     _completionStarted = true;
@@ -287,7 +347,7 @@ void SearchWin::startCompletion()
  */
 void SearchWin::halfComplete(const CmdPtr_t& cmpl)
 {
-    if (SW == NULL)
+    if (!SW)
         return;
 
     if (ComboBox_GetTextLength(SW->_hSearch) < cComplAfter)
@@ -300,13 +360,15 @@ void SearchWin::halfComplete(const CmdPtr_t& cmpl)
     {
         cmpl->Id(AUTOCOMPLETE_SYMBOL);
 
-        ParserPtr_t parser(new LineParser);
+        ParserPtr_t parser = std::make_shared<LineParser>();
         cmpl->Parser(parser);
 
         CmdEngine::Run(cmpl, endCompletion);
     }
     else
     {
+        DbManager::Get().PutDb(cmpl->Db());
+
         SW->_completionStarted = false;
         SW->_completionDone = true;
     }
@@ -318,13 +380,15 @@ void SearchWin::halfComplete(const CmdPtr_t& cmpl)
  */
 void SearchWin::endCompletion(const CmdPtr_t& cmpl)
 {
-    if (SW == NULL)
+    if (!SW)
         return;
 
     SW->_completionStarted = false;
 
     if (ComboBox_GetTextLength(SW->_hSearch) < cComplAfter)
         return;
+
+    DbManager::Get().PutDb(cmpl->Db());
 
     if (cmpl->Status() == OK && cmpl->Result())
     {
@@ -344,10 +408,11 @@ void SearchWin::clearCompletion()
     if (_completionStarted)
         return;
 
-    CText txt(ComboBox_GetTextLength(_hSearch));
+    const int pos = LOWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+
+    CText txt(pos);
 
     ComboBox_GetText(_hSearch, txt.C_str(), (int)txt.Size());
-    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     ComboBox_ResetContent(_hSearch);
     ComboBox_ShowDropdown(_hSearch, FALSE);
@@ -371,7 +436,7 @@ void SearchWin::filterComplList()
 
     ComboBox_GetText(_hSearch, filter.C_str(), (int)filter.Size());
 
-    int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+    const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
 
@@ -441,7 +506,7 @@ void SearchWin::onEditChange()
 
     if (_completionDone)
     {
-        int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+        const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
         if (pos < cComplAfter)
             clearCompletion();
@@ -463,21 +528,31 @@ void SearchWin::onOK()
 {
     if (ComboBox_GetTextLength(_hSearch))
     {
+        DbHandle db = getDatabase();
+
+        if (!db)
+            return;
+
         CText tag(ComboBox_GetTextLength(_hSearch));
 
         ComboBox_GetText(_hSearch, tag.C_str(), (int)tag.Size());
 
+        const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
+
         bool re = (Button_GetCheck(_hRE) == BST_CHECKED);
         bool ic = (Button_GetCheck(_hIC) == BST_CHECKED);
 
-        _cmd->Tag(tag);
-        _cmd->RegExp(re);
-        _cmd->IgnoreCase(ic);
-
         _cancelled = false;
+
+        ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+        _cmd = std::make_shared<Cmd>(_cmdId, db, parser, tag.C_str(), ic, re);
+
         CmdEngine::Run(_cmd, _complCB);
     }
 
+    // Make this optional so search window can stay open if user wishes that
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
@@ -503,6 +578,11 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                 if (wParam == VK_RETURN)
                 {
                     SW->onOK();
+                    return 1;
+                }
+                if (wParam == VK_CONTROL || wParam == VK_MENU)
+                {
+                    SW->clearCompletion();
                     return 1;
                 }
 
@@ -553,8 +633,7 @@ LRESULT APIENTRY SearchWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         case WM_DESTROY:
             SW->saveSearchOptions();
 
-            delete SW;
-            SW = NULL;
+            SW = nullptr;
         return 0;
     }
 

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -141,64 +141,6 @@ CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
 }
 
 
-void dbWriteCB(const CmdPtr_t& cmd);
-
-
-/**
- *  \brief
- */
-DbHandle getDatabase(bool writeEn = false)
-{
-    INpp& npp = INpp::Get();
-    bool success;
-    CPath currentFile;
-    npp.GetFilePath(currentFile);
-
-    DbHandle db = DbManager::Get().GetDb(currentFile, writeEn, &success);
-
-    // Search default database for read operations (if no local DB found and default is configured to be used)
-    if (!db && !writeEn && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
-        db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, writeEn, &success);
-
-    if (!db)
-    {
-        if (writeEn)
-        {
-            MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
-            return db;
-        }
-
-        int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\n\nDo you want to create it?"),
-                cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
-        if (choice != IDYES)
-            return db;
-
-        currentFile.StripFilename();
-
-        if (!Tools::BrowseForFolder(npp.GetHandle(), currentFile))
-            return db;
-
-        db = DbManager::Get().RegisterDb(currentFile);
-
-        CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
-        CmdEngine::Run(cmd, dbWriteCB);
-
-        return NULL;
-    }
-    else if (!success)
-    {
-        CText msg(_T("Database at\n\""));
-        msg += db->GetPath();
-        msg += _T("\"\nis currently in use.\nPlease try again later.");
-
-        MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
-        db = NULL;
-    }
-
-    return db;
-}
-
-
 /**
  *  \brief
  */
@@ -236,7 +178,7 @@ void halfComplCB(const CmdPtr_t& cmd)
     {
         cmd->Id(AUTOCOMPLETE_SYMBOL);
 
-        ParserPtr_t parser(new LineParser);
+        ParserPtr_t parser = std::make_shared<LineParser>();
         cmd->Parser(parser);
 
         CmdEngine::Run(cmd, autoComplCB);
@@ -352,7 +294,7 @@ void AutoComplete()
     if (!db)
         return;
 
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE, db, NULL, tag.C_str(), GTagsSettings._ic));
+    CmdPtr_t cmd = std::make_shared<Cmd>(AUTOCOMPLETE, db, nullptr, tag.C_str(), GTagsSettings._ic);
 
     CmdEngine::Run(cmd, halfComplCB);
 }
@@ -373,8 +315,8 @@ void AutoCompleteFile()
     if (!db)
         return;
 
-    ParserPtr_t parser(new LineParser);
-    CmdPtr_t cmd(new Cmd(AUTOCOMPLETE_FILE, db, parser, tag.C_str(), GTagsSettings._ic));
+    ParserPtr_t parser = std::make_shared<LineParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(AUTOCOMPLETE_FILE, db, parser, tag.C_str(), GTagsSettings._ic);
 
     CmdEngine::Run(cmd, autoComplCB);
 }
@@ -385,10 +327,18 @@ void AutoCompleteFile()
  */
 void FindFile()
 {
-    SearchWin::Close();
+    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    CText tag = getSelection(rwHSci, false, DONT_SELECT);
+    if (tag.IsEmpty())
+    {
+        CPath fileName;
+        INpp::Get().GetFileNamePart(fileName);
+        SearchWin::Show(FIND_FILE, showResultCB, fileName.C_str());
+        return;
+    }
 
     DbHandle db;
-    HWND rwHSci = ResultWin::GetSciHandleIfFocused();
 
     if (rwHSci)
         db = getDatabaseAt(ResultWin::GetDbPath());
@@ -398,22 +348,11 @@ void FindFile()
     if (!db)
         return;
 
-    ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_FILE, db, parser, NULL, GTagsSettings._ic));
+    ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(FIND_FILE, db, parser, nullptr, GTagsSettings._ic);
 
-    CText tag = getSelection(rwHSci, false, DONT_SELECT);
-    if (tag.IsEmpty())
-    {
-        CPath fileName;
-        INpp::Get().GetFileNamePart(fileName);
-        cmd->Tag(fileName);
-        SearchWin::Show(cmd, showResultCB);
-    }
-    else
-    {
-        cmd->Tag(tag);
-        CmdEngine::Run(cmd, showResultCB);
-    }
+    cmd->Tag(tag);
+    CmdEngine::Run(cmd, showResultCB);
 }
 
 
@@ -422,10 +361,15 @@ void FindFile()
  */
 void FindDefinition()
 {
-    SearchWin::Close();
-
     DbHandle db;
     HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    CText tag = getSelection(rwHSci);
+    if (tag.IsEmpty())
+    {
+        SearchWin::Show(FIND_DEFINITION, findCB, nullptr, false);
+        return;
+    }
 
     if (rwHSci)
         db = getDatabaseAt(ResultWin::GetDbPath());
@@ -435,19 +379,11 @@ void FindDefinition()
     if (!db)
         return;
 
-    ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_DEFINITION, db, parser, NULL, GTagsSettings._ic));
+    ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(FIND_DEFINITION, db, parser, nullptr, GTagsSettings._ic);
 
-    CText tag = getSelection(rwHSci);
-    if (tag.IsEmpty())
-    {
-        SearchWin::Show(cmd, findCB, false);
-    }
-    else
-    {
-        cmd->Tag(tag);
-        CmdEngine::Run(cmd, findCB);
-    }
+    cmd->Tag(tag);
+    CmdEngine::Run(cmd, findCB);
 }
 
 
@@ -456,10 +392,15 @@ void FindDefinition()
  */
 void FindReference()
 {
-    SearchWin::Close();
-
     DbHandle db;
     HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    CText tag = getSelection(rwHSci);
+    if (tag.IsEmpty())
+    {
+        SearchWin::Show(FIND_REFERENCE, findCB, nullptr, false);
+        return;
+    }
 
     if (rwHSci)
         db = getDatabaseAt(ResultWin::GetDbPath());
@@ -479,19 +420,11 @@ void FindReference()
         return;
     }
 
-    ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(FIND_REFERENCE, db, parser, NULL, GTagsSettings._ic));
+    ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(FIND_REFERENCE, db, parser, nullptr, GTagsSettings._ic);
 
-    CText tag = getSelection(rwHSci);
-    if (tag.IsEmpty())
-    {
-        SearchWin::Show(cmd, findCB, false);
-    }
-    else
-    {
-        cmd->Tag(tag);
-        CmdEngine::Run(cmd, findCB);
-    }
+    cmd->Tag(tag);
+    CmdEngine::Run(cmd, findCB);
 }
 
 
@@ -500,10 +433,15 @@ void FindReference()
  */
 void SearchSrc()
 {
-    SearchWin::Close();
-
     DbHandle db;
     HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    CText tag = getSelection(rwHSci);
+    if (tag.IsEmpty())
+    {
+        SearchWin::Show(GREP, showResultCB);
+        return;
+    }
 
     if (rwHSci)
         db = getDatabaseAt(ResultWin::GetDbPath());
@@ -513,19 +451,11 @@ void SearchSrc()
     if (!db)
         return;
 
-    ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP, db, parser, NULL, GTagsSettings._ic));
+    ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(GREP, db, parser, nullptr, GTagsSettings._ic);
 
-    CText tag = getSelection(rwHSci);
-    if (tag.IsEmpty())
-    {
-        SearchWin::Show(cmd, showResultCB);
-    }
-    else
-    {
-        cmd->Tag(tag);
-        CmdEngine::Run(cmd, showResultCB);
-    }
+    cmd->Tag(tag);
+    CmdEngine::Run(cmd, showResultCB);
 }
 
 
@@ -534,10 +464,15 @@ void SearchSrc()
  */
 void SearchOther()
 {
-    SearchWin::Close();
-
     DbHandle db;
     HWND rwHSci = ResultWin::GetSciHandleIfFocused();
+
+    CText tag = getSelection(rwHSci);
+    if (tag.IsEmpty())
+    {
+        SearchWin::Show(GREP_TEXT, showResultCB);
+        return;
+    }
 
     if (rwHSci)
         db = getDatabaseAt(ResultWin::GetDbPath());
@@ -547,19 +482,11 @@ void SearchOther()
     if (!db)
         return;
 
-    ParserPtr_t parser(new ResultWin::TabParser);
-    CmdPtr_t cmd(new Cmd(GREP_TEXT, db, parser, NULL, GTagsSettings._ic));
+    ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(GREP_TEXT, db, parser, nullptr, GTagsSettings._ic);
 
-    CText tag = getSelection(rwHSci);
-    if (tag.IsEmpty())
-    {
-        SearchWin::Show(cmd, showResultCB);
-    }
-    else
-    {
-        cmd->Tag(tag);
-        CmdEngine::Run(cmd, showResultCB);
-    }
+    cmd->Tag(tag);
+    CmdEngine::Run(cmd, showResultCB);
 }
 
 
@@ -599,8 +526,6 @@ void GoForward()
  */
 void CreateDatabase()
 {
-    SearchWin::Close();
-
     CPath currentFile;
 
     bool success;
@@ -638,7 +563,8 @@ void CreateDatabase()
         db = DbManager::Get().RegisterDb(currentFile);
     }
 
-    CmdPtr_t cmd(new Cmd(CREATE_DATABASE, db));
+    CmdPtr_t cmd = std::make_shared<Cmd>(CREATE_DATABASE, db);
+
     CmdEngine::Run(cmd, dbWriteCB);
 }
 
@@ -648,8 +574,6 @@ void CreateDatabase()
  */
 void DeleteDatabase()
 {
-    SearchWin::Close();
-
     DbHandle db = getDatabase(true);
     if (!db)
         return;
@@ -677,7 +601,51 @@ void DeleteDatabase()
  */
 void ToggleWindowsFocus()
 {
-    ResultWin::Show();
+    enum FocusWindow {
+        Notepad,
+        Results,
+        Search,
+        EnumEnd
+    } f;
+
+    HWND hWnd = GetFocus();
+
+    INpp& npp = INpp::Get();
+
+    if (hWnd == npp.ReadSciHandle())
+        f = FocusWindow::Notepad;
+    else if (ResultWin::IsFocused(hWnd))
+        f = FocusWindow::Results;
+    else if (SearchWin::IsFocused(hWnd))
+        f = FocusWindow::Search;
+    else
+    {
+        SetFocus(npp.GetSciHandle());
+        return;
+    }
+
+    while (true)
+    {
+        f = static_cast<FocusWindow>(static_cast<int>(f) + 1);
+
+        switch (f)
+        {
+            case FocusWindow::Notepad:
+            case FocusWindow::EnumEnd:
+                SetFocus(npp.GetSciHandle());
+            return;
+
+            case FocusWindow::Results:
+                if (ResultWin::Activate())
+                    return;
+            break;
+
+            case FocusWindow::Search:
+                if (SearchWin::Activate())
+                    return;
+            break;
+        }
+    }
 }
 
 
@@ -717,7 +685,8 @@ void SettingsCfg()
  */
 void About()
 {
-    CmdPtr_t cmd(new Cmd(VERSION));
+    CmdPtr_t cmd = std::make_shared<Cmd>(VERSION);
+
     CmdEngine::Run(cmd, halfAboutCB);
 }
 
@@ -760,6 +729,69 @@ unsigned UIFontSize;
 HWND MainWndH = NULL;
 
 Settings GTagsSettings;
+
+
+/**
+ *  \brief
+ */
+DbHandle getDatabase(bool writeEn, bool skipDialogs)
+{
+    INpp& npp = INpp::Get();
+    bool success;
+    CPath currentFile;
+    npp.GetFilePath(currentFile);
+
+    DbHandle db = DbManager::Get().GetDb(currentFile, writeEn, &success);
+
+    // Search default database for read operations (if no local DB found and default is configured to be used)
+    if (!db && !writeEn && GTagsSettings._useDefDb && !GTagsSettings._defDbPath.IsEmpty())
+        db = DbManager::Get().GetDbAt(GTagsSettings._defDbPath, writeEn, &success);
+
+    if (!db)
+    {
+        if (!skipDialogs)
+        {
+            if (writeEn)
+            {
+                MessageBox(npp.GetHandle(), _T("GTags database not found"), cPluginName, MB_OK | MB_ICONINFORMATION);
+                return db;
+            }
+
+            int choice = MessageBox(npp.GetHandle(), _T("GTags database not found.\n\nDo you want to create it?"),
+                    cPluginName, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+            if (choice != IDYES)
+                return db;
+
+            currentFile.StripFilename();
+
+            if (!Tools::BrowseForFolder(npp.GetHandle(), currentFile))
+                return db;
+
+            db = DbManager::Get().RegisterDb(currentFile);
+
+            CmdPtr_t cmd = std::make_shared<Cmd>(CREATE_DATABASE, db);
+
+            CmdEngine::Run(cmd, dbWriteCB);
+        }
+
+        return NULL;
+    }
+    else if (!success)
+    {
+        if (!skipDialogs)
+        {
+            CText msg(_T("Database at\n\""));
+            msg += db->GetPath();
+            msg += _T("\"\nis currently in use.\nPlease try again later.");
+
+            MessageBox(npp.GetHandle(), msg.C_str(), cPluginName, MB_OK | MB_ICONINFORMATION);
+        }
+
+        db = NULL;
+    }
+
+    return db;
+}
 
 
 /**

@@ -81,6 +81,21 @@ sptr_t      ResultWin::_sciPtr  = 0;
 /**
  *  \brief
  */
+bool ResultWin::Activate()
+{
+    if (RW && TabCtrl_GetItemCount(RW->_hTab))
+    {
+        SetFocus(ResultWin::_hSci);
+        return true;
+    }
+
+    return false;
+};
+
+
+/**
+ *  \brief
+ */
 intptr_t ResultWin::TabParser::Parse(const CmdPtr_t& cmd)
 {
     _filesCount = 0;

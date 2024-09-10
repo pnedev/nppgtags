@@ -138,6 +138,16 @@ public:
         return CPath();
     }
 
+    static bool IsFocused(HWND hWnd = NULL)
+    {
+        if (hWnd == NULL)
+            hWnd = GetFocus();
+
+        return (RW && (RW->_hWnd == hWnd || IsChild(RW->_hWnd, hWnd)));
+    };
+
+    static bool Activate();
+
 private:
     /**
      *  \struct  Tab

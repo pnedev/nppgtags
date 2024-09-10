@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2022 Pavel Nedev
+ *  Copyright(C) 2015-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -68,8 +68,8 @@ class Cmd
 public:
     static const TCHAR* CmdName[];
 
-    Cmd(CmdId_t id, DbHandle db = NULL, ParserPtr_t parser = ParserPtr_t(NULL),
-            const TCHAR* tag = NULL, bool ignoreCase = false, bool regExp = false);
+    Cmd(CmdId_t id, DbHandle db = nullptr, ParserPtr_t parser = nullptr,
+            const TCHAR* tag = nullptr, bool ignoreCase = false, bool regExp = false);
     ~Cmd() {}
 
     inline void Id(CmdId_t id) { _id = id; }
