@@ -98,7 +98,8 @@ void AutoCompleteWin::Show(const CmdPtr_t& cmd)
  */
 AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _ic(cmd->IgnoreCase()),
-    _cmdTagLen((int)(_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())), _completion(cmd->Parser())
+    _cmdTagLen((int)(_cmdId == AUTOCOMPLETE_FILE ? cmd->Tag().Len() - 1 : cmd->Tag().Len())),
+    _completion(cmd->Parser())
 {}
 
 
@@ -180,6 +181,8 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
         return NULL;
     }
 
+    resizeLV();
+
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
 
@@ -219,10 +222,7 @@ int AutoCompleteWin::filterLV(const CText& filter)
     }
 
     if (lvItem.iItem > 0)
-    {
         ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-        resizeLV();
-    }
 
     return lvItem.iItem;
 }

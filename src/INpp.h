@@ -229,6 +229,12 @@ public:
         *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, currPos) + 2;
     }
 
+    inline void GetPointFromPos(intptr_t pos, int* x, int* y) const
+    {
+        *x = (int)SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, pos) + 2;
+        *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, pos) + 2;
+    }
+
     inline void GoToPos(intptr_t pos) const
     {
         SendMessage(_hSC, SCI_GOTOPOS, pos, 0);
