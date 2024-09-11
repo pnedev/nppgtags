@@ -474,9 +474,7 @@ void SearchWin::filterComplList()
     if (ComboBox_GetCount(_hSearch))
     {
         ComboBox_ShowDropdown(_hSearch, TRUE);
-
-        if (_keyPressed == VK_BACK || _keyPressed == VK_DELETE)
-            ComboBox_SetText(_hSearch, filter.C_str());
+        ComboBox_SetText(_hSearch, filter.C_str());
 
         if (_initialCompl)
         {
