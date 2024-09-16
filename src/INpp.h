@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -260,9 +260,14 @@ public:
         return (bool)SendMessage(_hSC, SCI_SELECTIONISRECTANGLE, 0, 0);
     }
 
+    inline int GetSelectionsCount() const
+    {
+        return SendMessage(_hSC, SCI_GETSELECTIONS, 0, 0);
+    }
+
     inline bool IsMultiSelection() const
     {
-        return (SendMessage(_hSC, SCI_GETSELECTIONS, 0, 0) != 1);
+        return (GetSelectionsCount() != 1);
     }
 
     inline intptr_t GetSelectionSize() const
@@ -270,7 +275,7 @@ public:
         return SendMessage(_hSC, SCI_GETSELTEXT, 0, 0) + 1;
     }
 
-    inline void GetSelection(CTextA& sel) const
+    inline void GetSelectionText(CTextA& sel) const
     {
         intptr_t selLen = GetSelectionSize();
 
@@ -283,6 +288,16 @@ public:
     {
         SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
     }
+
+    inline void SetMainSelection(intptr_t startPos, intptr_t endPos) const
+    {
+        const int sel = SendMessage(_hSC, SCI_GETMAINSELECTION, 0, 0);
+
+        SendMessage(_hSC, SCI_SETSELECTIONNANCHOR, sel, startPos);
+        SendMessage(_hSC, SCI_SETSELECTIONNCARET, sel, endPos);
+    }
+
+    void MultiSelectBefore(intptr_t len) const;
 
     inline void SelectWord(bool partial = false) const
     {
@@ -304,6 +319,10 @@ public:
         SendMessage(_hSC, SCI_SETSEL, currPos, currPos);
     }
 
+    void ClearSelectionMulti() const;
+    void MultiOffsetPos(intptr_t len) const;
+    void ClearUnmatchingWordMultiSel(const CTextA& word) const;
+
     inline intptr_t GetPos() const
     {
         return SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
@@ -313,8 +332,9 @@ public:
     void SetView(intptr_t startPos, intptr_t endPos = 0) const;
 
     intptr_t GetWordSize(bool partial = false) const;
-    intptr_t GetWord(CTextA& word, bool partial = false, bool select = false) const;
+    intptr_t GetWord(CTextA& word, bool partial = false, bool select = false, bool multiSel = false) const;
     void ReplaceWord(const char* replText, bool partial = false) const;
+    void ReplaceWordMulti(const char* replText, bool partial = false) const;
     bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
             intptr_t* startPos = NULL, intptr_t* endPos = NULL) const;
 
@@ -335,10 +355,17 @@ public:
         return (char)SendMessage(_hSC, SCI_GETCHARAT, pos, 0);
     }
 
-    inline void AddText(char* txt, size_t len) const
+    inline void AddText(const char* txt, size_t len) const
     {
         SendMessage(_hSC, SCI_ADDTEXT, len, (LPARAM)txt);
     }
+
+    void InsertTextAt(intptr_t pos, const char* txt) const
+    {
+        SendMessage(_hSC, SCI_INSERTTEXT, pos, (LPARAM)txt);
+    }
+
+    void InsertTextAtMultiPos(const char* txt) const;
 
     inline void BeginUndoAction() const
     {

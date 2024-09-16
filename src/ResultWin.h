@@ -232,7 +232,6 @@ private:
     void onSearchWindowCreate(HWND hWnd);
     void showWindow(HWND hFocus = NULL);
     void hideWindow();
-    void releaseKeys();
 
     void hookKeyboard()
     {

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -75,6 +75,8 @@ public:
 
     inline bool operator==(const CTextW& txt) const { return (_buf == txt._buf); }
     inline bool operator==(const wchar_t* str) const { return !wcscmp(_buf.data(), str); }
+    inline bool operator!=(const CTextW& txt) const { return !(*this == txt); }
+    inline bool operator!=(const char* str) const { return !(*this == str); }
 
     void operator+=(const CTextW& txt);
     void operator+=(const wchar_t* str);
@@ -135,6 +137,8 @@ public:
 
     inline bool operator==(const CTextA& txt) const { return (_buf == txt._buf); }
     inline bool operator==(const char* str) const { return !strcmp(_buf.data(), str); }
+    inline bool operator!=(const CTextA& txt) const { return !(*this == txt); }
+    inline bool operator!=(const char* str) const { return !(*this == str); }
 
     void operator+=(const CTextA& txt);
     void operator+=(const char* str);
@@ -207,6 +211,7 @@ private:
 namespace Tools
 {
 
+void ReleaseKeys();
 bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);
 RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 unsigned GetFontHeight(HDC hdc, HFONT font);

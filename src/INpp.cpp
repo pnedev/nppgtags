@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2022 Pavel Nedev
+ *  Copyright(C) 2014-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -23,6 +23,103 @@
 
 
 #include "INpp.h"
+#include <map>
+
+
+/**
+ *  \brief
+ */
+void INpp::MultiSelectBefore(intptr_t len) const
+{
+    const int selectionsCount = GetSelectionsCount();
+
+    for (int i = 0; i < selectionsCount; ++i)
+    {
+        const intptr_t pos = SendMessage(_hSC, SCI_GETSELECTIONNCARET, i, 0);
+
+        SendMessage(_hSC, SCI_SETSELECTIONNANCHOR, i, (pos < len) ? 0 : pos - len);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::ClearSelectionMulti() const
+{
+    const int selectionsCount = GetSelectionsCount();
+
+    for (int i = 0; i < selectionsCount; ++i)
+    {
+        const intptr_t pos = SendMessage(_hSC, SCI_GETSELECTIONNCARET, i, 0);
+
+        SendMessage(_hSC, SCI_SETSELECTIONNANCHOR, i, pos);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::MultiOffsetPos(intptr_t len) const
+{
+    const int selectionsCount = GetSelectionsCount();
+
+    for (int i = 0; i < selectionsCount; ++i)
+    {
+        const intptr_t pos = SendMessage(_hSC, SCI_GETSELECTIONNCARET, i, 0);
+
+        SendMessage(_hSC, SCI_SETSELECTIONNCARET, i, pos + len);
+    }
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::ClearUnmatchingWordMultiSel(const CTextA& word) const
+{
+    const size_t len = word.Len();
+
+    CTextA selWord(len + 1);
+
+    int i;
+    int selectionsCount;
+
+    do
+    {
+        selectionsCount = GetSelectionsCount();
+
+        for (i = 0; i < selectionsCount; ++i)
+        {
+            const intptr_t pos = SendMessage(_hSC, SCI_GETSELECTIONNCARET, i, 0);
+            const intptr_t wordStart = SendMessage(_hSC, SCI_WORDSTARTPOSITION, pos, true);
+
+            if (pos - wordStart != static_cast<intptr_t>(len))
+            {
+                SendMessage(_hSC, SCI_DROPSELECTIONN, i, 0);
+                break;
+            }
+            else
+            {
+                struct Sci_TextRangeFull tr;
+                tr.chrg.cpMin   = pos - len;
+                tr.chrg.cpMax   = pos;
+                tr.lpstrText    = selWord.C_str();
+
+                SendMessage(_hSC, SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
+                selWord.AutoFit();
+
+                if (selWord != word)
+                {
+                    SendMessage(_hSC, SCI_DROPSELECTIONN, i, 0);
+                    break;
+                }
+            }
+        }
+    }
+    while (i < selectionsCount);
+}
 
 
 /**
@@ -45,24 +142,19 @@ intptr_t INpp::GetWordSize(bool partial) const
 /**
  *  \brief
  */
-intptr_t INpp::GetWord(CTextA& word, bool partial, bool select) const
+intptr_t INpp::GetWord(CTextA& word, bool partial, bool select, bool multiSel) const
 {
-    intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
-    intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
-    intptr_t wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
+    const intptr_t currPos    = SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0);
+    const intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, currPos, true);
+    const intptr_t wordEnd    = partial ? currPos : SendMessage(_hSC, SCI_WORDENDPOSITION, currPos, true);
 
-    intptr_t len = wordEnd - wordStart;
+    const intptr_t len = wordEnd - wordStart;
 
     if (len == 0)
     {
         word.Clear();
         return len;
     }
-
-    if (select)
-        SendMessage(_hSC, SCI_SETSEL, wordStart, wordEnd);
-    else
-        SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
 
     word.Resize(len + 1);
 
@@ -73,6 +165,27 @@ intptr_t INpp::GetWord(CTextA& word, bool partial, bool select) const
 
     SendMessage(_hSC, SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr);
     word.AutoFit();
+
+    if (select)
+    {
+        if (multiSel)
+        {
+            ClearUnmatchingWordMultiSel(word);
+
+            if (wordEnd != currPos)
+                MultiOffsetPos(wordEnd - currPos);
+
+            MultiSelectBefore(len);
+        }
+        else
+        {
+            SetMainSelection(wordStart, wordEnd);
+        }
+    }
+    else
+    {
+        ClearSelectionMulti();
+    }
 
     return len;
 }
@@ -93,6 +206,30 @@ void INpp::ReplaceWord(const char* replText, bool partial) const
     SendMessage(_hSC, SCI_REPLACETARGET, (WPARAM)-1, (LPARAM)replText);
     wordEnd = wordStart + strlen(replText);
     SendMessage(_hSC, SCI_SETSEL, wordEnd, wordEnd);
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::ReplaceWordMulti(const char* replText, bool partial) const
+{
+    const int selectionsCount = GetSelectionsCount();
+
+    for (int i = 0; i < selectionsCount; ++i)
+    {
+        const intptr_t pos  = SendMessage(_hSC, SCI_GETSELECTIONNCARET, i, 0);
+        intptr_t wordStart  = SendMessage(_hSC, SCI_WORDSTARTPOSITION, pos, true);
+        intptr_t wordEnd    = partial ? pos : SendMessage(_hSC, SCI_WORDENDPOSITION, pos, true);
+
+        SendMessage(_hSC, SCI_SETTARGETSTART, wordStart, 0);
+        SendMessage(_hSC, SCI_SETTARGETEND, wordEnd, 0);
+
+        SendMessage(_hSC, SCI_REPLACETARGET, (WPARAM)-1, (LPARAM)replText);
+        wordEnd = wordStart + strlen(replText);
+        SendMessage(_hSC, SCI_SETSELECTIONNANCHOR, i, wordEnd);
+        SendMessage(_hSC, SCI_SETSELECTIONNCARET, i, wordEnd);
+    }
 }
 
 
@@ -132,6 +269,7 @@ void INpp::SetView(intptr_t startPos, intptr_t endPos) const
     lineNum = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, lineNum, 0) - linesOnScreen / 2;
     if (lineNum < 0)
         lineNum = 0;
+
     SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
     SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, lineNum, 0);
 }
@@ -173,6 +311,55 @@ bool INpp::SearchText(const char* text, bool ignoreCase, bool wholeWord, bool re
     SetView(*startPos, *endPos);
 
     return isFound;
+}
+
+
+/**
+ *  \brief
+ */
+void INpp::InsertTextAtMultiPos(const char* txt) const
+{
+    const int txtLen = strlen(txt);
+
+    const intptr_t mainPos =
+        SendMessage(_hSC, SCI_GETSELECTIONNANCHOR, SendMessage(_hSC, SCI_GETMAINSELECTION, 0, 0), 0);
+
+    std::map<intptr_t, intptr_t> selSorter;
+
+    const int selectionsCount = GetSelectionsCount();
+
+    for (int i = 0; i < selectionsCount; ++i)
+        selSorter.emplace(
+                SendMessage(_hSC, SCI_GETSELECTIONNANCHOR, i, 0), SendMessage(_hSC, SCI_GETSELECTIONNCARET, i, 0));
+
+    std::vector<std::pair<intptr_t, intptr_t>> selections;
+    std::pair<intptr_t, intptr_t> mainSel;
+
+    int selOffset = 0;
+
+    for (auto& sel : selSorter)
+    {
+        InsertTextAt(sel.second + selOffset, txt);
+
+        if (sel.first != mainPos)
+        {
+            selections.emplace_back(sel.first + selOffset, sel.second + selOffset + txtLen);
+        }
+        else
+        {
+            mainSel.first = sel.first + selOffset;
+            mainSel.second = sel.second + selOffset + txtLen;
+        }
+
+        selOffset += txtLen;
+    }
+
+    selections.emplace_back(mainSel);
+
+    SendMessage(_hSC, SCI_SETSELECTION, selections[0].second, selections[0].first);
+
+    for (size_t i = 1; i < selections.size(); ++i)
+        SendMessage(_hSC, SCI_ADDSELECTION, selections[i].second, selections[i].first);
 }
 
 

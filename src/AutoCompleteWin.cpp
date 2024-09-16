@@ -108,7 +108,7 @@ AutoCompleteWin::AutoCompleteWin(const CmdPtr_t& cmd) :
  */
 AutoCompleteWin::~AutoCompleteWin()
 {
-    INpp::Get().ClearSelection();
+    INpp::Get().ClearSelectionMulti();
     INpp::Get().EndUndoAction();
 
     if (_hFont)
@@ -172,7 +172,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
 
     CTextA wordA;
-    INpp::Get().GetWord(wordA, true, true);
+    INpp::Get().GetWord(wordA, true, true, true);
     CText word(wordA.C_str());
 
     if (!filterLV(word))
@@ -318,7 +318,7 @@ void AutoCompleteWin::onDblClick()
     lvItem.pszText[lvItem.cchTextMax - 1] = 0;
 
     CTextA completion(itemTxt);
-    INpp::Get().ReplaceWord(completion.C_str(), true);
+    INpp::Get().ReplaceWordMulti(completion.C_str(), true);
 
     SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
@@ -349,14 +349,14 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
         return true;
 
         case VK_DELETE:
-            INpp::Get().ReplaceWord("", true);
+            INpp::Get().ReplaceWordMulti("", true);
             SendMessage(_hWnd, WM_CLOSE, 0, 0);
         return true;
 
         case VK_BACK:
         {
             INpp& npp = INpp::Get();
-            npp.ClearSelection();
+            npp.ClearSelectionMulti();
             npp.Backspace();
             if (npp.GetWordSize(true) < _cmdTagLen)
             {
@@ -377,8 +377,16 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
                 return false;
 
             INpp& npp = INpp::Get();
-            npp.ClearSelection();
-            npp.AddText((char*)&character, 1);
+
+            if (npp.GetSelectionsCount() == 1)
+            {
+                npp.AddText((char*)&character, 1);
+            }
+            else
+            {
+                const char charStr[] {(char)character, '\0'};
+                npp.InsertTextAtMultiPos(charStr);
+            }
 
             if (keyCode == VK_SPACE)
             {
@@ -391,7 +399,7 @@ bool AutoCompleteWin::onKeyDown(int keyCode)
     if (!INpp::Get().IsPreviousCharWordEnd())
     {
         CTextA wordA;
-        INpp::Get().GetWord(wordA, true, true);
+        INpp::Get().GetWord(wordA, true, true, true);
         CText word(wordA.C_str());
         int lvItemsCnt = filterLV(word);
 

@@ -107,7 +107,7 @@ enum WordSelection_t
  *  \brief
  */
 CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
-        WordSelection_t selectWord = FULL_SELECT, bool highlightWord = true)
+        WordSelection_t selectWord = FULL_SELECT, bool highlightWord = true, bool multiSel = false)
 {
     INpp& npp = INpp::Get();
 
@@ -126,10 +126,10 @@ CText getSelection(HWND hSci = NULL, bool skipPreSelect = false,
     CTextA tagA;
 
     if (!skipPreSelect)
-        npp.GetSelection(tagA);
+        npp.GetSelectionText(tagA);
 
     if (skipPreSelect || (tagA.IsEmpty() && selectWord != DONT_SELECT))
-        npp.GetWord(tagA, selectWord == PARTIAL_SELECT, highlightWord);
+        npp.GetWord(tagA, selectWord == PARTIAL_SELECT, highlightWord, multiSel);
 
     if (hSci)
         npp.SetSciHandle(nppHSci);
@@ -154,7 +154,7 @@ void autoComplCB(const CmdPtr_t& cmd)
         return;
     }
 
-    INpp::Get().ClearSelection();
+    INpp::Get().ClearSelectionMulti();
 
     if (cmd->Status() == FAILED)
     {
@@ -187,7 +187,7 @@ void halfComplCB(const CmdPtr_t& cmd)
 
     DbManager::Get().PutDb(cmd->Db());
 
-    INpp::Get().ClearSelection();
+    INpp::Get().ClearSelectionMulti();
 
     if (cmd->Status() == FAILED)
     {

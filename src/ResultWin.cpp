@@ -1070,7 +1070,7 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
 
     CTextA selectionA;
     if (!npp.IsSelectionVertical())
-        npp.GetSelection(selectionA);
+        npp.GetSelectionText(selectionA);
 
     npp.SetSciHandle(nppHSci);
 
@@ -1133,33 +1133,6 @@ void ResultWin::hideWindow()
 
     if (GetFocus() != npp.ReadSciHandle())
         SetFocus(npp.GetSciHandle());
-}
-
-
-/**
- *  \brief
- */
-void ResultWin::releaseKeys()
-{
-    INPUT inputs[4] = {};
-    ZeroMemory(inputs, sizeof(inputs));
-
-    inputs[0].type = INPUT_KEYBOARD;
-    inputs[0].ki.wVk = VK_SHIFT;
-    inputs[0].ki.dwFlags = KEYEVENTF_KEYUP;
-
-    inputs[1].type = INPUT_KEYBOARD;
-    inputs[1].ki.wVk = VK_CONTROL;
-    inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
-
-    inputs[2].type = INPUT_KEYBOARD;
-    inputs[2].ki.wVk = VK_MENU;
-    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
-
-    inputs[3].type = INPUT_MOUSE;
-    inputs[3].mi.dwFlags = GetSystemMetrics(SM_SWAPBUTTON) ? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP;
-
-    SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
 }
 
 
@@ -1234,7 +1207,7 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
     if (parser->getHitsCount() != 1)
         return false;
 
-    releaseKeys();
+    Tools::ReleaseKeys();
 
     intptr_t line = -1;
 
@@ -1291,7 +1264,7 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
  */
 bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
 {
-    releaseKeys();
+    Tools::ReleaseKeys();
 
     intptr_t lineLen = sendSci(SCI_GETCURRENTPOS, 0, 0);
     sendSci(SCI_SETSEL, lineLen, lineLen);
