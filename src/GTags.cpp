@@ -620,6 +620,8 @@ void ToggleWindowsFocus()
         EnumEnd
     } f;
 
+    Tools::ReleaseKeys();
+
     HWND hWnd = GetFocus();
 
     INpp& npp = INpp::Get();

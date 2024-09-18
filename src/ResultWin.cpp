@@ -567,6 +567,8 @@ void ResultWin::show()
  */
 void ResultWin::show(const CmdPtr_t& cmd)
 {
+    Tools::ReleaseKeys();
+
     Tab* tab = new Tab(cmd);
 
     bool isNewTab = false;
