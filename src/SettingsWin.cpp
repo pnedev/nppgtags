@@ -160,7 +160,7 @@ bool SettingsWin::createWin()
     }
 
     WNDCLASS wc         = {0};
-    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
@@ -242,10 +242,12 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         ReleaseDC(hOwner, hdc);
     }
 
+    const int btnHeight = ((txtInfoHeight + 10 > 25) ? txtInfoHeight + 10 : 25);
+
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 520, 13 * txtHeight + txtInfoHeight + 285);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 640, 14 * btnHeight + txtInfoHeight + 180);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -264,11 +266,35 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     height  = win.bottom - win.top;
 
     int xPos = win.left + 15;
-    int yPos = win.top + 15;
+    int yPos = win.top + 20;
 
+    _hKeepSearchOpen = CreateWindowEx(0, _T("BUTTON"), _T("Keep Search box open"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos, yPos, (width / 2) - 5, btnHeight,
+            _hWnd, NULL, HMod, NULL);
+
+    _hTrigAutocmplEn = CreateWindowEx(0, _T("BUTTON"), _T("Trigger Autocomplete after char"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos + (width / 2) + 5, yPos, (width / 2) - 30, btnHeight,
+            _hWnd, NULL, HMod, NULL);
+
+    win.top     = yPos;
+    win.bottom  = win.top + txtInfoHeight;
+    win.left    = xPos + width - 25;
+    win.right   = win.left + 25;
+
+    styleEx = WS_EX_CLIENTEDGE;
+    style   = WS_CHILD | WS_VISIBLE | ES_LEFT | ES_NUMBER | ES_NOOLEDRAGDROP;
+
+    AdjustWindowRectEx(&win, style, FALSE, styleEx);
+    _hTrigAutocmplAfter = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
+            win.left, win.top, win.right - win.left, win.bottom - win.top,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (btnHeight + 5);
     _hEnDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable default database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos, yPos, (width / 2), txtHeight + 10,
+            xPos, yPos, (width / 2) - 5, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hSetDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Set DB"),
@@ -281,7 +307,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             xPos + (width / 2) + (width / 4) + 5, yPos, (width / 4) - 5, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
+    yPos += (btnHeight + 5);
     win.top     = yPos;
     win.bottom  = win.top + txtHeight;
     win.left    = xPos;
@@ -295,7 +321,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (win.bottom - win.top + 25);
+    yPos += (win.bottom - win.top + 35);
     _hTab = CreateWindowEx(WS_EX_TRANSPARENT, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | TCS_BUTTONS | TCS_FIXEDWIDTH | TCS_FOCUSNEVER,
             xPos, yPos, width, height - yPos - 50,
@@ -335,9 +361,9 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     TabCtrl_AdjustRect(_hTab, FALSE, &win);
     width = win.right - win.left - 10;
     xPos = win.left + 5;
-    yPos = win.top + 15;
+    yPos = win.top + 20;
 
-    _hInfo = CreateWindowEx(0, _T("STATIC"), _T("Below settings apply to all new databases"),
+    _hInfo = CreateWindowEx(0, _T("STATIC"), _T("The settings below apply to all new databases"),
             WS_CHILD | WS_VISIBLE | SS_CENTER | SS_SUNKEN,
             xPos, yPos, width, 2 * txtHeight + 10,
             _hWnd, NULL, HMod, NULL);
@@ -351,18 +377,18 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     yPos += (txtInfoHeight + 5);
     _hParser = CreateWindowEx(0, WC_COMBOBOX, NULL,
             WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
-            xPos, yPos, (width / 2) - 10, txtHeight + 10,
+            xPos, yPos, (width / 2) - 10, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hAutoUpdDb = CreateWindowEx(0, _T("BUTTON"), _T("Auto-update database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + (width / 2) + 30, yPos, (width / 2) - 50, txtHeight + 10,
+            xPos + (width / 2) + 60, yPos, (width / 2) - 60, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (txtHeight + 30);
     _hEnLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable library databases"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos, yPos, (width / 2), txtHeight + 10,
+            xPos, yPos, (width / 2), btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hAddLibDb = CreateWindowEx(0, _T("BUTTON"), _T("Add DB"),
@@ -375,7 +401,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             xPos + (width / 2) + (width / 4) + 5, yPos, (width / 4) - 5, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
+    yPos += (btnHeight + 5);
     win.top     = yPos;
     win.bottom  = win.top + 3 * txtHeight;
     win.left    = xPos;
@@ -393,7 +419,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     yPos += (win.bottom - win.top + 10);
     _hEnPathFilter = CreateWindowEx(0, _T("BUTTON"), _T("Ignore sub-folders"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos, yPos, (width / 2), txtHeight + 10,
+            xPos, yPos, (width / 2), btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hAddPathFilter = CreateWindowEx(0, _T("BUTTON"), _T("Add sub-folder"),
@@ -401,7 +427,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             xPos + width + 5 - (width / 3), yPos, (width / 3) - 5, 25,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (((txtHeight + 10 > 25) ? txtHeight + 10 : 25) + 5);
+    yPos += (btnHeight + 5);
     win.top     = yPos;
     win.bottom  = win.top + 3 * txtHeight;
     win.left    = xPos;
@@ -435,6 +461,9 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     if (_hFontInfo)
     {
+        SendMessage(_hKeepSearchOpen, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hTrigAutocmplEn, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hTrigAutocmplAfter, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hEnDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hSetDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
@@ -456,6 +485,31 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
     Edit_SetText(_hDefDb, GTagsSettings._defDbPath.C_str());
     SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
+
+    Button_SetCheck(_hKeepSearchOpen, GTagsSettings._keepSearchWinOpen ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hTrigAutocmplEn, GTagsSettings._triggerAutocmplAfter ? BST_CHECKED : BST_UNCHECKED);
+
+    SendMessage(_hTrigAutocmplAfter, EM_SETEVENTMASK, 0, ENM_NONE);
+
+    if (GTagsSettings._triggerAutocmplAfter)
+    {
+        Edit_Enable(_hTrigAutocmplAfter, TRUE);
+        SendMessage(_hTrigAutocmplAfter, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_WINDOW));
+
+        TCHAR buf[3];
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, _T("%d"), GTagsSettings._triggerAutocmplAfter);
+
+        Edit_SetText(_hTrigAutocmplAfter, buf);
+    }
+    else
+    {
+        Edit_Enable(_hTrigAutocmplAfter, FALSE);
+        SendMessage(_hTrigAutocmplAfter, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+
+        Edit_SetText(_hTrigAutocmplAfter, _T("3"));
+    }
+
+    SendMessage(_hTrigAutocmplAfter, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
     if (GTagsSettings._useDefDb)
     {
@@ -609,7 +663,7 @@ void SettingsWin::fillTabData()
 {
     if (_activeTab->_db)
     {
-        CText txt(_T("Below settings apply to database at\n\""));
+        CText txt(_T("The settings below apply to database at\n\""));
         txt += _activeTab->_db->GetPath();
         txt += _T("\"");
 		SetWindowText(_hInfo, txt.C_str());
@@ -617,7 +671,7 @@ void SettingsWin::fillTabData()
     }
     else
     {
-		SetWindowText(_hInfo, _T("Below settings apply to all new databases"));
+		SetWindowText(_hInfo, _T("The settings below apply to all new databases"));
 		SetWindowText(_hParserInfo, _T("Code Parser"));
     }
 
@@ -794,6 +848,30 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
     Settings newSettings;
 
     newSettings._genericDbCfg = tab->_cfg;
+    newSettings._keepSearchWinOpen = (Button_GetCheck(_hKeepSearchOpen) == BST_CHECKED) ? true : false;
+
+    if (Button_GetCheck(_hTrigAutocmplEn) == BST_CHECKED)
+    {
+        const int len = Edit_GetTextLength(_hTrigAutocmplAfter);
+        if (len)
+        {
+            TCHAR txt[len + 1];
+            Edit_GetText(_hTrigAutocmplAfter, txt, len + 1);
+
+            newSettings._triggerAutocmplAfter = _tcstol(txt, nullptr, 10);
+            if (newSettings._triggerAutocmplAfter > Settings::cTriggerAutocmplAfterMax)
+                newSettings._triggerAutocmplAfter = Settings::cTriggerAutocmplAfterMax;
+        }
+        else
+        {
+            newSettings._triggerAutocmplAfter = 0;
+        }
+    }
+    else
+    {
+        newSettings._triggerAutocmplAfter = 0;
+    }
+
     newSettings._useDefDb = (Button_GetCheck(_hEnDefDb) == BST_CHECKED) ? true : false;
 
     const int len = Edit_GetTextLength(_hDefDb);
@@ -1060,6 +1138,30 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     return 0;
                 }
 
+                if ((HWND)lParam == SW->_hTrigAutocmplEn)
+                {
+                    BOOL en;
+                    int color;
+
+                    if (Button_GetCheck(SW->_hTrigAutocmplEn) == BST_CHECKED)
+                    {
+                        en = TRUE;
+                        color = COLOR_WINDOW;
+                    }
+                    else
+                    {
+                        en = FALSE;
+                        color = COLOR_BTNFACE;
+                    }
+
+                    Edit_Enable(SW->_hTrigAutocmplAfter, en);
+                    SendMessage(SW->_hTrigAutocmplAfter, EM_SETBKGNDCOLOR, 0, GetSysColor(color));
+
+                    EnableWindow(SW->_hSave, TRUE);
+
+                    return 0;
+                }
+
                 if ((HWND)lParam == SW->_hEnDefDb)
                 {
                     BOOL en;
@@ -1203,8 +1305,9 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     return 0;
                 }
 
-                if ((HWND)lParam == SW->_hAutoUpdDb)
-                    EnableWindow(SW->_hSave, TRUE);
+                if ((HWND)lParam == SW->_hKeepSearchOpen ||
+                    (HWND)lParam == SW->_hAutoUpdDb)
+                        EnableWindow(SW->_hSave, TRUE);
             }
             else if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == CBN_SELCHANGE)
             {

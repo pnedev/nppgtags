@@ -54,7 +54,7 @@ unsigned                ActivityWin::TxtHeight = 0;
 void ActivityWin::Register()
 {
     WNDCLASS wc         = {0};
-    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);

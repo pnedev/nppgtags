@@ -45,7 +45,7 @@ namespace GTags
 
 const TCHAR SearchWin::cClassName[] = _T("SearchWin");
 const int SearchWin::cWidth         = 450;
-const int SearchWin::cComplAfter    = 2;
+const int SearchWin::cComplAfter    = 3;
 
 
 std::unique_ptr<SearchWin> SearchWin::SW {nullptr};
@@ -57,7 +57,7 @@ std::unique_ptr<SearchWin> SearchWin::SW {nullptr};
 void SearchWin::Register()
 {
     WNDCLASS wc         = {0};
-    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
@@ -565,8 +565,8 @@ void SearchWin::onOK()
         CmdEngine::Run(_cmd, _complCB);
     }
 
-    // Make this optional so search window can stay open if user wishes that
-    SendMessage(_hWnd, WM_CLOSE, 0, 0);
+    if (!GTagsSettings._keepSearchWinOpen)
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
 }
 
 

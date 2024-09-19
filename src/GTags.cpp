@@ -1085,7 +1085,7 @@ void OnFileDelete(const CPath& file)
  */
 void OnUserInput()
 {
-    if (!AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= 3))
+    if (!AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
         autoComplete(true);
 }
 

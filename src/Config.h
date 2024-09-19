@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2015-2022 Pavel Nedev
+ *  Copyright(C) 2015-2024 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -111,6 +111,8 @@ private:
 class Settings
 {
 public:
+    static const int cTriggerAutocmplAfterMax;
+
     Settings();
     ~Settings() {}
 
@@ -121,6 +123,8 @@ public:
     const Settings& operator=(const Settings&);
     bool operator==(const Settings&) const;
 
+    bool    _keepSearchWinOpen;
+    int     _triggerAutocmplAfter;
     bool    _useDefDb;
     CPath   _defDbPath;
     bool    _re;
@@ -133,6 +137,8 @@ public:
 private:
     static const TCHAR cInfo[];
 
+    static const TCHAR cKeepSearchWinOpenKey[];
+    static const TCHAR cTriggerAutocmplAfterKey[];
     static const TCHAR cUseDefDbKey[];
     static const TCHAR cDefDbPathKey[];
     static const TCHAR cREOptionKey[];

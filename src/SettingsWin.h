@@ -111,6 +111,9 @@ private:
     Tab*        _activeTab;
 
     HWND        _hWnd;
+    HWND        _hKeepSearchOpen;
+    HWND        _hTrigAutocmplEn;
+    HWND        _hTrigAutocmplAfter;
     HWND        _hEnDefDb;
     HWND        _hSetDefDb;
     HWND        _hUpdDefDb;

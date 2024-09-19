@@ -32,6 +32,7 @@
 #include "ActivityWin.h"
 #include "Cmd.h"
 #include "CmdEngine.h"
+#include <cstdlib>
 #include <windowsx.h>
 #include <richedit.h>
 #include <commctrl.h>
@@ -485,7 +486,7 @@ HWND ResultWin::Register()
         return NULL;
 
     WNDCLASS wc         = {0};
-    wc.style            = CS_HREDRAW | CS_VREDRAW;
+    wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
@@ -1287,7 +1288,7 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
     {
         for (i = 7; i <= lineLen && lineTxt[i] != ':'; ++i);
         lineTxt[i] = 0;
-        line = (intptr_t)atoll(&lineTxt[7]) - 1;
+        line = (intptr_t)strtoll(&lineTxt[7], nullptr, 10) - 1;
 
         lineNum = sendSci(SCI_GETFOLDPARENT, lineNum);
         if (lineNum == -1)

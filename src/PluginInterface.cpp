@@ -77,7 +77,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
     {
         case SCN_CHARADDED:
         {
-            if ((notifyCode->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT) && !GTags::NoDBFound)
+            if (GTags::GTagsSettings._triggerAutocmplAfter &&
+                (notifyCode->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT) && !GTags::NoDBFound)
                 GTags::OnUserInput();
         }
         break;
