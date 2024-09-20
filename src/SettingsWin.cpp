@@ -275,7 +275,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     _hTrigAutocmplEn = CreateWindowEx(0, _T("BUTTON"), _T("Trigger Autocomplete after char"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + (width / 2) + 5, yPos, (width / 2) - 30, btnHeight,
+            xPos + (width / 2) + 5, yPos, (width / 2) - 35, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     win.top     = yPos;
@@ -850,13 +850,15 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
     newSettings._genericDbCfg = tab->_cfg;
     newSettings._keepSearchWinOpen = (Button_GetCheck(_hKeepSearchOpen) == BST_CHECKED) ? true : false;
 
+    int len;
+
     if (Button_GetCheck(_hTrigAutocmplEn) == BST_CHECKED)
     {
-        const int len = Edit_GetTextLength(_hTrigAutocmplAfter);
+        len = Edit_GetTextLength(_hTrigAutocmplAfter);
         if (len)
         {
-            TCHAR txt[len + 1];
-            Edit_GetText(_hTrigAutocmplAfter, txt, len + 1);
+            TCHAR txt[8];
+            Edit_GetText(_hTrigAutocmplAfter, txt, 8);
 
             newSettings._triggerAutocmplAfter = _tcstol(txt, nullptr, 10);
             if (newSettings._triggerAutocmplAfter > Settings::cTriggerAutocmplAfterMax)
@@ -874,7 +876,7 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
 
     newSettings._useDefDb = (Button_GetCheck(_hEnDefDb) == BST_CHECKED) ? true : false;
 
-    const int len = Edit_GetTextLength(_hDefDb);
+    len = Edit_GetTextLength(_hDefDb);
     if (len)
     {
         newSettings._defDbPath.Resize(len);

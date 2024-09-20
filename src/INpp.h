@@ -262,7 +262,7 @@ public:
 
     inline int GetSelectionsCount() const
     {
-        return SendMessage(_hSC, SCI_GETSELECTIONS, 0, 0);
+        return (int)SendMessage(_hSC, SCI_GETSELECTIONS, 0, 0);
     }
 
     inline bool IsMultiSelection() const
@@ -291,7 +291,7 @@ public:
 
     inline void SetMainSelection(intptr_t startPos, intptr_t endPos) const
     {
-        const int sel = SendMessage(_hSC, SCI_GETMAINSELECTION, 0, 0);
+        const int sel = (int)SendMessage(_hSC, SCI_GETMAINSELECTION, 0, 0);
 
         SendMessage(_hSC, SCI_SETSELECTIONNANCHOR, sel, startPos);
         SendMessage(_hSC, SCI_SETSELECTIONNCARET, sel, endPos);

@@ -319,7 +319,7 @@ bool INpp::SearchText(const char* text, bool ignoreCase, bool wholeWord, bool re
  */
 void INpp::InsertTextAtMultiPos(const char* txt) const
 {
-    const int txtLen = strlen(txt);
+    const size_t txtLen = strlen(txt);
 
     const intptr_t mainPos =
         SendMessage(_hSC, SCI_GETSELECTIONNANCHOR, SendMessage(_hSC, SCI_GETMAINSELECTION, 0, 0), 0);
@@ -335,7 +335,7 @@ void INpp::InsertTextAtMultiPos(const char* txt) const
     std::vector<std::pair<intptr_t, intptr_t>> selections;
     std::pair<intptr_t, intptr_t> mainSel;
 
-    int selOffset = 0;
+    size_t selOffset = 0;
 
     for (auto& sel : selSorter)
     {
