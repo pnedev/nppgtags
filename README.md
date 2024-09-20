@@ -40,6 +40,8 @@ There are two types of settings - 'generic' plugin settings and database related
 
 Among the 'generic' settings are:
 
+- Keep Search box open - if enabled the search box where you can enter searched tags will be held open after triggering the search.
+- Trigger autocomplete after char - if enabled the autocomplete will be triggered automatically after you type a word with lenght equal or bigger than the configured characters count.
 - The default database - if enabled it will be used to perform searches from active files (documents) in Notepad++ that don't have their own database (unparsed files). This is kind-of library database for unparsed files.
 
 The database related settings come in two distinct copies that are identical.
