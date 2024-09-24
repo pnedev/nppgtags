@@ -568,8 +568,6 @@ void ResultWin::show()
  */
 void ResultWin::show(const CmdPtr_t& cmd)
 {
-    Tools::ReleaseKeys();
-
     Tab* tab = new Tab(cmd);
 
     bool isNewTab = false;
@@ -1104,6 +1102,8 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
  */
 void ResultWin::showWindow(HWND hFocus)
 {
+    Tools::ReleaseKeys();
+
     INpp::Get().ShowDockingWin(_hWnd);
 
     ActivityWin::UpdatePositions();
@@ -1111,7 +1111,7 @@ void ResultWin::showWindow(HWND hFocus)
     if (hFocus)
         SetFocus(hFocus);
     else
-        SetFocus(_hWnd);
+        SetFocus(_hSci);
 }
 
 
@@ -1210,8 +1210,6 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
     if (parser->getHitsCount() != 1)
         return false;
 
-    Tools::ReleaseKeys();
-
     intptr_t line = -1;
 
     if (tab->_cmdId != FIND_FILE)
@@ -1228,6 +1226,7 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
 
     CPath file = tab->_projectPath.C_str();
     file += parser->getFirstFileResult().c_str();
+    file.NormalizePathSlashes();
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())
@@ -1239,9 +1238,31 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
         return true;
     }
 
-    DocLocation::Get().Push();
-    npp.OpenFile(file.C_str());
-    UpdateWindow(npp.GetHandle());
+    CPath currentFile;
+    npp.GetFilePathFromBufID(npp.getCurrentBuffId(), currentFile);
+
+    bool sameLine = false;
+    bool sameLocation = false;
+
+    // if already there just return
+    if (currentFile == file)
+    {
+        if (tab->_cmdId == FIND_FILE)
+            return true;
+
+        sameLine = npp.GetCurrentLine() == line;
+        sameLocation = npp.IsLineVisible(line);
+    }
+
+    if (!sameLocation)
+    {
+        Tools::ReleaseKeys();
+
+        npp.ClearSelectionMulti();
+
+        DocLocation::Get().Push();
+        npp.OpenFile(file.C_str());
+    }
 
     if (tab->_cmdId == FIND_FILE)
         return true;
@@ -1250,12 +1271,18 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
     intptr_t findBegin      = npp.PositionFromLine(line);
     intptr_t findEnd        = npp.LineEndPosition(line);
 
-    if (!npp.SearchText(tab->_search.C_str(), tab->_ignoreCase, wholeWord, tab->_regExp, &findBegin, &findEnd))
+    if (!npp.SearchText(tab->_search.C_str(), tab->_ignoreCase, wholeWord, tab->_regExp,
+        &findBegin, &findEnd, sameLocation))
     {
         MessageBox(npp.GetHandle(),
                 _T("Look-up mismatch, database seems outdated.")
                 _T("\nSave all modified files, re-create it and redo the search."),
                 cPluginName, MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (sameLocation && sameLine)
+    {
+        Sleep(50);
+        npp.ClearSelectionMulti();
     }
 
     return true;
@@ -1312,6 +1339,7 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
         file = _activeTab->_projectPath.C_str();
 
     file += &lineTxt[1];
+    file.NormalizePathSlashes();
 
     INpp& npp = INpp::Get();
     if (!file.FileExists())
@@ -1323,9 +1351,29 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
         return false;
     }
 
-    DocLocation::Get().Push();
-    npp.OpenFile(file.C_str());
-    UpdateWindow(npp.GetHandle());
+    CPath currentFile;
+    npp.GetFilePathFromBufID(npp.getCurrentBuffId(), currentFile);
+
+    bool sameLocation = false;
+
+    // if already there just return
+    if (currentFile == file)
+    {
+        if (_activeTab->_cmdId == FIND_FILE)
+            return true;
+
+        sameLocation = npp.IsLineVisible(line);
+    }
+
+    if (!sameLocation)
+    {
+        Tools::ReleaseKeys();
+
+        npp.ClearSelectionMulti();
+
+        DocLocation::Get().Push();
+        npp.OpenFile(file.C_str());
+    }
 
     if (_activeTab->_cmdId == FIND_FILE)
         return true;
@@ -1340,13 +1388,17 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
         matchNum; findBegin = findEnd, findEnd = endPos, --matchNum)
     {
         if (!npp.SearchText(_activeTab->_search.C_str(), _activeTab->_ignoreCase, wholeWord, _activeTab->_regExp,
-                &findBegin, &findEnd))
+                &findBegin, &findEnd, sameLocation))
         {
             MessageBox(npp.GetHandle(),
                     _T("Look-up mismatch, present results are outdated.")
                     _T("\nSave all modified files and redo the search."),
                     cPluginName, MB_OK | MB_ICONEXCLAMATION);
             return false;
+        }
+        else if (sameLocation)
+        {
+            SetFocus(npp.GetSciHandle());
         }
     }
 

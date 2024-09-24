@@ -730,6 +730,19 @@ void CTextA::Resize(size_t size)
 /**
  *  \brief
  */
+void CPath::NormalizePathSlashes()
+{
+    AutoFit();
+
+    for (size_t i = 0; i < Len(); ++i)
+        if (_buf[i] == _T('/'))
+            _buf[i] = _T('\\');
+}
+
+
+/**
+ *  \brief
+ */
 void CPath::AsFolder()
 {
     AutoFit();

@@ -279,7 +279,7 @@ void INpp::SetView(intptr_t startPos, intptr_t endPos) const
  *  \brief
  */
 bool INpp::SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
-        intptr_t* startPos, intptr_t* endPos) const
+        intptr_t* startPos, intptr_t* endPos, bool keepView) const
 {
     if (startPos == NULL || endPos == NULL)
         return false;
@@ -308,7 +308,10 @@ bool INpp::SearchText(const char* text, bool ignoreCase, bool wholeWord, bool re
     *startPos = SendMessage(_hSC, SCI_GETTARGETSTART, 0, 0);
     *endPos = SendMessage(_hSC, SCI_GETTARGETEND, 0, 0);
 
-    SetView(*startPos, *endPos);
+    if (keepView)
+        SendMessage(_hSC, SCI_SETSEL, *startPos, *endPos);
+    else
+        SetView(*startPos, *endPos);
 
     return isFound;
 }

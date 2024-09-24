@@ -155,6 +155,11 @@ public:
         path += _T("\\");
     }
 
+    inline LRESULT getCurrentBuffId()
+    {
+        return SendMessage(_nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+    }
+
     inline void GetFilePath(CPath& filePath) const
     {
         filePath.Resize(MAX_PATH);
@@ -181,13 +186,24 @@ public:
         if (!SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)filePath))
             return -1;
 
-        ReadSciHandle();
+        UpdateWindow(_nppData._nppHandle);
+        UpdateWindow(ReadSciHandle());
         return 0;
     }
 
     inline void SwitchToFile(const TCHAR* filePath) const
     {
         SendMessage(_nppData._nppHandle, NPPM_SWITCHTOFILE, 0, (LPARAM)filePath);
+    }
+
+    inline bool IsLineVisible(intptr_t line) const
+    {
+        const intptr_t visLine      = SendMessage(_hSC, SCI_VISIBLEFROMDOCLINE, line, 0);
+        const intptr_t visEnd       = visLine + SendMessage(_hSC, SCI_WRAPCOUNT, line, 0) - 1;
+        const intptr_t firstLine    = SendMessage(_hSC, SCI_GETFIRSTVISIBLELINE, 0, 0);
+
+        return (firstLine <= visLine &&
+                (firstLine + SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0) - 1) >= visEnd);
     }
 
     inline int GetCaretLineBack() const
@@ -233,6 +249,11 @@ public:
     {
         *x = (int)SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, pos) + 2;
         *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, pos) + 2;
+    }
+
+    inline intptr_t GetCurrentLine() const
+    {
+        return SendMessage(_hSC, SCI_LINEFROMPOSITION, SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0), 0);
     }
 
     inline void GoToPos(intptr_t pos) const
@@ -336,7 +357,7 @@ public:
     void ReplaceWord(const char* replText, bool partial = false) const;
     void ReplaceWordMulti(const char* replText, bool partial = false) const;
     bool SearchText(const char* text, bool ignoreCase, bool wholeWord, bool regExp,
-            intptr_t* startPos = NULL, intptr_t* endPos = NULL) const;
+            intptr_t* startPos = NULL, intptr_t* endPos = NULL, bool keepView = false) const;
 
     inline bool IsPreviousCharWordEnd()
     {

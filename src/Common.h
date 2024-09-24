@@ -193,6 +193,8 @@ public:
         return (bool)(dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
+    void NormalizePathSlashes();
+
     void AsFolder();
     size_t StripFilename();
     size_t DirUp();
