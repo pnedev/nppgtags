@@ -859,6 +859,7 @@ void showResultCB(const CmdPtr_t& cmd)
         if (cmd->Result() && cmd->Status() == OK)
         {
             ResultWin::Show(cmd);
+            return;
         }
         else
         {
@@ -885,6 +886,8 @@ void showResultCB(const CmdPtr_t& cmd)
         MessageBox(INpp::Get().GetHandle(), _T("Database seems outdated.\nPlease re-create it and redo the search."),
                 cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
     }
+
+    INpp::Get().ClearSelectionMulti();
 }
 
 

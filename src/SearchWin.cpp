@@ -478,7 +478,7 @@ void SearchWin::filterComplList()
 
         if (_initialCompl)
         {
-        	_initialCompl = false;
+            _initialCompl = false;
             PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
         }
         else
