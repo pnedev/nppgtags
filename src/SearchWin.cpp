@@ -410,14 +410,27 @@ void SearchWin::endCompletion(const CmdPtr_t& cmpl)
 /**
  *  \brief
  */
+void SearchWin::hideDropDown()
+{
+    if (_completionStarted)
+        return;
+
+    if (_completion)
+        ComboBox_ShowDropdown(_hSearch, FALSE);
+}
+
+
+/**
+ *  \brief
+ */
 void SearchWin::clearCompletion()
 {
     if (_completionStarted)
         return;
 
-    const int pos = LOWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+    const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
-    CText txt(pos);
+    CText txt(ComboBox_GetTextLength(_hSearch));
 
     ComboBox_GetText(_hSearch, txt.C_str(), (int)txt.Size());
 
@@ -439,11 +452,11 @@ void SearchWin::filterComplList()
     if (!_completion)
         return;
 
+    const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+
     CText filter(ComboBox_GetTextLength(_hSearch));
 
     ComboBox_GetText(_hSearch, filter.C_str(), (int)filter.Size());
-
-    const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
     int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
 
@@ -452,12 +465,9 @@ void SearchWin::filterComplList()
     else
         pCompare = &_tcsncmp;
 
-    ComboBox_ResetContent(_hSearch);
-    ComboBox_ShowDropdown(_hSearch, FALSE);
-    ComboBox_SetText(_hSearch, filter.C_str());
-    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
-
     SendMessage(_hSearch, WM_SETREDRAW, FALSE, 0);
+
+    ComboBox_ResetContent(_hSearch);
 
     if (filter.Len() == cComplAfter)
     {
@@ -473,6 +483,7 @@ void SearchWin::filterComplList()
 
     if (ComboBox_GetCount(_hSearch))
     {
+        ComboBox_SetCurSel(_hSearch, 0);
         ComboBox_ShowDropdown(_hSearch, TRUE);
         ComboBox_SetText(_hSearch, filter.C_str());
 
@@ -485,6 +496,12 @@ void SearchWin::filterComplList()
         {
             PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
         }
+    }
+    else
+    {
+        ComboBox_ShowDropdown(_hSearch, FALSE);
+        ComboBox_SetText(_hSearch, filter.C_str());
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, -1));
     }
 
     SendMessage(_hSearch, WM_SETREDRAW, TRUE, 0);
@@ -546,11 +563,14 @@ void SearchWin::onOK()
         if (!db)
             return;
 
-        CText tag(ComboBox_GetTextLength(_hSearch));
+        int pos = LOWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
+
+        if (pos <= 0 || pos == HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0)))
+            pos = ComboBox_GetTextLength(_hSearch);
+
+        CText tag(pos);
 
         ComboBox_GetText(_hSearch, tag.C_str(), (int)tag.Size());
-
-        const int pos = HIWORD(SendMessage(_hSearch, CB_GETEDITSEL, 0, 0));
 
         PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(pos, pos));
 
@@ -573,6 +593,22 @@ void SearchWin::onOK()
 /**
  *  \brief
  */
+inline void SearchWin::onTabPress()
+{
+    const int lbIdx = ComboBox_GetCurSel(_hSearch);
+
+    CText txt(ComboBox_GetLBTextLen(_hSearch, lbIdx));
+
+    ComboBox_GetLBText(_hSearch, lbIdx, txt.C_str());
+    ComboBox_SetText(_hSearch, txt.C_str());
+
+    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(txt.Len(), -1));
+}
+
+
+/**
+ *  \brief
+ */
 LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
     if (code >= 0)
@@ -583,23 +619,28 @@ LRESULT CALLBACK SearchWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
             // Key is pressed
             if (!(lParam & (1 << 31)))
             {
-                if (wParam == VK_ESCAPE)
+                switch (wParam)
                 {
-                    SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
-                    return 1;
-                }
-                if (wParam == VK_RETURN)
-                {
-                    SW->onOK();
-                    return 1;
-                }
-                if (wParam == VK_CONTROL || wParam == VK_MENU)
-                {
-                    SW->clearCompletion();
-                    return 1;
-                }
+                    case VK_CONTROL:
+                    case VK_MENU:
+                        SW->hideDropDown();
+                        return 1;
 
-                SW->_keyPressed = (int)wParam;
+                    case VK_ESCAPE:
+                        SendMessage(SW->_hWnd, WM_CLOSE, 0, 0);
+                        return 1;
+
+                    case VK_TAB:
+                        SW->onTabPress();
+                        return 1;
+
+                    case VK_RETURN:
+                        SW->onOK();
+                        return 1;
+
+                    default:
+                        SW->_keyPressed = (int)wParam;
+                }
             }
         }
     }

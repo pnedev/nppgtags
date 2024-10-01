@@ -620,7 +620,7 @@ void ToggleWindowsFocus()
         EnumEnd
     } f;
 
-    Tools::ReleaseKeys();
+    // Tools::ReleaseKeys();
 
     HWND hWnd = GetFocus();
 

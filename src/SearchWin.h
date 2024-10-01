@@ -92,12 +92,14 @@ private:
     void reinit(CmdId_t cmdId, CompletionCB complCB, const TCHAR* hint, bool enRE, bool enIC);
 
     void startCompletion();
+    void hideDropDown();
     void clearCompletion();
     void filterComplList();
 
     void saveSearchOptions();
     void onEditChange();
     void onOK();
+    inline void onTabPress();
 
     static std::unique_ptr<SearchWin> SW;
 
