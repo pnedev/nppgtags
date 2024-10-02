@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.15)
+cmake_policy (SET CMP0091 NEW)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
@@ -10,9 +11,9 @@ if (UNIX OR MINGW)
     set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE  ONLY)
 
     if (WIN64)
-        set (toolchain_prefix   x86_64-w64-mingw32)
+        set (toolchain_prefix x86_64-w64-mingw32)
     else ()
-        set (toolchain_prefix   i686-w64-mingw32)
+        set (toolchain_prefix i686-w64-mingw32)
     endif ()
 
     set (CMAKE_C_COMPILER   ${CMAKE_SYSROOT}/bin/${toolchain_prefix}-gcc)
@@ -24,6 +25,8 @@ if (UNIX OR MINGW)
 endif ()
 
 project (NppGTags)
+
+set(CMAKE_CXX_STANDARD 14)
 
 if (UNIX OR MINGW)
     set (defs
@@ -40,12 +43,10 @@ if (UNIX OR MINGW)
     endif ()
 
     set (CMAKE_CXX_FLAGS
-        "-std=c++14 -O3 -static-libgcc -static-libstdc++ -Wall -Wno-unknown-pragmas"
+        "-O3 -static-libgcc -static-libstdc++ -Wall -Wno-unknown-pragmas"
     )
 
-    set (CMAKE_MODULE_LINKER_FLAGS
-        "-s"
-    )
+    set (CMAKE_MODULE_LINKER_FLAGS "-s")
 
     set (CMAKE_SHARED_MODULE_PREFIX "")
 else ()
@@ -63,9 +64,7 @@ else ()
         )
     endif ()
 
-    set (CMAKE_CXX_FLAGS
-        "/EHsc /LD /MT /MP /W4"
-    )
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /LD /MP /W4")
 endif ()
 
 set (project_rc_files
@@ -107,22 +106,22 @@ if (UNIX OR MINGW)
     target_link_libraries (NppGTags ${comctl32})
 
     set (INSTALL_PATH
-        "$ENV{HOME}/wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
+        "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
     )
 
+    message ("Install destination: ${INSTALL_PATH}")
+
     install (FILES ${CMAKE_BINARY_DIR}/NppGTags.dll
+        DESTINATION "${INSTALL_PATH}"
+    )
+
+    install (DIRECTORY bin/bin
+        DESTINATION "${INSTALL_PATH}"
+    )
+
+    install (DIRECTORY bin/share
         DESTINATION "${INSTALL_PATH}"
     )
 else ()
     target_link_libraries (NppGTags comctl32)
 endif ()
-
-message ("Install destination: ${INSTALL_PATH}")
-
-install (DIRECTORY bin/bin
-    DESTINATION "${INSTALL_PATH}"
-)
-
-install (DIRECTORY bin/share
-    DESTINATION "${INSTALL_PATH}"
-)
