@@ -1,3 +1,12 @@
+What's new in v5.2.0
+=======================
+- Add multi-caret Autocomplete and possibility to triger autocomplete if configurable number of chars are typed
+- Made several Search box improvements related to its autocompletion and the box can now be configured to stay open
+- Toggle window now cycles also through Search box if it is open
+- Update Global GTags binaries to 6.6.12
+- Several other fixes and improvements
+
+
 What's new in v5.1.2
 =======================
 - Update Notepad++ API (>= Notepad++ v8.6.5 but it is compatible with older version as well)
