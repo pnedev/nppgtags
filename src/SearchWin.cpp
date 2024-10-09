@@ -597,12 +597,15 @@ inline void SearchWin::onTabPress()
 {
     const int lbIdx = ComboBox_GetCurSel(_hSearch);
 
-    CText txt(ComboBox_GetLBTextLen(_hSearch, lbIdx));
+    if (lbIdx >= 0)
+    {
+        CText txt(ComboBox_GetLBTextLen(_hSearch, lbIdx));
 
-    ComboBox_GetLBText(_hSearch, lbIdx, txt.C_str());
-    ComboBox_SetText(_hSearch, txt.C_str());
+        ComboBox_GetLBText(_hSearch, lbIdx, txt.C_str());
+        ComboBox_SetText(_hSearch, txt.C_str());
 
-    PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(txt.Len(), -1));
+        PostMessage(_hSearch, CB_SETEDITSEL, 0, MAKELPARAM(txt.Len(), -1));
+    }
 }
 
 
