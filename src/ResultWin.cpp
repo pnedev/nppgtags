@@ -1224,7 +1224,12 @@ bool ResultWin::visitSingleResult(ResultWin::Tab* tab)
         }
     }
 
-    CPath file = tab->_projectPath.C_str();
+    CPath file;
+
+    // Path is not absolute (does not start with drive letter)
+    if ((parser->getFirstFileResult().c_str()[0] != '/') && (parser->getFirstFileResult().c_str()[1] != ':'))
+        file = tab->_projectPath.C_str();
+
     file += parser->getFirstFileResult().c_str();
     file.NormalizePathSlashes();
 
@@ -1335,7 +1340,7 @@ bool ResultWin::openItem(intptr_t lineNum, unsigned matchNum)
     CPath file;
 
     // Path is not absolute (does not start with drive letter)
-    if ((lineLen < 5) || (lineTxt[2] != ':'))
+    if ((lineLen < 5) || ((lineTxt[1] != '/') && (lineTxt[2] != ':')))
         file = _activeTab->_projectPath.C_str();
 
     file += &lineTxt[1];
