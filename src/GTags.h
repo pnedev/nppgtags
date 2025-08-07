@@ -52,7 +52,7 @@ enum PluginWinMessages_t
     WM_CLOSE_ACTIVITY_WIN
 };
 
-extern FuncItem     Menu[21];
+extern FuncItem     Menu[22];
 
 extern HINSTANCE    HMod;
 extern CPath        DllPath;

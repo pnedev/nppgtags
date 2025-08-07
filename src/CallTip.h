@@ -2,16 +2,22 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <memory>
+#include "Common.h"
+#include "CmdDefines.h"
+
 #include <cstdint>
 #include <vector>
-#include "Common.h"
+
 #include "NppAPI/Notepad_plus_msgs.h"
 #include "NppAPI/Docking.h"
 #include "NppAPI/PluginInterface.h"
 
-#include "CmdDefines.h"
 
-class CallTipWin()
+namespace GTags
+{
+
+class CallTipWin
 {
 public:
     static void Register();
@@ -31,5 +37,19 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+    CallTipWin& operator=(const CallTipWin&) = delete;
+
+    void onDblClick();
+
     static std::unique_ptr<CallTipWin> CTW;
-}
+
+    HWND            _hWnd;
+    HWND            _hLVWnd;
+    HFONT           _hFont;
+    const CmdId_t   _cmdId;
+    const bool      _ic;
+    const int       _cmdTagLen;
+    ParserPtr_t     _completion;
+};
+
+} // namespace GTags

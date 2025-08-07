@@ -41,6 +41,7 @@
 #include "AboutWin.h"
 #include "GTags.h"
 #include "LineParser.h"
+#include "CallTip.h"
 
 
 namespace
@@ -331,6 +332,33 @@ void AutoCompleteFile()
     CmdPtr_t cmd = std::make_shared<Cmd>(AUTOCOMPLETE_FILE, db, parser, tag.C_str(), GTagsSettings._ic);
 
     CmdEngine::Run(cmd, autoComplCB);
+}
+
+/**
+ *  \brief
+ */
+void callTip(bool autorun)
+{
+    CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
+    if (tag.IsEmpty())
+        return;
+
+    DbHandle db = getDatabase(false, autorun);
+    if (!db)
+        return;
+
+    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
+
+    CmdEngine::Run(cmd, halfComplCB);
+}
+
+
+/**
+ *  \brief
+ */
+void CallTip()
+{
+    callTip(false);
 }
 
 
@@ -712,7 +740,7 @@ void About()
 namespace GTags
 {
 
-FuncItem Menu[21] = {
+FuncItem Menu[22] = {
     /* 0 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE], AutoComplete),
     /* 1 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE_FILE], AutoCompleteFile),
     /* 2 */  FuncItem(Cmd::CmdName[FIND_FILE], FindFile),
@@ -733,7 +761,8 @@ FuncItem Menu[21] = {
     /* 17 */ FuncItem(),
     /* 18 */ FuncItem(_T("Settings..."), SettingsCfg),
     /* 19 */ FuncItem(),
-    /* 20 */ FuncItem(_T("About..."), About)
+    /* 20 */ FuncItem(_T("About..."), About),
+    /* 21 */ FuncItem(Cmd::CmdName[CALLTIP], CallTip)
 };
 
 HINSTANCE HMod = NULL;

@@ -45,7 +45,8 @@ enum CmdId_t
     GREP,
     GREP_TEXT,
     VERSION,
-    CTAGS_VERSION
+    CTAGS_VERSION,
+    CALLTIP
 };
 
 
