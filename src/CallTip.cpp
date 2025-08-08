@@ -173,6 +173,82 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
 /**
  *  \brief
  */
+void CallTipWin::resizeLV()
+{
+    bool scroll = false;
+    int rowsCount = ListView_GetItemCount(_hLVWnd);
+    rowsCount = 7;
+    if (rowsCount > 7)
+    {
+        rowsCount = 7;
+        scroll = true;
+    }
+
+    RECT win;
+    ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
+    // int lvWidth     = win.right - win.left;
+    int lvWidth     = 50;
+    int lvHeight    = (win.bottom - win.top) * rowsCount;
+
+    HWND hHeader = ListView_GetHeader(_hLVWnd);
+    GetWindowRect(hHeader, &win);
+    lvHeight += win.bottom - win.top;
+
+    RECT maxWin;
+    INpp& npp = INpp::Get();
+    GetWindowRect(npp.GetSciHandle(), &maxWin);
+
+    int maxWidth = (maxWin.right - maxWin.left) - 30;
+    if (scroll)
+        maxWidth -= GetSystemMetrics(SM_CXVSCROLL);
+    if (lvWidth > maxWidth)
+        lvWidth = maxWidth;
+
+    ListView_SetColumnWidth(_hLVWnd, 0, lvWidth);
+
+    if (scroll)
+        lvWidth += GetSystemMetrics(SM_CXVSCROLL);
+
+    win.left    = maxWin.left;
+    win.top     = maxWin.top;
+    win.right   = win.left + lvWidth;
+    win.bottom  = win.top + lvHeight;
+
+    AdjustWindowRect(&win, (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE), FALSE);
+    lvWidth     = win.right - win.left;
+    lvHeight    = win.bottom - win.top;
+
+    int xOffset, yOffset;
+    npp.GetPointPos(&xOffset, &yOffset);
+
+    win.left    = maxWin.left + xOffset;
+    win.top     = maxWin.top + yOffset + npp.GetTextHeight();
+    win.right   = win.left + lvWidth;
+    win.bottom  = win.top + lvHeight;
+
+    xOffset = win.right - maxWin.right;
+    if (xOffset > 0)
+    {
+        win.left    -= xOffset;
+        win.right   -= xOffset;
+    }
+
+    if (win.bottom > maxWin.bottom)
+    {
+        win.bottom  = maxWin.top + yOffset;
+        win.top     = win.bottom - lvHeight;
+    }
+
+    MoveWindow(_hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
+
+    GetClientRect(_hWnd, &win);
+    MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
+}
+
+
+/**
+ *  \brief
+ */
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)

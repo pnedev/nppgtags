@@ -205,14 +205,14 @@ void halfComplCB(const CmdPtr_t& cmd)
 
 void callTipCB(const CmdPtr_t& cmd)
 {
-    DbManager::Get().PutDb(cmd->Db());
-
-    if (cmd->Status() == OK && cmd->Result())
+    if (cmd->Status() == OK)
     {
         CallTipWin::Show(cmd);
         return;
     }
-
+    
+    DbManager::Get().PutDb(cmd->Db());
+    
     INpp::Get().ClearSelectionMulti();
 
     if (cmd->Status() == FAILED)
@@ -372,7 +372,8 @@ void callTip(bool autorun)
     if (!db)
         return;
 
-    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
+    ParserPtr_t parser = std::make_shared<LineParser>();
+    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, tag.C_str(), GTagsSettings._ic, false, autorun);
 
     CmdEngine::Run(cmd, callTipCB);
 }

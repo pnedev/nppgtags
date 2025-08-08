@@ -44,6 +44,7 @@ private:
     CallTipWin& operator=(const CallTipWin&) = delete;
 
     HWND composeWindow(const TCHAR* header);
+    void resizeLV();
 
     void onDblClick();
 
