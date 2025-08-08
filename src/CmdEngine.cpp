@@ -43,7 +43,7 @@ const TCHAR* CmdEngine::CmdLine[] = {
     _T("\"%s\\global.exe\" -cT \"%s\""),                                    // AUTOCOMPLETE
     _T("\"%s\\global.exe\" -cs \"%s\""),                                    // AUTOCOMPLETE_SYMBOL
     _T("\"%s\\global.exe\" -cPo --match-part=all \"%s\""),                  // AUTOCOMPLETE_FILE
-    _T("\"%s\\global.exe\" -cT \"%s\""),                                    // CALLTIP
+    _T("\"%s\\global.exe\" -cs \"%s\""),                                    // CALLTIP
     _T("\"%s\\global.exe\" -Po \"%s\""),                                    // FIND_FILE
     _T("\"%s\\global.exe\" -dT --result=grep --path-style=abslib \"%s\""),  // FIND_DEFINITION
     _T("\"%s\\global.exe\" -r --result=grep \"%s\""),                       // FIND_REFERENCE

@@ -6,13 +6,6 @@
 #include "Common.h"
 #include "CmdDefines.h"
 
-#include <cstdint>
-#include <vector>
-
-#include "NppAPI/Notepad_plus_msgs.h"
-#include "NppAPI/Docking.h"
-#include "NppAPI/PluginInterface.h"
-
 
 namespace GTags
 {
@@ -44,6 +37,7 @@ private:
     CallTipWin& operator=(const CallTipWin&) = delete;
 
     HWND composeWindow(const TCHAR* header);
+    int filterLV(const CText& filter);
     void resizeLV();
 
     void onDblClick();

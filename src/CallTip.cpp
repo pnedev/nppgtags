@@ -153,13 +153,13 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     INpp::Get().GetWord(wordA, true, true, true);
     CText word(wordA.C_str());
 
-    // if (!filterLV(word))
-    // {
-        // SendMessage(_hWnd, WM_CLOSE, 0, 0);
-        // return NULL;
-    // }
+    if (!filterLV(word))
+    {
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        return NULL;
+    }
 
-    // resizeLV();
+    resizeLV();
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
@@ -173,11 +173,48 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
 /**
  *  \brief
  */
+int CallTipWin::filterLV(const CText& filter)
+{
+    LVITEM lvItem   = {0};
+    lvItem.mask     = LVIF_TEXT | LVIF_STATE;
+
+    size_t len = filter.Len();
+
+    ListView_DeleteAllItems(_hLVWnd);
+
+    int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
+
+    if (_ic)
+        pCompare = &_tcsnicmp;
+    else
+        pCompare = &_tcsncmp;
+
+    for (const auto& complEntry : _completion->GetList())
+    {
+        if (!len || !pCompare(complEntry, filter.C_str(), len))
+        {
+            lvItem.pszText = complEntry;
+            ListView_InsertItem(_hLVWnd, &lvItem);
+            ++lvItem.iItem;
+        }
+    }
+
+    if (lvItem.iItem > 0)
+        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+
+    return lvItem.iItem;
+}
+
+/**
+ *  \brief
+ */
 void CallTipWin::resizeLV()
 {
     bool scroll = false;
     int rowsCount = ListView_GetItemCount(_hLVWnd);
-    rowsCount = 7;
+    // rowsCount = 7;
+    // MB_
+    // Call
     if (rowsCount > 7)
     {
         rowsCount = 7;
@@ -186,8 +223,8 @@ void CallTipWin::resizeLV()
 
     RECT win;
     ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
-    // int lvWidth     = win.right - win.left;
-    int lvWidth     = 50;
+    int lvWidth     = win.right - win.left;
+    // int lvWidth     = 50;
     int lvHeight    = (win.bottom - win.top) * rowsCount;
 
     HWND hHeader = ListView_GetHeader(_hLVWnd);

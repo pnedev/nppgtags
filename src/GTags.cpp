@@ -205,13 +205,13 @@ void halfComplCB(const CmdPtr_t& cmd)
 
 void callTipCB(const CmdPtr_t& cmd)
 {
-    if (cmd->Status() == OK)
+    DbManager::Get().PutDb(cmd->Db());
+    
+    if (cmd->Status() == OK && cmd->Result())
     {
         CallTipWin::Show(cmd);
         return;
     }
-    
-    DbManager::Get().PutDb(cmd->Db());
     
     INpp::Get().ClearSelectionMulti();
 
