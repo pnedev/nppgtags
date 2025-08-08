@@ -30,6 +30,10 @@ public:
         return (CTW != nullptr);
     }
 
+    CallTipWin(const CmdPtr_t& cmd);
+    CallTipWin(const CallTipWin&);
+    ~CallTipWin();
+
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
@@ -38,6 +42,8 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     CallTipWin& operator=(const CallTipWin&) = delete;
+
+    HWND composeWindow(const TCHAR* header);
 
     void onDblClick();
 

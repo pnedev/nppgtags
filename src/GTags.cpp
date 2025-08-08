@@ -203,6 +203,31 @@ void halfComplCB(const CmdPtr_t& cmd)
 }
 
 
+void callTipCB(const CmdPtr_t& cmd)
+{
+    DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == OK && cmd->Result())
+    {
+        CallTipWin::Show(cmd);
+        return;
+    }
+
+    INpp::Get().ClearSelectionMulti();
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
 /**
  *  \brief
  */
@@ -347,9 +372,9 @@ void callTip(bool autorun)
     if (!db)
         return;
 
-    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
+    CmdPtr_t cmd = std::make_shared<Cmd>(CallTip, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
 
-    CmdEngine::Run(cmd, halfComplCB);
+    CmdEngine::Run(cmd, callTipCB);
 }
 
 
@@ -958,6 +983,7 @@ void PluginInit()
     ActivityWin::Register();
     SearchWin::Register();
     AutoCompleteWin::Register();
+    CallTipWin::Register();
 
     MainWndH = ResultWin::Register();
     if (MainWndH == NULL)
@@ -984,6 +1010,7 @@ void PluginDeInit()
     ActivityWin::Unregister();
     SearchWin::Unregister();
     AutoCompleteWin::Unregister();
+    CallTipWin::Unregister();
     ResultWin::Unregister();
 
     if (DeInitCOM)
