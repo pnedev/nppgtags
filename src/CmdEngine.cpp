@@ -43,6 +43,7 @@ const TCHAR* CmdEngine::CmdLine[] = {
     _T("\"%s\\global.exe\" -cT \"%s\""),                                    // AUTOCOMPLETE
     _T("\"%s\\global.exe\" -cs \"%s\""),                                    // AUTOCOMPLETE_SYMBOL
     _T("\"%s\\global.exe\" -cPo --match-part=all \"%s\""),                  // AUTOCOMPLETE_FILE
+    _T("\"%s\\global.exe\" -cT \"%s\""),                                    // CALLTIP
     _T("\"%s\\global.exe\" -Po \"%s\""),                                    // FIND_FILE
     _T("\"%s\\global.exe\" -dT --result=grep --path-style=abslib \"%s\""),  // FIND_DEFINITION
     _T("\"%s\\global.exe\" -r --result=grep \"%s\""),                       // FIND_REFERENCE
@@ -51,7 +52,6 @@ const TCHAR* CmdEngine::CmdLine[] = {
     _T("\"%s\\global.exe\" -gO --result=grep \"%s\""),                      // GREP_TEXT
     _T("\"%s\\global.exe\" --version"),                                     // VERSION
     _T("\"%s\\ctags.exe\" --version")                                       // CTAGS_VERSION
-    _T("\"%s\\global.exe\" -cT \"%s\""),                                    // CALLTIP
 };
 
 
@@ -291,7 +291,7 @@ void CmdEngine::setEnvironmentVars() const
 {
     CText buf;
 
-    if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == FIND_DEFINITION))
+    if (!_cmd->_skipLibs && (_cmd->_id == AUTOCOMPLETE || _cmd->_id == CALLTIP || _cmd->_id == FIND_DEFINITION))
     {
         const DbConfig& cfg = _cmd->Db()->GetConfig();
         if (cfg._useLibDb && cfg._libDbPaths.size())

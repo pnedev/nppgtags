@@ -372,7 +372,7 @@ void callTip(bool autorun)
     if (!db)
         return;
 
-    CmdPtr_t cmd = std::make_shared<Cmd>(CallTip, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
+    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, nullptr, tag.C_str(), GTagsSettings._ic, false, autorun);
 
     CmdEngine::Run(cmd, callTipCB);
 }
@@ -562,7 +562,7 @@ void IgnoreCase()
 {
     GTagsSettings._ic = !GTagsSettings._ic;
 
-    INpp::Get().SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+    INpp::Get().SetPluginMenuFlag(Menu[9]._cmdID, GTagsSettings._ic);
 
     GTagsSettings._dirty = true;
 }
@@ -768,26 +768,26 @@ namespace GTags
 FuncItem Menu[22] = {
     /* 0 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE], AutoComplete),
     /* 1 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE_FILE], AutoCompleteFile),
-    /* 2 */  FuncItem(Cmd::CmdName[FIND_FILE], FindFile),
-    /* 3 */  FuncItem(Cmd::CmdName[FIND_DEFINITION], FindDefinition),
-    /* 4 */  FuncItem(Cmd::CmdName[FIND_REFERENCE], FindReference),
-    /* 5 */  FuncItem(Cmd::CmdName[GREP], SearchSrc),
-    /* 6 */  FuncItem(Cmd::CmdName[GREP_TEXT], SearchOther),
-    /* 7 */  FuncItem(),
-    /* 8 */  FuncItem(_T("Ignore Case"), IgnoreCase), // Array number is important as it is used to toggle the flag!!!
-    /* 9 */  FuncItem(),
-    /* 10*/  FuncItem(_T("Go Back"), GoBack),
-    /* 11*/  FuncItem(_T("Go Forward"), GoForward),
-    /* 12 */ FuncItem(),
-    /* 13 */ FuncItem(Cmd::CmdName[CREATE_DATABASE], CreateDatabase),
-    /* 14 */ FuncItem(_T("Delete Database"), DeleteDatabase),
-    /* 15 */ FuncItem(),
-    /* 16 */ FuncItem(_T("Toggle Windows Focus"), ToggleWindowsFocus),
-    /* 17 */ FuncItem(),
-    /* 18 */ FuncItem(_T("Settings..."), SettingsCfg),
-    /* 19 */ FuncItem(),
-    /* 20 */ FuncItem(_T("About..."), About),
-    /* 21 */ FuncItem(Cmd::CmdName[CALLTIP], CallTip)
+    /* 2 */  FuncItem(Cmd::CmdName[CALLTIP], CallTip),
+    /* 3 */  FuncItem(Cmd::CmdName[FIND_FILE], FindFile),
+    /* 4 */  FuncItem(Cmd::CmdName[FIND_DEFINITION], FindDefinition),
+    /* 5 */  FuncItem(Cmd::CmdName[FIND_REFERENCE], FindReference),
+    /* 6 */  FuncItem(Cmd::CmdName[GREP], SearchSrc),
+    /* 7 */  FuncItem(Cmd::CmdName[GREP_TEXT], SearchOther),
+    /* 8 */  FuncItem(),
+    /* 9 */  FuncItem(_T("Ignore Case"), IgnoreCase), // Array number is important as it is used to toggle the flag!!!
+    /* 10 */ FuncItem(),
+    /* 11 */ FuncItem(_T("Go Back"), GoBack),
+    /* 12 */ FuncItem(_T("Go Forward"), GoForward),
+    /* 13 */ FuncItem(),
+    /* 14 */ FuncItem(Cmd::CmdName[CREATE_DATABASE], CreateDatabase),
+    /* 15 */ FuncItem(_T("Delete Database"), DeleteDatabase),
+    /* 16 */ FuncItem(),
+    /* 17 */ FuncItem(_T("Toggle Windows Focus"), ToggleWindowsFocus),
+    /* 18 */ FuncItem(),
+    /* 19 */ FuncItem(_T("Settings..."), SettingsCfg),
+    /* 20 */ FuncItem(),
+    /* 21 */ FuncItem(_T("About..."), About)
 };
 
 HINSTANCE HMod = NULL;
@@ -1030,7 +1030,7 @@ void OnNppReady()
 {
     INpp& npp = INpp::Get();
 
-    npp.SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+    npp.SetPluginMenuFlag(Menu[9]._cmdID, GTagsSettings._ic);
 
 	if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
 	{
