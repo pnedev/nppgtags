@@ -9,20 +9,63 @@
 #include "INpp.h"
 #include "GTags.h"
 #include "CallTip.h"
-#include "Cmd.h"
-#include "LineParser.h"
 
+#include <string>
 
 namespace GTags
 {
 
 const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
-const int CallTipWin::cWidth           = 400;
+const int CallTipWin::cWidth           = 1000;
 
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 
+intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
+{
+
+    intptr_t result = 0;
+
+    _lines.clear();
+    _paths.clear();
+    _buf = cmd->Result();
+
+    // if (_buf.Len() > 0) {
+        // MessageBox(NULL, _buf.C_str(), CText(_T("Parser")).C_str(), MB_OK);
+    // }
+    size_t start_pos = 0;
+    size_t end_pos = 0;
+    std::basic_string<TCHAR> search_str(_buf.C_str());
+    TCHAR* token = NULL;
+    while (true) {
+        ++result;
+        end_pos = search_str.find(L":", start_pos); // Find the definition path in the line
+        // if (result == 4) {
+            // break;
+        // }
+        if (end_pos == std::string::npos) {
+            break;
+        }
+        end_pos = search_str.find(L":", end_pos + 1); // There are two ":" so skip to the next one.
+        _paths.push_back(CText(search_str.substr(start_pos, end_pos - start_pos).c_str()).C_str());
+        start_pos = end_pos + 1;
+        end_pos = search_str.find(L"\n", start_pos); // Find the definition information and end of line.
+        // _lines.push_back(CText(search_str.substr(start_pos, end_pos - start_pos).c_str()).C_str());
+        token = CText(search_str.substr(start_pos, end_pos - start_pos).c_str()).C_str();
+        _lines.push_back(token);
+        CText line(_buf);
+        line.Resize(end_pos);
+        line.Erase(0, start_pos);
+        // _lines.push_back(line.C_str());
+        // _lines.push_back(_buf.C_str());
+        start_pos = end_pos + 1;
+        end_pos = end_pos + 1;
+        // _lines.push_back((L"AAA"));
+    }
+
+    return result;
+}
 
 /**
  *  \brief
@@ -153,11 +196,7 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     INpp::Get().GetWord(wordA, true, true, true);
     CText word(wordA.C_str());
 
-    if (!filterLV(word))
-    {
-        SendMessage(_hWnd, WM_CLOSE, 0, 0);
-        return NULL;
-    }
+    filterLV();
 
     resizeLV();
 
@@ -173,30 +212,18 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
 /**
  *  \brief
  */
-int CallTipWin::filterLV(const CText& filter)
+int CallTipWin::filterLV()
 {
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
-    size_t len = filter.Len();
-
     ListView_DeleteAllItems(_hLVWnd);
-
-    int (*pCompare)(const TCHAR*, const TCHAR*, size_t);
-
-    if (_ic)
-        pCompare = &_tcsnicmp;
-    else
-        pCompare = &_tcsncmp;
 
     for (const auto& complEntry : _completion->GetList())
     {
-        if (!len || !pCompare(complEntry, filter.C_str(), len))
-        {
-            lvItem.pszText = complEntry;
-            ListView_InsertItem(_hLVWnd, &lvItem);
-            ++lvItem.iItem;
-        }
+        lvItem.pszText = complEntry;
+        ListView_InsertItem(_hLVWnd, &lvItem);
+        ++lvItem.iItem;
     }
 
     if (lvItem.iItem > 0)
@@ -215,6 +242,7 @@ void CallTipWin::resizeLV()
     // rowsCount = 7;
     // MB_
     // Call
+    // ListView_GetItemRect
     if (rowsCount > 7)
     {
         rowsCount = 7;

@@ -2,13 +2,33 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <cstdint>
+#include <vector>
 #include <memory>
 #include "Common.h"
 #include "CmdDefines.h"
+#include "Cmd.h"
 
 
 namespace GTags
 {
+
+
+class CallTipParser : public ResultParser
+{
+public:
+    CallTipParser() {}
+    virtual ~CallTipParser() {}
+
+    virtual intptr_t Parse(const CmdPtr_t&);
+    virtual const std::vector<TCHAR*>& GetListPaths() const { return _paths; }
+
+protected:
+    std::vector<TCHAR*> _paths;
+
+private:
+    CText _buf;
+};
 
 class CallTipWin
 {
@@ -37,7 +57,7 @@ private:
     CallTipWin& operator=(const CallTipWin&) = delete;
 
     HWND composeWindow(const TCHAR* header);
-    int filterLV(const CText& filter);
+    int filterLV();
     void resizeLV();
 
     void onDblClick();

@@ -43,6 +43,10 @@ intptr_t LineParser::Parse(const CmdPtr_t& cmd)
     _lines.clear();
     _buf = cmd->Result();
 
+    // if (_buf.Len() > 0) {
+        // MessageBox(NULL, _buf.C_str(), CText(_T("Parser")).C_str(), MB_OK);
+    // }
+    
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken;
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp))

@@ -372,7 +372,10 @@ void callTip(bool autorun)
     if (!db)
         return;
 
-    ParserPtr_t parser = std::make_shared<LineParser>();
+    // ParserPtr_t parser = std::make_shared<LineParser>();
+    ParserPtr_t parser = std::make_shared<CallTipParser>();
+    // ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
+
     CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, tag.C_str(), GTagsSettings._ic, false, autorun);
 
     CmdEngine::Run(cmd, callTipCB);
