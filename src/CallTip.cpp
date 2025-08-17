@@ -17,7 +17,7 @@ namespace GTags
 
 const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
-const int CallTipWin::cWidth           = 1000;
+const int CallTipWin::cWidth           = 600;
 
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
@@ -34,34 +34,16 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
     // if (_buf.Len() > 0) {
         // MessageBox(NULL, _buf.C_str(), CText(_T("Parser")).C_str(), MB_OK);
     // }
-    size_t start_pos = 0;
-    size_t end_pos = 0;
-    std::basic_string<TCHAR> search_str(_buf.C_str());
-    TCHAR* token = NULL;
-    while (true) {
+    TCHAR* pTmp = NULL;
+    for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
+            pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
+        TCHAR* inner_context = NULL;
+        TCHAR* inner_token = _tcstok_s(pToken, _T(":"), &inner_context);
+        inner_token = _tcstok_s(NULL, _T(":"), &inner_context);
+        //_paths.push_back(&inner_token);
+        inner_token = _tcstok_s(NULL, _T("\n\r"), &inner_context);
+        _lines.push_back(inner_token);
         ++result;
-        end_pos = search_str.find(L":", start_pos); // Find the definition path in the line
-        // if (result == 4) {
-            // break;
-        // }
-        if (end_pos == std::string::npos) {
-            break;
-        }
-        end_pos = search_str.find(L":", end_pos + 1); // There are two ":" so skip to the next one.
-        _paths.push_back(CText(search_str.substr(start_pos, end_pos - start_pos).c_str()).C_str());
-        start_pos = end_pos + 1;
-        end_pos = search_str.find(L"\n", start_pos); // Find the definition information and end of line.
-        // _lines.push_back(CText(search_str.substr(start_pos, end_pos - start_pos).c_str()).C_str());
-        token = CText(search_str.substr(start_pos, end_pos - start_pos).c_str()).C_str();
-        _lines.push_back(token);
-        CText line(_buf);
-        line.Resize(end_pos);
-        line.Erase(0, start_pos);
-        // _lines.push_back(line.C_str());
-        // _lines.push_back(_buf.C_str());
-        start_pos = end_pos + 1;
-        end_pos = end_pos + 1;
-        // _lines.push_back((L"AAA"));
     }
 
     return result;
