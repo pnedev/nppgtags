@@ -305,7 +305,7 @@ public:
         sel.AutoFit();
     }
 
-    inline bool GetCursorFunction(CTextA& func_name, intptr_t overload) const
+    inline void GetCursorFunction(CTextA& func_name, intptr_t& overload) const
     {
         intptr_t line = GetCurrentLine();
         intptr_t startpos = PositionFromLine(line);
@@ -316,7 +316,7 @@ public:
         intptr_t offset = currpos - startpos;
         
         if (offset < 2) { // 'a(' is the shortest possible function.
-            return false;
+            return;
         }
         CTextA line_buf;
         line_buf.Resize(len);
@@ -346,7 +346,7 @@ public:
                     for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
                         func_name += line_buf.C_str()[n];
                     }
-                    return true;
+                    return;
                 }
             }
             else if (symbol == ')') {
@@ -356,6 +356,7 @@ public:
                 overload += 1;
             }
         }
+        return;
     }
 
     inline void SetSelection(intptr_t startPos, intptr_t endPos) const

@@ -102,7 +102,7 @@ void CallTipWin::Show(const CmdPtr_t& cmd)
 CallTipWin::CallTipWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _ic(cmd->IgnoreCase()),
     _cmdTagLen((int)(cmd->Tag().Len())),
-    _completion(cmd->Parser())
+    _parser(std::static_pointer_cast<CallTipParser>(cmd->Parser()))
 {}
 
 
@@ -201,11 +201,20 @@ int CallTipWin::filterLV()
 
     ListView_DeleteAllItems(_hLVWnd);
 
-    for (const auto& complEntry : _completion->GetList())
+    for (int i = 0; i < _parser->GetList().size(); i++)
     {
-        lvItem.pszText = complEntry;
-        ListView_InsertItem(_hLVWnd, &lvItem);
-        ++lvItem.iItem;
+        TCHAR* word = _parser->GetList().at(i);
+        intptr_t parameter_count = 0;
+        for (TCHAR ch = *word; ch; ch=*++word) {
+            if (ch == _T(',')) {
+                parameter_count++;
+            }
+        }
+        if (_parser->overload <= parameter_count) {
+            lvItem.pszText = _parser->GetList().at(i);
+            ListView_InsertItem(_hLVWnd, &lvItem);
+            ++lvItem.iItem;
+        }
     }
 
     if (lvItem.iItem > 0)

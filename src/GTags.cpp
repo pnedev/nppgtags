@@ -368,18 +368,18 @@ void callTip(bool autorun)
     CTextA tag;
     intptr_t overload = 0;
     INpp& npp = INpp::Get();
-    bool is_valid_function = npp.GetCursorFunction(tag, overload);
-    MessageBox(NULL, CText(tag.C_str()).C_str(), L"PLUF", MB_OK);
-    if (is_valid_function == false)
+    npp.GetCursorFunction(tag, overload);
+    
+    if (tag.IsEmpty())
         return;
 
     DbHandle db = getDatabase(false, autorun);
     if (!db)
         return;
 
-    ParserPtr_t parser = std::make_shared<CallTipParser>();
+    ParserPtr_t parser = std::make_shared<CallTipParser>(overload);
 
-    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, CText(tag.C_str()).C_str(), GTagsSettings._ic, false, autorun);
+    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, CText(tag.C_str()).C_str(), false, false, autorun);
 
     CmdEngine::Run(cmd, callTipCB);
 }

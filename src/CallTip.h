@@ -17,11 +17,14 @@ namespace GTags
 class CallTipParser : public ResultParser
 {
 public:
-    CallTipParser() {}
+
+    intptr_t overload = 0;
+    CallTipParser(intptr_t pOverload) : overload(pOverload) {}
     virtual ~CallTipParser() {}
 
     virtual intptr_t Parse(const CmdPtr_t&);
     virtual const std::vector<TCHAR*>& GetListPaths() const { return _paths; }
+    
 
 protected:
     std::vector<TCHAR*> _paths;
@@ -42,11 +45,10 @@ public:
     {
         return (CTW != nullptr);
     }
+    
 
     CallTipWin(const CmdPtr_t& cmd);
-    CallTipWin(const CallTipWin&);
     ~CallTipWin();
-
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
@@ -70,7 +72,7 @@ private:
     const CmdId_t   _cmdId;
     const bool      _ic;
     const int       _cmdTagLen;
-    ParserPtr_t     _completion;
+    std::shared_ptr<CallTipParser>      _parser;
 };
 
 } // namespace GTags
