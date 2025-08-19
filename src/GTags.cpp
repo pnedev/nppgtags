@@ -364,19 +364,22 @@ void AutoCompleteFile()
  */
 void callTip(bool autorun)
 {
-    CText tag = getSelection(NULL, true, PARTIAL_SELECT, false);
-    if (tag.IsEmpty())
+    
+    CTextA tag;
+    intptr_t overload = 0;
+    INpp& npp = INpp::Get();
+    bool is_valid_function = npp.GetCursorFunction(tag, overload);
+    MessageBox(NULL, CText(tag.C_str()).C_str(), L"PLUF", MB_OK);
+    if (is_valid_function == false)
         return;
 
     DbHandle db = getDatabase(false, autorun);
     if (!db)
         return;
 
-    // ParserPtr_t parser = std::make_shared<LineParser>();
     ParserPtr_t parser = std::make_shared<CallTipParser>();
-    // ParserPtr_t parser = std::make_shared<ResultWin::TabParser>();
 
-    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, tag.C_str(), GTagsSettings._ic, false, autorun);
+    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, CText(tag.C_str()).C_str(), GTagsSettings._ic, false, autorun);
 
     CmdEngine::Run(cmd, callTipCB);
 }

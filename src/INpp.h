@@ -305,6 +305,59 @@ public:
         sel.AutoFit();
     }
 
+    inline bool GetCursorFunction(CTextA& func_name, intptr_t overload) const
+    {
+        intptr_t line = GetCurrentLine();
+        intptr_t startpos = PositionFromLine(line);
+        intptr_t endpos = LineEndPosition(line);
+        intptr_t len = endpos - startpos + 3; // Also take CRLF in account, even if not there.
+
+        intptr_t currpos = GetPos();
+        intptr_t offset = currpos - startpos;
+        
+        if (offset < 2) { // 'a(' is the shortest possible function.
+            return false;
+        }
+        CTextA line_buf;
+        line_buf.Resize(len);
+        SendMessage(_hSC, SCI_GETLINE, line, (LPARAM)line_buf.C_str());
+        line_buf.AutoFit();
+        
+        intptr_t nests = 0;
+        if (line_buf.C_str()[offset] == ')') { // Keep the offset within cursor's actual current nest.
+            offset -= 1;
+        }
+        
+        for (int i = offset; i >= 0; i--) { // Find all of the '(' and ','.
+            char symbol = line_buf.C_str()[i];
+            if (symbol == '(') {
+                nests -= 1;
+                if (nests == -1) {
+                    int name_end = i - 1;;
+                    int n = i - 1;
+                    while (true) {
+                        symbol = line_buf.C_str()[n];
+                        if (symbol == ' ' || symbol == '\n' || symbol == '\t' || symbol == '\r' || symbol == ':') {
+                            n += 1;
+                            break;
+                        }
+                        n--;
+                    }
+                    for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
+                        func_name += line_buf.C_str()[n];
+                    }
+                    return true;
+                }
+            }
+            else if (symbol == ')') {
+                nests += 1;
+            }
+            else if (symbol == ',' && nests == 0) {
+                overload += 1;
+            }
+        }
+    }
+
     inline void SetSelection(intptr_t startPos, intptr_t endPos) const
     {
         SendMessage(_hSC, SCI_SETSEL, startPos, endPos);
