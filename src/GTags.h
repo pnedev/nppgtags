@@ -83,6 +83,6 @@ void OnFileChangeCancel();
 void OnFileChange(const CPath& file);
 void OnFileRename(const CPath& file);
 void OnFileDelete(const CPath& file);
-void OnUserInput();
+void OnUserInput(int ch);
 
 } // namespace GTags

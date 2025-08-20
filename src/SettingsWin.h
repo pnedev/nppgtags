@@ -114,6 +114,7 @@ private:
     HWND        _hKeepSearchOpen;
     HWND        _hTrigAutocmplEn;
     HWND        _hTrigAutocmplAfter;
+    HWND        _hTrigCallTip;
     HWND        _hEnDefDb;
     HWND        _hSetDefDb;
     HWND        _hUpdDefDb;

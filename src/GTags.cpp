@@ -1149,9 +1149,12 @@ void OnFileDelete(const CPath& file)
 /**
  *  \brief
  */
-void OnUserInput()
+void OnUserInput(int ch)
 {
-    if (!AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
+    if (GTagsSettings._autoTriggerCallTip && (ch == ',' || ch == '('))
+        callTip(true);
+    else if (GTagsSettings._triggerAutocmplAfter &&
+        !AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
         autoComplete(true);
 }
 

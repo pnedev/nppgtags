@@ -42,6 +42,7 @@ const TCHAR Settings::cInfo[] =
 
 const TCHAR Settings::cKeepSearchWinOpenKey[]       = _T("KeepSearchWinOpen = ");
 const TCHAR Settings::cTriggerAutocmplAfterKey[]    = _T("TriggerAutocmplAfter = ");
+const TCHAR Settings::cAutoTriggerCallTipKey[]      = _T("AutoTriggerCallTip = ");
 const TCHAR Settings::cUseDefDbKey[]                = _T("UseDefaultDB = ");
 const TCHAR Settings::cDefDbPathKey[]               = _T("DefaultDBPath = ");
 const TCHAR Settings::cREOptionKey[]                = _T("RegExp = ");
@@ -352,6 +353,7 @@ void Settings::SetDefaults()
 {
     _keepSearchWinOpen = false;
     _triggerAutocmplAfter = 0;
+    _autoTriggerCallTip = false;
     _useDefDb = false;
     _defDbPath.Clear();
     _re = false;
@@ -406,6 +408,14 @@ bool Settings::Load()
             _triggerAutocmplAfter = _tcstol(&line[pos], nullptr, 10);
             if (_triggerAutocmplAfter > cTriggerAutocmplAfterMax)
                 _triggerAutocmplAfter = cTriggerAutocmplAfterMax;
+        }
+        else if (!_tcsncmp(line, cAutoTriggerCallTipKey, _countof(cAutoTriggerCallTipKey) - 1))
+        {
+            const unsigned pos = _countof(cAutoTriggerCallTipKey) - 1;
+            if (!_tcsncmp(&line[pos], _T("yes"), _countof(_T("yes")) - 1))
+                _autoTriggerCallTip = true;
+            else
+                _autoTriggerCallTip = false;
         }
         else if (!_tcsncmp(line, cUseDefDbKey, _countof(cUseDefDbKey) - 1))
         {
@@ -471,6 +481,7 @@ bool Settings::Save() const
     if (_ftprintf_s(fp, _T("%s\n"), cInfo) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cKeepSearchWinOpenKey, (_keepSearchWinOpen ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%d\n"), cTriggerAutocmplAfterKey, _triggerAutocmplAfter) > 0)
+    if (_ftprintf_s(fp, _T("%s%s\n"), cAutoTriggerCallTipKey, (_autoTriggerCallTip ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cUseDefDbKey, (_useDefDb ? _T("yes") : _T("no"))) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cDefDbPathKey, _defDbPath.C_str()) > 0)
     if (_ftprintf_s(fp, _T("%s%s\n"), cREOptionKey, (_re ? _T("yes") : _T("no"))) > 0)
@@ -496,6 +507,7 @@ const Settings& Settings::operator=(const Settings& rhs)
     {
         _keepSearchWinOpen      = rhs._keepSearchWinOpen;
         _triggerAutocmplAfter   = rhs._triggerAutocmplAfter;
+        _autoTriggerCallTip     = rhs._autoTriggerCallTip;
         _useDefDb               = rhs._useDefDb;
         _defDbPath              = rhs._defDbPath;
         _re                     = rhs._re;
@@ -516,6 +528,7 @@ bool Settings::operator==(const Settings& rhs) const
         return true;
 
     return (_keepSearchWinOpen == rhs._keepSearchWinOpen && _triggerAutocmplAfter == rhs._triggerAutocmplAfter &&
+            _autoTriggerCallTip == rhs._autoTriggerCallTip &&
             _useDefDb == rhs._useDefDb && _defDbPath == rhs._defDbPath && _re == rhs._re && _ic == rhs._ic &&
             _genericDbCfg == rhs._genericDbCfg);
 }
