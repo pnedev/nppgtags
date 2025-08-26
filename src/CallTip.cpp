@@ -4,12 +4,13 @@
 
 
 #include <windows.h>
+#include <winuser.h>
 #include <commctrl.h>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
 #include "CallTip.h"
-
+#include "NppAPI/Notepad_plus_msgs.h"
 #include <string>
 
 namespace GTags
@@ -111,9 +112,6 @@ CallTipWin::CallTipWin(const CmdPtr_t& cmd) :
  */
 CallTipWin::~CallTipWin()
 {
-    INpp::Get().ClearSelectionMulti();
-    INpp::Get().EndUndoAction();
-
     if (_hFont)
         DeleteObject(_hFont);
 }
@@ -124,13 +122,13 @@ CallTipWin::~CallTipWin()
  */
 HWND CallTipWin::composeWindow(const TCHAR* header)
 {
-    HWND hOwner = INpp::Get().GetSciHandle();
+    HWND hOwner = (INpp::Get().GetSciHandle());
     RECT win;
 
     GetWindowRect(hOwner, &win);
 
     _hWnd = CreateWindow(cClassName, NULL,
-            WS_POPUP | WS_BORDER,
+            WS_CHILD | WS_BORDER, // Make a child window, as a popup window will hide the editors caret.
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -148,10 +146,10 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     HDC hdc = GetWindowDC(_hLVWnd);
 
     _hFont = CreateFont(
-            -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
-            0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-            OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-            FF_DONTCARE | DEFAULT_PITCH, UIFontName.C_str());
+          -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
+          0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+          OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+          FF_DONTCARE | DEFAULT_PITCH, UIFontName.C_str());
 
     ReleaseDC(_hLVWnd, hdc);
 
@@ -171,12 +169,9 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
     DWORD backgroundColor = GetSysColor(cBackgroundColor);
+    EnableWindow(_hWnd, true);
     ListView_SetBkColor(_hLVWnd, backgroundColor);
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
-
-    CTextA wordA;
-    INpp::Get().GetWord(wordA, true, true, true);
-    CText word(wordA.C_str());
 
     filterLV();
 
@@ -184,9 +179,8 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
-
-    INpp::Get().BeginUndoAction();
-
+    SetFocus(_hWnd);
+    
     return _hWnd;
 }
 
@@ -228,22 +222,11 @@ int CallTipWin::filterLV()
  */
 void CallTipWin::resizeLV()
 {
-    bool scroll = false;
     int rowsCount = ListView_GetItemCount(_hLVWnd);
-    // rowsCount = 7;
-    // MB_
-    // Call
-    // ListView_GetItemRect
-    if (rowsCount > 7)
-    {
-        rowsCount = 7;
-        scroll = true;
-    }
 
     RECT win;
     ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
     int lvWidth     = win.right - win.left;
-    // int lvWidth     = 50;
     int lvHeight    = (win.bottom - win.top) * rowsCount;
 
     HWND hHeader = ListView_GetHeader(_hLVWnd);
@@ -254,19 +237,10 @@ void CallTipWin::resizeLV()
     INpp& npp = INpp::Get();
     GetWindowRect(npp.GetSciHandle(), &maxWin);
 
-    int maxWidth = (maxWin.right - maxWin.left) - 30;
-    if (scroll)
-        maxWidth -= GetSystemMetrics(SM_CXVSCROLL);
-    if (lvWidth > maxWidth)
-        lvWidth = maxWidth;
-
     ListView_SetColumnWidth(_hLVWnd, 0, lvWidth);
 
-    if (scroll)
-        lvWidth += GetSystemMetrics(SM_CXVSCROLL);
-
-    win.left    = maxWin.left;
-    win.top     = maxWin.top;
+    win.left    = 0;
+    win.top     = 0;
     win.right   = win.left + lvWidth;
     win.bottom  = win.top + lvHeight;
 
@@ -277,8 +251,8 @@ void CallTipWin::resizeLV()
     int xOffset, yOffset;
     npp.GetPointPos(&xOffset, &yOffset);
 
-    win.left    = maxWin.left + xOffset;
-    win.top     = maxWin.top + yOffset + npp.GetTextHeight();
+    win.left    = 0 + xOffset;
+    win.top     = 0 + yOffset - lvHeight;
     win.right   = win.left + lvWidth;
     win.bottom  = win.top + lvHeight;
 
@@ -291,8 +265,8 @@ void CallTipWin::resizeLV()
 
     if (win.bottom > maxWin.bottom)
     {
-        win.bottom  = maxWin.top + yOffset;
-        win.top     = win.bottom - lvHeight;
+        win.bottom  = maxWin.top - lvHeight;
+        win.top     = win.bottom + yOffset;
     }
 
     MoveWindow(_hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
@@ -307,6 +281,8 @@ void CallTipWin::resizeLV()
  */
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    HWND npp_handle = INpp::Get().ReadSciHandle();
+    
     switch (uMsg)
     {
         case WM_CREATE:
@@ -315,25 +291,43 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         case WM_SETFOCUS:
             SetFocus(CTW->_hLVWnd);
         return 0;
+        
 
-        case WM_NOTIFY:
+        case WM_NOTIFY: {
             switch (((LPNMHDR)lParam)->code)
             {
-                case NM_KILLFOCUS:
-                    SendMessage(hWnd, WM_CLOSE, 0, 0);
-                return 0;
-                
-                // case NM_DBLCLK:
-                    // CTW->onDblClick();
-                // return  0;
+                case NM_KILLFOCUS: {
+                    if (GetParent(CTW->_hWnd) == GetFocus()) {
+                        SetFocus(CTW->_hLVWnd);
+                    }
+                    else { // Yeild focus to non parent windows
+                        DestroyCurrentWin();
+                    }
+                    return 0;
+                }
+                case LVN_KEYDOWN: {
+                    int keyCode = ((LPNMLVKEYDOWN)lParam)->wVKey;
+                    if (keyCode == VK_ESCAPE) {
+                        DestroyCurrentWin();
+                        return 0;
+                    }
+                    BYTE keysState[256];
+                    WORD character;
+                    if (!GetKeyboardState(keysState))
+                        return false;
+                    if (ToAscii(keyCode, MapVirtualKey(keyCode, MAPVK_VK_TO_VSC), keysState, &character, 1) != 1)
+                        return false;
+                    SendMessage(npp_handle, WM_CHAR, (WPARAM)character, (LPARAM)1);
+                    return 1;
+                }
             }
+        }
         break;
-
+        
         case WM_DESTROY:
             CTW = nullptr;
         return 0;
     }
-
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 

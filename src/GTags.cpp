@@ -390,6 +390,8 @@ void callTip(bool autorun)
  */
 void CallTip()
 {
+    if (CallTipWin::IsShown())
+        CallTipWin::DestroyCurrentWin() ;
     callTip(false);
 }
 
@@ -1157,5 +1159,6 @@ void OnUserInput(int ch)
         !AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
         autoComplete(true);
 }
+
 
 } // namespace GTags

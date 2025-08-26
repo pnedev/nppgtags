@@ -46,6 +46,15 @@ public:
         return (CTW != nullptr);
     }
     
+    static void DestroyCurrentWin()
+    {
+        if (CTW != nullptr)
+        {
+            SetParent(CTW->_hWnd, NULL); // Set parent wnd as desktop, otherwise npp crashes, idk why.
+            SendMessage(CTW->_hWnd, WM_CLOSE, 0, 0);
+            CTW = nullptr;
+        }
+    }
 
     CallTipWin(const CmdPtr_t& cmd);
     ~CallTipWin();
