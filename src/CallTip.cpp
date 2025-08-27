@@ -56,7 +56,7 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
 void CallTipWin::Register()
 {
     WNDCLASS wc         = {0};
-    wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
+    wc.style            = CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
@@ -128,7 +128,8 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     GetWindowRect(hOwner, &win);
 
     _hWnd = CreateWindow(cClassName, NULL,
-            WS_CHILD | WS_BORDER, // Make a child window, as a popup window will hide the editors caret.
+            WS_CHILD | WS_BORDER |
+            WS_EX_TOOLWINDOW, // Make a child window, as a popup window will hide the editors caret.
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -179,6 +180,8 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
 
     ShowWindow(_hWnd, SW_SHOWNORMAL);
     UpdateWindow(_hWnd);
+    EnableWindow(_hLVWnd, false);
+
     SetFocus(_hWnd);
     
     return _hWnd;
@@ -289,40 +292,30 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         return 0;
 
         case WM_SETFOCUS:
-            SetFocus(CTW->_hLVWnd);
+            SetFocus(CTW->_hWnd);
         return 0;
-        
 
-        case WM_NOTIFY: {
-            switch (((LPNMHDR)lParam)->code)
-            {
-                case NM_KILLFOCUS: {
-                    if (GetParent(CTW->_hWnd) == GetFocus()) {
-                        SetFocus(CTW->_hLVWnd);
-                    }
-                    else { // Yeild focus to non parent windows
-                        DestroyCurrentWin();
-                    }
-                    return 0;
-                }
-                case LVN_KEYDOWN: {
-                    int keyCode = ((LPNMLVKEYDOWN)lParam)->wVKey;
-                    if (keyCode == VK_ESCAPE) {
-                        DestroyCurrentWin();
-                        return 0;
-                    }
-                    BYTE keysState[256];
-                    WORD character;
-                    if (!GetKeyboardState(keysState))
-                        return false;
-                    if (ToAscii(keyCode, MapVirtualKey(keyCode, MAPVK_VK_TO_VSC), keysState, &character, 1) != 1)
-                        return false;
-                    SendMessage(npp_handle, WM_CHAR, (WPARAM)character, (LPARAM)1);
-                    return 1;
-                }
+        case WM_KILLFOCUS: {
+            if (GetParent(CTW->_hWnd) == GetFocus()) {
+                SetFocus(CTW->_hWnd);
+            }
+            else { // Yeild focus to non parent windows
+                DestroyCurrentWin();
             }
         }
-        break;
+        return 0;
+        
+        case WM_CHAR:
+            SendMessage(npp_handle, WM_CHAR, wParam, lParam);
+        return 0;
+        
+        case WM_KEYDOWN:
+            if (wParam == VK_ESCAPE) {
+                DestroyCurrentWin();
+                SetFocus(npp_handle);
+            }
+            SendMessage(npp_handle, WM_KEYDOWN, wParam, lParam);
+        return 0;
         
         case WM_DESTROY:
             CTW = nullptr;
