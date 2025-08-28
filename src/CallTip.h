@@ -53,9 +53,10 @@ public:
     {
         if (CTW != nullptr)
         {
-            SetParent(CTW->_hWnd, NULL); // Set parent wnd as desktop, otherwise npp crashes, idk why.
+            CTW->_queued_for_deletion = true;
+            // SetParent(CTW->_hWnd, NULL); // Set parent wnd as desktop, otherwise npp crashes, idk why.
             SendMessage(CTW->_hWnd, WM_CLOSE, 0, 0);
-            CTW = nullptr;
+            // CTW = nullptr;
         }
     }
 
@@ -84,6 +85,7 @@ private:
     void updateWindow();
     static std::unique_ptr<CallTipWin> CTW;
     int             _selItem;
+    bool            _queued_for_deletion;
     HWND            _hWnd;
     HWND            _hLVWnd;
     HFONT           _hFont;

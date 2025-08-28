@@ -334,7 +334,7 @@ public:
                     int n = i - 1;
                     while (true) {
                         symbol = line_buf.C_str()[n];
-                        if (symbol == ' ' || symbol == '\n' || symbol == '\t' || symbol == '\r' || symbol == ':') {
+                        if (!isalpha(symbol) && !isdigit(symbol)) {
                             n += 1;
                             break;
                         }
@@ -352,6 +352,9 @@ public:
             }
             else if (symbol == ',' && nests == 0) {
                 overload += 1;
+            }
+            else if (!isalpha(symbol) && !isdigit(symbol) && symbol != ' ') { // could be { or " break if so.
+                return;
             }
         }
         return;

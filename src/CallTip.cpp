@@ -101,7 +101,7 @@ void CallTipWin::Show(const CmdPtr_t& cmd)
  */
 CallTipWin::CallTipWin(const CmdPtr_t& cmd) :
     _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _tag(cmd->Tag()),
-    _parser(std::static_pointer_cast<CallTipParser>(cmd->Parser())), _selItem(-1)
+    _parser(std::static_pointer_cast<CallTipParser>(cmd->Parser())), _selItem(-1), _queued_for_deletion(false)
 {}
 
 
@@ -206,6 +206,8 @@ int CallTipWin::getDefParamCount(TCHAR* word) {
 }
 
 int CallTipWin::getItemByName(TCHAR* word) {
+    if (_hLVWnd == nullptr)
+        return -1;
     for (int i = 0; i < ListView_GetItemCount(_hLVWnd); i++) {
         TCHAR buf[256];
         ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
@@ -332,9 +334,15 @@ void CallTipWin::updateWindow() {
     INpp& npp = INpp::Get();
     npp.GetCursorFunction(tag, overload, func_start_pos);
 
-    if (tag.IsEmpty() || CText(tag.C_str()) != _tag) {
+    if (tag.IsEmpty()) {
         CallTipWin::DestroyCurrentWin();
-        SetFocus(npp.ReadSciHandle());
+        SetFocus(npp.ReadSciHandle()); // Order is *very* important here.
+        return;
+    }
+    if (CText(tag.C_str()) != _tag) {
+        // TODO: Show new calltip.
+        CallTipWin::DestroyCurrentWin();
+        SetFocus(npp.ReadSciHandle()); // Again, order is very important here.
         return;
     }
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
@@ -344,11 +352,11 @@ void CallTipWin::updateWindow() {
         filterLV();
         resizeLV();
         _selItem = getItemByName(buf);
-        if (_selItem >= 0)
+        if (_selItem >= 0) {
             ListView_SetItemState(_hLVWnd, _selItem, LVIS_SELECTED, LVIS_SELECTED);
             onClick(_selItem);
+        }
     }
-
 }
 
 void CallTipWin::onClick(int item) {
@@ -368,20 +376,33 @@ void CallTipWin::onClick(int item) {
 
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (CTW == nullptr) {
+        return 0;
+    }
     HWND npp_handle = INpp::Get().ReadSciHandle();
-    
     switch (uMsg)
     {
         case WM_CREATE:
         return 0;
 
-        case WM_SETFOCUS:
+        case WM_DESTROY:
+            CTW = nullptr;
+        return 0;
+
+        case WM_SETFOCUS: {
+            if (CTW->_queued_for_deletion == true)
+                return 0;
             SetFocus(CTW->_hWnd);
+            CTW->updateWindow();
+        }
         return 0;
 
         case WM_KILLFOCUS: {
+            if (CTW->_queued_for_deletion == true)
+                return 0;
             if (GetParent(CTW->_hWnd) == GetFocus()) {
                 SetFocus(CTW->_hWnd);
+                // This implies the user likely moved the cursor, so we should also update the window.
             }
             else { // Yeild focus to non parent windows
                 DestroyCurrentWin();
@@ -412,7 +433,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 case VK_BACK: {
                     CTW->updateWindow();
                 }
-                break;
+                return 1;
             }
         }
         return 0;
@@ -463,9 +484,6 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
             }
         break;
 
-        case WM_DESTROY:
-            CTW = nullptr;
-        return 0;
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
