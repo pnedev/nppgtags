@@ -305,7 +305,7 @@ public:
         sel.AutoFit();
     }
 
-    inline void GetCursorFunction(CTextA& func_name, intptr_t& overload) const
+    inline void GetCursorFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos) const
     {
         intptr_t line = GetCurrentLine();
         intptr_t startpos = PositionFromLine(line);
@@ -340,6 +340,7 @@ public:
                         }
                         n--;
                     }
+                    func_start_pos = startpos + n;
                     for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
                         func_name += line_buf.C_str()[n];
                     }

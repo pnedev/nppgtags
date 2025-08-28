@@ -17,9 +17,12 @@ namespace GTags
 class CallTipParser : public ResultParser
 {
 public:
-
+    // DevNote I don't think overload and fun_start_pos should be apart of the parser,
+    // and they could be static variables in CallTipWin but that seems less fitting.
     intptr_t overload = 0;
-    CallTipParser(intptr_t pOverload) : overload(pOverload) {}
+    intptr_t func_start_pos = 0;
+    CallTipParser(intptr_t pOverload, intptr_t pFuncStart) :
+        overload(pOverload), func_start_pos(pFuncStart) {}
     virtual ~CallTipParser() {}
 
     virtual intptr_t Parse(const CmdPtr_t&);
@@ -72,17 +75,20 @@ private:
     HWND composeWindow(const TCHAR* header);
     int filterLV();
     void resizeLV();
+    
+    int getItemByName(TCHAR* word);
 
-    void onDblClick();
+    void onClick(int item);
+    void onDblClick(int item);
     void updateHeader(int overload, int high_overload = -1, TCHAR* header = _T("CallTip"));
+    void updateWindow();
     static std::unique_ptr<CallTipWin> CTW;
-
+    int             _selItem;
     HWND            _hWnd;
     HWND            _hLVWnd;
     HFONT           _hFont;
     const CmdId_t   _cmdId;
-    const bool      _ic;
-    const int       _cmdTagLen;
+    const CText     _tag;
     std::shared_ptr<CallTipParser>      _parser;
 };
 

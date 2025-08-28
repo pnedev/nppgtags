@@ -100,9 +100,8 @@ void CallTipWin::Show(const CmdPtr_t& cmd)
  *  \brief
  */
 CallTipWin::CallTipWin(const CmdPtr_t& cmd) :
-    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _ic(cmd->IgnoreCase()),
-    _cmdTagLen((int)(cmd->Tag().Len())),
-    _parser(std::static_pointer_cast<CallTipParser>(cmd->Parser()))
+    _hWnd(NULL), _hLVWnd(NULL), _hFont(NULL), _cmdId(cmd->Id()), _tag(cmd->Tag()),
+    _parser(std::static_pointer_cast<CallTipParser>(cmd->Parser())), _selItem(-1)
 {}
 
 
@@ -155,10 +154,10 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
-    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_LABELTIP | LVS_EX_TRACKSELECT | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     TCHAR buf[32];
-    _stprintf(buf, TEXT( "CallTip %d" ), int(_parser->overload) + 1);
+    _stprintf(buf, TEXT( "%d (CallTip)" ), int(_parser->overload) + 1);
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
@@ -206,6 +205,17 @@ int CallTipWin::getDefParamCount(TCHAR* word) {
     return parameter_count;
 }
 
+int CallTipWin::getItemByName(TCHAR* word) {
+    for (int i = 0; i < ListView_GetItemCount(_hLVWnd); i++) {
+        TCHAR buf[256];
+        ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
+        if (_tcscmp(word, buf) == 0) {
+            return i;
+        }
+    }
+    return -1; // Item not listed.
+}
+
 int CallTipWin::filterLV()
 {
     LVITEM lvItem   = {0};
@@ -214,7 +224,10 @@ int CallTipWin::filterLV()
     ListView_DeleteAllItems(_hLVWnd);
     int lowest_parameter_count = 1000;
     int highest_parameter_count = 0;
-
+    int overload_compare = _parser->overload;
+    if (overload_compare > 0) { // 0 and 1 are interchangable with overload.
+        overload_compare += 1;
+    }
     for (int i = 0; i < _parser->GetList().size(); i++)
     {
         TCHAR* word = _parser->GetList().at(i);
@@ -224,7 +237,7 @@ int CallTipWin::filterLV()
         if (parameter_count > highest_parameter_count)
             highest_parameter_count = parameter_count;
         
-        if (_parser->overload <= parameter_count) {
+        if (overload_compare <= parameter_count) {
             lvItem.pszText = _parser->GetList().at(i);
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
@@ -270,7 +283,7 @@ void CallTipWin::resizeLV()
     lvHeight    = win.bottom - win.top;
 
     int xOffset, yOffset;
-    npp.GetPointPos(&xOffset, &yOffset);
+    npp.GetPointFromPos(_parser->func_start_pos, &xOffset, &yOffset);
 
     win.left    = 0 + xOffset;
     win.top     = 0 + yOffset - lvHeight;
@@ -312,6 +325,47 @@ void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
 }
 
+void CallTipWin::updateWindow() {
+    CTextA tag;
+    intptr_t overload = 0;
+    intptr_t func_start_pos = 0;
+    INpp& npp = INpp::Get();
+    npp.GetCursorFunction(tag, overload, func_start_pos);
+
+    if (tag.IsEmpty() || CText(tag.C_str()) != _tag) {
+        CallTipWin::DestroyCurrentWin();
+        SetFocus(npp.ReadSciHandle());
+        return;
+    }
+    if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
+        _parser->overload = overload;
+        TCHAR buf[256];
+        ListView_GetItemText(_hLVWnd, _selItem, 0, buf, _countof(buf));
+        filterLV();
+        resizeLV();
+        _selItem = getItemByName(buf);
+        if (_selItem >= 0)
+            ListView_SetItemState(_hLVWnd, _selItem, LVIS_SELECTED, LVIS_SELECTED);
+            onClick(_selItem);
+    }
+
+}
+
+void CallTipWin::onClick(int item) {
+    TCHAR buf[256];
+    ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
+
+    TCHAR* pTmp = NULL;
+    _tcstok_s(buf, _T("("), &pTmp);
+    TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
+    if (parameter_list == NULL)
+        parameter_list = TEXT("");
+    TCHAR buf2[256];
+    ListView_GetItemText(CTW->_hLVWnd, item, 0, buf2, _countof(buf));
+    CTW->updateHeader(getDefParamCount(buf2), -1, parameter_list);
+}
+
+
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND npp_handle = INpp::Get().ReadSciHandle();
@@ -336,35 +390,32 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         return 0;
         
         case WM_CHAR:
-            if (wParam == '(' || wParam == ')' || wParam == ',') {
-                // TODO: Redraw CallTip.
-            }
             SendMessage(npp_handle, WM_CHAR, wParam, lParam);
+            if (wParam == '(' || wParam == ')' || wParam == ',') {
+                CTW->updateWindow();
+            }
         return 0;
         
         case WM_KEYDOWN: {
-            switch (wParam) 
-            {
-                case VK_ESCAPE:
-                    DestroyCurrentWin();
-                    SetFocus(npp_handle);
+            if (wParam == VK_ESCAPE) {
+                DestroyCurrentWin();
+                SetFocus(npp_handle);
                 return 0;
+            }
+            SendMessage(npp_handle, WM_KEYDOWN, wParam, lParam);
+            switch (wParam) // Update window *after* sending message to npp
+            {
                 case VK_UP:
                 case VK_DOWN:
                 case VK_LEFT:
-                case VK_RIGHT: {
-                    // TODO: Redraw CallTip.
+                case VK_RIGHT:
+                case VK_BACK: {
+                    CTW->updateWindow();
                 }
                 break;
             }
-            SendMessage(npp_handle, WM_KEYDOWN, wParam, lParam);
         }
         return 0;
-        
-        case WM_MOUSEMOVE: {
-            SendMessage(CTW->_hLVWnd, WM_MOUSEMOVE, wParam, lParam);
-        }
-        return 2;
         
         case WM_LBUTTONDOWN: {
             // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
@@ -384,22 +435,9 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                     DestroyCurrentWin();
                 return 0;
                 
-                case LVN_HOTTRACK:
-                    SetWindowText(CTW->_hWnd, L"0");
-                return 0;
-                
                 case NM_CLICK: {
-                    TCHAR buf[256];
-                    ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
-
-                    TCHAR* pTmp = NULL;
-                    _tcstok_s(buf, _T("("), &pTmp);
-                    TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
-                    if (parameter_list == NULL)
-                        parameter_list = TEXT("");
-                    TCHAR buf2[256];
-                    ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf2, _countof(buf));
-                    CTW->updateHeader(getDefParamCount(buf2), -1, parameter_list);
+                    CTW->_selItem = ((LPNMITEMACTIVATE)lParam)->iItem;
+                    CTW->onClick(CTW->_selItem);
                 }
                 return 0;
                 

@@ -367,8 +367,9 @@ void callTip(bool autorun)
     
     CTextA tag;
     intptr_t overload = 0;
+    intptr_t func_start_pos = 0;
     INpp& npp = INpp::Get();
-    npp.GetCursorFunction(tag, overload);
+    npp.GetCursorFunction(tag, overload, func_start_pos);
     
     if (tag.IsEmpty())
         return;
@@ -377,7 +378,7 @@ void callTip(bool autorun)
     if (!db)
         return;
 
-    ParserPtr_t parser = std::make_shared<CallTipParser>(overload);
+    ParserPtr_t parser = std::make_shared<CallTipParser>(overload, func_start_pos);
 
     CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, CText(tag.C_str()).C_str(), false, false, autorun);
 
