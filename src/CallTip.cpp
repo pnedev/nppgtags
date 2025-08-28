@@ -24,25 +24,25 @@ const int CallTipWin::cWidth           = 600;
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 
-intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
-{
+intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
 
     intptr_t result = 0;
 
     _lines.clear();
     _paths.clear();
     _buf = cmd->Result();
+    // MessageBox(NULL, _buf.C_str(), L"CALL", MB_OK);
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         TCHAR* inner_context = NULL;
         TCHAR* inner_token = _tcstok_s(pToken, _T(":"), &inner_context);
-        inner_token = _tcstok_s(NULL, _T(":"), &inner_context);
-        inner_token = _tcstok_s(NULL, _T(")"), &inner_context);
-        inner_token = _tcscat(inner_token, TEXT(")"));
+        inner_token++;
+        _tcscat(_tcscat(inner_token, _tcstok_s(NULL, _T(":"), &inner_context)), TEXT(":"));
+        _tcscat(_tcscat(inner_token, _tcstok_s(NULL, _T(":"), &inner_context)), TEXT(":"));
+        _paths.push_back(inner_token);
+        inner_token = _tcstok_s(NULL, _T("{\n\r"), &inner_context); // cutoff curly brackets as well.
         _lines.push_back(inner_token);
-        
-        _tcstok_s(NULL, _T("\n\r"), &inner_context); // Go to start of next line.
         ++result;
     }
 
@@ -190,13 +190,15 @@ int CallTipWin::getDefParamCount(TCHAR* word) {
     bool parameter_start = false;
     for (TCHAR ch = *word; ch; ch=*++word) {
         if (parameter_count == 0) {
-            if (ch == _T('('))
+            if (ch == _T('(')) {
                 parameter_start = true;
-            else if (parameter_start == true)
+            }
+            else if (parameter_start == true) {
                 if (ch == _T(')'))
                     return 0;
                 else
                     parameter_count += 1;
+            }
         }
         if (ch == _T(','))
             parameter_count++;
@@ -295,19 +297,18 @@ void CallTipWin::resizeLV()
 }
 
 void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
-    TCHAR buf[128];
+    TCHAR buf[128] = { 0 };
     if (high_overload == -1) {
         _stprintf(buf, TEXT("%d/%d (%s)"), int(_parser->overload) + 1, overload, header);
     }
     else {
         _stprintf(buf, TEXT("%d/%d-%d (%s)"), int(_parser->overload) + 1, overload, high_overload, header);
     }
-
-    LVCOLUMN lvCol      = {0};
-    lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
-    lvCol.pszText       = buf;
-    lvCol.cchTextMax    = _countof(buf);
-    lvCol.cx            = cWidth;
+    LVCOLUMN lvCol = { 0 };
+    lvCol.mask = LVCF_TEXT | LVCF_WIDTH;
+    lvCol.cchTextMax = _countof(buf);
+    lvCol.pszText = buf;
+    lvCol.cx = cWidth;
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
 }
 
@@ -361,14 +362,18 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         return 0;
         
         case WM_MOUSEMOVE: {
-            // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
             SendMessage(CTW->_hLVWnd, WM_MOUSEMOVE, wParam, lParam);
         }
-        return 0;
+        return 2;
         
         case WM_LBUTTONDOWN: {
             // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
             SendMessage(CTW->_hLVWnd, WM_LBUTTONDOWN, wParam, lParam);
+        }
+        return 0;
+        case WM_LBUTTONDBLCLK: {
+            // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
+            SendMessage(CTW->_hLVWnd, WM_LBUTTONDBLCLK, wParam, lParam);
         }
         return 0;
         
@@ -389,14 +394,32 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 
                     TCHAR* pTmp = NULL;
                     _tcstok_s(buf, _T("("), &pTmp);
-                    TCHAR* parameter_list;
-                    _tcscat(parameter_list, _tcstok_s(NULL, _T(")"), &pTmp));
-                    CTW->updateHeader(getDefParamCount(buf), -1, parameter_list);
+                    TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
+                    if (parameter_list == NULL)
+                        parameter_list = TEXT("");
+                    TCHAR buf2[256];
+                    ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf2, _countof(buf));
+                    CTW->updateHeader(getDefParamCount(buf2), -1, parameter_list);
                 }
                 return 0;
                 
                 case NM_DBLCLK: {
-                    MessageBox(NULL, L"NM_DBLCLK", L"CallTip", MB_OK);
+                    INpp& npp = INpp::Get();
+                    TCHAR buf[256];
+                    ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
+                    for (int i = 0; i < CTW->_parser->GetList().size(); i++) {
+                        TCHAR* word = CTW->_parser->GetList().at(i);
+                        if (_tcscmp(word, buf) == 0) {
+                            TCHAR* path_and_line = CTW->_parser->GetListPaths().at(i);
+                            TCHAR* pTmp = NULL;
+                            TCHAR* path = _tcstok_s(path_and_line, _T(":"), &pTmp);
+                            TCHAR* line = _tcstok_s(NULL, _T(":"), &pTmp);
+                            npp.OpenFile(path);
+                            npp.GoToLine(_tstoi(line));
+                            DestroyCurrentWin();
+                            return 0;
+                        }
+                    }
                 }
                 return 0;
             }
