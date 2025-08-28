@@ -4,6 +4,7 @@
 
 
 #include <windows.h>
+#include <windowsx.h>
 #include <winuser.h>
 #include <commctrl.h>
 #include "Common.h"
@@ -31,19 +32,17 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
     _lines.clear();
     _paths.clear();
     _buf = cmd->Result();
-
-    // if (_buf.Len() > 0) {
-        // MessageBox(NULL, _buf.C_str(), CText(_T("Parser")).C_str(), MB_OK);
-    // }
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         TCHAR* inner_context = NULL;
         TCHAR* inner_token = _tcstok_s(pToken, _T(":"), &inner_context);
         inner_token = _tcstok_s(NULL, _T(":"), &inner_context);
-        //_paths.push_back(&inner_token);
-        inner_token = _tcstok_s(NULL, _T("\n\r"), &inner_context);
+        inner_token = _tcstok_s(NULL, _T(")"), &inner_context);
+        inner_token = _tcscat(inner_token, TEXT(")"));
         _lines.push_back(inner_token);
+        
+        _tcstok_s(NULL, _T("\n\r"), &inner_context); // Go to start of next line.
         ++result;
     }
 
@@ -122,14 +121,13 @@ CallTipWin::~CallTipWin()
  */
 HWND CallTipWin::composeWindow(const TCHAR* header)
 {
-    HWND hOwner = (INpp::Get().GetSciHandle());
+    HWND hOwner = (INpp::Get().ReadSciHandle());
     RECT win;
 
     GetWindowRect(hOwner, &win);
 
     _hWnd = CreateWindow(cClassName, NULL,
-            WS_CHILD | WS_BORDER |
-            WS_EX_TOOLWINDOW, // Make a child window, as a popup window will hide the editors caret.
+            WS_CHILD | WS_BORDER, // Make a child window, as a popup window will hide the editors caret.
             win.left, win.top, win.right - win.left, win.bottom - win.top,
             hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
@@ -140,7 +138,7 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     GetClientRect(_hWnd, &win);
 
     _hLVWnd = CreateWindow(WC_LISTVIEW, NULL, WS_CHILD | WS_VISIBLE |
-            LVS_REPORT | LVS_SINGLESEL | LVS_NOLABELWRAP | LVS_NOSORTHEADER | LVS_SORTASCENDING,
+            LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER | LVS_SORTASCENDING,
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
@@ -157,10 +155,10 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
-    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_LABELTIP | LVS_EX_TRACKSELECT | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     TCHAR buf[32];
-    _tcscpy_s(buf, _countof(buf), header);
+    _stprintf(buf, TEXT( "CallTip %d" ), int(_parser->overload) + 1);
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
@@ -187,35 +185,53 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     return _hWnd;
 }
 
+int CallTipWin::getDefParamCount(TCHAR* word) {
+    int parameter_count = 0;
+    bool parameter_start = false;
+    for (TCHAR ch = *word; ch; ch=*++word) {
+        if (parameter_count == 0) {
+            if (ch == _T('('))
+                parameter_start = true;
+            else if (parameter_start == true)
+                if (ch == _T(')'))
+                    return 0;
+                else
+                    parameter_count += 1;
+        }
+        if (ch == _T(','))
+            parameter_count++;
+    }
+    return parameter_count;
+}
 
-/**
- *  \brief
- */
 int CallTipWin::filterLV()
 {
     LVITEM lvItem   = {0};
     lvItem.mask     = LVIF_TEXT | LVIF_STATE;
 
     ListView_DeleteAllItems(_hLVWnd);
+    int lowest_parameter_count = 1000;
+    int highest_parameter_count = 0;
 
     for (int i = 0; i < _parser->GetList().size(); i++)
     {
         TCHAR* word = _parser->GetList().at(i);
-        intptr_t parameter_count = 0;
-        for (TCHAR ch = *word; ch; ch=*++word) {
-            if (ch == _T(',')) {
-                parameter_count++;
-            }
-        }
+        int parameter_count = getDefParamCount(word);
+        if (parameter_count < lowest_parameter_count)
+            lowest_parameter_count = parameter_count;
+        if (parameter_count > highest_parameter_count)
+            highest_parameter_count = parameter_count;
+        
         if (_parser->overload <= parameter_count) {
             lvItem.pszText = _parser->GetList().at(i);
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
         }
     }
-
-    if (lvItem.iItem > 0)
-        ListView_SetItemState(_hLVWnd, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+    if (lowest_parameter_count == highest_parameter_count)
+        updateHeader(lowest_parameter_count);
+    else 
+        updateHeader(lowest_parameter_count, highest_parameter_count);
 
     return lvItem.iItem;
 }
@@ -278,10 +294,23 @@ void CallTipWin::resizeLV()
     MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
 }
 
+void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
+    TCHAR buf[128];
+    if (high_overload == -1) {
+        _stprintf(buf, TEXT("%d/%d (%s)"), int(_parser->overload) + 1, overload, header);
+    }
+    else {
+        _stprintf(buf, TEXT("%d/%d-%d (%s)"), int(_parser->overload) + 1, overload, high_overload, header);
+    }
 
-/**
- *  \brief
- */
+    LVCOLUMN lvCol      = {0};
+    lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
+    lvCol.pszText       = buf;
+    lvCol.cchTextMax    = _countof(buf);
+    lvCol.cx            = cWidth;
+    ListView_SetColumn(_hLVWnd, 0, &lvCol);
+}
+
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND npp_handle = INpp::Get().ReadSciHandle();
@@ -306,17 +335,73 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         return 0;
         
         case WM_CHAR:
+            if (wParam == '(' || wParam == ')' || wParam == ',') {
+                // TODO: Redraw CallTip.
+            }
             SendMessage(npp_handle, WM_CHAR, wParam, lParam);
         return 0;
         
-        case WM_KEYDOWN:
-            if (wParam == VK_ESCAPE) {
-                DestroyCurrentWin();
-                SetFocus(npp_handle);
+        case WM_KEYDOWN: {
+            switch (wParam) 
+            {
+                case VK_ESCAPE:
+                    DestroyCurrentWin();
+                    SetFocus(npp_handle);
+                return 0;
+                case VK_UP:
+                case VK_DOWN:
+                case VK_LEFT:
+                case VK_RIGHT: {
+                    // TODO: Redraw CallTip.
+                }
+                break;
             }
             SendMessage(npp_handle, WM_KEYDOWN, wParam, lParam);
+        }
         return 0;
         
+        case WM_MOUSEMOVE: {
+            // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
+            SendMessage(CTW->_hLVWnd, WM_MOUSEMOVE, wParam, lParam);
+        }
+        return 0;
+        
+        case WM_LBUTTONDOWN: {
+            // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
+            SendMessage(CTW->_hLVWnd, WM_LBUTTONDOWN, wParam, lParam);
+        }
+        return 0;
+        
+        case WM_NOTIFY:
+            switch (((LPNMHDR)lParam)->code)
+            {
+                case NM_KILLFOCUS:
+                    DestroyCurrentWin();
+                return 0;
+                
+                case LVN_HOTTRACK:
+                    SetWindowText(CTW->_hWnd, L"0");
+                return 0;
+                
+                case NM_CLICK: {
+                    TCHAR buf[256];
+                    ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
+
+                    TCHAR* pTmp = NULL;
+                    _tcstok_s(buf, _T("("), &pTmp);
+                    TCHAR* parameter_list;
+                    _tcscat(parameter_list, _tcstok_s(NULL, _T(")"), &pTmp));
+                    CTW->updateHeader(getDefParamCount(buf), -1, parameter_list);
+                }
+                return 0;
+                
+                case NM_DBLCLK: {
+                    MessageBox(NULL, L"NM_DBLCLK", L"CallTip", MB_OK);
+                }
+                return 0;
+            }
+        break;
+
         case WM_DESTROY:
             CTW = nullptr;
         return 0;

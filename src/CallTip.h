@@ -65,6 +65,8 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+    static int getDefParamCount(TCHAR* word);
+
     CallTipWin& operator=(const CallTipWin&) = delete;
 
     HWND composeWindow(const TCHAR* header);
@@ -72,7 +74,7 @@ private:
     void resizeLV();
 
     void onDblClick();
-
+    void updateHeader(int overload, int high_overload = -1, TCHAR* header = _T("CallTip"));
     static std::unique_ptr<CallTipWin> CTW;
 
     HWND            _hWnd;

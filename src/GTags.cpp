@@ -390,8 +390,6 @@ void callTip(bool autorun)
  */
 void CallTip()
 {
-    if (CallTipWin::IsShown())
-        CallTipWin::DestroyCurrentWin() ;
     callTip(false);
 }
 

@@ -324,10 +324,7 @@ public:
         line_buf.AutoFit();
         
         intptr_t nests = 0;
-        if (line_buf.C_str()[offset] == ')') { // Keep the offset within cursor's actual current nest.
-            offset -= 1;
-        }
-        
+        offset -= 1;
         for (int i = offset; i >= 0; i--) { // Find all of the '(' and ','.
             char symbol = line_buf.C_str()[i];
             if (symbol == '(') {
