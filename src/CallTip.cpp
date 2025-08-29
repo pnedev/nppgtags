@@ -49,6 +49,63 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     return result;
 }
 
+void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos, intptr_t caret_pos)
+{
+    INpp& npp = INpp::Get();
+
+    intptr_t currpos = caret_pos;
+    if (caret_pos == -1)
+        currpos = npp.GetPos();
+    intptr_t line = npp.GetLineFromPosition(currpos);
+    intptr_t startpos = npp.PositionFromLine(line);
+    intptr_t endpos = npp.LineEndPosition(line);
+    intptr_t len = endpos - startpos + 3; // Also take CRLF in account, even if not there.
+
+    intptr_t offset = currpos - startpos;
+    
+    if (offset < 2) { // 'a(' is the shortest possible function.
+        return;
+    }
+    CTextA line_buf;
+    npp.GetLineText(line_buf, len, line);
+    
+    intptr_t nests = 0;
+    offset -= 1;
+    for (int i = offset; i >= 0; i--) { // Find all of the '(' and ','.
+        char symbol = line_buf.C_str()[i];
+        if (symbol == '(') {
+            nests -= 1;
+            if (nests == -1) {
+                int name_end = i - 1;;
+                int n = i - 1;
+                while (true) {
+                    symbol = line_buf.C_str()[n];
+                    if (!isalpha(symbol) && !isdigit(symbol)) {
+                        n += 1;
+                        break;
+                    }
+                    n--;
+                }
+                func_start_pos = startpos + n;
+                for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
+                    func_name += line_buf.C_str()[n];
+                }
+                return;
+            }
+        }
+        else if (symbol == ')') {
+            nests += 1;
+        }
+        else if (symbol == ',' && nests == 0) {
+            overload += 1;
+        }
+        else if (!isalpha(symbol) && !isdigit(symbol) && symbol != ' ') { // could be { or ", break if so.
+            return;
+        }
+    }
+    return;
+}
+
 /**
  *  \brief
  */
@@ -327,22 +384,22 @@ void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
 }
 
-void CallTipWin::updateWindow() {
+void CallTipWin::updateWindow(intptr_t position) {
     CTextA tag;
     intptr_t overload = 0;
     intptr_t func_start_pos = 0;
     INpp& npp = INpp::Get();
-    npp.GetCursorFunction(tag, overload, func_start_pos);
+    GetCallTipFunction(tag, overload, func_start_pos, position);
 
     if (tag.IsEmpty()) {
-        CallTipWin::DestroyCurrentWin();
-        SetFocus(npp.ReadSciHandle()); // Order is *very* important here.
+        CallTipWin::DestroyCurrentWin(); // Order is important here.
+        SetFocus(npp.ReadSciHandle());
         return;
     }
     if (CText(tag.C_str()) != _tag) {
         // TODO: Show new calltip.
-        CallTipWin::DestroyCurrentWin();
-        SetFocus(npp.ReadSciHandle()); // Again, order is very important here.
+        CallTipWin::DestroyCurrentWin(); // Again, order is important here.
+        SetFocus(npp.ReadSciHandle());
         return;
     }
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
@@ -393,7 +450,6 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
             if (CTW->_queued_for_deletion == true)
                 return 0;
             SetFocus(CTW->_hWnd);
-            CTW->updateWindow();
         }
         return 0;
 
@@ -402,7 +458,15 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 return 0;
             if (GetParent(CTW->_hWnd) == GetFocus()) {
                 SetFocus(CTW->_hWnd);
-                // This implies the user likely moved the cursor, so we should also update the window.
+        // The window has lost focus, so we know the user clicked on the npp window, but not yet where,
+        // and we don't get the click notification, thus we need to find the new caret position ourselves.
+                INpp& npp = INpp::Get();
+                POINT caretPoint;
+                GetCursorPos(&caretPoint);
+                RECT maxWin;
+                GetWindowRect(npp_handle, &maxWin);
+                intptr_t cursor_pos = npp.GetPosFromPoint(caretPoint.x - maxWin.left, caretPoint.y - maxWin.top);
+                CTW->updateWindow(cursor_pos);
             }
             else { // Yeild focus to non parent windows
                 DestroyCurrentWin();

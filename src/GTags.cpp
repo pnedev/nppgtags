@@ -369,7 +369,7 @@ void callTip(bool autorun)
     intptr_t overload = 0;
     intptr_t func_start_pos = 0;
     INpp& npp = INpp::Get();
-    npp.GetCursorFunction(tag, overload, func_start_pos);
+    CallTipWin::GetCallTipFunction(tag, overload, func_start_pos);
     
     if (tag.IsEmpty())
         return;

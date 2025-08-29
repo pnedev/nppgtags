@@ -250,6 +250,16 @@ public:
         *x = (int)SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, pos) + 2;
         *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, pos) + 2;
     }
+    
+    inline intptr_t GetPosFromPoint(int x, int y) const
+    {
+        return SendMessage(_hSC, SCI_POSITIONFROMPOINT, x, y);
+    }
+    
+    inline intptr_t GetLineFromPosition(intptr_t pos) const
+    {
+        return SendMessage(_hSC, SCI_LINEFROMPOSITION, pos, 0);
+    }
 
     inline intptr_t GetCurrentLine() const
     {
@@ -304,60 +314,13 @@ public:
         SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)sel.C_str());
         sel.AutoFit();
     }
+    
 
-    inline void GetCursorFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos) const
+    inline void GetLineText(CTextA& line_buf, intptr_t buf_len, intptr_t line) const
     {
-        intptr_t line = GetCurrentLine();
-        intptr_t startpos = PositionFromLine(line);
-        intptr_t endpos = LineEndPosition(line);
-        intptr_t len = endpos - startpos + 3; // Also take CRLF in account, even if not there.
-
-        intptr_t currpos = GetPos();
-        intptr_t offset = currpos - startpos;
-        
-        if (offset < 2) { // 'a(' is the shortest possible function.
-            return;
-        }
-        CTextA line_buf;
-        line_buf.Resize(len);
+        line_buf.Resize(buf_len);
         SendMessage(_hSC, SCI_GETLINE, line, (LPARAM)line_buf.C_str());
         line_buf.AutoFit();
-        
-        intptr_t nests = 0;
-        offset -= 1;
-        for (int i = offset; i >= 0; i--) { // Find all of the '(' and ','.
-            char symbol = line_buf.C_str()[i];
-            if (symbol == '(') {
-                nests -= 1;
-                if (nests == -1) {
-                    int name_end = i - 1;;
-                    int n = i - 1;
-                    while (true) {
-                        symbol = line_buf.C_str()[n];
-                        if (!isalpha(symbol) && !isdigit(symbol)) {
-                            n += 1;
-                            break;
-                        }
-                        n--;
-                    }
-                    func_start_pos = startpos + n;
-                    for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
-                        func_name += line_buf.C_str()[n];
-                    }
-                    return;
-                }
-            }
-            else if (symbol == ')') {
-                nests += 1;
-            }
-            else if (symbol == ',' && nests == 0) {
-                overload += 1;
-            }
-            else if (!isalpha(symbol) && !isdigit(symbol) && symbol != ' ') { // could be { or " break if so.
-                return;
-            }
-        }
-        return;
     }
 
     inline void SetSelection(intptr_t startPos, intptr_t endPos) const

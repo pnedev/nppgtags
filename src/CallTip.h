@@ -54,12 +54,12 @@ public:
         if (CTW != nullptr)
         {
             CTW->_queued_for_deletion = true;
-            // SetParent(CTW->_hWnd, NULL); // Set parent wnd as desktop, otherwise npp crashes, idk why.
             SendMessage(CTW->_hWnd, WM_CLOSE, 0, 0);
-            // CTW = nullptr;
         }
     }
-
+    
+    static void GetCallTipFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos, intptr_t caret_pos = -1);
+    
     CallTipWin(const CmdPtr_t& cmd);
     ~CallTipWin();
 private:
@@ -82,10 +82,10 @@ private:
     void onClick(int item);
     void onDblClick(int item);
     void updateHeader(int overload, int high_overload = -1, TCHAR* header = _T("CallTip"));
-    void updateWindow();
+    void updateWindow(intptr_t position = -1);
     static std::unique_ptr<CallTipWin> CTW;
     int             _selItem;
-    bool            _queued_for_deletion;
+    bool            _queued_for_deletion; // Used to know when not to auto refocus.
     HWND            _hWnd;
     HWND            _hLVWnd;
     HFONT           _hFont;
