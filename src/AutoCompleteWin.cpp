@@ -253,6 +253,7 @@ void AutoCompleteWin::resizeLV()
     RECT maxWin;
     INpp& npp = INpp::Get();
     GetWindowRect(npp.GetSciHandle(), &maxWin);
+    maxWin.right -= GetSystemMetrics(SM_CXHSCROLL); // Take sci scrollbar into account.
 
     int maxWidth = (maxWin.right - maxWin.left) - 30;
     if (scroll)

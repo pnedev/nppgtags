@@ -250,12 +250,12 @@ public:
         *x = (int)SendMessage(_hSC, SCI_POINTXFROMPOSITION, 0, pos) + 2;
         *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, pos) + 2;
     }
-    
+
     inline intptr_t GetPosFromPoint(int x, int y) const
     {
         return SendMessage(_hSC, SCI_POSITIONFROMPOINT, x, y);
     }
-    
+
     inline intptr_t GetLineFromPosition(intptr_t pos) const
     {
         return SendMessage(_hSC, SCI_LINEFROMPOSITION, pos, 0);
@@ -314,7 +314,6 @@ public:
         SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)sel.C_str());
         sel.AutoFit();
     }
-    
 
     inline void GetLineText(CTextA& line_buf, intptr_t buf_len, intptr_t line) const
     {

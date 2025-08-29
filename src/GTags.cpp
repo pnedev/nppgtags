@@ -206,7 +206,7 @@ void halfComplCB(const CmdPtr_t& cmd)
 void callTipCB(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
-    
+
     if (cmd->Status() == OK && cmd->Result())
     {
         CallTipWin::Show(cmd);
@@ -285,9 +285,9 @@ void aboutCB(const CmdPtr_t& cmd)
         cmd->AppendToResult(txt.Vector());
     }
 
-	const CText msg = cmd->Result();
+    const CText msg = cmd->Result();
 
-	AboutWin::Show(msg.C_str());
+    AboutWin::Show(msg.C_str());
 }
 
 
@@ -364,13 +364,12 @@ void AutoCompleteFile()
  */
 void callTip(bool autorun)
 {
-    
     CTextA tag;
     intptr_t overload = 0;
     intptr_t func_start_pos = 0;
     INpp& npp = INpp::Get();
     CallTipWin::GetCallTipFunction(tag, overload, func_start_pos);
-    
+
     if (tag.IsEmpty())
         return;
 
@@ -391,6 +390,8 @@ void callTip(bool autorun)
  */
 void CallTip()
 {
+    if (CallTipWin::IsShown())
+        CallTipWin::DestroyCurrentWin();
     callTip(false);
 }
 
@@ -1152,7 +1153,7 @@ void OnFileDelete(const CPath& file)
  */
 void OnUserInput(int ch)
 {
-    if (GTagsSettings._autoTriggerCallTip && (ch == ',' || ch == '('))
+    if (GTagsSettings._autoTriggerCallTip && !CallTipWin::IsShown() && (ch == ',' || ch == '('))
         callTip(true);
     else if (GTagsSettings._triggerAutocmplAfter &&
         !AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
