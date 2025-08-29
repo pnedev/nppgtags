@@ -65,11 +65,13 @@ public:
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
-    static const int    cWidth;
+    static const int    cItemWidth;
+    static const int    cWindowWidth;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     static int getDefParamCount(TCHAR* word);
+    static TCHAR* getDefParamText(TCHAR* word);
 
     CallTipWin& operator=(const CallTipWin&) = delete;
 

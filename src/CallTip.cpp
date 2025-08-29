@@ -19,7 +19,8 @@ namespace GTags
 
 const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
-const int CallTipWin::cWidth           = 600;
+const int CallTipWin::cItemWidth           = 1024;
+const int CallTipWin::cWindowWidth         = 400;
 
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
@@ -81,6 +82,11 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
                 while (true) {
                     symbol = line_buf.C_str()[n];
                     if (!isalpha(symbol) && !isdigit(symbol)) {
+                        if (symbol == ' ' && n == name_end) { // Whitespace between name and params, remove and continue.
+                            name_end--;
+                            n--;
+                            continue;
+                        }
                         n += 1;
                         break;
                     }
@@ -99,7 +105,7 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
         else if (symbol == ',' && nests == 0) {
             overload += 1;
         }
-        else if (!isalpha(symbol) && !isdigit(symbol) && symbol != ' ') { // could be { or ", break if so.
+        else if (symbol == ';' || symbol == '{') {
             return;
         }
     }
@@ -211,7 +217,8 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     if (_hFont)
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
-    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+    ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_HEADERINALLVIEWS | LVS_EX_COLUMNOVERFLOW |
+        LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS);
 
     TCHAR buf[32];
     _stprintf(buf, TEXT( "%d (CallTip)" ), int(_parser->overload) + 1);
@@ -220,7 +227,7 @@ HWND CallTipWin::composeWindow(const TCHAR* header)
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
     lvCol.pszText       = buf;
     lvCol.cchTextMax    = _countof(buf);
-    lvCol.cx            = cWidth;
+    lvCol.cx            = cItemWidth;
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
     DWORD backgroundColor = GetSysColor(cBackgroundColor);
@@ -260,6 +267,15 @@ int CallTipWin::getDefParamCount(TCHAR* word) {
             parameter_count++;
     }
     return parameter_count;
+}
+
+TCHAR* CallTipWin::getDefParamText(TCHAR* word) {
+    TCHAR* pTmp = NULL;
+    _tcstok_s(word, _T("("), &pTmp);
+    TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
+    if (parameter_list == NULL)
+        parameter_list = TEXT("");
+    return parameter_list;
 }
 
 int CallTipWin::getItemByName(TCHAR* word) {
@@ -303,7 +319,14 @@ int CallTipWin::filterLV()
         }
     }
     if (lowest_parameter_count == highest_parameter_count)
-        updateHeader(lowest_parameter_count);
+        if (ListView_GetItemCount(_hLVWnd) == 1) {
+            TCHAR buf[256];
+            ListView_GetItemText(CTW->_hLVWnd, 0, 0, buf, _countof(buf));
+            updateHeader(lowest_parameter_count, -1, getDefParamText(buf));
+        }
+        else {
+            updateHeader(lowest_parameter_count);
+        }
     else 
         updateHeader(lowest_parameter_count, highest_parameter_count);
 
@@ -317,20 +340,37 @@ void CallTipWin::resizeLV()
 {
     int rowsCount = ListView_GetItemCount(_hLVWnd);
 
+    int widest_width = 0;
+    int widest_idx = 0;
+    for (int i = 0; i <= ListView_GetItemCount(_hLVWnd); i++) {
+        TCHAR buf[256] = {0};
+        ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
+        int str_len = _tcsclen(buf);
+        if (str_len > widest_width)
+            widest_width = str_len;
+            widest_idx = i;
+    }
+    TCHAR widest_buf[256] = {0};
+    ListView_GetItemText(_hLVWnd, widest_idx, 0, widest_buf, _countof(widest_buf));
+    SIZE fontSIZE;
+    GetTextExtentPoint32(GetDC(_hLVWnd), widest_buf, widest_width, &fontSIZE);
+
     RECT win;
     ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
-    int lvWidth     = win.right - win.left;
+
+    int lvWidth     = min(cWindowWidth, fontSIZE.cx + 16);
     int lvHeight    = (win.bottom - win.top) * rowsCount;
+    win.right = (win.left + lvWidth);
 
     HWND hHeader = ListView_GetHeader(_hLVWnd);
     GetWindowRect(hHeader, &win);
+    lvHeight += win.bottom - win.top;
+    lvHeight += win.bottom - win.top;
     lvHeight += win.bottom - win.top;
 
     RECT maxWin;
     INpp& npp = INpp::Get();
     GetWindowRect(npp.GetSciHandle(), &maxWin);
-
-    ListView_SetColumnWidth(_hLVWnd, 0, lvWidth);
 
     win.left    = 0;
     win.top     = 0;
@@ -345,7 +385,7 @@ void CallTipWin::resizeLV()
     npp.GetPointFromPos(_parser->func_start_pos, &xOffset, &yOffset);
 
     win.left    = 0 + xOffset;
-    win.top     = 0 + yOffset - lvHeight;
+    win.top     = 0 + yOffset + npp.GetTextHeight();
     win.right   = win.left + lvWidth;
     win.bottom  = win.top + lvHeight;
 
@@ -358,8 +398,8 @@ void CallTipWin::resizeLV()
 
     if (win.bottom > maxWin.bottom)
     {
-        win.bottom  = maxWin.top - lvHeight;
-        win.top     = win.bottom + yOffset;
+        win.bottom  = maxWin.top + yOffset;
+        win.top     = win.bottom - lvHeight;
     }
 
     MoveWindow(_hWnd, win.left, win.top, win.right - win.left, win.bottom - win.top, TRUE);
@@ -380,7 +420,7 @@ void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
     lvCol.mask = LVCF_TEXT | LVCF_WIDTH;
     lvCol.cchTextMax = _countof(buf);
     lvCol.pszText = buf;
-    lvCol.cx = cWidth;
+    lvCol.cx = cItemWidth;
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
 }
 
@@ -419,15 +459,7 @@ void CallTipWin::updateWindow(intptr_t position) {
 void CallTipWin::onClick(int item) {
     TCHAR buf[256];
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
-
-    TCHAR* pTmp = NULL;
-    _tcstok_s(buf, _T("("), &pTmp);
-    TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
-    if (parameter_list == NULL)
-        parameter_list = TEXT("");
-    TCHAR buf2[256];
-    ListView_GetItemText(CTW->_hLVWnd, item, 0, buf2, _countof(buf));
-    CTW->updateHeader(getDefParamCount(buf2), -1, parameter_list);
+    CTW->updateHeader(getDefParamCount(buf), -1, getDefParamText(buf));
 }
 
 
@@ -502,15 +534,15 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         }
         return 0;
         
-        case WM_LBUTTONDOWN: {
-            // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
-            SendMessage(CTW->_hLVWnd, WM_LBUTTONDOWN, wParam, lParam);
-        }
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_LBUTTONDBLCLK:
+            // Report to LV, so we can get the translated message reported back
+            SendMessage(CTW->_hLVWnd, uMsg, wParam, lParam);
         return 0;
-        case WM_LBUTTONDBLCLK: {
-            // Report to LV, so we can get the translated message reported back as NM_CLICK or NM_DBLCLK.
-            SendMessage(CTW->_hLVWnd, WM_LBUTTONDBLCLK, wParam, lParam);
-        }
+        case WM_MOUSEWHEEL:
+            ListView_Scroll(CTW->_hLVWnd, 90, 0);
         return 0;
         
         case WM_NOTIFY:
