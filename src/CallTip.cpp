@@ -36,23 +36,39 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
-        TCHAR* inner_context = NULL;
-        TCHAR* inner_token = _tcstok_s(pToken, _T(":"), &inner_context);
-        inner_token++;
-        _tcscat(_tcscat(inner_token, _tcstok_s(NULL, _T(":"), &inner_context)), TEXT(":"));
-        _tcscat(_tcscat(inner_token, _tcstok_s(NULL, _T(":"), &inner_context)), TEXT(":"));
-        _paths.push_back(inner_token);
-        inner_token = _tcstok_s(NULL, _T("{\n\r"), &inner_context); // cutoff curly brackets as well.
-        _lines.push_back(inner_token);
-        ++result;
+        int colon_count = 0;
+        int i = 0;
+        while (true) { // Find end of path.
+            if (pToken[i] == '\0')
+                break;
+            if (pToken[i] == ':') { // Path has 3 colons, "c:/path/:line_number:"
+                colon_count += 1;
+                if (colon_count == 3) {
+                    TCHAR* path_token = pToken;
+                    path_token[i] = '\0';
+                    _paths.push_back(path_token);
+                    i++;
+                    TCHAR* function_token = &pToken[i];
+                    _lines.push_back(function_token);
+                }
+            }
+            if (colon_count >= 3) { // Remove possible declaration after defintion.
+                if (pToken[i] == '{' || pToken[i] == ';' || (colon_count >= 6 && pToken[i] == ':')) {
+                    pToken[i-1] = '\0';
+                    break;
+                }
+            }
+            i++;
+        }
+        result++;
     }
-
     return result;
 }
 
 void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos, intptr_t caret_pos)
 {
     INpp& npp = INpp::Get();
+    npp.ReadSciHandle();
 
     intptr_t currpos = caret_pos;
     if (caret_pos == -1)
@@ -77,8 +93,8 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
         if (symbol == '(') {
             nests -= 1;
             if (nests == -1) {
-                int name_end = i - 1;;
-                int n = i - 1;
+                intptr_t name_end = i - 1;;
+                intptr_t n = i - 1;
                 while (true) {
                     symbol = line_buf.C_str()[n];
                     if (!isalpha(symbol) && !isdigit(symbol)) {
@@ -179,7 +195,7 @@ CallTipWin::~CallTipWin()
 
 HWND CallTipWin::composeWindow()
 {
-    HWND hOwner = (INpp::Get().ReadSciHandle());
+    HWND hOwner = (INpp::Get().GetSciHandle());
     RECT win;
 
     GetWindowRect(hOwner, &win);
@@ -265,9 +281,12 @@ int CallTipWin::getDefParamCount(TCHAR* word) {
     return parameter_count;
 }
 
-TCHAR* CallTipWin::getDefParamText(TCHAR* word) {
+TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize) {
+    TCHAR wrd_copy[256] = {0};
+    memcpy_s(wrd_copy, 256, word, wordSize);
+
     TCHAR* pTmp = NULL;
-    _tcstok_s(word, _T("("), &pTmp);
+    _tcstok_s(wrd_copy, _T("("), &pTmp);
     TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
     if (parameter_list == NULL)
         parameter_list = TEXT("");
@@ -316,9 +335,12 @@ int CallTipWin::filterLV()
     }
     if (lowest_parameter_count == highest_parameter_count)
         if (ListView_GetItemCount(_hLVWnd) == 1) {
-            TCHAR buf[256];
-            ListView_GetItemText(CTW->_hLVWnd, 0, 0, buf, _countof(buf));
-            updateHeader(lowest_parameter_count, -1, getDefParamText(buf));
+            // TCHAR buf[256];
+            // ListView_GetItemText(CTW->_hLVWnd, 0, 0, buf, _countof(buf));
+            // updateHeader(lowest_parameter_count, -1, getDefParamText(buf));
+            ListView_SetItemState(_hLVWnd, _selItem, LVIS_SELECTED, LVIS_SELECTED);
+            _selItem = 0;
+            onClick(_selItem);
         }
         else {
             updateHeader(lowest_parameter_count);
@@ -336,12 +358,12 @@ void CallTipWin::resizeLV()
 {
     int rowsCount = ListView_GetItemCount(_hLVWnd);
 
-    size_t widest_width = 0;
+    int widest_width = 0;
     int widest_idx = 0;
     for (int i = 0; i <= ListView_GetItemCount(_hLVWnd); i++) {
         TCHAR buf[256] = {0};
         ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
-        size_t str_len = _tcsclen(buf);
+        int str_len = int(_tcsclen(buf));
         if (str_len > widest_width)
             widest_width = str_len;
             widest_idx = i;
@@ -428,13 +450,13 @@ void CallTipWin::updateWindow(intptr_t position) {
 
     if (tag.IsEmpty()) {
         CallTipWin::DestroyCurrentWin(); // Order is important here.
-        SetFocus(npp.ReadSciHandle());
+        SetFocus(npp.GetSciHandle());
         return;
     }
     if (CText(tag.C_str()) != _tag) {
         // TODO: Show new calltip.
         CallTipWin::DestroyCurrentWin(); // Again, order is important here.
-        SetFocus(npp.ReadSciHandle());
+        SetFocus(npp.GetSciHandle());
         return;
     }
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
@@ -452,9 +474,10 @@ void CallTipWin::updateWindow(intptr_t position) {
 }
 
 void CallTipWin::onClick(int item) {
-    TCHAR buf[256];
+    _selItem = item;
+    TCHAR buf[256] = {0};
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
-    CTW->updateHeader(getDefParamCount(buf), -1, getDefParamText(buf));
+    updateHeader(getDefParamCount(buf), -1, getDefParamText(buf, 256));
 }
 
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -462,7 +485,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
     if (CTW == nullptr) {
         return 0;
     }
-    HWND npp_handle = INpp::Get().ReadSciHandle();
+    HWND npp_handle = INpp::Get().GetSciHandle();
     switch (uMsg)
     {
         case WM_CREATE:
@@ -551,8 +574,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 return 0;
 
                 case NM_CLICK: {
-                    CTW->_selItem = ((LPNMITEMACTIVATE)lParam)->iItem;
-                    CTW->onClick(CTW->_selItem);
+                    CTW->onClick(((LPNMITEMACTIVATE)lParam)->iItem);
                 }
                 return 0;
 
@@ -563,16 +585,27 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                     for (int i = 0; i < CTW->_parser->GetList().size(); i++) {
                         TCHAR* word = CTW->_parser->GetList().at(i);
                         if (_tcscmp(word, buf) == 0) {
-                            TCHAR* path_and_line = CTW->_parser->GetListPaths().at(i);
-                            TCHAR* pTmp = NULL;
-                            TCHAR* path = _tcstok_s(path_and_line, _T(":"), &pTmp);
-                            TCHAR* line = _tcstok_s(NULL, _T(":"), &pTmp);
+                            TCHAR* path = CTW->_parser->GetListPaths().at(i);
+                            TCHAR* line = _tcschr(path, _T(':'));
+                            line = _tcschr(line+1, _T(':'));
+                            line[0] = '\0';
+                            line++;
+                            CPath path_check(path);
+                            if (!path_check.FileExists())
+                            {
+                                MessageBox(npp.GetHandle(),
+                                        _T("File not found, database seems outdated.")
+                                        _T("\nPlease re-create it and redo the search."),
+                                        cPluginName, MB_OK | MB_ICONEXCLAMATION);
+                                return 0;
+                            }
                             npp.OpenFile(path);
                             npp.GoToLine(_tstoi(line));
                             DestroyCurrentWin();
                             return 0;
                         }
                     }
+                    DestroyCurrentWin();
                 }
                 return 0;
             }

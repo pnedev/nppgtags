@@ -367,7 +367,6 @@ void callTip(bool autorun)
     CTextA tag;
     intptr_t overload = 0;
     intptr_t func_start_pos = 0;
-    INpp& npp = INpp::Get();
     CallTipWin::GetCallTipFunction(tag, overload, func_start_pos);
 
     if (tag.IsEmpty())

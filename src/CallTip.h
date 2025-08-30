@@ -66,7 +66,7 @@ private:
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     static int getDefParamCount(TCHAR* word);
-    static TCHAR* getDefParamText(TCHAR* word);
+    static TCHAR* getDefParamText(TCHAR* word, int wordSize);
 
     CallTipWin& operator=(const CallTipWin&) = delete;
 
