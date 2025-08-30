@@ -41,7 +41,7 @@
 #include "AboutWin.h"
 #include "GTags.h"
 #include "LineParser.h"
-#include "CallTip.h"
+#include "CallTipWin.h"
 
 
 namespace

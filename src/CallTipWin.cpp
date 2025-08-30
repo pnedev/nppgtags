@@ -1,5 +1,4 @@
 
-
 #pragma comment (lib, "comctl32")
 
 
@@ -10,7 +9,7 @@
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
-#include "CallTip.h"
+#include "CallTipWin.h"
 #include "NppAPI/Notepad_plus_msgs.h"
 #include <string>
 
@@ -26,19 +25,16 @@ const int CallTipWin::cMinWidth            = 100;
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 
 intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
-
     intptr_t result = 0;
-
     _lines.clear();
     _paths.clear();
     _buf = cmd->Result();
-    // MessageBox(NULL, _buf.C_str(), L"CALL", MB_OK);
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         int colon_count = 0;
         int i = 0;
-        while (true) { // Find end of path.
+        while (i < 1024) { // Find end of path.
             if (pToken[i] == '\0')
                 break;
             if (pToken[i] == ':') { // Path has 3 colons, "c:/path/:line_number:"
@@ -586,10 +582,13 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                         TCHAR* word = CTW->_parser->GetList().at(i);
                         if (_tcscmp(word, buf) == 0) {
                             TCHAR* path = CTW->_parser->GetListPaths().at(i);
-                            TCHAR* line = _tcschr(path, _T(':'));
-                            line = _tcschr(line+1, _T(':'));
+                            TCHAR* line = _tcsrchr(path, _T(':'));
                             line[0] = '\0';
                             line++;
+                            int intLine = max(0, _tstoi(line) - 1);
+
+                            TCHAR path_buf[256] = { 0 };
+                            _stprintf(path_buf, TEXT("%s"), path);
                             CPath path_check(path);
                             if (!path_check.FileExists())
                             {
@@ -599,8 +598,11 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                                         cPluginName, MB_OK | MB_ICONEXCLAMATION);
                                 return 0;
                             }
-                            npp.OpenFile(path);
-                            npp.GoToLine(_tstoi(line));
+
+                            if (npp.OpenFile(path_buf) == 0) {
+                                npp.GoToLine(intLine);
+                                npp.SetFirstVisibleLine(intLine - (npp.LinesOnScreen()/2)); // Center view.
+                            }
                             DestroyCurrentWin();
                             return 0;
                         }

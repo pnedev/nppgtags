@@ -276,6 +276,16 @@ public:
         SendMessage(_hSC, SCI_GOTOLINE, line, 0);
     }
 
+    inline void SetFirstVisibleLine(intptr_t line) const
+    {
+        SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, line, 0);
+    }
+
+    inline intptr_t LinesOnScreen() const
+    {
+        return SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
+    }
+
     inline intptr_t PositionFromLine(intptr_t line) const
     {
         return SendMessage(_hSC, SCI_POSITIONFROMLINE, line, 0);
