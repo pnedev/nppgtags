@@ -203,6 +203,9 @@ void halfComplCB(const CmdPtr_t& cmd)
 }
 
 
+/**
+ *  \brief
+ */
 void callTipCB(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());

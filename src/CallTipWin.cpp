@@ -1,3 +1,26 @@
+/**
+ *  \file
+ *  \brief  GTags CallTips window
+ *
+ *  \author  Pavel Nedev <pg.nedev@gmail.com>, Robert McDowell <github.com/RobertP-McDowell>
+ *
+ *  \section COPYRIGHT
+ *  Copyright(C) 2014-2024 Pavel Nedev
+ *
+ *  \section LICENSE
+ *  This program is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License version 2 as published
+ *  by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *  for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 
 #pragma comment (lib, "comctl32")
 
@@ -24,6 +47,9 @@ const int CallTipWin::cMinWidth            = 100;
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 
+/**
+ *  \brief
+ */
 intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     intptr_t result = 0;
     _lines.clear();
@@ -61,6 +87,9 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     return result;
 }
 
+/**
+ *  \brief
+ */
 void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos, intptr_t caret_pos)
 {
     INpp& npp = INpp::Get();
@@ -256,6 +285,9 @@ HWND CallTipWin::composeWindow()
     return _hWnd;
 }
 
+/**
+ *  \brief
+ */
 int CallTipWin::getDefParamCount(TCHAR* word) {
     int parameter_count = 0;
     bool parameter_start = false;
@@ -277,6 +309,9 @@ int CallTipWin::getDefParamCount(TCHAR* word) {
     return parameter_count;
 }
 
+/**
+ *  \brief
+ */
 TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize) {
     TCHAR wrd_copy[256] = {0};
     memcpy_s(wrd_copy, 256, word, wordSize);
@@ -289,6 +324,9 @@ TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize) {
     return parameter_list;
 }
 
+/**
+ *  \brief
+ */
 int CallTipWin::getItemByName(TCHAR* word) {
     if (_hLVWnd == nullptr)
         return -1;
@@ -302,6 +340,9 @@ int CallTipWin::getItemByName(TCHAR* word) {
     return -1; // Item not listed.
 }
 
+/**
+ *  \brief
+ */
 int CallTipWin::filterLV()
 {
     LVITEM lvItem   = {0};
@@ -421,6 +462,9 @@ void CallTipWin::resizeLV()
     MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
 }
 
+/**
+ *  \brief
+ */
 void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
     TCHAR buf[128] = { 0 };
     if (high_overload == -1) {
@@ -469,6 +513,9 @@ void CallTipWin::updateWindow(intptr_t position) {
     }
 }
 
+/**
+ *  \brief
+ */
 void CallTipWin::onClick(int item) {
     _selItem = item;
     TCHAR buf[256] = {0};
@@ -476,6 +523,9 @@ void CallTipWin::onClick(int item) {
     updateHeader(getDefParamCount(buf), -1, getDefParamText(buf, 256));
 }
 
+/**
+ *  \brief
+ */
 LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (CTW == nullptr) {
