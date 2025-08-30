@@ -34,6 +34,7 @@ const TCHAR* Cmd::CmdName[] = {
     _T("AutoComplete"),                 // AUTOCOMPLETE
     _T("AutoComplete"),                 // AUTOCOMPLETE_SYMBOL
     _T("AutoComplete File Name"),       // AUTOCOMPLETE_FILE
+    _T("CallTip"),                      // CALLTIP
     _T("Find File"),                    // FIND_FILE
     _T("Find Definition"),              // FIND_DEFINITION
     _T("Find Reference"),               // FIND_REFERENCE

@@ -89,6 +89,7 @@ set (project_sources
     src/AboutWin.cpp
     src/AutoCompleteWin.cpp
     src/ResultWin.cpp
+    src/CallTipWin.cpp
 )
 
 add_definitions (${defs})

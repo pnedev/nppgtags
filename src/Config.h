@@ -125,6 +125,7 @@ public:
 
     bool    _keepSearchWinOpen;
     int     _triggerAutocmplAfter;
+    bool    _autoTriggerCallTip;
     bool    _useDefDb;
     CPath   _defDbPath;
     bool    _re;
@@ -139,6 +140,7 @@ private:
 
     static const TCHAR cKeepSearchWinOpenKey[];
     static const TCHAR cTriggerAutocmplAfterKey[];
+    static const TCHAR cAutoTriggerCallTipKey[];
     static const TCHAR cUseDefDbKey[];
     static const TCHAR cDefDbPathKey[];
     static const TCHAR cREOptionKey[];

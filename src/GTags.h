@@ -52,7 +52,7 @@ enum PluginWinMessages_t
     WM_CLOSE_ACTIVITY_WIN
 };
 
-extern FuncItem     Menu[21];
+extern FuncItem     Menu[22];
 
 extern HINSTANCE    HMod;
 extern CPath        DllPath;
@@ -83,6 +83,6 @@ void OnFileChangeCancel();
 void OnFileChange(const CPath& file);
 void OnFileRename(const CPath& file);
 void OnFileDelete(const CPath& file);
-void OnUserInput();
+void OnUserInput(int ch);
 
 } // namespace GTags

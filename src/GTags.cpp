@@ -41,6 +41,7 @@
 #include "AboutWin.h"
 #include "GTags.h"
 #include "LineParser.h"
+#include "CallTipWin.h"
 
 
 namespace
@@ -205,6 +206,34 @@ void halfComplCB(const CmdPtr_t& cmd)
 /**
  *  \brief
  */
+void callTipCB(const CmdPtr_t& cmd)
+{
+    DbManager::Get().PutDb(cmd->Db());
+
+    if (cmd->Status() == OK && cmd->Result())
+    {
+        CallTipWin::Show(cmd);
+        return;
+    }
+    
+    INpp::Get().ClearSelectionMulti();
+
+    if (cmd->Status() == FAILED)
+    {
+        CText msg(cmd->Result());
+        msg += _T("\nTry re-creating database.");
+        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+    }
+    else if (cmd->Status() == RUN_ERROR)
+    {
+        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+    }
+}
+
+
+/**
+ *  \brief
+ */
 void findCB(const CmdPtr_t& cmd)
 {
     if (cmd->Status() == OK && cmd->Result() == NULL)
@@ -259,9 +288,9 @@ void aboutCB(const CmdPtr_t& cmd)
         cmd->AppendToResult(txt.Vector());
     }
 
-	const CText msg = cmd->Result();
+    const CText msg = cmd->Result();
 
-	AboutWin::Show(msg.C_str());
+    AboutWin::Show(msg.C_str());
 }
 
 
@@ -331,6 +360,41 @@ void AutoCompleteFile()
     CmdPtr_t cmd = std::make_shared<Cmd>(AUTOCOMPLETE_FILE, db, parser, tag.C_str(), GTagsSettings._ic);
 
     CmdEngine::Run(cmd, autoComplCB);
+}
+
+/**
+ *  \brief
+ */
+void callTip(bool autorun)
+{
+    CTextA tag;
+    intptr_t overload = 0;
+    intptr_t func_start_pos = 0;
+    CallTipWin::GetCallTipFunction(tag, overload, func_start_pos);
+
+    if (tag.IsEmpty())
+        return;
+
+    DbHandle db = getDatabase(false, autorun);
+    if (!db)
+        return;
+
+    ParserPtr_t parser = std::make_shared<CallTipParser>(overload, func_start_pos);
+
+    CmdPtr_t cmd = std::make_shared<Cmd>(CALLTIP, db, parser, CText(tag.C_str()).C_str(), false, false, autorun);
+
+    CmdEngine::Run(cmd, callTipCB);
+}
+
+
+/**
+ *  \brief
+ */
+void CallTip()
+{
+    if (CallTipWin::IsShown())
+        CallTipWin::DestroyCurrentWin();
+    callTip(false);
 }
 
 
@@ -509,7 +573,7 @@ void IgnoreCase()
 {
     GTagsSettings._ic = !GTagsSettings._ic;
 
-    INpp::Get().SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+    INpp::Get().SetPluginMenuFlag(Menu[9]._cmdID, GTagsSettings._ic);
 
     GTagsSettings._dirty = true;
 }
@@ -712,28 +776,29 @@ void About()
 namespace GTags
 {
 
-FuncItem Menu[21] = {
+FuncItem Menu[22] = {
     /* 0 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE], AutoComplete),
     /* 1 */  FuncItem(Cmd::CmdName[AUTOCOMPLETE_FILE], AutoCompleteFile),
-    /* 2 */  FuncItem(Cmd::CmdName[FIND_FILE], FindFile),
-    /* 3 */  FuncItem(Cmd::CmdName[FIND_DEFINITION], FindDefinition),
-    /* 4 */  FuncItem(Cmd::CmdName[FIND_REFERENCE], FindReference),
-    /* 5 */  FuncItem(Cmd::CmdName[GREP], SearchSrc),
-    /* 6 */  FuncItem(Cmd::CmdName[GREP_TEXT], SearchOther),
-    /* 7 */  FuncItem(),
-    /* 8 */  FuncItem(_T("Ignore Case"), IgnoreCase), // Array number is important as it is used to toggle the flag!!!
-    /* 9 */  FuncItem(),
-    /* 10*/  FuncItem(_T("Go Back"), GoBack),
-    /* 11*/  FuncItem(_T("Go Forward"), GoForward),
-    /* 12 */ FuncItem(),
-    /* 13 */ FuncItem(Cmd::CmdName[CREATE_DATABASE], CreateDatabase),
-    /* 14 */ FuncItem(_T("Delete Database"), DeleteDatabase),
-    /* 15 */ FuncItem(),
-    /* 16 */ FuncItem(_T("Toggle Windows Focus"), ToggleWindowsFocus),
-    /* 17 */ FuncItem(),
-    /* 18 */ FuncItem(_T("Settings..."), SettingsCfg),
-    /* 19 */ FuncItem(),
-    /* 20 */ FuncItem(_T("About..."), About)
+    /* 2 */  FuncItem(Cmd::CmdName[CALLTIP], CallTip),
+    /* 3 */  FuncItem(Cmd::CmdName[FIND_FILE], FindFile),
+    /* 4 */  FuncItem(Cmd::CmdName[FIND_DEFINITION], FindDefinition),
+    /* 5 */  FuncItem(Cmd::CmdName[FIND_REFERENCE], FindReference),
+    /* 6 */  FuncItem(Cmd::CmdName[GREP], SearchSrc),
+    /* 7 */  FuncItem(Cmd::CmdName[GREP_TEXT], SearchOther),
+    /* 8 */  FuncItem(),
+    /* 9 */  FuncItem(_T("Ignore Case"), IgnoreCase), // Array number is important as it is used to toggle the flag!!!
+    /* 10 */ FuncItem(),
+    /* 11 */ FuncItem(_T("Go Back"), GoBack),
+    /* 12 */ FuncItem(_T("Go Forward"), GoForward),
+    /* 13 */ FuncItem(),
+    /* 14 */ FuncItem(Cmd::CmdName[CREATE_DATABASE], CreateDatabase),
+    /* 15 */ FuncItem(_T("Delete Database"), DeleteDatabase),
+    /* 16 */ FuncItem(),
+    /* 17 */ FuncItem(_T("Toggle Windows Focus"), ToggleWindowsFocus),
+    /* 18 */ FuncItem(),
+    /* 19 */ FuncItem(_T("Settings..."), SettingsCfg),
+    /* 20 */ FuncItem(),
+    /* 21 */ FuncItem(_T("About..."), About)
 };
 
 HINSTANCE HMod = NULL;
@@ -929,6 +994,7 @@ void PluginInit()
     ActivityWin::Register();
     SearchWin::Register();
     AutoCompleteWin::Register();
+    CallTipWin::Register();
 
     MainWndH = ResultWin::Register();
     if (MainWndH == NULL)
@@ -955,6 +1021,7 @@ void PluginDeInit()
     ActivityWin::Unregister();
     SearchWin::Unregister();
     AutoCompleteWin::Unregister();
+    CallTipWin::Unregister();
     ResultWin::Unregister();
 
     if (DeInitCOM)
@@ -974,7 +1041,7 @@ void OnNppReady()
 {
     INpp& npp = INpp::Get();
 
-    npp.SetPluginMenuFlag(Menu[8]._cmdID, GTagsSettings._ic);
+    npp.SetPluginMenuFlag(Menu[9]._cmdID, GTagsSettings._ic);
 
 	if (npp.GetVersion() < MIN_NOTEPADPP_VERSION)
 	{
@@ -1086,10 +1153,14 @@ void OnFileDelete(const CPath& file)
 /**
  *  \brief
  */
-void OnUserInput()
+void OnUserInput(int ch)
 {
-    if (!AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
+    if (GTagsSettings._autoTriggerCallTip && !CallTipWin::IsShown() && (ch == ',' || ch == '('))
+        callTip(true);
+    else if (GTagsSettings._triggerAutocmplAfter &&
+        !AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
         autoComplete(true);
 }
+
 
 } // namespace GTags

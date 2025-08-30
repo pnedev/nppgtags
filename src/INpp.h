@@ -251,6 +251,16 @@ public:
         *y = (int)SendMessage(_hSC, SCI_POINTYFROMPOSITION, 0, pos) + 2;
     }
 
+    inline intptr_t GetPosFromPoint(int x, int y) const
+    {
+        return SendMessage(_hSC, SCI_POSITIONFROMPOINT, x, y);
+    }
+
+    inline intptr_t GetLineFromPosition(intptr_t pos) const
+    {
+        return SendMessage(_hSC, SCI_LINEFROMPOSITION, pos, 0);
+    }
+
     inline intptr_t GetCurrentLine() const
     {
         return SendMessage(_hSC, SCI_LINEFROMPOSITION, SendMessage(_hSC, SCI_GETCURRENTPOS, 0, 0), 0);
@@ -264,6 +274,16 @@ public:
     inline void GoToLine(intptr_t line) const
     {
         SendMessage(_hSC, SCI_GOTOLINE, line, 0);
+    }
+
+    inline void SetFirstVisibleLine(intptr_t line) const
+    {
+        SendMessage(_hSC, SCI_SETFIRSTVISIBLELINE, line, 0);
+    }
+
+    inline intptr_t LinesOnScreen() const
+    {
+        return SendMessage(_hSC, SCI_LINESONSCREEN, 0, 0);
     }
 
     inline intptr_t PositionFromLine(intptr_t line) const
@@ -303,6 +323,13 @@ public:
         sel.Resize(selLen);
         SendMessage(_hSC, SCI_GETSELTEXT, 0, (LPARAM)sel.C_str());
         sel.AutoFit();
+    }
+
+    inline void GetLineText(CTextA& line_buf, intptr_t buf_len, intptr_t line) const
+    {
+        line_buf.Resize(buf_len);
+        SendMessage(_hSC, SCI_GETLINE, line, (LPARAM)line_buf.C_str());
+        line_buf.AutoFit();
     }
 
     inline void SetSelection(intptr_t startPos, intptr_t endPos) const

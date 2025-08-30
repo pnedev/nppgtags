@@ -247,7 +247,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 640, 14 * btnHeight + txtInfoHeight + 180);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 640, 15 * btnHeight + txtInfoHeight + 180);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -289,6 +289,12 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     AdjustWindowRectEx(&win, style, FALSE, styleEx);
     _hTrigAutocmplAfter = CreateWindowEx(styleEx, RICHEDIT_CLASS, NULL, style,
             win.left, win.top, win.right - win.left, win.bottom - win.top,
+            _hWnd, NULL, HMod, NULL);
+
+    yPos += (btnHeight + 5);
+    _hTrigCallTip = CreateWindowEx(0, _T("BUTTON"), _T("Auto trigger CallTips"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos + (width / 2) + 5, yPos, (width / 2) - 35, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     yPos += (btnHeight + 5);
@@ -464,6 +470,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         SendMessage(_hKeepSearchOpen, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hTrigAutocmplEn, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hTrigAutocmplAfter, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
+        SendMessage(_hTrigCallTip, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hParserInfo, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hEnDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
         SendMessage(_hSetDefDb, WM_SETFONT, (WPARAM)_hFontInfo, TRUE);
@@ -488,6 +495,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     Button_SetCheck(_hKeepSearchOpen, GTagsSettings._keepSearchWinOpen ? BST_CHECKED : BST_UNCHECKED);
     Button_SetCheck(_hTrigAutocmplEn, GTagsSettings._triggerAutocmplAfter ? BST_CHECKED : BST_UNCHECKED);
+    Button_SetCheck(_hTrigCallTip, GTagsSettings._autoTriggerCallTip ? BST_CHECKED : BST_UNCHECKED);
 
     SendMessage(_hTrigAutocmplAfter, EM_SETEVENTMASK, 0, ENM_NONE);
 
@@ -873,6 +881,8 @@ bool SettingsWin::saveTab(SettingsWin::Tab* tab)
     {
         newSettings._triggerAutocmplAfter = 0;
     }
+
+    newSettings._autoTriggerCallTip = (Button_GetCheck(_hTrigCallTip) == BST_CHECKED) ? true : false;
 
     newSettings._useDefDb = (Button_GetCheck(_hEnDefDb) == BST_CHECKED) ? true : false;
 
@@ -1308,6 +1318,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                 }
 
                 if ((HWND)lParam == SW->_hKeepSearchOpen ||
+                    (HWND)lParam == SW->_hTrigCallTip ||
                     (HWND)lParam == SW->_hAutoUpdDb)
                         EnableWindow(SW->_hSave, TRUE);
             }
