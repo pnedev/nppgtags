@@ -49,6 +49,7 @@ public:
 
     virtual intptr_t Parse(const CmdPtr_t&);
     virtual const std::vector<TCHAR*>& GetListPaths() const { return _paths; }
+    int FindListIndexFromLine(TCHAR* findLine);
 
 protected:
     std::vector<TCHAR*> _paths;
@@ -93,16 +94,16 @@ private:
     static int getDefParamCount(TCHAR* word);
     static TCHAR* getDefParamText(TCHAR* word, int wordSize);
 
+    int getItemByName(TCHAR* itemText);
+
     CallTipWin& operator=(const CallTipWin&) = delete;
 
     HWND composeWindow();
     int filterLV();
     void resizeLV();
-    
-    int getItemByName(TCHAR* word);
 
     void onClick(int item);
-    void updateHeader(int overload, int high_overload = -1, TCHAR* header = _T("CallTip"));
+    void updateHeader(int overload, int high_overload = -1, TCHAR* header1 = _T("CallTip"), TCHAR* header2 = _T(""));
     void updateWindow(intptr_t position = -1);
     static std::unique_ptr<CallTipWin> CTW;
     int             _selItem;

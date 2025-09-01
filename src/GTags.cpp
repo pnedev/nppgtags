@@ -210,12 +210,20 @@ void callTipCB(const CmdPtr_t& cmd)
 {
     DbManager::Get().PutDb(cmd->Db());
 
+    if (cmd->Id() != CALLTIP_SYMBOL && cmd->Status() == OK && cmd->Result() == NULL)
+    {
+        cmd->Id(CALLTIP_SYMBOL);
+
+        CmdEngine::Run(cmd, callTipCB);
+        return;
+    }
+
     if (cmd->Status() == OK && cmd->Result())
     {
         CallTipWin::Show(cmd);
         return;
     }
-    
+
     INpp::Get().ClearSelectionMulti();
 
     if (cmd->Status() == FAILED)
