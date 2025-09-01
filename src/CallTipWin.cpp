@@ -42,10 +42,24 @@ namespace GTags
 const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
 const int CallTipWin::cItemWidth           = 1024;
-const int CallTipWin::cMinWidth            = 100;
+const int CallTipWin::cMinWidth            = 300;
 
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
+
+/**
+ *  \brief
+ */
+int CallTipParser::FindListIndexFromLine(TCHAR* findLine) { // Returns -1 if couldn't find line in list.
+    for (int i = 0; i < GetList().size(); i++) {
+        TCHAR* word = GetList().at(i);
+        if (_tcscmp(findLine, word) == 0) {
+            return i;
+        }
+    }
+    return 0;
+}
+
 
 /**
  *  \brief
@@ -60,28 +74,33 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         int colon_count = 0;
         int i = 0;
+        int function_start_idx = 0;
         while (i < 1024) { // Find end of path.
             if (pToken[i] == '\0')
                 break;
-            if (pToken[i] == ':') { // Path has 3 colons, "c:/path/:line_number:"
+            if (pToken[i] == ':') { // Absoulute paths have 3 colons, "c:/path/file:line_number:"
                 colon_count += 1;
                 if (colon_count == 3) {
                     TCHAR* path_token = pToken;
                     path_token[i] = '\0';
                     _paths.push_back(path_token);
                     i++;
-                    TCHAR* function_token = &pToken[i];
-                    _lines.push_back(function_token);
+                    function_start_idx = i;
+                    while (isspace(pToken[function_start_idx])) { // Remove whitespace.
+                        function_start_idx++;
+                    }
                 }
             }
-            if (colon_count >= 3) { // Remove possible declaration after defintion.
+            if (colon_count >= 3) { // Remove possible defintion.
                 if (pToken[i] == '{' || pToken[i] == ';' || (colon_count >= 6 && pToken[i] == ':')) {
-                    pToken[i-1] = '\0';
+                    pToken[i] = '\0';
                     break;
                 }
             }
             i++;
         }
+        TCHAR* function_token = &pToken[function_start_idx];
+        _lines.push_back(function_token);
         result++;
     }
     return result;
@@ -120,14 +139,14 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
             if (nests == -1) {
                 intptr_t name_end = i - 1;;
                 intptr_t n = i - 1;
-                while (true) {
+                while (n >= 0) {
                     symbol = line_buf.C_str()[n];
-                    if (!isalpha(symbol) && !isdigit(symbol)) {
-                        if (symbol == ' ' && n == name_end) { // Whitespace between name and params, remove and continue.
-                            name_end--;
-                            n--;
-                            continue;
-                        }
+                    if (isspace(symbol) && n == name_end) { // Whitespace between name and params, remove and continue.
+                        name_end--;
+                        n--;
+                        continue;
+                    }
+                    if (!isalpha(symbol) && !isdigit(symbol) && symbol != '_') {
                         n += 1;
                         break;
                     }
@@ -272,7 +291,11 @@ HWND CallTipWin::composeWindow()
     ListView_SetBkColor(_hLVWnd, backgroundColor);
     ListView_SetTextBkColor(_hLVWnd, backgroundColor);
 
-    filterLV();
+    if (!filterLV())
+    {
+        SendMessage(_hWnd, WM_CLOSE, 0, 0);
+        return NULL;
+    }
 
     resizeLV();
 
@@ -357,30 +380,38 @@ int CallTipWin::filterLV()
     }
     for (int i = 0; i < _parser->GetList().size(); i++)
     {
-        TCHAR* word = _parser->GetList().at(i);
-        int parameter_count = getDefParamCount(word);
+        TCHAR* line = _parser->GetList().at(i);
+        TCHAR* path = _parser->GetListPaths().at(i);
+        // filter non header files, when searching by symbol.
+        if (_cmdId == CALLTIP_SYMBOL && !_tcsstr(path, TEXT(".h:")) &&
+            !_tcsstr(path, TEXT(".hpp:")) && !_tcsstr(path, TEXT(".hxx:")))
+            continue;
+        int parameter_count = getDefParamCount(line);
         if (parameter_count < lowest_parameter_count)
             lowest_parameter_count = parameter_count;
         if (parameter_count > highest_parameter_count)
             highest_parameter_count = parameter_count;
         
         if (overload_compare <= parameter_count) {
-            lvItem.pszText = _parser->GetList().at(i);
+            lvItem.pszText = line;
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
         }
     }
+    if (lvItem.iItem == 0) {
+        return 0;
+    }
     if (lowest_parameter_count == highest_parameter_count)
         if (ListView_GetItemCount(_hLVWnd) == 1) {
-            // TCHAR buf[256];
-            // ListView_GetItemText(CTW->_hLVWnd, 0, 0, buf, _countof(buf));
-            // updateHeader(lowest_parameter_count, -1, getDefParamText(buf));
-            ListView_SetItemState(_hLVWnd, _selItem, LVIS_SELECTED, LVIS_SELECTED);
             _selItem = 0;
+            ListView_SetItemState(_hLVWnd, _selItem, LVIS_SELECTED, LVIS_SELECTED);
             onClick(_selItem);
         }
         else {
-            updateHeader(lowest_parameter_count);
+            if (_cmdId == CALLTIP_SYMBOL)
+                updateHeader(lowest_parameter_count, -1, _T("CallTips"), _T("Symbol *.h"));
+            else
+                updateHeader(lowest_parameter_count, -1, _T("CallTips"));
         }
     else 
         updateHeader(lowest_parameter_count, highest_parameter_count);
@@ -465,13 +496,13 @@ void CallTipWin::resizeLV()
 /**
  *  \brief
  */
-void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header) {
+void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header1, TCHAR* header2) {
     TCHAR buf[128] = { 0 };
     if (high_overload == -1) {
-        _stprintf(buf, TEXT("%d/%d (%s)"), int(_parser->overload) + 1, overload, header);
+        _stprintf(buf, TEXT("%d/%d (%s) %s"), int(_parser->overload) + 1, overload, header1, header2);
     }
     else {
-        _stprintf(buf, TEXT("%d/%d-%d (%s)"), int(_parser->overload) + 1, overload, high_overload, header);
+        _stprintf(buf, TEXT("%d/%d-%d (%s) %s"), int(_parser->overload) + 1, overload, high_overload, header1, header2);
     }
     LVCOLUMN lvCol = { 0 };
     lvCol.mask = LVCF_TEXT | LVCF_WIDTH;
@@ -503,7 +534,11 @@ void CallTipWin::updateWindow(intptr_t position) {
         _parser->overload = overload;
         TCHAR buf[256];
         ListView_GetItemText(_hLVWnd, _selItem, 0, buf, _countof(buf));
-        filterLV();
+        if (!filterLV())
+        {
+            SendMessage(_hWnd, WM_CLOSE, 0, 0);
+            return;
+        }
         resizeLV();
         _selItem = getItemByName(buf);
         if (_selItem >= 0) {
@@ -520,7 +555,14 @@ void CallTipWin::onClick(int item) {
     _selItem = item;
     TCHAR buf[256] = {0};
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
-    updateHeader(getDefParamCount(buf), -1, getDefParamText(buf, 256));
+    int listIndex = _parser->FindListIndexFromLine(buf);
+    TCHAR pathBuf[256];
+    if (listIndex != -1) {
+        _stprintf(pathBuf, _tcsrchr(_parser->GetListPaths().at(listIndex), _T('/'))+1);
+        _tcschr(pathBuf, _T(':'))[0] = '\0';
+    }
+
+    updateHeader(getDefParamCount(buf), -1, getDefParamText(buf, 256), pathBuf);
 }
 
 /**
@@ -628,33 +670,29 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                     INpp& npp = INpp::Get();
                     TCHAR buf[256] = {0};
                     ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
-                    for (int i = 0; i < CTW->_parser->GetList().size(); i++) {
-                        TCHAR* word = CTW->_parser->GetList().at(i);
-                        if (_tcscmp(word, buf) == 0) {
-                            TCHAR* path = CTW->_parser->GetListPaths().at(i);
-                            TCHAR* line = _tcsrchr(path, _T(':'));
-                            line[0] = '\0';
-                            line++;
-                            int intLine = max(0, _tstoi(line) - 1);
+                    int listIndex = CTW->_parser->FindListIndexFromLine(buf);
+                    if (listIndex != -1) {
+                        TCHAR* path = CTW->_parser->GetListPaths().at(listIndex);
+                        TCHAR* line = _tcsrchr(path, _T(':'));
+                        line[0] = '\0';
+                        line++;
+                        int intLine = max(0, _tstoi(line) - 1);
 
-                            TCHAR path_buf[256] = { 0 };
-                            _stprintf(path_buf, TEXT("%s"), path);
-                            CPath path_check(path);
-                            if (!path_check.FileExists())
-                            {
-                                MessageBox(npp.GetHandle(),
-                                        _T("File not found, database seems outdated.")
-                                        _T("\nPlease re-create it and redo the search."),
-                                        cPluginName, MB_OK | MB_ICONEXCLAMATION);
-                                return 0;
-                            }
-
-                            if (npp.OpenFile(path_buf) == 0) {
-                                npp.GoToLine(intLine);
-                                npp.SetFirstVisibleLine(intLine - (npp.LinesOnScreen()/2)); // Center view.
-                            }
-                            DestroyCurrentWin();
+                        TCHAR path_buf[256] = { 0 };
+                        _stprintf(path_buf, TEXT("%s"), path);
+                        CPath path_check(path);
+                        if (!path_check.FileExists())
+                        {
+                            MessageBox(npp.GetHandle(),
+                                    _T("File not found, database seems outdated.")
+                                    _T("\nPlease re-create it and redo the search."),
+                                    cPluginName, MB_OK | MB_ICONEXCLAMATION);
                             return 0;
+                        }
+
+                        if (npp.OpenFile(path_buf) == 0) {
+                            npp.GoToLine(intLine);
+                            npp.SetFirstVisibleLine(intLine - (npp.LinesOnScreen()/2)); // Center view.
                         }
                     }
                     DestroyCurrentWin();
