@@ -49,9 +49,12 @@ public:
 
     virtual intptr_t Parse(const CmdPtr_t&);
     virtual const std::vector<TCHAR*>& GetListPaths() const { return _paths; }
+    virtual const std::vector<TCHAR>& GetListBufs() const { return _line_bufs; }
     int FindListIndexFromLine(TCHAR* findLine);
 
 protected:
+    // _lines defined in base class goes unused here.
+    std::vector<TCHAR> _line_bufs;
     std::vector<TCHAR*> _paths;
 private:
     CText _buf;

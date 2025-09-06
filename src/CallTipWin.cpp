@@ -35,9 +35,14 @@
 #include "CallTipWin.h"
 #include "NppAPI/Notepad_plus_msgs.h"
 #include <string>
+#include <fstream>
+#include <iostream>
 
 namespace GTags
 {
+
+typedef std::basic_fstream<TCHAR> tifstream;
+typedef std::basic_string<TCHAR> tstring;
 
 const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
@@ -67,6 +72,7 @@ int CallTipParser::FindListIndexFromLine(TCHAR* findLine) { // Returns -1 if cou
 intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     intptr_t result = 0;
     _lines.clear();
+    _line_bufs.clear();
     _paths.clear();
     _buf = cmd->Result();
     TCHAR* pTmp = NULL;
@@ -74,33 +80,62 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         int colon_count = 0;
         int i = 0;
-        int function_start_idx = 0;
+        int def_start_idx = -1;
+        int linenum_start_idx = 0;
+        TCHAR* path_token = pToken;
         while (i < 1024) { // Find end of path.
             if (pToken[i] == '\0')
                 break;
             if (pToken[i] == ':') { // Absoulute paths have 3 colons, "c:/path/file:line_number:"
                 colon_count += 1;
-                if (colon_count == 3) {
-                    TCHAR* path_token = pToken;
-                    path_token[i] = '\0';
-                    _paths.push_back(path_token);
-                    i++;
-                    function_start_idx = i;
-                    while (isspace(pToken[function_start_idx])) { // Remove whitespace.
-                        function_start_idx++;
-                    }
+                if (colon_count == 2) { // Start of :line_number:
+                    linenum_start_idx = i;
                 }
-            }
-            if (colon_count >= 3) { // Remove possible defintion.
-                if (pToken[i] == '{' || pToken[i] == ';' || (colon_count >= 6 && pToken[i] == ':')) {
-                    pToken[i] = '\0';
-                    break;
+                else if (colon_count == 3) { // End of path.
+                    path_token[i] = '\0';
+                    i++;
+                    def_start_idx = i;
+                    while (isspace(pToken[def_start_idx])) { // Remove whitespace.
+                        def_start_idx++;
+                    }
                 }
             }
             i++;
         }
-        TCHAR* function_token = &pToken[function_start_idx];
-        _lines.push_back(function_token);
+		
+        path_token[linenum_start_idx] = '\0';
+        int linenum = _tstoi(&path_token[linenum_start_idx + 1]);
+        tifstream src_file(path_token);
+		tstring line_str;
+
+        path_token[linenum_start_idx] = ':'; // (just this back where we found it :)
+
+        src_file.seekg(INpp::Get().PositionFromLine(linenum - 1));
+        TCHAR line_token[512] = { 0 };
+        bool break_while = false;
+        int nests = 0;
+        while (!src_file.eof() && !break_while) {
+            std::getline(src_file, line_str, L'\n');
+            _stprintf(line_token, TEXT("%s"), line_str.c_str());
+            for (TCHAR* symbol = &line_token[0]; symbol; symbol++) {
+                if (*symbol == _T('(')) {
+                    nests++;
+                }
+                if (*symbol == _T(')')) {
+                    nests--;
+                    if (nests == 0) {
+                        symbol[1] = '\0';
+                        break_while = true;
+                        break;
+                    }
+                }
+            }
+        }
+        //MessageBox(NULL, path_token, L"CallTips", MB_OK);
+        //MessageBox(NULL, line_token, L"Calltips", MB_OK);
+        src_file.close();
+        _line_bufs.push_back(*line_token);
+		_paths.push_back(path_token);
         result++;
     }
     return result;
@@ -122,39 +157,80 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
     intptr_t endpos = npp.LineEndPosition(line);
     intptr_t len = endpos - startpos + 3; // Also take CRLF in account, even if not there.
 
-    intptr_t offset = currpos - startpos;
+    intptr_t start_offset = currpos - startpos;
+	intptr_t endline_len = len; // Doesn't reset in loop.
+	intptr_t endline_line = line; // Doesn't reset in loop.
+	intptr_t endline_startpos = startpos; // Doesn't reset in loop.
 
-    if (offset < 2) { // 'a(' is the shortest possible function.
+    if (start_offset < 2) { // 'a(' is the shortest possible function.
         return;
     }
     CTextA line_buf;
     npp.GetLineText(line_buf, len, line);
 
     intptr_t nests = 0;
-    offset -= 1;
-    for (intptr_t i = offset; i >= 0; i--) { // Find all of the '(' and ','.
-        char symbol = line_buf.C_str()[i];
+	intptr_t i = start_offset;
+	char *currline_cstr = line_buf.C_str();
+    while (true) { // Find all of the '(' and ','.
+		i--;
+		if (i <= -1) { // Multiline function.
+			line--;
+			startpos = npp.PositionFromLine(line);
+			endpos = npp.LineEndPosition(line);
+			len = endpos - startpos + 3;
+			npp.GetLineText(line_buf, len, line);
+			currline_cstr = line_buf.C_str();
+			i = len;
+		}
+        char symbol = currline_cstr[i];
         if (symbol == '(') {
             nests -= 1;
             if (nests == -1) {
-                intptr_t name_end = i - 1;;
-                intptr_t n = i - 1;
-                while (n >= 0) {
-                    symbol = line_buf.C_str()[n];
+                intptr_t name_end = i - 1;
+                intptr_t n = i;
+                while (n > 0) {
+                    n--;
+                    symbol = currline_cstr[n];
                     if (isspace(symbol) && n == name_end) { // Whitespace between name and params, remove and continue.
                         name_end--;
                         n--;
                         continue;
                     }
-                    if (!isalpha(symbol) && !isdigit(symbol) && symbol != '_') {
+                    if (!isalpha(symbol) && !isdigit(symbol) && symbol != '_' && symbol != '~') {
                         n += 1;
                         break;
                     }
-                    n--;
                 }
-                func_start_pos = startpos + n;
-                for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
-                    func_name += line_buf.C_str()[n];
+				// We need to check if there is another function line below,
+				// so CallTipWin won't be annoying and cover it (entirely).
+                i = start_offset;
+				CTextA endline_buf;
+				npp.GetLineText(endline_buf, endline_len, endline_line);
+				bool currline_is_endline = false;
+				while (i < endline_len) {
+					symbol = endline_buf.C_str()[i];
+					if (symbol == '(') {
+						nests--;
+					}
+					else if (symbol == ')') {
+						nests++;
+						if (nests == 0) {
+							currline_is_endline = true;
+							break;
+						}
+					}
+					i++;
+				}
+				if (!currline_is_endline) {
+					endline_startpos += endline_len - 1;
+				}
+                func_start_pos = endline_startpos;
+				// Don't offset calltip for multiline functions:
+                if (endline_startpos == startpos)
+                    func_start_pos += n;
+				// Reverse the name back, so it's normal:
+                for (n; n <= name_end; n++) {
+                    func_name += currline_cstr[n];
                 }
                 return;
             }
@@ -304,7 +380,6 @@ HWND CallTipWin::composeWindow()
     EnableWindow(_hLVWnd, false);
 
     SetFocus(_hWnd);
-    
     return _hWnd;
 }
 
@@ -382,10 +457,19 @@ int CallTipWin::filterLV()
     {
         TCHAR* line = _parser->GetList().at(i);
         TCHAR* path = _parser->GetListPaths().at(i);
-        // filter non header files, when searching by symbol.
-        if (_cmdId == CALLTIP_SYMBOL && !_tcsstr(path, TEXT(".h:")) &&
-            !_tcsstr(path, TEXT(".hpp:")) && !_tcsstr(path, TEXT(".hxx:")))
-            continue;
+        if (_cmdId == CALLTIP_SYMBOL) {
+            // filter non header files, when searching by symbol.
+            if (!_tcsstr(path, TEXT(".h:")) &&
+                !_tcsstr(path, TEXT(".hpp:")) && !_tcsstr(path, TEXT(".hxx:")))
+                continue;
+            TCHAR *name_in_line = _tcsstr(line, _tag.C_str());
+            name_in_line += _tag.Len();
+            while (isspace(*name_in_line)) { name_in_line++; }
+            // If '(' is not the next symbol after the name,
+            // than it's not a function at all.
+            if (*name_in_line != _T('('))
+                continue;
+        }
         int parameter_count = getDefParamCount(line);
         if (parameter_count < lowest_parameter_count)
             lowest_parameter_count = parameter_count;
@@ -532,6 +616,7 @@ void CallTipWin::updateWindow(intptr_t position) {
     }
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
         _parser->overload = overload;
+		_parser->func_start_pos = func_start_pos;
         TCHAR buf[256];
         ListView_GetItemText(_hLVWnd, _selItem, 0, buf, _countof(buf));
         if (!filterLV())
@@ -691,7 +776,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                         }
 
                         if (npp.OpenFile(path_buf) == 0) {
-                            npp.GoToLine(intLine);
+                            npp.GoToPos(npp.LineEndPosition(intLine));
                             npp.SetFirstVisibleLine(intLine - (npp.LinesOnScreen()/2)); // Center view.
                         }
                     }
