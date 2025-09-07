@@ -38,6 +38,9 @@
 namespace GTags
 {
 
+typedef std::basic_fstream<TCHAR> tifstream;
+typedef std::basic_string<TCHAR> tstring;
+
 class CallTipParser : public ResultParser
 {
 public:
@@ -48,11 +51,11 @@ public:
     virtual ~CallTipParser() {}
 
     virtual intptr_t Parse(const CmdPtr_t&);
-    virtual const std::vector<TCHAR*>& GetListPaths() const { return _paths; }
-    int FindListIndexFromLine(TCHAR* findLine);
+    virtual const std::vector<tstring>& GetDefinitions() const { return _definitions; }
+    int FindDefIndexFromLine(const TCHAR* findLine);
 
 protected:
-    std::vector<TCHAR*> _paths;
+    std::vector<tstring> _definitions;
 private:
     CText _buf;
 };
@@ -91,7 +94,7 @@ private:
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    static int getDefParamCount(TCHAR* word);
+    static int getDefParamCount(const TCHAR* word);
     static TCHAR* getDefParamText(TCHAR* word, int wordSize);
 
     int getItemByName(TCHAR* itemText);

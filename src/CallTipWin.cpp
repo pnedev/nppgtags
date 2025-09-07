@@ -35,6 +35,8 @@
 #include "CallTipWin.h"
 #include "NppAPI/Notepad_plus_msgs.h"
 #include <string>
+#include <fstream>
+#include <iostream>
 
 namespace GTags
 {
@@ -50,9 +52,9 @@ std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 /**
  *  \brief
  */
-int CallTipParser::FindListIndexFromLine(TCHAR* findLine) { // Returns -1 if couldn't find line in list.
-    for (int i = 0; i < GetList().size(); i++) {
-        TCHAR* word = GetList().at(i);
+int CallTipParser::FindDefIndexFromLine(const TCHAR* findLine) { // Returns -1 if couldn't find line in list.
+    for (int i = 0; i < GetDefinitions().size(); i++) {
+        const TCHAR* word = &GetDefinitions().at(i).c_str()[0];
         if (_tcscmp(findLine, word) == 0) {
             return i;
         }
@@ -67,40 +69,88 @@ int CallTipParser::FindListIndexFromLine(TCHAR* findLine) { // Returns -1 if cou
 intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     intptr_t result = 0;
     _lines.clear();
-    _paths.clear();
+    _definitions.clear();
     _buf = cmd->Result();
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
+    for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken;
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         int colon_count = 0;
         int i = 0;
-        int function_start_idx = 0;
+        int def_start_idx = -1;
+        int linenum_start_idx = 0;
+        TCHAR* path_token = pToken;
         while (i < 1024) { // Find end of path.
             if (pToken[i] == '\0')
                 break;
             if (pToken[i] == ':') { // Absoulute paths have 3 colons, "c:/path/file:line_number:"
                 colon_count += 1;
-                if (colon_count == 3) {
-                    TCHAR* path_token = pToken;
-                    path_token[i] = '\0';
-                    _paths.push_back(path_token);
-                    i++;
-                    function_start_idx = i;
-                    while (isspace(pToken[function_start_idx])) { // Remove whitespace.
-                        function_start_idx++;
-                    }
+                if (colon_count == 2) { // Start of :line_number:
+                    linenum_start_idx = i;
                 }
-            }
-            if (colon_count >= 3) { // Remove possible defintion.
-                if (pToken[i] == '{' || pToken[i] == ';' || (colon_count >= 6 && pToken[i] == ':')) {
-                    pToken[i] = '\0';
-                    break;
+                else if (colon_count == 3) { // End of path.
+                    path_token[i] = '\0';
+                    i++;
+                    def_start_idx = i;
+                    while (isspace(pToken[def_start_idx])) { // Remove whitespace.
+                        def_start_idx++;
+                    }
                 }
             }
             i++;
         }
-        TCHAR* function_token = &pToken[function_start_idx];
-        _lines.push_back(function_token);
+
+        path_token[linenum_start_idx] = '\0';
+        int linenum = _tstoi(&path_token[linenum_start_idx + 1]);
+        tifstream src_file(path_token);
+        tstring line_str;
+
+        // (just putting this back where we found it :)
+        path_token[linenum_start_idx] = ':';
+
+        // We have to loop all the way to the line we are searching for.
+        for (int l = 1; l <= linenum - 1; l++) {
+            std::getline(src_file, line_str, _T('\n'));
+        }
+
+        tstring full_def_str;
+        bool break_while = false;
+        int nests = 0;
+        int loop_count = 0;
+        while (!break_while) {
+            if (src_file.eof() || loop_count >= 10) {
+                // We could do a popup per usual, but to keep it unobtrusive,
+                // notify the user by putting a warning as a calltip.
+                full_def_str = TEXT("ERROR: Could not parse CallTip.");
+                break;
+            }
+            std::getline(src_file, line_str, L'\n');
+            size_t lc_idx = 0;
+            size_t nest_end_offset = line_str.length();
+            for (lc_idx = 0; lc_idx < line_str.length(); lc_idx++) {
+
+                if (line_str[lc_idx] == _T('(')) {
+                    nests++;
+                }
+                if (line_str[lc_idx] == _T(')')) {
+                    nests--;
+                    nest_end_offset = lc_idx;
+                }
+            }
+            full_def_str.append(line_str);
+            // Add space in place of newline
+            full_def_str.append(TEXT(" "));
+            loop_count++;
+            if (nests == 0) {
+                size_t end_offset = full_def_str.length() + 1 - (line_str.length() - nest_end_offset);
+                full_def_str.resize(end_offset);
+                break;
+            }
+        }
+        // Remove extra space.
+        full_def_str.resize(full_def_str.length() - 1);
+        src_file.close();
+        _definitions.push_back(full_def_str);
+        _lines.push_back(path_token);
         result++;
     }
     return result;
@@ -122,25 +172,42 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
     intptr_t endpos = npp.LineEndPosition(line);
     intptr_t len = endpos - startpos + 3; // Also take CRLF in account, even if not there.
 
-    intptr_t offset = currpos - startpos;
+    intptr_t start_offset = currpos - startpos;
+    intptr_t endline_len = len; // Doesn't reset in loop.
+    intptr_t endline_line = line; // Doesn't reset in loop.
+    intptr_t endline_startpos = startpos; // Doesn't reset in loop.
 
-    if (offset < 2) { // 'a(' is the shortest possible function.
+    if (start_offset < 2) { // 'a(' is the shortest possible function.
         return;
     }
     CTextA line_buf;
     npp.GetLineText(line_buf, len, line);
 
     intptr_t nests = 0;
-    offset -= 1;
-    for (intptr_t i = offset; i >= 0; i--) { // Find all of the '(' and ','.
-        char symbol = line_buf.C_str()[i];
+    intptr_t i = start_offset;
+    char *currline_cstr = line_buf.C_str();
+    while (true) { // Find all of the '(' and ','.
+        i--;
+        if (i <= -1) { // Multiline function.
+            line--;
+            if (line < 0)
+                break;
+            startpos = npp.PositionFromLine(line);
+            endpos = npp.LineEndPosition(line);
+            len = endpos - startpos + 3;
+            npp.GetLineText(line_buf, len, line);
+            currline_cstr = line_buf.C_str();
+            i = len;
+        }
+        char symbol = currline_cstr[i];
         if (symbol == '(') {
             nests -= 1;
             if (nests == -1) {
-                intptr_t name_end = i - 1;;
-                intptr_t n = i - 1;
-                while (n >= 0) {
-                    symbol = line_buf.C_str()[n];
+                intptr_t name_end = i - 1;
+                intptr_t n = i;
+                while (n > 0) {
+                    n--;
+                    symbol = currline_cstr[n];
                     if (isspace(symbol) && n == name_end) { // Whitespace between name and params, remove and continue.
                         name_end--;
                         n--;
@@ -150,11 +217,35 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
                         n += 1;
                         break;
                     }
-                    n--;
                 }
-                func_start_pos = startpos + n;
-                for (n; n <= name_end; n++) { // Reverse the name back, so it's normal.
-                    func_name += line_buf.C_str()[n];
+                // We need to check if there is another function line below,
+                // so CallTipWin won't be annoying and cover it (entirely).
+                i = start_offset;
+                CTextA endline_buf;
+                npp.GetLineText(endline_buf, endline_len, endline_line);
+                bool currline_is_endline = false;
+                while (i < endline_len) {
+                    symbol = endline_buf.C_str()[i];
+                    if (symbol == '(') {
+                        nests--;
+                    }
+                    else if (symbol == ')') {
+                        nests++;
+                        if (nests == 0) {
+                            currline_is_endline = true;
+                            break;
+                        }
+                    }
+                    i++;
+                }
+                if (!currline_is_endline) {
+                    endline_startpos += endline_len - 1;
+                }
+                func_start_pos = n;
+                func_start_pos += endline_startpos;
+                // Reverse the name back, so it's normal:
+                for (n; n <= name_end; n++) {
+                    func_name += currline_cstr[n];
                 }
                 return;
             }
@@ -239,7 +330,7 @@ CallTipWin::~CallTipWin()
 
 HWND CallTipWin::composeWindow()
 {
-    HWND hOwner = (INpp::Get().GetSciHandle());
+    HWND hOwner = (INpp::Get().ReadSciHandle());
     RECT win;
 
     GetWindowRect(hOwner, &win);
@@ -304,14 +395,13 @@ HWND CallTipWin::composeWindow()
     EnableWindow(_hLVWnd, false);
 
     SetFocus(_hWnd);
-    
     return _hWnd;
 }
 
 /**
  *  \brief
  */
-int CallTipWin::getDefParamCount(TCHAR* word) {
+int CallTipWin::getDefParamCount(const TCHAR* word) {
     int parameter_count = 0;
     bool parameter_start = false;
     for (TCHAR ch = *word; ch; ch=*++word) {
@@ -380,20 +470,29 @@ int CallTipWin::filterLV()
     }
     for (int i = 0; i < _parser->GetList().size(); i++)
     {
-        TCHAR* line = _parser->GetList().at(i);
-        TCHAR* path = _parser->GetListPaths().at(i);
-        // filter non header files, when searching by symbol.
-        if (_cmdId == CALLTIP_SYMBOL && !_tcsstr(path, TEXT(".h:")) &&
-            !_tcsstr(path, TEXT(".hpp:")) && !_tcsstr(path, TEXT(".hxx:")))
-            continue;
-        int parameter_count = getDefParamCount(line);
+        const TCHAR* def = &_parser->GetDefinitions().at(i).c_str()[0];
+        TCHAR* path = _parser->GetList().at(i);
+        if (_cmdId == CALLTIP_SYMBOL) {
+            // filter non header files, when searching by symbol.
+            if (!_tcsstr(path, TEXT(".h:")) &&
+                !_tcsstr(path, TEXT(".hpp:")) && !_tcsstr(path, TEXT(".hxx:")))
+                continue;
+            const TCHAR *name_in_def = _tcsstr(def, _tag.C_str());
+            name_in_def += _tag.Len();
+            while (isspace(*name_in_def)) { name_in_def++; }
+            // If '(' is not the next symbol after the name,
+            // than it's not a function at all.
+            if (*name_in_def != _T('('))
+                continue;
+        }
+        int parameter_count = getDefParamCount(def);
         if (parameter_count < lowest_parameter_count)
             lowest_parameter_count = parameter_count;
         if (parameter_count > highest_parameter_count)
             highest_parameter_count = parameter_count;
-        
+
         if (overload_compare <= parameter_count) {
-            lvItem.pszText = line;
+            lvItem.pszText = (TCHAR*)def; // Note, May be unsafe.
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
         }
@@ -413,7 +512,7 @@ int CallTipWin::filterLV()
             else
                 updateHeader(lowest_parameter_count, -1, _T("CallTips"));
         }
-    else 
+    else
         updateHeader(lowest_parameter_count, highest_parameter_count);
 
     return lvItem.iItem;
@@ -481,9 +580,10 @@ void CallTipWin::resizeLV()
         win.right   -= xOffset;
     }
 
-    if (win.bottom > maxWin.bottom)
+    if (win.bottom >
+        maxWin.bottom - maxWin.top - GetSystemMetrics(SM_CXHSCROLL))
     {
-        win.bottom  = maxWin.top + yOffset;
+        win.bottom  = yOffset;
         win.top     = win.bottom - lvHeight;
     }
 
@@ -532,6 +632,7 @@ void CallTipWin::updateWindow(intptr_t position) {
     }
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
         _parser->overload = overload;
+        _parser->func_start_pos = func_start_pos;
         TCHAR buf[256];
         ListView_GetItemText(_hLVWnd, _selItem, 0, buf, _countof(buf));
         if (!filterLV())
@@ -555,10 +656,10 @@ void CallTipWin::onClick(int item) {
     _selItem = item;
     TCHAR buf[256] = {0};
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
-    int listIndex = _parser->FindListIndexFromLine(buf);
+    int listIndex = _parser->FindDefIndexFromLine(buf);
     TCHAR pathBuf[256];
     if (listIndex != -1) {
-        _stprintf(pathBuf, _tcsrchr(_parser->GetListPaths().at(listIndex), _T('/'))+1);
+        _stprintf(pathBuf, _tcsrchr(_parser->GetList().at(listIndex), _T('/'))+1);
         _tcschr(pathBuf, _T(':'))[0] = '\0';
     }
 
@@ -600,9 +701,13 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 INpp& npp = INpp::Get();
                 POINT caretPoint;
                 GetCursorPos(&caretPoint);
-                RECT maxWin;
-                GetWindowRect(npp_handle, &maxWin);
-                intptr_t cursor_pos = npp.GetPosFromPoint(caretPoint.x - maxWin.left, caretPoint.y - maxWin.top);
+                RECT nppRect;
+                GetWindowRect(npp_handle, &nppRect);
+                intptr_t cursor_pos = npp.GetPosFromPoint(caretPoint.x - nppRect.left, caretPoint.y - nppRect.top);
+                if (cursor_pos == -1 || !PtInRect(&nppRect, caretPoint)) {
+                    DestroyCurrentWin();
+                    return 0;
+                }
                 CTW->updateWindow(cursor_pos);
             }
             else { // Yeild focus to non parent windows
@@ -643,16 +748,14 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         case WM_CUT:
         case WM_INPUTLANGCHANGE: // I don't know if NPP needs any of these, but I'll send them jsut in case.
         case WM_INPUTLANGCHANGEREQUEST:
-            SendMessage(npp_handle, uMsg, wParam, lParam);
-        return 0;
+            return SendMessage(npp_handle, uMsg, wParam, lParam);
 
         case WM_MOUSEMOVE:
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
         case WM_LBUTTONDBLCLK:
         case WM_MOUSEWHEEL:
-            SendMessage(CTW->_hLVWnd, uMsg, wParam, lParam);
-        return 0;
+            return SendMessage(CTW->_hLVWnd, uMsg, wParam, lParam);
 
         case WM_NOTIFY:
             switch (((LPNMHDR)lParam)->code)
@@ -670,9 +773,9 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                     INpp& npp = INpp::Get();
                     TCHAR buf[256] = {0};
                     ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
-                    int listIndex = CTW->_parser->FindListIndexFromLine(buf);
+                    int listIndex = CTW->_parser->FindDefIndexFromLine(buf);
                     if (listIndex != -1) {
-                        TCHAR* path = CTW->_parser->GetListPaths().at(listIndex);
+                        TCHAR* path = CTW->_parser->GetList().at(listIndex);
                         TCHAR* line = _tcsrchr(path, _T(':'));
                         line[0] = '\0';
                         line++;
@@ -691,7 +794,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                         }
 
                         if (npp.OpenFile(path_buf) == 0) {
-                            npp.GoToLine(intLine);
+                            npp.GoToPos(npp.LineEndPosition(intLine));
                             npp.SetFirstVisibleLine(intLine - (npp.LinesOnScreen()/2)); // Center view.
                         }
                     }

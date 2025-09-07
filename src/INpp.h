@@ -253,7 +253,7 @@ public:
 
     inline intptr_t GetPosFromPoint(int x, int y) const
     {
-        return SendMessage(_hSC, SCI_POSITIONFROMPOINT, x, y);
+        return SendMessage(_hSC, SCI_POSITIONFROMPOINTCLOSE, x, y);
     }
 
     inline intptr_t GetLineFromPosition(intptr_t pos) const
