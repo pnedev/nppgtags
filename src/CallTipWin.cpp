@@ -190,6 +190,8 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
         i--;
         if (i <= -1) { // Multiline function.
             line--;
+			if (line < 0)
+				break;
             startpos = npp.PositionFromLine(line);
             endpos = npp.LineEndPosition(line);
             len = endpos - startpos + 3;
@@ -211,7 +213,7 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
                         n--;
                         continue;
                     }
-                    if (!isalpha(symbol) && !isdigit(symbol) && symbol != '_' && symbol != '~') {
+                    if (!isalpha(symbol) && !isdigit(symbol) && symbol != '_') {
                         n += 1;
                         break;
                     }
@@ -328,7 +330,7 @@ CallTipWin::~CallTipWin()
 
 HWND CallTipWin::composeWindow()
 {
-    HWND hOwner = (INpp::Get().GetSciHandle());
+    HWND hOwner = (INpp::Get().ReadSciHandle());
     RECT win;
 
     GetWindowRect(hOwner, &win);
@@ -699,9 +701,13 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 INpp& npp = INpp::Get();
                 POINT caretPoint;
                 GetCursorPos(&caretPoint);
-                RECT maxWin;
-                GetWindowRect(npp_handle, &maxWin);
-                intptr_t cursor_pos = npp.GetPosFromPoint(caretPoint.x - maxWin.left, caretPoint.y - maxWin.top);
+                RECT nppRect;
+                GetWindowRect(npp_handle, &nppRect);
+                intptr_t cursor_pos = npp.GetPosFromPoint(caretPoint.x - nppRect.left, caretPoint.y - nppRect.top);
+				if (cursor_pos == -1 || !PtInRect(&nppRect, caretPoint)) {
+					DestroyCurrentWin();
+					return 0;
+				}
                 CTW->updateWindow(cursor_pos);
             }
             else { // Yeild focus to non parent windows
@@ -742,16 +748,14 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
         case WM_CUT:
         case WM_INPUTLANGCHANGE: // I don't know if NPP needs any of these, but I'll send them jsut in case.
         case WM_INPUTLANGCHANGEREQUEST:
-            SendMessage(npp_handle, uMsg, wParam, lParam);
-        return 0;
+            return SendMessage(npp_handle, uMsg, wParam, lParam);
 
         case WM_MOUSEMOVE:
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
         case WM_LBUTTONDBLCLK:
         case WM_MOUSEWHEEL:
-            SendMessage(CTW->_hLVWnd, uMsg, wParam, lParam);
-        return 0;
+            return SendMessage(CTW->_hLVWnd, uMsg, wParam, lParam);
 
         case WM_NOTIFY:
             switch (((LPNMHDR)lParam)->code)
