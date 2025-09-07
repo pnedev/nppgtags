@@ -41,9 +41,6 @@
 namespace GTags
 {
 
-typedef std::basic_fstream<TCHAR> tifstream;
-typedef std::basic_string<TCHAR> tstring;
-
 const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
 const int CallTipWin::cItemWidth           = 1024;
@@ -55,9 +52,9 @@ std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 /**
  *  \brief
  */
-int CallTipParser::FindListIndexFromLine(TCHAR* findLine) { // Returns -1 if couldn't find line in list.
-    for (int i = 0; i < GetList().size(); i++) {
-        TCHAR* word = GetList().at(i);
+int CallTipParser::FindDefIndexFromLine(const TCHAR* findLine) { // Returns -1 if couldn't find line in list.
+    for (int i = 0; i < GetDefinitions().size(); i++) {
+        const TCHAR* word = &GetDefinitions().at(i).c_str()[0];
         if (_tcscmp(findLine, word) == 0) {
             return i;
         }
@@ -72,8 +69,7 @@ int CallTipParser::FindListIndexFromLine(TCHAR* findLine) { // Returns -1 if cou
 intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     intptr_t result = 0;
     _lines.clear();
-    _line_bufs.clear();
-    _paths.clear();
+    _definitions.clear();
     _buf = cmd->Result();
     TCHAR* pTmp = NULL;
     for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
@@ -108,34 +104,42 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
         tifstream src_file(path_token);
 		tstring line_str;
 
-        path_token[linenum_start_idx] = ':'; // (just this back where we found it :)
+        // (just putting this back where we found it :)
+        path_token[linenum_start_idx] = ':';
 
         src_file.seekg(INpp::Get().PositionFromLine(linenum - 1));
-        TCHAR line_token[512] = { 0 };
+        tstring full_def_str;
         bool break_while = false;
         int nests = 0;
-        while (!src_file.eof() && !break_while) {
+        int loop_count = 0;
+        while (!break_while) {
+            if (src_file.eof() || loop_count >= 10) {
+                // We could do a popup per usual, but to keep it unobtrusive,
+                // notify the user by putting a warning as a calltip.
+                full_def_str = TEXT("ERROR: Could not parse CallTip.");
+                break;
+            }
             std::getline(src_file, line_str, L'\n');
-            _stprintf(line_token, TEXT("%s"), line_str.c_str());
-            for (TCHAR* symbol = &line_token[0]; symbol; symbol++) {
-                if (*symbol == _T('(')) {
+            for (int line_idx = 0; line_idx < line_str.length(); line_idx++) {
+
+                if (line_str[line_idx] == _T('(')) {
                     nests++;
                 }
-                if (*symbol == _T(')')) {
+                if (line_str[line_idx] == _T(')')) {
                     nests--;
                     if (nests == 0) {
-                        symbol[1] = '\0';
+                        line_str[line_idx + 1] = '\0';
                         break_while = true;
                         break;
                     }
                 }
             }
+            full_def_str.append(line_str);
+            loop_count++;
         }
-        //MessageBox(NULL, path_token, L"CallTips", MB_OK);
-        //MessageBox(NULL, line_token, L"Calltips", MB_OK);
         src_file.close();
-        _line_bufs.push_back(*line_token);
-		_paths.push_back(path_token);
+        _definitions.push_back(full_def_str);
+        _lines.push_back(path_token);
         result++;
     }
     return result;
@@ -386,7 +390,7 @@ HWND CallTipWin::composeWindow()
 /**
  *  \brief
  */
-int CallTipWin::getDefParamCount(TCHAR* word) {
+int CallTipWin::getDefParamCount(const TCHAR* word) {
     int parameter_count = 0;
     bool parameter_start = false;
     for (TCHAR ch = *word; ch; ch=*++word) {
@@ -455,29 +459,29 @@ int CallTipWin::filterLV()
     }
     for (int i = 0; i < _parser->GetList().size(); i++)
     {
-        TCHAR* line = _parser->GetList().at(i);
-        TCHAR* path = _parser->GetListPaths().at(i);
+        const TCHAR* def = &_parser->GetDefinitions().at(i).c_str()[0];
+        TCHAR* path = _parser->GetList().at(i);
         if (_cmdId == CALLTIP_SYMBOL) {
             // filter non header files, when searching by symbol.
             if (!_tcsstr(path, TEXT(".h:")) &&
                 !_tcsstr(path, TEXT(".hpp:")) && !_tcsstr(path, TEXT(".hxx:")))
                 continue;
-            TCHAR *name_in_line = _tcsstr(line, _tag.C_str());
-            name_in_line += _tag.Len();
-            while (isspace(*name_in_line)) { name_in_line++; }
+            const TCHAR *name_in_def = _tcsstr(def, _tag.C_str());
+            name_in_def += _tag.Len();
+            while (isspace(*name_in_def)) { name_in_def++; }
             // If '(' is not the next symbol after the name,
             // than it's not a function at all.
-            if (*name_in_line != _T('('))
+            if (*name_in_def != _T('('))
                 continue;
         }
-        int parameter_count = getDefParamCount(line);
+        int parameter_count = getDefParamCount(def);
         if (parameter_count < lowest_parameter_count)
             lowest_parameter_count = parameter_count;
         if (parameter_count > highest_parameter_count)
             highest_parameter_count = parameter_count;
         
         if (overload_compare <= parameter_count) {
-            lvItem.pszText = line;
+            lvItem.pszText = (TCHAR*)def; // Note, May be unsafe.
             ListView_InsertItem(_hLVWnd, &lvItem);
             ++lvItem.iItem;
         }
@@ -640,10 +644,10 @@ void CallTipWin::onClick(int item) {
     _selItem = item;
     TCHAR buf[256] = {0};
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
-    int listIndex = _parser->FindListIndexFromLine(buf);
+    int listIndex = _parser->FindDefIndexFromLine(buf);
     TCHAR pathBuf[256];
     if (listIndex != -1) {
-        _stprintf(pathBuf, _tcsrchr(_parser->GetListPaths().at(listIndex), _T('/'))+1);
+        _stprintf(pathBuf, _tcsrchr(_parser->GetList().at(listIndex), _T('/'))+1);
         _tcschr(pathBuf, _T(':'))[0] = '\0';
     }
 
@@ -755,9 +759,9 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                     INpp& npp = INpp::Get();
                     TCHAR buf[256] = {0};
                     ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
-                    int listIndex = CTW->_parser->FindListIndexFromLine(buf);
+                    int listIndex = CTW->_parser->FindDefIndexFromLine(buf);
                     if (listIndex != -1) {
-                        TCHAR* path = CTW->_parser->GetListPaths().at(listIndex);
+                        TCHAR* path = CTW->_parser->GetList().at(listIndex);
                         TCHAR* line = _tcsrchr(path, _T(':'));
                         line[0] = '\0';
                         line++;
