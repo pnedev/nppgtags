@@ -72,7 +72,7 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     _definitions.clear();
     _buf = cmd->Result();
     TCHAR* pTmp = NULL;
-    for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken; 
+    for (TCHAR* pToken = _tcstok_s(_buf.C_str(), _T("\n\r"), &pTmp); pToken;
             pToken = _tcstok_s(NULL, _T("\n\r"), &pTmp)) {
         int colon_count = 0;
         int i = 0;
@@ -98,20 +98,20 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
             }
             i++;
         }
-		
+
         path_token[linenum_start_idx] = '\0';
         int linenum = _tstoi(&path_token[linenum_start_idx + 1]);
         tifstream src_file(path_token);
-		tstring line_str;
+        tstring line_str;
 
         // (just putting this back where we found it :)
         path_token[linenum_start_idx] = ':';
-		
-		// We have to loop all the way to the line we are searching for.
-		for (int l = 1; l <= linenum - 1; l++) {
-			std::getline(src_file, line_str, _T('\n'));
-		}
-		
+
+        // We have to loop all the way to the line we are searching for.
+        for (int l = 1; l <= linenum - 1; l++) {
+            std::getline(src_file, line_str, _T('\n'));
+        }
+
         tstring full_def_str;
         bool break_while = false;
         int nests = 0;
@@ -124,8 +124,8 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
                 break;
             }
             std::getline(src_file, line_str, L'\n');
-			size_t lc_idx = 0;
-			size_t nest_end_offset = line_str.length();
+            size_t lc_idx = 0;
+            size_t nest_end_offset = line_str.length();
             for (lc_idx = 0; lc_idx < line_str.length(); lc_idx++) {
 
                 if (line_str[lc_idx] == _T('(')) {
@@ -133,21 +133,21 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
                 }
                 if (line_str[lc_idx] == _T(')')) {
                     nests--;
-					nest_end_offset = lc_idx;
+                    nest_end_offset = lc_idx;
                 }
             }
             full_def_str.append(line_str);
-			// Add space in place of newline
+            // Add space in place of newline
             full_def_str.append(TEXT(" "));
             loop_count++;
-			if (nests == 0) {
-				size_t end_offset = full_def_str.length() + 1 - (line_str.length() - nest_end_offset);
-				full_def_str.resize(end_offset);
-				break;
-			}
+            if (nests == 0) {
+                size_t end_offset = full_def_str.length() + 1 - (line_str.length() - nest_end_offset);
+                full_def_str.resize(end_offset);
+                break;
+            }
         }
-		// Remove extra space.
-		full_def_str.resize(full_def_str.length() - 1);
+        // Remove extra space.
+        full_def_str.resize(full_def_str.length() - 1);
         src_file.close();
         _definitions.push_back(full_def_str);
         _lines.push_back(path_token);
@@ -173,9 +173,9 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
     intptr_t len = endpos - startpos + 3; // Also take CRLF in account, even if not there.
 
     intptr_t start_offset = currpos - startpos;
-	intptr_t endline_len = len; // Doesn't reset in loop.
-	intptr_t endline_line = line; // Doesn't reset in loop.
-	intptr_t endline_startpos = startpos; // Doesn't reset in loop.
+    intptr_t endline_len = len; // Doesn't reset in loop.
+    intptr_t endline_line = line; // Doesn't reset in loop.
+    intptr_t endline_startpos = startpos; // Doesn't reset in loop.
 
     if (start_offset < 2) { // 'a(' is the shortest possible function.
         return;
@@ -184,19 +184,19 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
     npp.GetLineText(line_buf, len, line);
 
     intptr_t nests = 0;
-	intptr_t i = start_offset;
-	char *currline_cstr = line_buf.C_str();
+    intptr_t i = start_offset;
+    char *currline_cstr = line_buf.C_str();
     while (true) { // Find all of the '(' and ','.
-		i--;
-		if (i <= -1) { // Multiline function.
-			line--;
-			startpos = npp.PositionFromLine(line);
-			endpos = npp.LineEndPosition(line);
-			len = endpos - startpos + 3;
-			npp.GetLineText(line_buf, len, line);
-			currline_cstr = line_buf.C_str();
-			i = len;
-		}
+        i--;
+        if (i <= -1) { // Multiline function.
+            line--;
+            startpos = npp.PositionFromLine(line);
+            endpos = npp.LineEndPosition(line);
+            len = endpos - startpos + 3;
+            npp.GetLineText(line_buf, len, line);
+            currline_cstr = line_buf.C_str();
+            i = len;
+        }
         char symbol = currline_cstr[i];
         if (symbol == '(') {
             nests -= 1;
@@ -216,32 +216,32 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
                         break;
                     }
                 }
-				// We need to check if there is another function line below,
-				// so CallTipWin won't be annoying and cover it (entirely).
+                // We need to check if there is another function line below,
+                // so CallTipWin won't be annoying and cover it (entirely).
                 i = start_offset;
-				CTextA endline_buf;
-				npp.GetLineText(endline_buf, endline_len, endline_line);
-				bool currline_is_endline = false;
-				while (i < endline_len) {
-					symbol = endline_buf.C_str()[i];
-					if (symbol == '(') {
-						nests--;
-					}
-					else if (symbol == ')') {
-						nests++;
-						if (nests == 0) {
-							currline_is_endline = true;
-							break;
-						}
-					}
-					i++;
-				}
-				if (!currline_is_endline) {
-					endline_startpos += endline_len - 1;
-				}
-				func_start_pos = n;
+                CTextA endline_buf;
+                npp.GetLineText(endline_buf, endline_len, endline_line);
+                bool currline_is_endline = false;
+                while (i < endline_len) {
+                    symbol = endline_buf.C_str()[i];
+                    if (symbol == '(') {
+                        nests--;
+                    }
+                    else if (symbol == ')') {
+                        nests++;
+                        if (nests == 0) {
+                            currline_is_endline = true;
+                            break;
+                        }
+                    }
+                    i++;
+                }
+                if (!currline_is_endline) {
+                    endline_startpos += endline_len - 1;
+                }
+                func_start_pos = n;
                 func_start_pos += endline_startpos;
-				// Reverse the name back, so it's normal:
+                // Reverse the name back, so it's normal:
                 for (n; n <= name_end; n++) {
                     func_name += currline_cstr[n];
                 }
@@ -488,7 +488,7 @@ int CallTipWin::filterLV()
             lowest_parameter_count = parameter_count;
         if (parameter_count > highest_parameter_count)
             highest_parameter_count = parameter_count;
-        
+
         if (overload_compare <= parameter_count) {
             lvItem.pszText = (TCHAR*)def; // Note, May be unsafe.
             ListView_InsertItem(_hLVWnd, &lvItem);
@@ -510,7 +510,7 @@ int CallTipWin::filterLV()
             else
                 updateHeader(lowest_parameter_count, -1, _T("CallTips"));
         }
-    else 
+    else
         updateHeader(lowest_parameter_count, highest_parameter_count);
 
     return lvItem.iItem;
@@ -579,7 +579,7 @@ void CallTipWin::resizeLV()
     }
 
     if (win.bottom >
-		maxWin.bottom - maxWin.top - GetSystemMetrics(SM_CXHSCROLL))
+        maxWin.bottom - maxWin.top - GetSystemMetrics(SM_CXHSCROLL))
     {
         win.bottom  = yOffset;
         win.top     = win.bottom - lvHeight;
@@ -630,7 +630,7 @@ void CallTipWin::updateWindow(intptr_t position) {
     }
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
         _parser->overload = overload;
-		_parser->func_start_pos = func_start_pos;
+        _parser->func_start_pos = func_start_pos;
         TCHAR buf[256];
         ListView_GetItemText(_hLVWnd, _selItem, 0, buf, _countof(buf));
         if (!filterLV())
