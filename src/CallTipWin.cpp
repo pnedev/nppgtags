@@ -190,8 +190,8 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
         i--;
         if (i <= -1) { // Multiline function.
             line--;
-			if (line < 0)
-				break;
+            if (line < 0)
+                break;
             startpos = npp.PositionFromLine(line);
             endpos = npp.LineEndPosition(line);
             len = endpos - startpos + 3;
@@ -704,10 +704,10 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 RECT nppRect;
                 GetWindowRect(npp_handle, &nppRect);
                 intptr_t cursor_pos = npp.GetPosFromPoint(caretPoint.x - nppRect.left, caretPoint.y - nppRect.top);
-				if (cursor_pos == -1 || !PtInRect(&nppRect, caretPoint)) {
-					DestroyCurrentWin();
-					return 0;
-				}
+                if (cursor_pos == -1 || !PtInRect(&nppRect, caretPoint)) {
+                    DestroyCurrentWin();
+                    return 0;
+                }
                 CTW->updateWindow(cursor_pos);
             }
             else { // Yeild focus to non parent windows
