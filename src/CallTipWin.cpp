@@ -106,8 +106,12 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
 
         // (just putting this back where we found it :)
         path_token[linenum_start_idx] = ':';
-
-        src_file.seekg(INpp::Get().PositionFromLine(linenum - 1));
+		
+		// We have to loop all the way to the line we are searching for.
+		for (int l = 1; l <= linenum - 1; l++) {
+			std::getline(src_file, line_str, _T('\n'));
+		}
+		
         tstring full_def_str;
         bool break_while = false;
         int nests = 0;
@@ -120,23 +124,30 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
                 break;
             }
             std::getline(src_file, line_str, L'\n');
-            for (int line_idx = 0; line_idx < line_str.length(); line_idx++) {
+			size_t lc_idx = 0;
+			size_t nest_end_offset = line_str.length();
+            for (lc_idx = 0; lc_idx < line_str.length(); lc_idx++) {
 
-                if (line_str[line_idx] == _T('(')) {
+                if (line_str[lc_idx] == _T('(')) {
                     nests++;
                 }
-                if (line_str[line_idx] == _T(')')) {
+                if (line_str[lc_idx] == _T(')')) {
                     nests--;
-                    if (nests == 0) {
-                        line_str[line_idx + 1] = '\0';
-                        break_while = true;
-                        break;
-                    }
+					nest_end_offset = lc_idx;
                 }
             }
             full_def_str.append(line_str);
+			// Add space in place of newline
+            full_def_str.append(TEXT(" "));
             loop_count++;
+			if (nests == 0) {
+				size_t end_offset = full_def_str.length() + 1 - (line_str.length() - nest_end_offset);
+				full_def_str.resize(end_offset);
+				break;
+			}
         }
+		// Remove extra space.
+		full_def_str.resize(full_def_str.length() - 1);
         src_file.close();
         _definitions.push_back(full_def_str);
         _lines.push_back(path_token);
@@ -228,10 +239,8 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
 				if (!currline_is_endline) {
 					endline_startpos += endline_len - 1;
 				}
-                func_start_pos = endline_startpos;
-				// Don't offset calltip for multiline functions:
-                if (endline_startpos == startpos)
-                    func_start_pos += n;
+				func_start_pos = n;
+                func_start_pos += endline_startpos;
 				// Reverse the name back, so it's normal:
                 for (n; n <= name_end; n++) {
                     func_name += currline_cstr[n];
