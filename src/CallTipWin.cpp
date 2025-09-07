@@ -578,9 +578,10 @@ void CallTipWin::resizeLV()
         win.right   -= xOffset;
     }
 
-    if (win.bottom > maxWin.bottom)
+    if (win.bottom >
+		maxWin.bottom - maxWin.top - GetSystemMetrics(SM_CXHSCROLL))
     {
-        win.bottom  = maxWin.top + yOffset;
+        win.bottom  = yOffset;
         win.top     = win.bottom - lvHeight;
     }
 
