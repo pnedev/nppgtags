@@ -247,7 +247,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     DWORD styleEx   = WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW;
     DWORD style     = WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
 
-    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 640, 15 * btnHeight + txtInfoHeight + 180);
+    RECT win = Tools::GetWinRect(hOwner, styleEx, style, 640, 15 * btnHeight + txtInfoHeight + 200);
     int width = win.right - win.left;
     int height = win.bottom - win.top;
 
@@ -268,19 +268,19 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     int xPos = win.left + 15;
     int yPos = win.top + 20;
 
-    _hKeepSearchOpen = CreateWindowEx(0, _T("BUTTON"), _T("Keep Search box open"),
-            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos, yPos, (width / 2) - 5, btnHeight,
-            _hWnd, NULL, HMod, NULL);
-
     _hTrigAutocmplEn = CreateWindowEx(0, _T("BUTTON"), _T("Trigger Autocomplete after char"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + (width / 2) + 5, yPos, (width / 2) - 35, btnHeight,
+            xPos, yPos, (width / 2) - 15, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
-    win.top     = yPos;
+    _hKeepSearchOpen = CreateWindowEx(0, _T("BUTTON"), _T("Keep Search box open"),
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+            xPos + (width / 2) + 60, yPos, (width / 2) - 60, btnHeight,
+            _hWnd, NULL, HMod, NULL);
+
+    win.top     = yPos + 5;
     win.bottom  = win.top + txtInfoHeight;
-    win.left    = xPos + width - 25;
+    win.left    = xPos + (width / 2) - 10;
     win.right   = win.left + 25;
 
     styleEx = WS_EX_CLIENTEDGE;
@@ -294,10 +294,10 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     yPos += (btnHeight + 5);
     _hTrigCallTip = CreateWindowEx(0, _T("BUTTON"), _T("Auto trigger CallTips"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + (width / 2) + 5, yPos, (width / 2) - 35, btnHeight,
+            xPos, yPos, (width / 2) - 5, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (btnHeight + 5);
+    yPos += (btnHeight + 20);
     _hEnDefDb = CreateWindowEx(0, _T("BUTTON"), _T("Enable default database"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             xPos, yPos, (width / 2) - 5, btnHeight,
@@ -327,7 +327,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (win.bottom - win.top + 35);
+    yPos += (win.bottom - win.top + 40);
     _hTab = CreateWindowEx(WS_EX_TRANSPARENT, WC_TABCONTROL, NULL,
             WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | TCS_BUTTONS | TCS_FIXEDWIDTH | TCS_FOCUSNEVER,
             xPos, yPos, width, height - yPos - 50,
