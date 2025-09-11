@@ -2,10 +2,10 @@
  *  \file
  *  \brief  GTags CallTips window
  *
- *  \author  Pavel Nedev <pg.nedev@gmail.com>, Robert McDowell <github.com/RobertP-McDowell>
+ *  \author  Robert McDowell <github.com/RobertP-McDowell>, Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2024 Pavel Nedev
+ *  Copyright(C) 2014-2025 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -29,22 +29,23 @@
 #include <windowsx.h>
 #include <winuser.h>
 #include <commctrl.h>
+#include <string>
+#include <fstream>
+#include <iostream>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
 #include "CallTipWin.h"
 #include "NppAPI/Notepad_plus_msgs.h"
-#include <string>
-#include <fstream>
-#include <iostream>
+
 
 namespace GTags
 {
 
-const TCHAR CallTipWin::cClassName[]   = _T("CallTipWin");
-const int CallTipWin::cBackgroundColor = COLOR_INFOBK;
-const int CallTipWin::cItemWidth           = 1024;
-const int CallTipWin::cMinWidth            = 300;
+const TCHAR CallTipWin::cClassName[]        = _T("CallTipWin");
+const int CallTipWin::cBackgroundColor      = COLOR_INFOBK;
+const int CallTipWin::cItemWidth            = 1024;
+const int CallTipWin::cMinWidth             = 400;
 
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
@@ -52,8 +53,9 @@ std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
 /**
  *  \brief
  */
-int CallTipParser::FindDefIndexFromLine(const TCHAR* findLine) { // Returns -1 if couldn't find line in list.
-    for (int i = 0; i < GetDefinitions().size(); i++) {
+int CallTipParser::FindDefIndexFromLine(const TCHAR* findLine) // Returns -1 if couldn't find line in list.
+{
+    for (int i = 0; static_cast<size_t>(i) < GetDefinitions().size(); i++) {
         const TCHAR* word = &GetDefinitions().at(i).c_str()[0];
         if (_tcscmp(findLine, word) == 0) {
             return i;
@@ -66,7 +68,8 @@ int CallTipParser::FindDefIndexFromLine(const TCHAR* findLine) { // Returns -1 i
 /**
  *  \brief
  */
-intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
+intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
+{
     intptr_t result = 0;
     _lines.clear();
     _definitions.clear();
@@ -156,6 +159,7 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd) {
     return result;
 }
 
+
 /**
  *  \brief
  */
@@ -244,7 +248,7 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
                 func_start_pos = n;
                 func_start_pos += endline_startpos;
                 // Reverse the name back, so it's normal:
-                for (n; n <= name_end; n++) {
+                for (; n <= name_end; n++) {
                     func_name += currline_cstr[n];
                 }
                 return;
@@ -262,6 +266,7 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
     }
     return;
 }
+
 
 /**
  *  \brief
@@ -328,6 +333,10 @@ CallTipWin::~CallTipWin()
         DeleteObject(_hFont);
 }
 
+
+/**
+ *  \brief
+ */
 HWND CallTipWin::composeWindow()
 {
     HWND hOwner = (INpp::Get().ReadSciHandle());
@@ -398,10 +407,12 @@ HWND CallTipWin::composeWindow()
     return _hWnd;
 }
 
+
 /**
  *  \brief
  */
-int CallTipWin::getDefParamCount(const TCHAR* word) {
+int CallTipWin::getDefParamCount(const TCHAR* word)
+{
     int parameter_count = 0;
     bool parameter_start = false;
     for (TCHAR ch = *word; ch; ch=*++word) {
@@ -422,10 +433,12 @@ int CallTipWin::getDefParamCount(const TCHAR* word) {
     return parameter_count;
 }
 
+
 /**
  *  \brief
  */
-TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize) {
+TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize)
+{
     TCHAR wrd_copy[256] = {0};
     memcpy_s(wrd_copy, 256, word, wordSize);
 
@@ -437,10 +450,12 @@ TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize) {
     return parameter_list;
 }
 
+
 /**
  *  \brief
  */
-int CallTipWin::getItemByName(TCHAR* word) {
+int CallTipWin::getItemByName(TCHAR* word)
+{
     if (_hLVWnd == nullptr)
         return -1;
     for (int i = 0; i < ListView_GetItemCount(_hLVWnd); i++) {
@@ -452,6 +467,7 @@ int CallTipWin::getItemByName(TCHAR* word) {
     }
     return -1; // Item not listed.
 }
+
 
 /**
  *  \brief
@@ -468,7 +484,7 @@ int CallTipWin::filterLV()
     if (overload_compare > 0) { // 0 and 1 are interchangable with overload.
         overload_compare += 1;
     }
-    for (int i = 0; i < _parser->GetList().size(); i++)
+    for (int i = 0; static_cast<size_t>(i) < _parser->GetList().size(); i++)
     {
         const TCHAR* def = &_parser->GetDefinitions().at(i).c_str()[0];
         TCHAR* path = _parser->GetList().at(i);
@@ -518,6 +534,7 @@ int CallTipWin::filterLV()
     return lvItem.iItem;
 }
 
+
 /**
  *  \brief
  */
@@ -531,9 +548,10 @@ void CallTipWin::resizeLV()
         TCHAR buf[256] = {0};
         ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
         int str_len = int(_tcsclen(buf));
-        if (str_len > widest_width)
+        if (str_len > widest_width) {
             widest_width = str_len;
             widest_idx = i;
+        }
     }
     TCHAR widest_buf[256] = {0};
     ListView_GetItemText(_hLVWnd, widest_idx, 0, widest_buf, _countof(widest_buf));
@@ -543,7 +561,7 @@ void CallTipWin::resizeLV()
     RECT win;
     ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
 
-    int lvWidth     = max(cMinWidth, fontSIZE.cx + 16);
+    int lvWidth     = std::max(cMinWidth, static_cast<int>(fontSIZE.cx + 16));
     int lvHeight    = (win.bottom - win.top) * rowsCount;
     win.right = (win.left + lvWidth);
 
@@ -593,10 +611,12 @@ void CallTipWin::resizeLV()
     MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
 }
 
+
 /**
  *  \brief
  */
-void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header1, TCHAR* header2) {
+void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header1, TCHAR* header2)
+{
     TCHAR buf[128] = { 0 };
     if (high_overload == -1) {
         _stprintf(buf, TEXT("%d/%d (%s) %s"), int(_parser->overload) + 1, overload, header1, header2);
@@ -612,7 +632,12 @@ void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header1, T
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
 }
 
-void CallTipWin::updateWindow(intptr_t position) {
+
+/**
+ *  \brief
+ */
+void CallTipWin::updateWindow(intptr_t position)
+{
     CTextA tag;
     intptr_t overload = 0;
     intptr_t func_start_pos = 0;
@@ -649,10 +674,12 @@ void CallTipWin::updateWindow(intptr_t position) {
     }
 }
 
+
 /**
  *  \brief
  */
-void CallTipWin::onClick(int item) {
+void CallTipWin::onClick(int item)
+{
     _selItem = item;
     TCHAR buf[256] = {0};
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
@@ -665,6 +692,7 @@ void CallTipWin::onClick(int item) {
 
     updateHeader(getDefParamCount(buf), -1, getDefParamText(buf, 256), pathBuf);
 }
+
 
 /**
  *  \brief
@@ -696,8 +724,8 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                 return 0;
             if (GetParent(CTW->_hWnd) == GetFocus()) {
                 SetFocus(CTW->_hWnd);
-        // The window has lost focus, so we know the user clicked on the npp window, but not yet where,
-        // and we don't get the click notification, thus we need to find the new caret position ourselves.
+                // The window has lost focus, so we know the user clicked on the npp window, but not yet where,
+                // and we don't get the click notification, thus we need to find the new caret position ourselves.
                 INpp& npp = INpp::Get();
                 POINT caretPoint;
                 GetCursorPos(&caretPoint);
@@ -779,7 +807,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                         TCHAR* line = _tcsrchr(path, _T(':'));
                         line[0] = '\0';
                         line++;
-                        int intLine = max(0, _tstoi(line) - 1);
+                        int intLine = std::max(0, _tstoi(line) - 1);
 
                         TCHAR path_buf[256] = { 0 };
                         _stprintf(path_buf, TEXT("%s"), path);

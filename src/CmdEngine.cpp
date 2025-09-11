@@ -38,21 +38,21 @@ namespace GTags
 {
 
 const TCHAR* CmdEngine::CmdLine[] = {
-    _T("\"%s\\gtags.exe\" -c --skip-unreadable"),                           // CREATE_DATABASE
-    _T("\"%s\\gtags.exe\" -c --skip-unreadable --single-update \"%s\""),    // UPDATE_SINGLE
-    _T("\"%s\\global.exe\" -cT \"%s\""),                                    // AUTOCOMPLETE
-    _T("\"%s\\global.exe\" -cs \"%s\""),                                    // AUTOCOMPLETE_SYMBOL
-    _T("\"%s\\global.exe\" -cPo --match-part=all \"%s\""),                  // AUTOCOMPLETE_FILE
-    _T("\"%s\\global.exe\" -dT --result=grep --path-style=absolute \"%s\""),// CALLTIP
-    _T("\"%s\\global.exe\" -s --result=grep --path-style=absolute \"%s\""), // CALLTIP_SYMBOL
-    _T("\"%s\\global.exe\" -Po \"%s\""),                                    // FIND_FILE
-    _T("\"%s\\global.exe\" -dT --result=grep --path-style=abslib \"%s\""),  // FIND_DEFINITION
-    _T("\"%s\\global.exe\" -r --result=grep \"%s\""),                       // FIND_REFERENCE
-    _T("\"%s\\global.exe\" -s --result=grep \"%s\""),                       // FIND_SYMBOL
-    _T("\"%s\\global.exe\" -g --result=grep \"%s\""),                       // GREP
-    _T("\"%s\\global.exe\" -gO --result=grep \"%s\""),                      // GREP_TEXT
-    _T("\"%s\\global.exe\" --version"),                                     // VERSION
-    _T("\"%s\\ctags.exe\" --version")                                       // CTAGS_VERSION
+    _T("\"%s\\gtags.exe\" -c --skip-unreadable"),                               // CREATE_DATABASE
+    _T("\"%s\\gtags.exe\" -c --skip-unreadable --single-update \"%s\""),        // UPDATE_SINGLE
+    _T("\"%s\\global.exe\" -cT \"%s\""),                                        // AUTOCOMPLETE
+    _T("\"%s\\global.exe\" -cs \"%s\""),                                        // AUTOCOMPLETE_SYMBOL
+    _T("\"%s\\global.exe\" -cPo --match-part=all \"%s\""),                      // AUTOCOMPLETE_FILE
+    _T("\"%s\\global.exe\" -dT --result=grep --path-style=absolute \"%s\""),    // CALLTIP
+    _T("\"%s\\global.exe\" -s --result=grep --path-style=absolute \"%s\""),     // CALLTIP_SYMBOL
+    _T("\"%s\\global.exe\" -Po \"%s\""),                                        // FIND_FILE
+    _T("\"%s\\global.exe\" -dT --result=grep --path-style=abslib \"%s\""),      // FIND_DEFINITION
+    _T("\"%s\\global.exe\" -r --result=grep \"%s\""),                           // FIND_REFERENCE
+    _T("\"%s\\global.exe\" -s --result=grep \"%s\""),                           // FIND_SYMBOL
+    _T("\"%s\\global.exe\" -g --result=grep \"%s\""),                           // GREP
+    _T("\"%s\\global.exe\" -gO --result=grep \"%s\""),                          // GREP_TEXT
+    _T("\"%s\\global.exe\" --version"),                                         // VERSION
+    _T("\"%s\\ctags.exe\" --version")                                           // CTAGS_VERSION
 };
 
 
@@ -212,8 +212,8 @@ unsigned CmdEngine::start()
             }
         }
         // Blink the auto-complete word to inform the user if nothing is found
-        else if (_cmd->_id == AUTOCOMPLETE_FILE ||
-                ((_cmd->_id == AUTOCOMPLETE || _cmd->_id == AUTOCOMPLETE_SYMBOL || _cmd->_id == CALLTIP) && !_cmd->_autorun))
+        else if ((_cmd->_id == AUTOCOMPLETE_FILE || _cmd->_id == AUTOCOMPLETE_SYMBOL ||
+                _cmd->_id == CALLTIP_SYMBOL) && !_cmd->_autorun)
         {
             CTextA wordA;
             INpp::Get().GetWord(wordA, true, true);

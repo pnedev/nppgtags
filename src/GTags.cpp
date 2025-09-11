@@ -208,15 +208,15 @@ void halfComplCB(const CmdPtr_t& cmd)
  */
 void callTipCB(const CmdPtr_t& cmd)
 {
-    DbManager::Get().PutDb(cmd->Db());
-
-    if (cmd->Id() != CALLTIP_SYMBOL && cmd->Status() == OK && cmd->Result() == NULL)
+    if (cmd->Status() == OK && cmd->Result() == NULL && cmd->Id() != CALLTIP_SYMBOL)
     {
         cmd->Id(CALLTIP_SYMBOL);
 
         CmdEngine::Run(cmd, callTipCB);
         return;
     }
+
+    DbManager::Get().PutDb(cmd->Db());
 
     if (cmd->Status() == OK && cmd->Result())
     {
@@ -1169,6 +1169,5 @@ void OnUserInput(int ch)
         !AutoCompleteWin::IsShown() && (INpp::Get().GetWordSize(true) >= GTagsSettings._triggerAutocmplAfter))
         autoComplete(true);
 }
-
 
 } // namespace GTags

@@ -338,7 +338,7 @@ void SearchWin::startCompletion()
         return;
     }
 
-    CmdPtr_t cmpl = std::make_shared<Cmd>(cmplId, db, parser, tag, (Button_GetCheck(_hIC) == BST_CHECKED), false);
+    CmdPtr_t cmpl = std::make_shared<Cmd>(cmplId, db, parser, tag, (Button_GetCheck(_hIC) == BST_CHECKED), false, true);
 
     if (_cmdId != FIND_DEFINITION)
         cmpl->SkipLibs(true);

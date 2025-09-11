@@ -119,7 +119,7 @@ private:
     ParserPtr_t         _parser;
     bool                _ignoreCase;
     bool                _regExp;
-    bool                _autorun; // Used only for AutoComplete command to distinguish between auto and manual run
+    bool                _autorun; // Used only for AutoComplete commands to distinguish between auto and manual run
     bool                _skipLibs;
 
     CmdStatus_t         _status;

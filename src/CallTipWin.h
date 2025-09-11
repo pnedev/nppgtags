@@ -2,10 +2,10 @@
  *  \file
  *  \brief  GTags CallTips window
  *
- *  \author  Pavel Nedev <pg.nedev@gmail.com>, Robert McDowell <github.com/RobertP-McDowell>
+ *  \author  Robert McDowell <github.com/RobertP-McDowell>, Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2024 Pavel Nedev
+ *  Copyright(C) 2014-2025 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -41,6 +41,11 @@ namespace GTags
 typedef std::basic_fstream<TCHAR> tifstream;
 typedef std::basic_string<TCHAR> tstring;
 
+
+/**
+ *  \class  CallTipParser
+ *  \brief
+ */
 class CallTipParser : public ResultParser
 {
 public:
@@ -56,10 +61,16 @@ public:
 
 protected:
     std::vector<tstring> _definitions;
+
 private:
     CText _buf;
 };
 
+
+/**
+ *  \class  CallTipWin
+ *  \brief
+ */
 class CallTipWin
 {
 public:
@@ -72,7 +83,7 @@ public:
     {
         return (CTW != nullptr);
     }
-    
+
     static void DestroyCurrentWin()
     {
         if (CTW != nullptr)
@@ -81,11 +92,13 @@ public:
             SendMessage(CTW->_hWnd, WM_CLOSE, 0, 0);
         }
     }
-    
-    static void GetCallTipFunction(CTextA& func_name, intptr_t& overload, intptr_t& func_start_pos, intptr_t caret_pos = -1);
-    
+
+    static void GetCallTipFunction(CTextA& func_name, intptr_t& overload,
+            intptr_t& func_start_pos, intptr_t caret_pos = -1);
+
     CallTipWin(const CmdPtr_t& cmd);
     ~CallTipWin();
+
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
@@ -108,15 +121,16 @@ private:
     void onClick(int item);
     void updateHeader(int overload, int high_overload = -1, TCHAR* header1 = _T("CallTip"), TCHAR* header2 = _T(""));
     void updateWindow(intptr_t position = -1);
-    static std::unique_ptr<CallTipWin> CTW;
-    int             _selItem;
-    bool            _queued_for_deletion; // Used to know when not to auto refocus.
-    HWND            _hWnd;
-    HWND            _hLVWnd;
-    HFONT           _hFont;
-    const CmdId_t   _cmdId;
-    const CText     _tag;
-    std::shared_ptr<CallTipParser>      _parser;
+    static std::unique_ptr<CallTipWin>  CTW;
+
+    HWND                            _hWnd;
+    HWND                            _hLVWnd;
+    HFONT                           _hFont;
+    const CmdId_t                   _cmdId;
+    const CText                     _tag;
+    std::shared_ptr<CallTipParser>  _parser;
+    int                             _selItem;
+    bool                            _queued_for_deletion; // Used to know when not to auto refocus.
 };
 
 } // namespace GTags
