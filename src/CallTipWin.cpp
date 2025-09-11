@@ -25,6 +25,8 @@
 #pragma comment (lib, "comctl32")
 
 
+#define NOMINMAX
+
 #include <windows.h>
 #include <windowsx.h>
 #include <winuser.h>
@@ -32,6 +34,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
