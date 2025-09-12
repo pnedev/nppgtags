@@ -44,7 +44,7 @@ namespace GTags
 {
 
 const TCHAR SettingsWin::cClassName[]   = _T("SettingsWin");
-const int SettingsWin::cBackgroundColor = COLOR_BTNFACE;
+const int SettingsWin::cBackgroundColor = COLOR_WINDOW;
 const int SettingsWin::cFontSize        = 10;
 
 
@@ -163,7 +163,7 @@ bool SettingsWin::createWin()
     wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hCursor          = (HCURSOR)::LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
     wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
 
@@ -275,7 +275,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     _hKeepSearchOpen = CreateWindowEx(0, _T("BUTTON"), _T("Keep Search box open"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos + (width / 2) + 60, yPos, (width / 2) - 60, btnHeight,
+            xPos + (width / 2) + 70, yPos, (width / 2) - 70, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     win.top     = yPos + 5;

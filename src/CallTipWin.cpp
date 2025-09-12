@@ -46,9 +46,9 @@ namespace GTags
 {
 
 const TCHAR CallTipWin::cClassName[]        = _T("CallTipWin");
-const int CallTipWin::cBackgroundColor      = COLOR_INFOBK;
+const int CallTipWin::cBackgroundColor      = COLOR_WINDOW;
 const int CallTipWin::cItemWidth            = 1024;
-const int CallTipWin::cMinWidth             = 400;
+const int CallTipWin::cMinWidth             = 300;
 
 
 std::unique_ptr<CallTipWin> CallTipWin::CTW {nullptr};
@@ -280,7 +280,7 @@ void CallTipWin::Register()
     wc.style            = CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hCursor          = (HCURSOR)::LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
     wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
 

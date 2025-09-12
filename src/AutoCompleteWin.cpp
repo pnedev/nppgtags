@@ -39,7 +39,7 @@ namespace GTags
 {
 
 const TCHAR AutoCompleteWin::cClassName[]   = _T("AutoCompleteWin");
-const int AutoCompleteWin::cBackgroundColor = COLOR_INFOBK;
+const int AutoCompleteWin::cBackgroundColor = COLOR_WINDOW;
 const int AutoCompleteWin::cWidth           = 400;
 
 
@@ -55,7 +55,7 @@ void AutoCompleteWin::Register()
     wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hCursor          = (HCURSOR)::LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
     wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
 

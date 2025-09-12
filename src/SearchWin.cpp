@@ -60,8 +60,8 @@ void SearchWin::Register()
     wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground    = GetSysColorBrush(COLOR_BTNFACE);
+    wc.hCursor          = (HCURSOR)::LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    wc.hbrBackground    = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszClassName    = cClassName;
 
     RegisterClass(&wc);

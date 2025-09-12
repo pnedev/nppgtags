@@ -40,7 +40,7 @@ namespace GTags
 {
 
 const TCHAR AboutWin::cClassName[]      = _T("AboutWin");
-const int AboutWin::cBackgroundColor    = COLOR_INFOBK;
+const int AboutWin::cBackgroundColor    = COLOR_WINDOW;
 const unsigned AboutWin::cFontSize      = 10;
 
 
@@ -62,7 +62,7 @@ void AboutWin::Show(const TCHAR* info)
     wc.style            = CS_PARENTDC | CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hCursor          = (HCURSOR)::LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
     wc.hbrBackground    = GetSysColorBrush(cBackgroundColor);
     wc.lpszClassName    = cClassName;
 
