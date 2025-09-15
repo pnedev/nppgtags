@@ -170,10 +170,10 @@ public:
 class CPath : public CText
 {
 public:
-	CPath() : CText() {}
+    CPath() : CText() {}
     CPath(const CPath& path) : CText(path) {}
-	CPath(const char* pathStr) : CText(pathStr) {}
-	CPath(const wchar_t* pathStr) : CText(pathStr) {}
+    CPath(const char* pathStr) : CText(pathStr) {}
+    CPath(const wchar_t* pathStr) : CText(pathStr) {}
     CPath(size_t size) : CText(size) {}
     ~CPath() {}
 
@@ -217,8 +217,18 @@ void ReleaseKeys();
 bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);
 RECT GetWinRect(HWND hOwner, DWORD styleEx, DWORD style, int width, int height);
 unsigned GetFontHeight(HDC hdc, HFONT font);
-HFONT CreateFromSystemMessageFont(HDC hdc = NULL, unsigned fontHeight = 0);
-HFONT CreateFromSystemMenuFont(HDC hdc = NULL, unsigned fontHeight = 0);
+
+
+enum class SysFont {
+    Caption,
+    SmallCaption,
+    Menu,
+    Status,
+    Message
+};
+
+
+HFONT CreateFontFromSystemDefault(SysFont font, HDC hdc = nullptr, int size = 0);
 
 
 #ifdef DEVEL

@@ -204,44 +204,71 @@ unsigned Tools::GetFontHeight(HDC hdc, HFONT font)
 /**
  *  \brief
  */
-HFONT Tools::CreateFromSystemMessageFont(HDC hdc, unsigned fontHeight)
+HFONT Tools::CreateFontFromSystemDefault(Tools::SysFont font, HDC hdc, int size)
 {
-    NONCLIENTMETRICS ncm;
-    ncm.cbSize = sizeof(ncm);
+    HFONT hf {nullptr};
+
+    NONCLIENTMETRICS ncm {0};
+    ncm.cbSize = sizeof(NONCLIENTMETRICS);
 
 #if (WINVER >= 0x0600)
     if (!IsWindows7OrGreater())
         ncm.cbSize -= sizeof(int);
 #endif
 
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+    if (::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0))
+    {
+        LOGFONT lf;
 
-    if (hdc && fontHeight)
-        ncm.lfMessageFont.lfHeight = -MulDiv(fontHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        switch (font)
+        {
+            case SysFont::Caption:
+                lf = ncm.lfCaptionFont;
+            break;
 
-    return CreateFontIndirect(&ncm.lfMessageFont);
-}
+            case SysFont::SmallCaption:
+                lf = ncm.lfSmCaptionFont;
+            break;
 
+            case SysFont::Menu:
+                lf = ncm.lfMenuFont;
+            break;
 
-/**
- *  \brief
- */
-HFONT Tools::CreateFromSystemMenuFont(HDC hdc, unsigned fontHeight)
-{
-    NONCLIENTMETRICS ncm;
-    ncm.cbSize = sizeof(ncm);
+            case SysFont::Status:
+                lf = ncm.lfStatusFont;
+            break;
 
-#if (WINVER >= 0x0600)
-    if (!IsWindows7OrGreater())
-        ncm.cbSize -= sizeof(int);
-#endif
+            case SysFont::Message:
+                lf = ncm.lfMessageFont;
+            break;
 
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+            default:
+            return hf;
+        }
 
-    if (hdc && fontHeight)
-        ncm.lfMenuFont.lfHeight = -MulDiv(fontHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        if (size)
+        {
+            if (!hdc)
+            {
+                hdc = ::GetDC(nullptr);
 
-    return CreateFontIndirect(&ncm.lfMenuFont);
+                if (hdc)
+                {
+                    lf.lfHeight = -::MulDiv(size, ::GetDeviceCaps(hdc, LOGPIXELSY), 72);
+
+                    ::ReleaseDC(nullptr, hdc);
+                }
+            }
+            else
+            {
+                lf.lfHeight = -::MulDiv(size, ::GetDeviceCaps(hdc, LOGPIXELSY), 72);
+            }
+        }
+
+        hf = ::CreateFontIndirect(&lf);
+    }
+
+    return hf;
 }
 
 

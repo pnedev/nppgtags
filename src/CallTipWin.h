@@ -102,15 +102,14 @@ public:
 private:
     static const TCHAR  cClassName[];
     static const int    cBackgroundColor;
-    static const int    cItemWidth;
     static const int    cMinWidth;
 
     static LRESULT APIENTRY wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     static int getDefParamCount(const TCHAR* word);
-    static TCHAR* getDefParamText(TCHAR* word, int wordSize);
+    static TCHAR* getDefParamText(TCHAR* word); // Modifies word buffer !!!
 
-    int getItemByName(TCHAR* itemText);
+    int getItemByName(const TCHAR* itemText);
 
     CallTipWin& operator=(const CallTipWin&) = delete;
 

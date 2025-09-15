@@ -68,9 +68,9 @@ namespace GTags
 
 const TCHAR ResultWin::cClassName[]         = _T("ResultWin");
 const TCHAR ResultWin::cSearchClassName[]   = _T("ResultSearchWin");
-const int ResultWin::cSearchBkgndColor      = COLOR_INFOBK;
-const unsigned ResultWin::cSearchFontSize   = 10;
-const int ResultWin::cSearchWidth           = 420;
+const int ResultWin::cSearchBkgndColor      = COLOR_WINDOW;
+const unsigned ResultWin::cSearchFontSize   = 9;
+const int ResultWin::cSearchWidth           = 450;
 
 
 std::unique_ptr<ResultWin> ResultWin::RW {nullptr};
@@ -496,7 +496,7 @@ HWND ResultWin::Register()
     RegisterClass(&wc);
 
     wc.lpfnWndProc      = searchWndProc;
-    wc.hbrBackground    = GetSysColorBrush(COLOR_BTNFACE);
+    wc.hbrBackground    = GetSysColorBrush(COLOR_3DFACE);
     wc.lpszClassName    = cSearchClassName;
 
     RegisterClass(&wc);
@@ -742,7 +742,7 @@ void ResultWin::applyStyle()
 
     char font[32];
     npp.GetFontName(STYLE_DEFAULT, font);
-    int size = npp.GetFontSize(STYLE_DEFAULT);
+    int size = npp.GetFontSize(STYLE_DEFAULT) + npp.GetZoom();
     COLORREF caretLineBackColor = npp.GetCaretLineBack();
     COLORREF foreColor = npp.GetForegroundColor(STYLE_DEFAULT);
     COLORREF backColor = npp.GetBackgroundColor(STYLE_DEFAULT);
@@ -753,9 +753,10 @@ void ResultWin::applyStyle()
     COLORREF findForeColor =
             RGB(GetRValue(backColor) ^ 0x1C, GetGValue(backColor) ^ 0xFF, GetBValue(backColor) ^ 0xFF);
 
-    HFONT hFont = Tools::CreateFromSystemMenuFont();
-    if (hFont)
-        SendMessage(_hTab, WM_SETFONT, (WPARAM)hFont, TRUE);
+    if (!_hMenuFont)
+        _hMenuFont = Tools::CreateFontFromSystemDefault(Tools::SysFont::Menu);
+    if (_hMenuFont)
+        SendMessage(_hTab, WM_SETFONT, (WPARAM)_hMenuFont, TRUE);
 
     sendSci(SCI_STYLERESETDEFAULT);
     setStyle(STYLE_DEFAULT, foreColor, backColor, false, false, size, font);
@@ -863,7 +864,7 @@ void ResultWin::setStyle(int style, COLORREF fore, COLORREF back, bool bold, boo
 void ResultWin::configScintilla()
 {
     sendSci(SCI_SETCODEPAGE, SC_CP_UTF8);
-    sendSci(SCI_SETEOLMODE, SC_EOL_CRLF);
+    sendSci(SCI_SETEOLMODE, SC_EOL_LF);
     sendSci(SCI_USEPOPUP, false);
     sendSci(SCI_SETUNDOCOLLECTION, false);
     sendSci(SCI_SETCARETSTYLE, CARETSTYLE_LINE);
@@ -976,15 +977,14 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
 {
     _hSearch = hWnd;
 
-    INpp::Get().RegisterWinForDarkMode(_hSearch);
+    // INpp::Get().RegisterWinForDarkMode(_hSearch);
 
-    HDC hdc = GetWindowDC(_hSearch);
+    HDC hdc = GetDC(_hSearch);
 
-    _hSearchFont    = Tools::CreateFromSystemMessageFont(hdc, cSearchFontSize);
-    _hBtnFont       = Tools::CreateFromSystemMenuFont(hdc, cSearchFontSize - 1);
+    _hSearchFont = Tools::CreateFontFromSystemDefault(Tools::SysFont::Message, hdc, cSearchFontSize);
 
     _searchTxtHeight    = Tools::GetFontHeight(hdc, _hSearchFont) + 1;
-    int btnHeight       = Tools::GetFontHeight(hdc, _hBtnFont) + 2;
+    int btnHeight       = _searchTxtHeight + 1;
 
     ReleaseDC(_hSearch, hdc);
 
@@ -1014,7 +1014,7 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
 
     int btnWidth = (win.right - win.left - 120) / 3;
 
-    _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
+    _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExpr"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             1, 0, btnWidth, btnHeight,
             _hSearch, NULL, HMod, NULL);
@@ -1039,13 +1039,13 @@ void ResultWin::onSearchWindowCreate(HWND hWnd)
             3 * btnWidth + 61, 0, 60, btnHeight,
             _hSearch, NULL, HMod, NULL);
 
-    if (_hBtnFont)
+    if (_hSearchFont)
     {
-        SendMessage(_hRE, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hIC, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hWW, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hUp, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
-        SendMessage(_hDown, WM_SETFONT, (WPARAM)_hBtnFont, TRUE);
+        SendMessage(_hRE, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+        SendMessage(_hIC, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+        SendMessage(_hWW, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+        SendMessage(_hUp, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
+        SendMessage(_hDown, WM_SETFONT, (WPARAM)_hSearchFont, TRUE);
     }
 
     Button_SetCheck(_hRE, _lastRE ? BST_CHECKED : BST_UNCHECKED);
@@ -2347,10 +2347,10 @@ LRESULT APIENTRY ResultWin::searchWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
                 RW->_hSearchFont = NULL;
             }
 
-            if (RW->_hBtnFont)
+            if (RW->_hMenuFont)
             {
-                DeleteObject(RW->_hBtnFont);
-                RW->_hBtnFont = NULL;
+                DeleteObject(RW->_hMenuFont);
+                RW->_hMenuFont = NULL;
             }
 
             RW->_hSearch = NULL;

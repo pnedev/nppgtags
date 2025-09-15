@@ -126,13 +126,14 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification* notifyCode)
         break;
 
         case NPPN_WORDSTYLESUPDATED:
+        case NPPN_DARKMODECHANGED:
         {
             INpp& npp = INpp::Get();
             char font[32];
 
             npp.GetFontName(STYLE_DEFAULT, font);
             GTags::UIFontName = font;
-            GTags::UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
+            GTags::UIFontSize = (unsigned)(npp.GetFontSize(STYLE_DEFAULT) + npp.GetZoom());
             GTags::ResultWin::ApplyStyle();
         }
         break;

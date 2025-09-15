@@ -61,7 +61,7 @@ void SearchWin::Register()
     wc.lpfnWndProc      = wndProc;
     wc.hInstance        = HMod;
     wc.hCursor          = (HCURSOR)::LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-    wc.hbrBackground    = GetSysColorBrush(COLOR_WINDOW);
+    wc.hbrBackground    = GetSysColorBrush(COLOR_3DFACE);
     wc.lpszClassName    = cClassName;
 
     RegisterClass(&wc);
@@ -143,14 +143,14 @@ SearchWin::~SearchWin()
  */
 HWND SearchWin::composeWindow(HWND hOwner, const TCHAR* hint, bool enRE, bool enIC)
 {
-    HDC hdc = GetWindowDC(hOwner);
+    HDC hdc = GetDC(hOwner);
 
     _hTxtFont = CreateFont(
             -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
             0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
             OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE | DEFAULT_PITCH, UIFontName.C_str());
-    _hBtnFont = Tools::CreateFromSystemMenuFont(hdc, UIFontSize - 1);
+    _hBtnFont = Tools::CreateFontFromSystemDefault(Tools::SysFont::Message, hdc, UIFontSize - 1);
 
     int txtHeight = Tools::GetFontHeight(hdc, _hTxtFont) + 1;
     int btnHeight = Tools::GetFontHeight(hdc, _hBtnFont) + 2;
@@ -169,12 +169,12 @@ HWND SearchWin::composeWindow(HWND hOwner, const TCHAR* hint, bool enRE, bool en
     if (_hWnd == NULL)
         return NULL;
 
-    INpp::Get().RegisterWinForDarkMode(_hWnd);
+    // INpp::Get().RegisterWinForDarkMode(_hWnd);
 
     GetClientRect(_hWnd, &win);
     width = (win.right - win.left - 20) / 3;
 
-    _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExp"),
+    _hRE = CreateWindowEx(0, _T("BUTTON"), _T("RegExpr"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             5, 5, width, btnHeight,
             _hWnd, NULL, HMod, NULL);

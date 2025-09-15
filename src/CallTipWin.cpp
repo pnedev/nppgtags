@@ -38,6 +38,7 @@
 #include "Common.h"
 #include "INpp.h"
 #include "GTags.h"
+#include "DocLocation.h"
 #include "CallTipWin.h"
 #include "NppAPI/Notepad_plus_msgs.h"
 
@@ -47,7 +48,6 @@ namespace GTags
 
 const TCHAR CallTipWin::cClassName[]        = _T("CallTipWin");
 const int CallTipWin::cBackgroundColor      = COLOR_WINDOW;
-const int CallTipWin::cItemWidth            = 1024;
 const int CallTipWin::cMinWidth             = 300;
 
 
@@ -184,15 +184,16 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
     intptr_t endline_line = line; // Doesn't reset in loop.
     intptr_t endline_startpos = startpos; // Doesn't reset in loop.
 
-    if (start_offset < 2) { // 'a(' is the shortest possible function.
+    if (start_offset < 2) // 'a(' is the shortest possible function.
         return;
-    }
+
     CTextA line_buf;
     npp.GetLineText(line_buf, len, line);
 
     intptr_t nests = 0;
     intptr_t i = start_offset;
     char *currline_cstr = line_buf.C_str();
+
     while (true) { // Find all of the '(' and ','.
         i--;
         if (i <= -1) { // Multiline function.
@@ -267,7 +268,6 @@ void CallTipWin::GetCallTipFunction(CTextA& func_name, intptr_t& overload, intpt
             return;
         }
     }
-    return;
 }
 
 
@@ -354,7 +354,7 @@ HWND CallTipWin::composeWindow()
     if (_hWnd == NULL)
         return NULL;
 
-    INpp::Get().RegisterWinForDarkMode(_hWnd);
+    // INpp::Get().RegisterWinForDarkMode(_hWnd);
 
     GetClientRect(_hWnd, &win);
 
@@ -363,7 +363,7 @@ HWND CallTipWin::composeWindow()
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    HDC hdc = GetWindowDC(_hLVWnd);
+    HDC hdc = GetDC(_hLVWnd);
 
     _hFont = CreateFont(
           -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
@@ -377,16 +377,16 @@ HWND CallTipWin::composeWindow()
         SendMessage(_hLVWnd, WM_SETFONT, (WPARAM)_hFont, TRUE);
 
     ListView_SetExtendedListViewStyle(_hLVWnd, LVS_EX_HEADERINALLVIEWS | LVS_EX_COLUMNOVERFLOW |
-        LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS);
+        LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
     TCHAR buf[32];
-    _stprintf(buf, TEXT( "%d (CallTip)" ), int(_parser->overload) + 1);
+    _sntprintf_s(buf, _countof(buf), _TRUNCATE, TEXT("%d (CallTip)"), int(_parser->overload) + 1);
 
     LVCOLUMN lvCol      = {0};
     lvCol.mask          = LVCF_TEXT | LVCF_WIDTH;
     lvCol.pszText       = buf;
     lvCol.cchTextMax    = _countof(buf);
-    lvCol.cx            = cItemWidth;
+    lvCol.cx            = cMinWidth;
     ListView_InsertColumn(_hLVWnd, 0, &lvCol);
 
     DWORD backgroundColor = GetSysColor(cBackgroundColor);
@@ -440,29 +440,31 @@ int CallTipWin::getDefParamCount(const TCHAR* word)
 /**
  *  \brief
  */
-TCHAR* CallTipWin::getDefParamText(TCHAR* word, int wordSize)
+TCHAR* CallTipWin::getDefParamText(TCHAR* word)
 {
-    TCHAR wrd_copy[256] = {0};
-    memcpy_s(wrd_copy, 256, word, wordSize);
-
     TCHAR* pTmp = NULL;
-    _tcstok_s(wrd_copy, _T("("), &pTmp);
-    TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
-    if (parameter_list == NULL)
-        parameter_list = TEXT("");
-    return parameter_list;
+    _tcstok_s(word, _T("("), &pTmp);
+
+    if (pTmp)
+    {
+        TCHAR* parameter_list = _tcstok_s(NULL, _T(")"), &pTmp);
+        if (parameter_list)
+            return parameter_list;
+    }
+
+    return &(word[_tcslen(word) - 1]);
 }
 
 
 /**
  *  \brief
  */
-int CallTipWin::getItemByName(TCHAR* word)
+int CallTipWin::getItemByName(const TCHAR* word)
 {
     if (_hLVWnd == nullptr)
         return -1;
     for (int i = 0; i < ListView_GetItemCount(_hLVWnd); i++) {
-        TCHAR buf[256] = {0};
+        TCHAR buf[MAX_PATH] = {0};
         ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
         if (_tcscmp(word, buf) == 0) {
             return i;
@@ -548,7 +550,7 @@ void CallTipWin::resizeLV()
     int widest_width = 0;
     int widest_idx = 0;
     for (int i = 0; i <= ListView_GetItemCount(_hLVWnd); i++) {
-        TCHAR buf[256] = {0};
+        TCHAR buf[MAX_PATH] = {0};
         ListView_GetItemText(_hLVWnd, i, 0, buf, _countof(buf));
         int str_len = int(_tcsclen(buf));
         if (str_len > widest_width) {
@@ -556,15 +558,17 @@ void CallTipWin::resizeLV()
             widest_idx = i;
         }
     }
-    TCHAR widest_buf[256] = {0};
+    TCHAR widest_buf[MAX_PATH] = {0};
     ListView_GetItemText(_hLVWnd, widest_idx, 0, widest_buf, _countof(widest_buf));
     SIZE fontSIZE;
-    GetTextExtentPoint32(GetDC(_hLVWnd), widest_buf, widest_width, &fontSIZE);
+    HDC hdc = GetDC(_hLVWnd);
+    GetTextExtentPoint32(hdc, widest_buf, widest_width, &fontSIZE);
+    ReleaseDC(_hLVWnd, hdc);
 
     RECT win;
     ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
 
-    int lvWidth     = std::max(cMinWidth, static_cast<int>(fontSIZE.cx + 16));
+    int lvWidth     = std::max(cMinWidth, static_cast<int>(fontSIZE.cx + 30));
     int lvHeight    = (win.bottom - win.top) * rowsCount;
     win.right = (win.left + lvWidth);
 
@@ -575,7 +579,7 @@ void CallTipWin::resizeLV()
     RECT maxWin;
     INpp& npp = INpp::Get();
     GetWindowRect(npp.GetSciHandle(), &maxWin);
-    maxWin.right -= GetSystemMetrics(SM_CXHSCROLL); // Take sci scrollbar into account.
+    maxWin.right -= GetSystemMetrics(SM_CXVSCROLL); // Take sci scrollbar into account.
 
     win.left    = 0;
     win.top     = 0;
@@ -601,8 +605,7 @@ void CallTipWin::resizeLV()
         win.right   -= xOffset;
     }
 
-    if (win.bottom >
-        maxWin.bottom - maxWin.top - GetSystemMetrics(SM_CXHSCROLL))
+    if (win.bottom > maxWin.bottom - maxWin.top - GetSystemMetrics(SM_CXHSCROLL))
     {
         win.bottom  = yOffset;
         win.top     = win.bottom - lvHeight;
@@ -612,6 +615,12 @@ void CallTipWin::resizeLV()
 
     GetClientRect(_hWnd, &win);
     MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
+
+    LVCOLUMN lvCol = { 0 };
+    lvCol.mask  = LVCF_WIDTH;
+    lvCol.cx    = win.right - win.left;
+    ListView_SetColumn(_hLVWnd, 0, &lvCol);
+
 }
 
 
@@ -620,18 +629,19 @@ void CallTipWin::resizeLV()
  */
 void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header1, TCHAR* header2)
 {
-    TCHAR buf[128] = { 0 };
+    TCHAR buf[MAX_PATH] = { 0 };
     if (high_overload == -1) {
-        _stprintf(buf, TEXT("%d/%d (%s) %s"), int(_parser->overload) + 1, overload, header1, header2);
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, TEXT("%d/%d (%s) %s"),
+                int(_parser->overload) + 1, overload, header1, header2);
     }
     else {
-        _stprintf(buf, TEXT("%d/%d-%d (%s) %s"), int(_parser->overload) + 1, overload, high_overload, header1, header2);
+        _sntprintf_s(buf, _countof(buf), _TRUNCATE, TEXT("%d/%d-%d (%s) %s"),
+                int(_parser->overload) + 1, overload, high_overload, header1, header2);
     }
     LVCOLUMN lvCol = { 0 };
-    lvCol.mask = LVCF_TEXT | LVCF_WIDTH;
+    lvCol.mask = LVCF_TEXT;
     lvCol.cchTextMax = _countof(buf);
     lvCol.pszText = buf;
-    lvCol.cx = cItemWidth;
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
 }
 
@@ -661,7 +671,7 @@ void CallTipWin::updateWindow(intptr_t position)
     if (overload != _parser->overload || func_start_pos != _parser->func_start_pos) {
         _parser->overload = overload;
         _parser->func_start_pos = func_start_pos;
-        TCHAR buf[256];
+        TCHAR buf[MAX_PATH];
         ListView_GetItemText(_hLVWnd, _selItem, 0, buf, _countof(buf));
         if (!filterLV())
         {
@@ -684,16 +694,20 @@ void CallTipWin::updateWindow(intptr_t position)
 void CallTipWin::onClick(int item)
 {
     _selItem = item;
-    TCHAR buf[256] = {0};
+    TCHAR buf[MAX_PATH] = {0};
     ListView_GetItemText(CTW->_hLVWnd, item, 0, buf, _countof(buf));
     int listIndex = _parser->FindDefIndexFromLine(buf);
-    TCHAR pathBuf[256];
+    TCHAR pathBuf[MAX_PATH];
     if (listIndex != -1) {
-        _stprintf(pathBuf, _tcsrchr(_parser->GetList().at(listIndex), _T('/'))+1);
-        _tcschr(pathBuf, _T(':'))[0] = '\0';
+        TCHAR* delimiterPtr = _tcsrchr(_parser->GetList().at(listIndex), _T('/'));
+        if (delimiterPtr)
+            _sntprintf_s(pathBuf, _countof(pathBuf), _TRUNCATE, TEXT("%s"), delimiterPtr + 1);
+        delimiterPtr = _tcschr(pathBuf, _T(':'));
+        if (delimiterPtr)
+            *delimiterPtr = _T('\0');
     }
 
-    updateHeader(getDefParamCount(buf), -1, getDefParamText(buf, 256), pathBuf);
+    updateHeader(getDefParamCount(buf), -1, getDefParamText(buf), pathBuf);
 }
 
 
@@ -802,7 +816,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 
                 case NM_DBLCLK: {
                     INpp& npp = INpp::Get();
-                    TCHAR buf[256] = {0};
+                    TCHAR buf[MAX_PATH] = {0};
                     ListView_GetItemText(CTW->_hLVWnd, ((LPNMITEMACTIVATE)lParam)->iItem, 0, buf, _countof(buf));
                     int listIndex = CTW->_parser->FindDefIndexFromLine(buf);
                     if (listIndex != -1) {
@@ -812,8 +826,8 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                         line++;
                         int intLine = std::max(0, _tstoi(line) - 1);
 
-                        TCHAR path_buf[256] = { 0 };
-                        _stprintf(path_buf, TEXT("%s"), path);
+                        TCHAR path_buf[MAX_PATH] = { 0 };
+                        _sntprintf_s(path_buf, _countof(path_buf), _TRUNCATE, TEXT("%s"), path);
                         CPath path_check(path);
                         if (!path_check.FileExists())
                         {
@@ -824,6 +838,7 @@ LRESULT APIENTRY CallTipWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
                             return 0;
                         }
 
+                        DocLocation::Get().Push();
                         if (npp.OpenFile(path_buf) == 0) {
                             npp.GoToPos(npp.LineEndPosition(intLine));
                             npp.SetFirstVisibleLine(intLine - (npp.LinesOnScreen()/2)); // Center view.

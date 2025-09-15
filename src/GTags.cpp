@@ -994,7 +994,7 @@ void PluginInit()
 
     npp.GetFontName(STYLE_DEFAULT, font);
     UIFontName = font;
-    UIFontSize = (unsigned)npp.GetFontSize(STYLE_DEFAULT);
+    UIFontSize = (unsigned)(npp.GetFontSize(STYLE_DEFAULT) + npp.GetZoom());
 
     const HRESULT coInitRes = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     DeInitCOM = (coInitRes == S_OK || coInitRes == S_FALSE) ? true : false;

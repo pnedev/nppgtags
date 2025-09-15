@@ -150,7 +150,7 @@ public:
     static bool Activate();
 
     ResultWin() : _hWnd(NULL), _hKeyHook(NULL), _activeTab(NULL),
-            _hSearch(NULL), _hSearchFont(NULL), _hBtnFont(NULL),
+            _hSearch(NULL), _hSearchFont(NULL), _hMenuFont(NULL),
             _lastRE(false), _lastIC(false), _lastWW(true) {}
     ~ResultWin();
 
@@ -279,7 +279,7 @@ private:
     HWND        _hUp;
     HWND        _hDown;
     HFONT       _hSearchFont;
-    HFONT       _hBtnFont;
+    HFONT       _hMenuFont;
 
     int         _searchTxtHeight;
 

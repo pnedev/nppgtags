@@ -44,8 +44,8 @@ namespace GTags
 {
 
 const TCHAR SettingsWin::cClassName[]   = _T("SettingsWin");
-const int SettingsWin::cBackgroundColor = COLOR_WINDOW;
-const int SettingsWin::cFontSize        = 10;
+const int SettingsWin::cBackgroundColor = COLOR_3DFACE;
+const int SettingsWin::cFontSize        = 9;
 
 
 std::unique_ptr<SettingsWin> SettingsWin::SW {nullptr};
@@ -231,10 +231,10 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     int txtHeight;
     int txtInfoHeight;
     {
-        HDC hdc = GetWindowDC(hOwner);
+        HDC hdc = GetDC(hOwner);
 
-        _hFont      = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
-        _hFontInfo  = Tools::CreateFromSystemMenuFont(hdc, cFontSize);
+        _hFont      = Tools::CreateFontFromSystemDefault(Tools::SysFont::Message, hdc, cFontSize);
+        _hFontInfo  = Tools::CreateFontFromSystemDefault(Tools::SysFont::Menu, hdc, cFontSize);
 
         txtHeight       = Tools::GetFontHeight(hdc, _hFont) + 1;
         txtInfoHeight   = Tools::GetFontHeight(hdc, _hFontInfo) + 1;
@@ -257,7 +257,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     if (_hWnd == NULL)
         return NULL;
 
-    INpp::Get().RegisterWinForDarkMode(_hWnd);
+    // INpp::Get().RegisterWinForDarkMode(_hWnd);
 
     GetClientRect(_hWnd, &win);
     const int totalWidth = win.right - win.left;
@@ -270,7 +270,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     _hTrigAutocmplEn = CreateWindowEx(0, _T("BUTTON"), _T("Trigger Autocomplete after char"),
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            xPos, yPos, (width / 2) - 15, btnHeight,
+            xPos, yPos, (width / 2) - 50, btnHeight,
             _hWnd, NULL, HMod, NULL);
 
     _hKeepSearchOpen = CreateWindowEx(0, _T("BUTTON"), _T("Keep Search box open"),
@@ -280,7 +280,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
 
     win.top     = yPos + 5;
     win.bottom  = win.top + txtInfoHeight;
-    win.left    = xPos + (width / 2) - 10;
+    win.left    = xPos + (width / 2) - 45;
     win.right   = win.left + 25;
 
     styleEx = WS_EX_CLIENTEDGE;
@@ -444,7 +444,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
             win.left + (win.right - win.left - width) / 2, win.top, width, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    yPos += (win.bottom - win.top + 25);
+    yPos += (win.bottom - win.top + 20);
     width = totalWidth / 5;
     _hSave = CreateWindowEx(0, _T("BUTTON"), _T("Save"),
             WS_CHILD | WS_VISIBLE | WS_DISABLED | BS_PUSHBUTTON,
@@ -512,7 +512,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     else
     {
         Edit_Enable(_hTrigAutocmplAfter, FALSE);
-        SendMessage(_hTrigAutocmplAfter, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+        SendMessage(_hTrigAutocmplAfter, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_3DFACE));
 
         Edit_SetText(_hTrigAutocmplAfter, _T("3"));
     }
@@ -531,7 +531,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
         EnableWindow(_hSetDefDb, FALSE);
         EnableWindow(_hUpdDefDb, FALSE);
         Edit_Enable(_hDefDb, FALSE);
-        SendMessage(_hDefDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+        SendMessage(_hDefDb, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_3DFACE));
     }
 
     Button_SetCheck(_hEnDefDb, GTagsSettings._useDefDb ? BST_CHECKED : BST_UNCHECKED);
@@ -725,7 +725,7 @@ void SettingsWin::fillTabData()
         EnableWindow(_hAddLibDb, FALSE);
         EnableWindow(_hUpdLibDbs, FALSE);
         Edit_Enable(_hLibDbs, FALSE);
-        SendMessage(_hLibDbs, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+        SendMessage(_hLibDbs, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_3DFACE));
     }
 
     if (_activeTab->_cfg._usePathFilter)
@@ -738,7 +738,7 @@ void SettingsWin::fillTabData()
     {
         EnableWindow(_hAddPathFilter, FALSE);
         Edit_Enable(_hPathFilters, FALSE);
-        SendMessage(_hPathFilters, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+        SendMessage(_hPathFilters, EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_3DFACE));
     }
 
     Button_SetCheck(_hAutoUpdDb, _activeTab->_cfg._autoUpdate ? BST_CHECKED : BST_UNCHECKED);
@@ -1126,9 +1126,9 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         case WM_CREATE:
         return 0;
 
-        case WM_CTLCOLORSTATIC:
-            SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
-        return (INT_PTR) GetSysColorBrush(cBackgroundColor);
+        // case WM_CTLCOLORSTATIC:
+            // SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
+        // return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
         case WM_COMMAND:
             if (HIWORD(wParam) == EN_KILLFOCUS)
@@ -1163,7 +1163,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     else
                     {
                         en = FALSE;
-                        color = COLOR_BTNFACE;
+                        color = COLOR_3DFACE;
                     }
 
                     Edit_Enable(SW->_hTrigAutocmplAfter, en);
@@ -1187,7 +1187,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     else
                     {
                         en = FALSE;
-                        color = COLOR_BTNFACE;
+                        color = COLOR_3DFACE;
                     }
 
                     EnableWindow(SW->_hSetDefDb, en);
@@ -1213,7 +1213,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     else
                     {
                         en = FALSE;
-                        color = COLOR_BTNFACE;
+                        color = COLOR_3DFACE;
                     }
 
                     EnableWindow(SW->_hAddLibDb, en);
@@ -1239,7 +1239,7 @@ LRESULT APIENTRY SettingsWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
                     else
                     {
                         en = FALSE;
-                        color = COLOR_BTNFACE;
+                        color = COLOR_3DFACE;
                     }
 
                     EnableWindow(SW->_hAddPathFilter, (en && SW->_activeTab->_db) ? TRUE : FALSE);

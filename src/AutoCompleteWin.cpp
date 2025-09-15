@@ -133,7 +133,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
     if (_hWnd == NULL)
         return NULL;
 
-    INpp::Get().RegisterWinForDarkMode(_hWnd);
+    // INpp::Get().RegisterWinForDarkMode(_hWnd);
 
     GetClientRect(_hWnd, &win);
 
@@ -142,7 +142,7 @@ HWND AutoCompleteWin::composeWindow(const TCHAR* header)
             0, 0, win.right - win.left, win.bottom - win.top,
             _hWnd, NULL, HMod, NULL);
 
-    HDC hdc = GetWindowDC(_hLVWnd);
+    HDC hdc = GetDC(_hLVWnd);
 
     _hFont = CreateFont(
             -MulDiv(UIFontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72),
@@ -253,7 +253,7 @@ void AutoCompleteWin::resizeLV()
     RECT maxWin;
     INpp& npp = INpp::Get();
     GetWindowRect(npp.GetSciHandle(), &maxWin);
-    maxWin.right -= GetSystemMetrics(SM_CXHSCROLL); // Take sci scrollbar into account.
+    maxWin.right -= GetSystemMetrics(SM_CXVSCROLL); // Take sci scrollbar into account.
 
     int maxWidth = (maxWin.right - maxWin.left) - 30;
     if (scroll)

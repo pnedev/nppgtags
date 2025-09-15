@@ -101,6 +101,13 @@ public:
         SendMessage(_nppData._nppHandle, NPPM_DARKMODESUBCLASSANDTHEME, (WPARAM)NppDarkMode::dmfInit, (LPARAM)hWnd);
     }
 
+    inline void OnDarkModeChange(HWND hWnd)
+    {
+        SendMessage(_nppData._nppHandle, NPPM_DARKMODESUBCLASSANDTHEME, (WPARAM)NppDarkMode::dmfHandleChange,
+                    (LPARAM)hWnd);
+        SetWindowPos(hWnd, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    }
+
     inline void RegisterWin(HWND hWnd) const
     {
         SendMessage(_nppData._nppHandle, NPPM_MODELESSDIALOG, MODELESSDIALOGADD, (LPARAM)hWnd);
@@ -209,6 +216,11 @@ public:
     inline int GetCaretLineBack() const
     {
         return (int)SendMessage(_hSC, SCI_GETCARETLINEBACK, 0, 0);
+    }
+
+    inline int GetZoom() const
+    {
+        return (int)SendMessage(_hSC, SCI_GETZOOM, 0, 0);
     }
 
     inline void GetFontName(int style, char* fontName) const

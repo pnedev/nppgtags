@@ -38,7 +38,7 @@ namespace GTags
 {
 
 const TCHAR ActivityWin::cClassName[]   = _T("ActivityWin");
-const int ActivityWin::cBackgroundColor = COLOR_WINDOW;
+const int ActivityWin::cBackgroundColor = COLOR_3DFACE;
 const unsigned ActivityWin::cFontSize   = 8;
 const int ActivityWin::cWidth           = 600;
 
@@ -190,13 +190,13 @@ HWND ActivityWin::composeWindow(const TCHAR* text)
     if (_hWnd == NULL)
         return NULL;
 
-    INpp::Get().RegisterWinForDarkMode(_hWnd);
+    // INpp::Get().RegisterWinForDarkMode(_hWnd);
 
     if (WindowList.empty())
     {
         HWND hParent = INpp::Get().GetHandle();
-        HDC hdc = GetWindowDC(hParent);
-        HFont = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
+        HDC hdc = GetDC(hParent);
+        HFont = Tools::CreateFontFromSystemDefault(Tools::SysFont::Message, hdc, cFontSize);
         TxtHeight = Tools::GetFontHeight(hdc, HFont);
         ReleaseDC(hParent, hdc);
     }
@@ -273,9 +273,9 @@ LRESULT APIENTRY ActivityWin::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         }
         return 0;
 
-        case WM_CTLCOLORSTATIC:
-            SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
-        return (INT_PTR) GetSysColorBrush(cBackgroundColor);
+        // case WM_CTLCOLORSTATIC:
+            // SetBkColor((HDC) wParam, GetSysColor(cBackgroundColor));
+        // return (INT_PTR) GetSysColorBrush(cBackgroundColor);
 
         case WM_COMMAND:
             if (HIWORD(wParam) == BN_CLICKED)

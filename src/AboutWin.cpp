@@ -40,8 +40,8 @@ namespace GTags
 {
 
 const TCHAR AboutWin::cClassName[]      = _T("AboutWin");
-const int AboutWin::cBackgroundColor    = COLOR_WINDOW;
-const unsigned AboutWin::cFontSize      = 10;
+const int AboutWin::cBackgroundColor    = COLOR_3DFACE;
+const unsigned AboutWin::cFontSize      = 9;
 
 
 std::unique_ptr<AboutWin> AboutWin::AW {nullptr};
@@ -111,7 +111,7 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
     if (_hWnd == NULL)
         return NULL;
 
-    INpp::Get().RegisterWinForDarkMode(_hWnd);
+    // INpp::Get().RegisterWinForDarkMode(_hWnd);
 
     GetClientRect(_hWnd, &win);
 
@@ -123,8 +123,8 @@ HWND AboutWin::composeWindow(HWND hOwner, const TCHAR* info)
 
     SendMessage(hEdit, EM_SETBKGNDCOLOR, 0, GetSysColor(cBackgroundColor));
 
-    HDC hdc = GetWindowDC(hEdit);
-    _hFont = Tools::CreateFromSystemMessageFont(hdc, cFontSize);
+    HDC hdc = GetDC(hEdit);
+    _hFont = Tools::CreateFontFromSystemDefault(Tools::SysFont::Message, hdc, cFontSize);
     ReleaseDC(hEdit, hdc);
 
     if (_hFont)
