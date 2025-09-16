@@ -1,6 +1,7 @@
 *TAGS
 GPATH
 NppGTags.cfg
+CMakeSettings.*
 *.suo
 *.sdf
 *.bat
@@ -10,3 +11,4 @@ NppGTags.cfg
 /Release
 /out
 /build
+/.vs
