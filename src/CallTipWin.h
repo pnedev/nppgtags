@@ -49,15 +49,16 @@ typedef std::basic_string<TCHAR> tstring;
 class CallTipParser : public ResultParser
 {
 public:
-    intptr_t overload = 0;
-    intptr_t func_start_pos = 0;
     CallTipParser(intptr_t pOverload, intptr_t pFuncStart) :
         overload(pOverload), func_start_pos(pFuncStart) {}
     virtual ~CallTipParser() {}
 
     virtual intptr_t Parse(const CmdPtr_t&);
-    virtual const std::vector<tstring>& GetDefinitions() const { return _definitions; }
+    const std::vector<tstring>& GetDefinitions() const { return _definitions; }
     int FindDefIndexFromLine(const TCHAR* findLine);
+
+    intptr_t overload = 0;
+    intptr_t func_start_pos = 0;
 
 protected:
     std::vector<tstring> _definitions;
@@ -118,7 +119,8 @@ private:
     void resizeLV();
 
     void onClick(int item);
-    void updateHeader(int overload, int high_overload = -1, TCHAR* header1 = _T("CallTip"), TCHAR* header2 = _T(""));
+    void updateHeader(int overload, int high_overload = -1,
+            const TCHAR* header1 = nullptr, const TCHAR* header2 = nullptr);
     void updateWindow(intptr_t position = -1);
     static std::unique_ptr<CallTipWin>  CTW;
 

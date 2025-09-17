@@ -129,7 +129,12 @@ intptr_t CallTipParser::Parse(const CmdPtr_t& cmd)
                 full_def_str = TEXT("ERROR: Could not parse CallTip.");
                 break;
             }
-            std::getline(src_file, line_str, L'\n');
+
+            std::getline(src_file, line_str, _T('\n'));
+            std::size_t firstNotSpacePos = line_str.find_first_not_of(_T(" \t"));
+            if (firstNotSpacePos)
+                line_str.erase(0, firstNotSpacePos);
+
             size_t lc_idx = 0;
             size_t nest_end_offset = line_str.length();
             for (lc_idx = 0; lc_idx < line_str.length(); lc_idx++) {
@@ -502,7 +507,7 @@ int CallTipWin::filterLV()
             name_in_def += _tag.Len();
             while (isspace(*name_in_def)) { name_in_def++; }
             // If '(' is not the next symbol after the name,
-            // than it's not a function at all.
+            // then it's not a function at all.
             if (*name_in_def != _T('('))
                 continue;
         }
@@ -531,7 +536,7 @@ int CallTipWin::filterLV()
             if (_cmdId == CALLTIP_SYMBOL)
                 updateHeader(lowest_parameter_count, -1, _T("CallTips"), _T("Symbol *.h"));
             else
-                updateHeader(lowest_parameter_count, -1, _T("CallTips"));
+                updateHeader(lowest_parameter_count);
         }
     else
         updateHeader(lowest_parameter_count, highest_parameter_count);
@@ -568,7 +573,7 @@ void CallTipWin::resizeLV()
     RECT win;
     ListView_GetItemRect(_hLVWnd, 0, &win, LVIR_BOUNDS);
 
-    int lvWidth     = std::max(cMinWidth, static_cast<int>(fontSIZE.cx + 30));
+    int lvWidth     = std::max(cMinWidth, static_cast<int>(fontSIZE.cx + 60));
     int lvHeight    = (win.bottom - win.top) * rowsCount;
     win.right = (win.left + lvWidth);
 
@@ -616,7 +621,7 @@ void CallTipWin::resizeLV()
     GetClientRect(_hWnd, &win);
     MoveWindow(_hLVWnd, 0, 0, win.right - win.left, win.bottom - win.top, TRUE);
 
-    LVCOLUMN lvCol = { 0 };
+    LVCOLUMN lvCol = {0};
     lvCol.mask  = LVCF_WIDTH;
     lvCol.cx    = win.right - win.left;
     ListView_SetColumn(_hLVWnd, 0, &lvCol);
@@ -627,18 +632,19 @@ void CallTipWin::resizeLV()
 /**
  *  \brief
  */
-void CallTipWin::updateHeader(int overload, int high_overload, TCHAR* header1, TCHAR* header2)
+void CallTipWin::updateHeader(int overload, int high_overload, const TCHAR* header1, const TCHAR* header2)
 {
-    TCHAR buf[MAX_PATH] = { 0 };
-    if (high_overload == -1) {
+    TCHAR buf[MAX_PATH] = {0};
+
+    if (high_overload == -1)
         _sntprintf_s(buf, _countof(buf), _TRUNCATE, TEXT("%d/%d (%s) %s"),
-                int(_parser->overload) + 1, overload, header1, header2);
-    }
-    else {
+                int(_parser->overload) + 1, overload, header1 ? header1 : _T("CallTips"), header2 ? header2 : _T(""));
+    else
         _sntprintf_s(buf, _countof(buf), _TRUNCATE, TEXT("%d/%d-%d (%s) %s"),
-                int(_parser->overload) + 1, overload, high_overload, header1, header2);
-    }
-    LVCOLUMN lvCol = { 0 };
+                int(_parser->overload) + 1, overload, high_overload,
+                header1 ? header1 : _T("CallTips"), header2 ? header2 : _T(""));
+
+    LVCOLUMN lvCol = {0};
     lvCol.mask = LVCF_TEXT;
     lvCol.cchTextMax = _countof(buf);
     lvCol.pszText = buf;
@@ -707,7 +713,9 @@ void CallTipWin::onClick(int item)
             *delimiterPtr = _T('\0');
     }
 
-    updateHeader(getDefParamCount(buf), -1, getDefParamText(buf), pathBuf);
+    const int paramsCount = getDefParamCount(buf);
+
+    updateHeader(paramsCount, -1, getDefParamText(buf), pathBuf);
 }
 
 

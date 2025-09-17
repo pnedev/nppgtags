@@ -2157,10 +2157,19 @@ LRESULT CALLBACK ResultWin::keyHookProc(int code, WPARAM wParam, LPARAM lParam)
                         return 1;
                     }
                 }
-                else if (wParam == 0x46 && !alt && !shift) // 'F'
+                else if (!alt && !shift)
                 {
-                    RW->createSearchWindow();
-                    return 1;
+                    if (wParam == 'F')
+                    {
+                        RW->createSearchWindow();
+                        return 1;
+                    }
+
+                    if (wParam == 'C')
+                    {
+                        RW->sendSci(SCI_COPY);
+                        return 1;
+                    }
                 }
             }
         }
