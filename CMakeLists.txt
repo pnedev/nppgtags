@@ -31,7 +31,7 @@ set(CMAKE_CXX_STANDARD 14)
 if (UNIX OR MINGW)
     set (defs
         -DUNICODE -D_UNICODE -DMINGW_HAS_SECURE_API=1 -D_WIN32 -DWIN32
-        -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
+        -D_WIN32_WINNT=0x0601 -DWIN32_LEAN_AND_MEAN -DNOCOMM -DNDEBUG
     )
 
     if (WIN64)
@@ -55,12 +55,12 @@ else ()
     if (CMAKE_CL_64 OR CMAKE_GENERATOR MATCHES Win64)
         set (defs
             -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
-            -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN -DNOCOMM -D_WIN64
+            -D_WIN32_WINNT=0x0601 -DWIN32_LEAN_AND_MEAN -DNOCOMM -D_WIN64
         )
     else ()
         set (defs
             -DUNICODE -D_UNICODE -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES -D_WIN32 -DWIN32
-            -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN -DNOCOMM
+            -D_WIN32_WINNT=0x0601 -DWIN32_LEAN_AND_MEAN -DNOCOMM
         )
     endif ()
 
@@ -104,7 +104,12 @@ if (UNIX OR MINGW)
         PATHS ${win32_lib_dir}
     )
 
-    target_link_libraries (NppGTags ${comctl32})
+    find_library (uxtheme
+        NAMES libuxtheme.a
+        PATHS ${win32_lib_dir}
+    )
+
+    target_link_libraries (NppGTags ${comctl32} ${uxtheme})
 
     set (INSTALL_PATH
         "$ENV{HOME}/.wine/drive_c/Program Files/Notepad++/plugins/NppGTags"
@@ -124,5 +129,5 @@ if (UNIX OR MINGW)
         DESTINATION "${INSTALL_PATH}"
     )
 else ()
-    target_link_libraries (NppGTags comctl32)
+    target_link_libraries (NppGTags comctl32 uxtheme)
 endif ()

@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2024 Pavel Nedev
+ *  Copyright(C) 2014-2025 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -877,6 +877,15 @@ void ResultWin::configScintilla()
     sendSci(SCI_SETWRAPVISUALFLAGSLOCATION, SC_WRAPVISUALFLAGLOC_DEFAULT);
     sendSci(SCI_SETWRAPINDENTMODE, SC_WRAPINDENT_FIXED);
     sendSci(SCI_SETWRAPSTARTINDENT, 24);
+
+    if (sendSci(SCI_SUPPORTSFEATURE, SC_SUPPORTS_THREAD_SAFE_MEASURE_WIDTHS) && sendSci(SCI_GETLAYOUTTHREADS) == 1)
+    {
+        const auto threadsCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+
+        if (threadsCount > 1)
+            sendSci(SCI_SETLAYOUTTHREADS, threadsCount);
+    }
+
     sendSci(SCI_SETLAYOUTCACHE, SC_CACHE_CARET);
 
     // Implement lexer in the container
@@ -918,8 +927,6 @@ HWND ResultWin::composeWindow()
             0, 0, 10, 10, hOwner, NULL, HMod, NULL);
     if (_hWnd == NULL)
         return NULL;
-
-    npp.RegisterWinForDarkMode(_hWnd);
 
     if (!_hSci)
     {

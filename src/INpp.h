@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2024 Pavel Nedev
+ *  Copyright(C) 2014-2025 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -94,6 +94,20 @@ public:
     inline HMENU GetPluginMenu() const
     {
         return (HMENU)SendMessage(_nppData._nppHandle, NPPM_GETMENUHANDLE, NPPPLUGINMENU, 0);
+    }
+
+    bool IsDarkMode() const
+    {
+        if (SendMessage(_nppData._nppHandle, NPPM_ISDARKMODEENABLED, 0, 0))
+            return true;
+
+        const int bg = static_cast<int>(SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0));
+
+        const int r = bg & 0xFF;
+        const int g = bg >> 8 & 0xFF;
+        const int b = bg >> 16 & 0xFF;
+
+        return (((r + g + b) / 3) < 128);
     }
 
     inline void RegisterWinForDarkMode(HWND hWnd) const

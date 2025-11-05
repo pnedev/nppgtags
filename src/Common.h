@@ -5,7 +5,7 @@
  *  \author  Pavel Nedev <pg.nedev@gmail.com>
  *
  *  \section COPYRIGHT
- *  Copyright(C) 2014-2024 Pavel Nedev
+ *  Copyright(C) 2014-2025 Pavel Nedev
  *
  *  \section LICENSE
  *  This program is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <uxtheme.h>
+#include <versionhelpers.h>
 
 
 #ifdef UNICODE
@@ -212,6 +214,20 @@ private:
 
 namespace Tools
 {
+
+inline void SetExplorerLightTheme(HWND hwnd)
+{
+    if (::IsWindows10OrGreater())
+        ::SetWindowTheme(hwnd, L"Explorer", nullptr);
+}
+
+
+inline void SetExplorerDarkTheme(HWND hwnd)
+{
+    if (::IsWindows10OrGreater())
+        ::SetWindowTheme(hwnd, L"DarkMode_Explorer", nullptr);
+}
+
 
 void ReleaseKeys();
 bool BrowseForFolder(HWND hOwnerWin, CPath& path, const TCHAR* info = NULL, bool onlySubFolders = false);

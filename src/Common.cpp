@@ -25,7 +25,6 @@
 #include "Common.h"
 #include <shlobj.h>
 #include <objbase.h>
-#include <versionhelpers.h>
 
 
 namespace
