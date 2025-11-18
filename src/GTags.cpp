@@ -157,15 +157,19 @@ void autoComplCB(const CmdPtr_t& cmd)
 
     INpp::Get().ClearSelectionMulti();
 
-    if (cmd->Status() == FAILED)
+    // Don't show error if autocomplete is auto-run
+    if (!GTagsSettings._triggerAutocmplAfter)
     {
-        CText msg(cmd->Result());
-        msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
-    }
-    else if (cmd->Status() == RUN_ERROR)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+        if (cmd->Status() == FAILED)
+        {
+            CText msg(cmd->Result());
+            msg += _T("\nTry re-creating database.");
+            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+        }
+        else if (cmd->Status() == RUN_ERROR)
+        {
+            MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+        }
     }
 }
 
@@ -190,15 +194,19 @@ void halfComplCB(const CmdPtr_t& cmd)
 
     INpp::Get().ClearSelectionMulti();
 
-    if (cmd->Status() == FAILED)
+    // Don't show error if autocomplete is auto-run
+    if (!GTagsSettings._triggerAutocmplAfter)
     {
-        CText msg(cmd->Result());
-        msg += _T("\nTry re-creating database.");
-        MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
-    }
-    else if (cmd->Status() == RUN_ERROR)
-    {
-        MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+        if (cmd->Status() == FAILED)
+        {
+            CText msg(cmd->Result());
+            msg += _T("\nTry re-creating database.");
+            MessageBox(INpp::Get().GetHandle(), msg.C_str(), cmd->Name(), MB_OK | MB_ICONEXCLAMATION);
+        }
+        else if (cmd->Status() == RUN_ERROR)
+        {
+            MessageBox(INpp::Get().GetHandle(), _T("Running GTags failed"), cmd->Name(), MB_OK | MB_ICONERROR);
+        }
     }
 }
 

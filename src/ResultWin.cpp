@@ -69,7 +69,7 @@ namespace GTags
 const TCHAR ResultWin::cClassName[]         = _T("ResultWin");
 const TCHAR ResultWin::cSearchClassName[]   = _T("ResultSearchWin");
 const int ResultWin::cSearchBkgndColor      = COLOR_WINDOW;
-const unsigned ResultWin::cSearchFontSize   = 9;
+const unsigned ResultWin::cSearchFontSize   = 10;
 const int ResultWin::cSearchWidth           = 450;
 
 
