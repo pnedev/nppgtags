@@ -489,7 +489,7 @@ HWND SettingsWin::composeWindow(HWND hOwner)
     for (size_t i = 0; DbConfig::Parser(i); ++i)
         SendMessage(_hParser, CB_ADDSTRING, 0, (LPARAM)DbConfig::Parser(i));
 
-	SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
+    SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_NONE);
     Edit_SetText(_hDefDb, GTagsSettings._defDbPath.C_str());
     SendMessage(_hDefDb, EM_SETEVENTMASK, 0, ENM_CHANGE);
 
