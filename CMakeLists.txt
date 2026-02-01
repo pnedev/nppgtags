@@ -3,6 +3,8 @@ cmake_policy (SET CMP0091 NEW)
 
 set (CMAKE_SYSTEM_NAME Windows)
 
+option (WIN64   "Win 64-bit build"  ON)
+
 if (UNIX OR MINGW)
     set (CMAKE_SYSROOT "/usr")
 
