@@ -27,7 +27,7 @@ import optparse
 import pygments.lexers
 from pygments.token import Token
 
-EXUBERANT_CTAGS = "../../../bin/ctags.exe"
+UNIVERSAL_CTAGS = "../../../bin/ctags.exe"
 
 # In most cases, lexers can be looked up with lowercase form of formal
 # language names. This dictionary defines exceptions.
@@ -139,7 +139,7 @@ class PygmentsParser:
 
 class CtagsParser:
     def __init__(self, ctags_command, options):
-        self.process = subprocess.Popen([ctags_command, '-xu', '--filter', '--filter-terminator=' + TERMINATOR, '--format=1'], bufsize=-1,
+        self.process = subprocess.Popen([ctags_command, '-xu', '--tag-relative=no', '--filter', '--filter-terminator=' + TERMINATOR, '--format=1'], bufsize=-1,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=CLOSEFDS,
                                         universal_newlines=True)
         if sys.version_info < (3,):
@@ -199,9 +199,9 @@ def parse_langmap(string):
     return langmap
 
 def handle_requests(langmap, options):
-    global EXUBERANT_CTAGS
-    if EXUBERANT_CTAGS != '' and EXUBERANT_CTAGS != 'no':
-        ctags_bin = os.path.join(os.path.dirname(__file__), EXUBERANT_CTAGS)
+    global UNIVERSAL_CTAGS
+    if UNIVERSAL_CTAGS != '' and UNIVERSAL_CTAGS != 'no':
+        ctags_bin = os.path.join(os.path.dirname(__file__), UNIVERSAL_CTAGS)
         pygments_parser = PygmentsParser(langmap, options)
         try:
             ctags_parser = CtagsParser(ctags_bin, options)
